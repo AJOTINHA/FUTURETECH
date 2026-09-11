@@ -2,17 +2,20 @@ package dev.futuretech.api.side.client;
 
 import dev.futuretech.api.side.SideConfigMenu;
 import dev.futuretech.api.side.SideMode;
+import dev.futuretech.client.MachineScreenStyle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.block.state.BlockState;
@@ -40,10 +43,6 @@ public final class SideConfigPanel<M extends AbstractContainerMenu & SideConfigM
     /** Opening and closing slide over this many milliseconds. */
     private static final double SLIDE_MILLIS = 150.0;
 
-    private static final int PANEL_EDGE = 0xFF111820;
-    private static final int PANEL_FILL = 0xFFBBC3CC;
-    private static final int HEADER = 0xFF293747;
-    private static final int TEXT = 0xFF283541;
     private static final int TITLE = 0xFFFFFFFF;
 
     /** Layout of the unfolded cube: column and row of each face relative to the front; the back sits beside the bottom. */
@@ -110,14 +109,15 @@ public final class SideConfigPanel<M extends AbstractContainerMenu & SideConfigM
         int width = BUTTON_SIZE + (int) Math.round((panelWidth - BUTTON_SIZE) * slide);
         int height = BUTTON_SIZE + (int) Math.round((PANEL_HEIGHT - BUTTON_SIZE) * slide);
         boolean hovered = slide <= 0 && isOver(mouseX, mouseY, buttonX, buttonY, BUTTON_SIZE, BUTTON_SIZE);
-        drawFrame(graphics, buttonX, buttonY, width, height);
-        if (hovered) graphics.fill(buttonX + 2, buttonY + 2, buttonX + BUTTON_SIZE - 2, buttonY + BUTTON_SIZE - 2, 0xFFCDD4DB);
+        // Same cut corners, shadow and header band as the machine screens; collapsed, the band fills the tab.
+        MachineScreenStyle.drawPanel(graphics, buttonX, buttonY, width, height);
+        if (hovered) graphics.fill(buttonX + 2, buttonY + 3, buttonX + width - 2, buttonY + BUTTON_SIZE - 2, 0x1AFFFFFF);
         drawIcon(graphics);
         if (slide <= 0) return;
 
         // Content only shows inside the part of the tab that has grown so far.
         graphics.enableScissor(buttonX, buttonY, buttonX + width - 2, buttonY + height - 2);
-        graphics.text(font, title, buttonX + BUTTON_SIZE, buttonY + 6, TEXT, false);
+        graphics.text(font, title, buttonX + BUTTON_SIZE, buttonY + 6, TITLE, false);
         drawFaces(graphics, mouseX, mouseY);
         graphics.disableScissor();
     }
@@ -185,6 +185,8 @@ public final class SideConfigPanel<M extends AbstractContainerMenu & SideConfigM
             int buttonId = face == Face.FRONT && event.hasShiftDown()
                     ? SideConfigMenu.BUTTON_CLEAR_ALL : face.resolve(front).ordinal();
             if (gameMode != null) gameMode.handleInventoryButtonClick(menu.containerId, buttonId);
+            // Same click as vanilla menu buttons.
+            Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
             return true;
         }
         return false;
@@ -209,19 +211,14 @@ public final class SideConfigPanel<M extends AbstractContainerMenu & SideConfigM
 
     private void drawIcon(GuiGraphicsExtractor graphics) {
         // A tiny unfolded cube marks the tab.
-        int cx = buttonX + 4;
-        int cy = buttonY + 4;
+        // The 3x3 cell glyph is 8 px wide, so an offset of 6 centres it in the 20 px tab.
+        int cx = buttonX + 5;
+        int cy = buttonY + 5;
         for (Face face : Face.values()) {
             int x = cx + 1 + face.column * 3;
             int y = cy + face.row * 3 + 1;
-            graphics.fill(x, y, x + 2, y + 2, face == Face.FRONT ? 0xFFEC761C : TEXT);
+            graphics.fill(x, y, x + 2, y + 2, face == Face.FRONT ? 0xFFEC761C : TITLE);
         }
-    }
-
-    private static void drawFrame(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
-        graphics.fill(x - 1, y + 1, x + width + 1, y + height + 1, 0x14000000);
-        graphics.fill(x, y, x + width, y + height, PANEL_EDGE);
-        graphics.fill(x + 2, y + 2, x + width - 2, y + height - 2, PANEL_FILL);
     }
 
     /** Sprite the block model uses for {@code side}; resolved once per state and cached. */

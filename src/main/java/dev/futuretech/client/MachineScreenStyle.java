@@ -5,14 +5,14 @@ import net.minecraft.world.inventory.Slot;
 import org.joml.Matrix3x2f;
 
 /** Shared look of the mod's machine screens: flat grey panel, dark blue header, simple slots and gradient bars. */
-final class MachineScreenStyle {
+public final class MachineScreenStyle {
     static final int TEXT = 0xFF283541;
     static final int TITLE = 0xFFFFFFFF;
     static final int BAR_BACK = 0xFF283541;
     static final int ENERGY_START = 0xFF1676C4;
     static final int ENERGY_END = 0xFF55E7ED;
 
-    static void drawPanel(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
+    public static void drawPanel(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
         // Small pixel steps reproduce vanilla-style corners without rounded panels.
         drawCutCornerRect(graphics, x - 3, y + 1, width + 6, height + 4, 3, 0x08000000);
         drawCutCornerRect(graphics, x - 2, y + 1, width + 4, height + 3, 3, 0x0C000000);
@@ -38,7 +38,7 @@ final class MachineScreenStyle {
         }
     }
 
-    static void drawCutCornerRect(GuiGraphicsExtractor graphics, int x, int y,
+    public static void drawCutCornerRect(GuiGraphicsExtractor graphics, int x, int y,
                                   int width, int height, int cornerSize, int color) {
         graphics.fill(x, y + cornerSize, x + width, y + height - cornerSize, color);
         for (int row = 0; row < cornerSize; row++) {
