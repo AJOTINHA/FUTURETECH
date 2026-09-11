@@ -1,0 +1,9 @@
+{
+  "itemGroup.futuretech": "FUTURETECH",
+  "block.futuretech.machine_casing": "Carcaça de Máquina",
+  "block.futuretech.solid_fuel_generator": "Gerador a Combustível Sólido",
+  "gui.futuretech.empty": "Vazio",
+  "gui.futuretech.energy": "Energia",
+  "gui.futuretech.rate": "%s FE/t",
+  "gui.futuretech.stored": "%s / %s FE"
+}

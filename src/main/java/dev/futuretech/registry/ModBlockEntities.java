@@ -1,0 +1,25 @@
+package dev.futuretech.registry;
+
+import dev.futuretech.FutureTech;
+import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
+
+public final class ModBlockEntities {
+    public static final DeferredRegister<BlockEntityType<?>> TYPES = DeferredRegister.create(
+            Registries.BLOCK_ENTITY_TYPE, FutureTech.MOD_ID);
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SolidFuelGeneratorBlockEntity>> SOLID_FUEL_GENERATOR =
+            TYPES.register("solid_fuel_generator", () -> new BlockEntityType<>(
+                    SolidFuelGeneratorBlockEntity::new, ModBlocks.SOLID_FUEL_GENERATOR.get()));
+
+    public static void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, SOLID_FUEL_GENERATOR.get(),
+                (generator, side) -> generator.energy());
+    }
+
+    private ModBlockEntities() {}
+}
