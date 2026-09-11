@@ -5,6 +5,7 @@ import static dev.futuretech.client.MachineScreenStyle.*;
 import dev.futuretech.api.gui.TabStrip;
 import dev.futuretech.api.redstone.client.RedstoneControlTab;
 import dev.futuretech.api.side.client.SideConfigTab;
+import dev.futuretech.api.upgrade.client.UpgradeTab;
 import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
 import dev.futuretech.menu.SolidFuelGeneratorMenu;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -19,11 +20,11 @@ public final class SolidFuelGeneratorScreen extends AbstractContainerScreen<Soli
     private final TabStrip tabs;
 
     public SolidFuelGeneratorScreen(SolidFuelGeneratorMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title, 176, 184);
+        super(menu, inventory, title, SolidFuelGeneratorMenu.IMAGE_WIDTH, 184);
         titleLabelX = menu.slots.getFirst().x - 1;
         inventoryLabelX = titleLabelX;
         inventoryLabelY = 90;
-        tabs = new TabStrip(new SideConfigTab<>(menu, font), new RedstoneControlTab<>(menu, font));
+        tabs = new TabStrip(new UpgradeTab(menu, font), new SideConfigTab<>(menu, font), new RedstoneControlTab<>(menu, font));
     }
 
     @Override

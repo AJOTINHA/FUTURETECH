@@ -6,6 +6,8 @@ import dev.futuretech.api.redstone.RedstoneControlMenu;
 import dev.futuretech.api.redstone.RedstoneMode;
 import dev.futuretech.api.side.SideConfigMenu;
 import dev.futuretech.api.side.SideMode;
+import dev.futuretech.api.upgrade.UpgradeInventory;
+import dev.futuretech.api.upgrade.UpgradeSlots;
 import dev.futuretech.block.BatteryTier;
 import dev.futuretech.block.entity.BatteryBlockEntity;
 import dev.futuretech.energy.EnergySync;
@@ -28,16 +30,21 @@ public final class BatteryMenu extends MachineMenu implements SideConfigMenu, Re
     private final ContainerData data;
     private final @Nullable BatteryBlockEntity battery;
 
+    /** Width of the battery screen; upgrade slots sit in the tab beside it. */
+    public static final int IMAGE_WIDTH = 176;
+
     public BatteryMenu(int id, Inventory inventory) {
-        this(id, inventory, null, new SimpleContainerData(DATA_COUNT));
+        this(id, inventory, null, new UpgradeInventory(() -> {}), new SimpleContainerData(DATA_COUNT));
     }
 
-    public BatteryMenu(int id, Inventory inventory, @Nullable BatteryBlockEntity battery, ContainerData data) {
+    public BatteryMenu(int id, Inventory inventory, @Nullable BatteryBlockEntity battery, UpgradeInventory upgrades,
+                       ContainerData data) {
         super(ModMenus.BATTERY.get(), id);
         checkContainerDataCount(data, DATA_COUNT);
         this.data = data;
         this.battery = battery;
         addStandardInventorySlots(inventory, 8, 102);
+        UpgradeSlots.addSlots(upgrades, IMAGE_WIDTH, this::addSlot);
         addDataSlots(data);
         if (battery != null) markSynced();
     }
@@ -87,8 +94,11 @@ public final class BatteryMenu extends MachineMenu implements SideConfigMenu, Re
         if (!slot.hasItem()) return ItemStack.EMPTY;
         ItemStack stack = slot.getItem();
         ItemStack original = stack.copy();
-        // No machine slots yet: shift-click only swaps between the main inventory and the hotbar.
-        if (index < 27) {
+        if (index >= 36) {
+            if (!moveItemStackTo(stack, 0, 36, true)) return ItemStack.EMPTY;
+        } else if (UpgradeInventory.isUpgrade(stack)) {
+            if (!moveItemStackTo(stack, 36, 36 + UpgradeInventory.SLOTS, false)) return ItemStack.EMPTY;
+        } else if (index < 27) {
             if (!moveItemStackTo(stack, 27, 36, false)) return ItemStack.EMPTY;
         } else if (!moveItemStackTo(stack, 0, 27, false)) {
             return ItemStack.EMPTY;

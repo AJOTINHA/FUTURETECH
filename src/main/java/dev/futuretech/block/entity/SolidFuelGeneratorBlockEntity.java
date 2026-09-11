@@ -2,6 +2,8 @@ package dev.futuretech.block.entity;
 
 import dev.futuretech.api.redstone.RedstoneControl;
 import dev.futuretech.api.redstone.RedstoneControllable;
+import dev.futuretech.api.upgrade.UpgradeInventory;
+import dev.futuretech.api.upgrade.Upgradeable;
 import dev.futuretech.api.side.SideConfig;
 import dev.futuretech.api.side.SideConfigurable;
 import dev.futuretech.api.side.SideConfigurableBlock;
@@ -21,6 +23,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.Containers;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
@@ -38,7 +41,7 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 import net.neoforged.neoforge.transfer.energy.EnergyHandlerUtil;
 
-public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntity implements SideConfigurable, RedstoneControllable {
+public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntity implements SideConfigurable, RedstoneControllable, Upgradeable {
     public static final int CAPACITY = 20_000;
     public static final int GENERATION_PER_TICK = 20;
     public static final int OUTPUT_PER_TICK = 80;
@@ -63,6 +66,7 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
     private final TickLimitedEnergyHandler energy = new TickLimitedEnergyHandler(CAPACITY, 0, OUTPUT_PER_TICK, this::setChanged);
     private final SideConfig sides;
     private final RedstoneControl redstone = new RedstoneControl();
+    private final UpgradeInventory upgrades = new UpgradeInventory(this::setChanged);
     private final ContainerData data = new ContainerData() {
         @Override
         public int get(int index) {
@@ -100,6 +104,15 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
 
     @Override
     public RedstoneControl redstoneControl() { return redstone; }
+
+    @Override
+    public UpgradeInventory upgrades() { return upgrades; }
+
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (level != null) Containers.dropContents(level, pos, upgrades);
+    }
 
     @Override
     public void redstoneControlChanged() { setChanged(); }
@@ -192,6 +205,7 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
         burnRemaining = Math.clamp(input.getIntOr("BurnRemaining", 0), 0, burnTotal);
         sides.load(input);
         redstone.load(input);
+        upgrades.load(input);
         generating = false;
     }
 
@@ -204,6 +218,7 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
         output.putInt("BurnTotal", burnTotal);
         sides.save(output);
         redstone.save(output);
+        upgrades.save(output);
     }
 
     @Override
@@ -223,6 +238,6 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
 
     @Override
     protected AbstractContainerMenu createMenu(int id, Inventory inventory) {
-        return new SolidFuelGeneratorMenu(id, inventory, this, data);
+        return new SolidFuelGeneratorMenu(id, inventory, this, upgrades, data);
     }
 }

@@ -53,12 +53,15 @@ public abstract class MachineTab {
 
     public boolean isOpen() { return open; }
 
+    public void setOpen(boolean open) { this.open = open; }
+
     public boolean isFullyOpen() { return open && slide >= 1; }
 
     /** Current height, including the part still sliding; the strip stacks the next tab under it. */
     public int height() { return height; }
 
-    private int fullWidth() {
+    /** Width when fully open; tabs whose content has a fixed position (menu slots) pin this. */
+    protected int fullWidth() {
         return Math.max(PADDING * 2 + contentWidth(), SIZE + font.width(title()) + PADDING + 2);
     }
 

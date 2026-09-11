@@ -74,7 +74,7 @@ Como nas baterias, todos os cabos compartilham as mesmas classes (`CableBlock`, 
 
 ## Configuração de lados
 
-Toda máquina tem um botão ao lado do título da interface que abre o painel **Lados**: o cubo desdobrado com as seis faces do bloco, desenhadas com as texturas reais e nomeadas em relação à frente (Frente, Trás, Esquerda, Direita, Cima, Baixo). Clicar numa face alterna o modo dela — **Entrada → Saída → Entrada e saída → Nenhum** — pulando os modos que aquela máquina não permite. A borda da face mostra o modo (azul entrada, laranja saída, verde ambos, cinza nenhum), e o tooltip diz o nome e o modo.
+Toda máquina tem, na lateral direita da interface, a aba **Configuração** (segunda da tira, abaixo de Melhorias): o cubo desdobrado com as seis faces do bloco, desenhadas com as texturas reais e nomeadas em relação à frente (Frente, Trás, Esquerda, Direita, Cima, Baixo). Clicar numa face alterna o modo dela — **Entrada → Saída → Entrada e saída → Nenhum** — pulando os modos que aquela máquina não permite. A borda da face mostra o modo (azul entrada, laranja saída, verde ambos, cinza nenhum), e o tooltip diz o nome e o modo.
 
 - Toda máquina nova é colocada com **todas as faces em Nenhum**; o jogador abre as faces que quer usar.
 - **Shift + clique na Frente** volta todas as faces para Nenhum.
@@ -84,7 +84,13 @@ Toda máquina tem um botão ao lado do título da interface que abre o painel **
 
 ## Controle de redstone
 
-Logo abaixo da aba de configuração fica a aba **Redstone**, com três modos: **Ignorar** (funciona sempre), **Sinal baixo** (funciona só sem sinal) e **Sinal alto** (funciona só com sinal). A aba mostra se o bloco está recebendo sinal agora. No gerador, o sinal controla a geração (o combustível em queima fica preservado; a energia guardada continua saindo). Na bateria, controla a saída; a carga pelas faces de entrada nunca é bloqueada.
+Abaixo da aba de configuração fica a aba **Redstone**, com três modos: **Ignorar** (funciona sempre), **Sinal baixo** (funciona só sem sinal) e **Sinal alto** (funciona só com sinal). A aba mostra se o bloco está recebendo sinal agora. No gerador, o sinal controla a geração (o combustível em queima fica preservado; a energia guardada continua saindo). Na bateria, controla a saída; a carga pelas faces de entrada nunca é bloqueada.
+
+## Melhorias
+
+A primeira aba, **Melhorias**, tem quatro slots para itens de upgrade. Ainda não existe nenhum item de upgrade: os slots aceitam só itens da tag `futuretech:upgrades`, que está vazia, então por enquanto a aba não tem efeito. Quando os upgrades existirem, entram por essa tag e as máquinas passam a lê-los pela `UpgradeInventory` (`dev.futuretech.api.upgrade`). Os slots são slots reais do menu (Shift + clique funciona) e o conteúdo é salvo com o bloco e cai ao quebrá-lo.
+
+Como os slots de menu têm posição fixa, a aba de melhorias é a primeira da tira, onde nenhuma aba aberta acima pode empurrá-la.
 
 A API fica em `dev.futuretech.api.redstone` (`RedstoneMode`, `RedstoneControl`, `RedstoneControllable`, `RedstoneControlMenu`, `RedstoneControlTab`) e segue o mesmo desenho da configuração de lados. As abas em si vêm de `dev.futuretech.api.gui` (`MachineTab`, `TabStrip`): uma tela cria um `TabStrip` com as abas que quiser e repassa desenho, tooltip e cliques; abas abertas empurram as de baixo.
 

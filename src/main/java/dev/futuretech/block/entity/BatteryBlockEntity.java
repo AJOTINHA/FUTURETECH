@@ -2,6 +2,8 @@ package dev.futuretech.block.entity;
 
 import dev.futuretech.api.redstone.RedstoneControl;
 import dev.futuretech.api.redstone.RedstoneControllable;
+import dev.futuretech.api.upgrade.UpgradeInventory;
+import dev.futuretech.api.upgrade.Upgradeable;
 import dev.futuretech.api.side.SideConfig;
 import dev.futuretech.api.side.SideConfigurable;
 import dev.futuretech.block.BatteryBlock;
@@ -18,6 +20,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -32,7 +35,7 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 import net.neoforged.neoforge.transfer.energy.EnergyHandlerUtil;
 
-public final class BatteryBlockEntity extends BlockEntity implements MenuProvider, SideConfigurable, RedstoneControllable {
+public final class BatteryBlockEntity extends BlockEntity implements MenuProvider, SideConfigurable, RedstoneControllable, Upgradeable {
     public static final int DATA_ENERGY_LOW = 0;
     public static final int DATA_ENERGY_HIGH = 1;
     public static final int DATA_INPUT = 2;
@@ -47,6 +50,7 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
     private final TickLimitedEnergyHandler energy;
     private final SideConfig sides;
     private final RedstoneControl redstone = new RedstoneControl();
+    private final UpgradeInventory upgrades = new UpgradeInventory(this::setChanged);
     // Transfer totals of the previous tick, shown in the menu as FE/t.
     private int lastInput;
     private int lastOutput;
@@ -91,6 +95,15 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
 
     @Override
     public RedstoneControl redstoneControl() { return redstone; }
+
+    @Override
+    public UpgradeInventory upgrades() { return upgrades; }
+
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (level != null) Containers.dropContents(level, pos, upgrades);
+    }
 
     @Override
     public void redstoneControlChanged() { setChanged(); }
@@ -150,6 +163,7 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
         setEnergyClamped(input.getIntOr("Energy", 0));
         sides.load(input);
         redstone.load(input);
+        upgrades.load(input);
     }
 
     @Override
@@ -158,6 +172,7 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
         output.putInt("Energy", energy.getAmountAsInt());
         sides.save(output);
         redstone.save(output);
+        upgrades.save(output);
     }
 
     // The stored charge travels with the dropped item and returns when it is placed again.
@@ -185,6 +200,6 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
 
     @Override
     public AbstractContainerMenu createMenu(int id, Inventory inventory, Player player) {
-        return new BatteryMenu(id, inventory, this, data);
+        return new BatteryMenu(id, inventory, this, upgrades, data);
     }
 }

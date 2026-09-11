@@ -7,11 +7,14 @@ import java.util.List;
 
 /**
  * Stacks {@link MachineTab}s down the right edge of a machine screen. Screens forward background
- * drawing, tooltips and mouse clicks here; an open tab pushes the ones below it down.
+ * drawing, tooltips and mouse clicks here; an open tab pushes the ones below it down. Tabs whose
+ * content has a fixed position (menu slots) must therefore come first on the strip.
  */
 public final class TabStrip {
     /** Panel rows between two stacked tabs. */
-    private static final int SPACING = 2;
+    public static final int SPACING = 2;
+    /** Rows between the screen's top edge and the first tab. */
+    public static final int TOP_OFFSET = 1;
 
     private final List<MachineTab> tabs;
 
@@ -22,7 +25,7 @@ public final class TabStrip {
     /** Call from {@code extractBackground}. Tabs share the screen's right border, one pixel below its top. */
     public void render(GuiGraphicsExtractor graphics, int leftPos, int topPos, int imageWidth, int mouseX, int mouseY) {
         int x = leftPos + imageWidth - 2;
-        int y = topPos + 1;
+        int y = topPos + TOP_OFFSET;
         for (MachineTab tab : tabs) {
             tab.render(graphics, x, y, mouseX, mouseY);
             y += tab.height() + SPACING;
@@ -41,4 +44,6 @@ public final class TabStrip {
         }
         return false;
     }
+
+    public MachineTab get(int index) { return tabs.get(index); }
 }

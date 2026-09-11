@@ -1,5 +1,6 @@
 package dev.futuretech.client;
 
+import dev.futuretech.api.upgrade.UpgradeSlot;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.inventory.Slot;
 import org.joml.Matrix3x2f;
@@ -25,17 +26,21 @@ public final class MachineScreenStyle {
         graphics.fillGradient(x + 2, y + 18, x + width - 2, y + 20, 0x18000000, 0x00000000);
     }
 
+    /** Draws the panel's own slots; upgrade slots are drawn by their tab instead. */
     static void drawSlots(GuiGraphicsExtractor graphics, int x, int y, Iterable<Slot> slots) {
         for (Slot slot : slots) {
-            int sx = x + slot.x;
-            int sy = y + slot.y;
-            graphics.fill(sx - 1, sy - 1, sx + 17, sy + 17, 0xFF56616D);
-            graphics.fill(sx, sy, sx + 16, sy + 16, 0xFF8B959F);
-            // One-pixel shading inside each slot leaves its border and size unchanged.
-            graphics.fill(sx, sy, sx + 16, sy + 1, 0x14000000);
-            graphics.fill(sx, sy + 1, sx + 1, sy + 15, 0x0A000000);
-            graphics.fill(sx, sy + 15, sx + 16, sy + 16, 0x16FFFFFF);
+            if (slot instanceof UpgradeSlot || !slot.isActive()) continue;
+            drawSlot(graphics, x + slot.x, y + slot.y);
         }
+    }
+
+    public static void drawSlot(GuiGraphicsExtractor graphics, int sx, int sy) {
+        graphics.fill(sx - 1, sy - 1, sx + 17, sy + 17, 0xFF56616D);
+        graphics.fill(sx, sy, sx + 16, sy + 16, 0xFF8B959F);
+        // One-pixel shading inside each slot leaves its border and size unchanged.
+        graphics.fill(sx, sy, sx + 16, sy + 1, 0x14000000);
+        graphics.fill(sx, sy + 1, sx + 1, sy + 15, 0x0A000000);
+        graphics.fill(sx, sy + 15, sx + 16, sy + 16, 0x16FFFFFF);
     }
 
     public static void drawCutCornerRect(GuiGraphicsExtractor graphics, int x, int y,

@@ -9,6 +9,8 @@ import dev.futuretech.api.side.SideConfigMenu;
 import dev.futuretech.api.side.SideConfigurable;
 import dev.futuretech.api.side.SideConfigurableBlock;
 import dev.futuretech.api.side.SideMode;
+import dev.futuretech.api.upgrade.UpgradeInventory;
+import dev.futuretech.api.upgrade.UpgradeSlots;
 import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
 import dev.futuretech.energy.EnergySync;
 import dev.futuretech.registry.ModBlocks;
@@ -30,11 +32,14 @@ public final class SolidFuelGeneratorMenu extends MachineMenu implements SideCon
     private final Container fuel;
     private final ContainerData data;
 
+    /** Width of the generator screen; upgrade slots sit in the tab beside it. */
+    public static final int IMAGE_WIDTH = 176;
+
     public SolidFuelGeneratorMenu(int id, Inventory inventory) {
-        this(id, inventory, new SimpleContainer(1), new SimpleContainerData(DATA_COUNT));
+        this(id, inventory, new SimpleContainer(1), new UpgradeInventory(() -> {}), new SimpleContainerData(DATA_COUNT));
     }
 
-    public SolidFuelGeneratorMenu(int id, Inventory inventory, Container fuel, ContainerData data) {
+    public SolidFuelGeneratorMenu(int id, Inventory inventory, Container fuel, UpgradeInventory upgrades, ContainerData data) {
         super(ModMenus.SOLID_FUEL_GENERATOR.get(), id);
         checkContainerSize(fuel, 1);
         checkContainerDataCount(data, DATA_COUNT);
@@ -45,6 +50,7 @@ public final class SolidFuelGeneratorMenu extends MachineMenu implements SideCon
             public boolean mayPlace(ItemStack stack) { return SolidFuelGeneratorBlockEntity.isFuel(stack); }
         });
         addStandardInventorySlots(inventory, 8, 102);
+        UpgradeSlots.addSlots(upgrades, IMAGE_WIDTH, this::addSlot);
         addDataSlots(data);
         if (fuel instanceof SolidFuelGeneratorBlockEntity) markSynced();
     }
@@ -91,8 +97,10 @@ public final class SolidFuelGeneratorMenu extends MachineMenu implements SideCon
         if (!slot.hasItem()) return ItemStack.EMPTY;
         ItemStack stack = slot.getItem();
         ItemStack original = stack.copy();
-        if (index == 0) {
+        if (index == 0 || index >= 37) {
             if (!moveItemStackTo(stack, 1, 37, true)) return ItemStack.EMPTY;
+        } else if (UpgradeInventory.isUpgrade(stack)) {
+            if (!moveItemStackTo(stack, 37, 37 + UpgradeInventory.SLOTS, false)) return ItemStack.EMPTY;
         } else if (SolidFuelGeneratorBlockEntity.isFuel(stack)) {
             if (!moveItemStackTo(stack, 0, 1, false)) return ItemStack.EMPTY;
         } else if (index < 28) {
