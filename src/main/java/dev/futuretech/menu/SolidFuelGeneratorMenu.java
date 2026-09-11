@@ -2,20 +2,28 @@ package dev.futuretech.menu;
 
 import static dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity.*;
 
+import dev.futuretech.api.side.SideConfigMenu;
+import dev.futuretech.api.side.SideConfigurable;
+import dev.futuretech.api.side.SideConfigurableBlock;
+import dev.futuretech.api.side.SideMode;
 import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
 import dev.futuretech.energy.EnergySync;
+import dev.futuretech.registry.ModBlocks;
 import dev.futuretech.registry.ModMenus;
+import net.minecraft.core.Direction;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 
-public final class SolidFuelGeneratorMenu extends AbstractContainerMenu {
+import java.util.Set;
+
+public final class SolidFuelGeneratorMenu extends MachineMenu implements SideConfigMenu {
     private final Container fuel;
     private final ContainerData data;
 
@@ -35,6 +43,7 @@ public final class SolidFuelGeneratorMenu extends AbstractContainerMenu {
         });
         addStandardInventorySlots(inventory, 8, 102);
         addDataSlots(data);
+        if (fuel instanceof SolidFuelGeneratorBlockEntity) markSynced();
     }
 
     public int energyStored() { return EnergySync.unpack(data.get(DATA_ENERGY_LOW), data.get(DATA_ENERGY_HIGH)); }
@@ -42,6 +51,25 @@ public final class SolidFuelGeneratorMenu extends AbstractContainerMenu {
     public int burnTotal() { return Math.max(1, data.get(DATA_BURN_TOTAL)); }
     public boolean isGenerating() { return data.get(DATA_GENERATING) != 0; }
     public boolean isFull() { return CAPACITY - energyStored() < GENERATION_PER_TICK; }
+
+    @Override
+    public SideMode sideMode(Direction side) { return SideMode.byOrdinal(data.get(DATA_SIDE_BASE + side.ordinal())); }
+
+    @Override
+    public Direction front() { return Direction.values()[Math.clamp(data.get(DATA_FRONT), 0, 5)]; }
+
+    @Override
+    public BlockState displayState() { return ModBlocks.SOLID_FUEL_GENERATOR.get().displayState(front()); }
+
+    @Override
+    public Set<SideMode> allowedModes() {
+        return ((SideConfigurableBlock) ModBlocks.SOLID_FUEL_GENERATOR.get()).allowedSideModes();
+    }
+
+    @Override
+    public boolean clickMenuButton(Player player, int buttonId) {
+        return SideConfigMenu.handleButton(fuel instanceof SideConfigurable target ? target : null, buttonId);
+    }
 
     @Override
     public boolean stillValid(Player player) { return fuel.stillValid(player); }

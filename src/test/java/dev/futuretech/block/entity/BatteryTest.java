@@ -177,12 +177,19 @@ class BatteryTest {
     }
 
     @Test
-    void outputSideFollowsTheFacingProperty(MinecraftServer server) {
+    void frontFollowsTheFacingPropertyAndEveryFaceStartsClosed(MinecraftServer server) {
         var state = ModBlocks.BATTERY_MK1.get().defaultBlockState();
         assertEquals(Direction.NORTH, state.getValue(BatteryBlock.FACING));
-        assertEquals(Direction.NORTH, battery().outputSide());
+        assertEquals(Direction.NORTH, battery().front());
         var east = new BatteryBlockEntity(BlockPos.ZERO, state.setValue(BatteryBlock.FACING, Direction.EAST));
-        assertEquals(Direction.EAST, east.outputSide());
+        assertEquals(Direction.EAST, east.front());
+        for (Direction side : Direction.values()) {
+            assertFalse(east.sideConfig().allowsInput(side), side.toString());
+            assertFalse(east.sideConfig().allowsOutput(side), side.toString());
+        }
+        // The machine's own sideless access is never blocked by the configuration.
+        assertTrue(east.sideConfig().allowsInput(null));
+        assertTrue(east.sideConfig().allowsOutput(null));
     }
 
     @Test

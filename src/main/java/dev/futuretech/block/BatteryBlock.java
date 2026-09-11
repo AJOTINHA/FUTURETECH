@@ -2,6 +2,9 @@ package dev.futuretech.block;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.futuretech.api.side.SideConfig;
+import dev.futuretech.api.side.SideConfigurableBlock;
+import dev.futuretech.api.side.SideMode;
 import dev.futuretech.block.entity.BatteryBlockEntity;
 import dev.futuretech.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -23,12 +26,16 @@ import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.neoforge.transfer.energy.EnergyHandlerUtil;
 
+import java.util.Set;
+
 /**
  * One block class for every {@link BatteryTier}; the tier supplies capacity and transfer rate.
- * Energy leaves only through the {@link #FACING front}; every other face only receives.
+ * Every face starts closed; players open them from the screen. A battery face is never input and
+ * output at once, because that would let a cable hand the battery its own energy back.
  */
-public final class BatteryBlock extends BaseEntityBlock {
+public final class BatteryBlock extends BaseEntityBlock implements SideConfigurableBlock {
     public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
+    private static final Set<SideMode> ALLOWED_SIDE_MODES = Set.of(SideMode.INPUT, SideMode.OUTPUT, SideMode.NONE);
     public static final MapCodec<BatteryBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             BatteryTier.CODEC.fieldOf("tier").forGetter(BatteryBlock::tier), propertiesCodec()
     ).apply(i, BatteryBlock::new));
@@ -59,10 +66,24 @@ public final class BatteryBlock extends BaseEntityBlock {
 
     @Override
     protected BlockState mirror(BlockState state, Mirror mirror) {
-        return state.rotate(mirror.getRotation(state.getValue(FACING)));
+        return rotate(state, mirror.getRotation(state.getValue(FACING)));
     }
 
     public BatteryTier tier() { return tier; }
+
+    @Override
+    public Set<SideMode> allowedSideModes() { return ALLOWED_SIDE_MODES; }
+
+    @Override
+    public SideConfig createSideConfig(BlockState state) {
+        // New machines start closed; the player opens the faces they want from the screen.
+        return new SideConfig(ALLOWED_SIDE_MODES, side -> SideMode.NONE);
+    }
+
+    @Override
+    public BlockState displayState(Direction front) {
+        return defaultBlockState().setValue(FACING, front.getAxis().isHorizontal() ? front : Direction.NORTH);
+    }
 
     @Override
     protected MapCodec<BatteryBlock> codec() {

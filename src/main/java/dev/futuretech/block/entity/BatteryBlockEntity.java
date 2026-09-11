@@ -1,5 +1,7 @@
 package dev.futuretech.block.entity;
 
+import dev.futuretech.api.side.SideConfig;
+import dev.futuretech.api.side.SideConfigurable;
 import dev.futuretech.block.BatteryBlock;
 import dev.futuretech.block.BatteryTier;
 import dev.futuretech.energy.EnergyNetworkUtil;
@@ -7,6 +9,7 @@ import dev.futuretech.energy.EnergySync;
 import dev.futuretech.energy.TickLimitedEnergyHandler;
 import dev.futuretech.menu.BatteryMenu;
 import dev.futuretech.registry.ModBlockEntities;
+import dev.futuretech.registry.ModBlocks;
 import dev.futuretech.registry.ModDataComponents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -19,6 +22,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
@@ -26,16 +30,19 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 import net.neoforged.neoforge.transfer.energy.EnergyHandlerUtil;
 
-public final class BatteryBlockEntity extends BlockEntity implements MenuProvider {
+public final class BatteryBlockEntity extends BlockEntity implements MenuProvider, SideConfigurable {
     public static final int DATA_ENERGY_LOW = 0;
     public static final int DATA_ENERGY_HIGH = 1;
     public static final int DATA_INPUT = 2;
     public static final int DATA_OUTPUT = 3;
     public static final int DATA_TIER = 4;
-    public static final int DATA_COUNT = 5;
+    public static final int DATA_SIDE_BASE = 5;
+    public static final int DATA_FRONT = DATA_SIDE_BASE + SideConfig.DATA_COUNT;
+    public static final int DATA_COUNT = DATA_FRONT + 1;
 
     private final BatteryTier tier;
     private final TickLimitedEnergyHandler energy;
+    private final SideConfig sides;
     // Transfer totals of the previous tick, shown in the menu as FE/t.
     private int lastInput;
     private int lastOutput;
@@ -48,7 +55,8 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
                 case DATA_INPUT -> lastInput;
                 case DATA_OUTPUT -> lastOutput;
                 case DATA_TIER -> tier.ordinal();
-                default -> 0;
+                case DATA_FRONT -> front().ordinal();
+                default -> index >= DATA_SIDE_BASE && index < DATA_FRONT ? sides.data(index - DATA_SIDE_BASE) : 0;
             };
         }
 
@@ -66,6 +74,19 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
         this.tier = state.getBlock() instanceof BatteryBlock block ? block.tier() : BatteryTier.MK1;
         this.energy = new TickLimitedEnergyHandler(
                 tier.capacity(), tier.transferPerTick(), tier.transferPerTick(), this::setChanged);
+        this.sides = state.getBlock() instanceof BatteryBlock block
+                ? block.createSideConfig(state) : ModBlocks.BATTERY_MK1.get().createSideConfig(state);
+    }
+
+    @Override
+    public SideConfig sideConfig() { return sides; }
+
+    @Override
+    public void sideConfigChanged() {
+        setChanged();
+        // Cables and capability caches next to us must see the new face modes.
+        invalidateCapabilities();
+        if (level != null) getBlockState().updateNeighbourShapes(level, worldPosition, Block.UPDATE_ALL);
     }
 
     public BatteryTier tier() { return tier; }
@@ -90,17 +111,17 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
         energy.beginTick();
     }
 
-    /** The one face energy leaves through; the block state decides, so rotation is honoured. */
-    public Direction outputSide() {
+    /** The face shown in the middle of the side panel, marked with copper on the model. */
+    @Override
+    public Direction front() {
         return getBlockState().hasProperty(BatteryBlock.FACING)
                 ? getBlockState().getValue(BatteryBlock.FACING) : Direction.NORTH;
     }
 
     private void exportEnergy(Level level, BlockPos pos) {
-        // Only the front pushes, and never straight into another battery.
-        BlockPos target = pos.relative(outputSide());
-        if (level.getBlockEntity(target) instanceof BatteryBlockEntity) return;
-        EnergyNetworkUtil.pushToNeighbour(level, pos, outputSide(), energy);
+        // Only output faces push, and never straight into another battery.
+        EnergyNetworkUtil.pushToNeighbours(level, pos, energy, side -> sides.allowsOutput(side)
+                && !(level.getBlockEntity(pos.relative(side)) instanceof BatteryBlockEntity));
     }
 
     private void setEnergyClamped(int amount) {
@@ -111,12 +132,14 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
         setEnergyClamped(input.getIntOr("Energy", 0));
+        sides.load(input);
     }
 
     @Override
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
         output.putInt("Energy", energy.getAmountAsInt());
+        sides.save(output);
     }
 
     // The stored charge travels with the dropped item and returns when it is placed again.

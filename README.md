@@ -4,7 +4,7 @@ Mod de máquinas, energia e automação industrial para **Minecraft Java 26.2**,
 
 ## Estado atual
 
-Versão `0.4.0`, com identificação `futuretech`, aba criativa própria e traduções em português e inglês.
+Versão `0.5.0`, com identificação `futuretech`, aba criativa própria e traduções em português e inglês.
 
 A **Carcaça de Máquina** está registrada na aba FUTURETECH. Usa provisoriamente a textura de bloco de ferro do Minecraft e pode ser fabricada com oito barras de ferro ao redor de um espaço vazio. Requer picareta de pedra ou superior para soltar o item.
 
@@ -38,7 +38,7 @@ A lista de peças de madeira é extensível pela tag de itens `futuretech:genera
 A **Bateria MK1** (`futuretech:battery_mk1`) armazena a energia do gerador. Clique com o botão direito para ver a reserva e as taxas de entrada e saída do último tick.
 
 - Armazena **100.000 FE**; recebe e envia até **200 FE/t** cada, por tick e não por chamada.
-- Tem uma **face de saída**: a frente, marcada com cobre, que fica virada para o jogador ao colocar (como a boca da fornalha). Só por ela a bateria envia energia; pelas outras cinco faces ela apenas recebe. Uma bateria nunca envia diretamente para outra bateria.
+- Cada face é configurável (veja "Configuração de lados"); a frente, marcada com cobre e virada para o jogador ao colocar, é a referência do painel. Uma face de bateria nunca é entrada e saída ao mesmo tempo, para um cabo não devolver à bateria a energia dela mesma. Uma bateria nunca envia diretamente para outra bateria.
 - Ao quebrar, o item sai com a carga guardada num componente de dados (`futuretech:energy`); a tooltip mostra "x / 100000 FE" e o item exibe uma barra de carga. Ao colocar de novo, a energia volta para o bloco. Baterias vazias não carregam o componente e continuam empilháveis.
 - Um comparador mede o nível da reserva.
 
@@ -57,7 +57,7 @@ Todas as baterias compartilham as mesmas classes (`BatteryBlock`, `BatteryBlockE
 O **Cabo MK1** (`futuretech:cable_mk1`) transporta energia entre blocos que não estão encostados. Cabos que se tocam formam uma rede única.
 
 - A rede inteira move até **400 FE/t**, no total, e guarda no máximo um tick de energia; quando não há para onde enviar, ela recusa novas inserções e o bloco de origem fica com a energia.
-- Funciona por "empurrão", igual ao gerador e à bateria: qualquer bloco vizinho que envie energia para um cabo alimenta a rede, e a rede reparte o que tem em rodízio entre todos os blocos vizinhos que aceitam energia. A rede nunca devolve energia pela face de um bloco que está tentando inserir nela, mesmo quando a inserção é recusada por o buffer estar cheio. Por isso a face de saída da bateria só sai e as demais só entram; ligar a mesma rede à saída e a uma entrada da mesma bateria faz a energia circular sem ganho.
+- Funciona por "empurrão", igual ao gerador e à bateria: qualquer bloco vizinho que envie energia para um cabo alimenta a rede, e a rede reparte o que tem em rodízio entre todos os blocos vizinhos que aceitam energia. A rede nunca devolve energia pela face de um bloco que está tentando inserir nela, mesmo quando a inserção é recusada por o buffer estar cheio. Faces configuradas como "Nenhum" não se conectam a cabos.
 - Os braços do cabo aparecem para outros cabos e para qualquer bloco com capacidade de energia naquele lado, inclusive máquinas de outros mods.
 - A rede é recalculada quando um cabo é colocado ou quebrado; quebrar um cabo no meio divide a rede em duas.
 - Sem tratamento de energia guardada no item: o cabo é um bloco simples, quebrável com qualquer picareta ou à mão.
@@ -72,6 +72,18 @@ Cobre     Cobre     Cobre
 
 Como nas baterias, todos os cabos compartilham as mesmas classes (`CableBlock`, `CableBlockEntity`, `CableNetwork`); o `CableTier` define o throughput. Cabos de tiers diferentes se conectam, e a rede assume o menor throughput entre eles. O visual reutiliza provisoriamente a textura de cobre cortado do Minecraft.
 
+## Configuração de lados
+
+Toda máquina tem um botão ao lado do título da interface que abre o painel **Lados**: o cubo desdobrado com as seis faces do bloco, desenhadas com as texturas reais e nomeadas em relação à frente (Frente, Trás, Esquerda, Direita, Cima, Baixo). Clicar numa face alterna o modo dela — **Entrada → Saída → Entrada e saída → Nenhum** — pulando os modos que aquela máquina não permite. A borda da face mostra o modo (azul entrada, laranja saída, verde ambos, cinza nenhum), e o tooltip diz o nome e o modo.
+
+- Toda máquina nova é colocada com **todas as faces em Nenhum**; o jogador abre as faces que quer usar.
+- **Shift + clique na Frente** volta todas as faces para Nenhum.
+- Gerador: cada face é Saída ou Nenhum (ele só produz).
+- Bateria: Entrada, Saída ou Nenhum; nunca ambos na mesma face.
+- Faces em Nenhum não oferecem energia a vizinhos nem se conectam a cabos; a configuração é salva com o bloco.
+
+A API fica em `dev.futuretech.api.side` e é reaproveitável por qualquer máquina nova: o bloco implementa `SideConfigurableBlock` (modos permitidos, padrões por face, estado para desenhar), o block entity implementa `SideConfigurable` e guarda um `SideConfig` (salvo/carregado e exposto em slots de dados do menu), o menu implementa `SideConfigMenu` e encaminha `clickMenuButton` para `SideConfigMenu.handleButton`, a capability de energia passa por `SidedEnergy.view`, e a tela instancia um `SideConfigPanel` e repassa desenho, tooltip e cliques. Os cliques viajam pelo pacote vanilla de botão de menu, sem rede própria.
+
 A fornalha elétrica ainda não está implementada.
 
 ## Desenvolvimento no Windows
@@ -85,7 +97,7 @@ Abra esta pasta como projeto Gradle na IDE, usando um JDK 25.
 # Iniciar uma instância de desenvolvimento do Minecraft
 .\gradlew.bat runClient
 
-# Testar geração, bateria, rede de cabos, persistência e carregamento das receitas
+# Testar geração, bateria, rede de cabos, configuração de lados, persistência e receitas
 .\gradlew.bat test
 ```
 

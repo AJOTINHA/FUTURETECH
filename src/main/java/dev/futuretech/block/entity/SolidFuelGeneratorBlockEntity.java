@@ -1,12 +1,17 @@
 package dev.futuretech.block.entity;
 
+import dev.futuretech.api.side.SideConfig;
+import dev.futuretech.api.side.SideConfigurable;
+import dev.futuretech.api.side.SideConfigurableBlock;
 import dev.futuretech.block.SolidFuelGeneratorBlock;
 import dev.futuretech.energy.EnergyNetworkUtil;
 import dev.futuretech.energy.EnergySync;
 import dev.futuretech.energy.TickLimitedEnergyHandler;
 import dev.futuretech.menu.SolidFuelGeneratorMenu;
 import dev.futuretech.registry.ModBlockEntities;
+import dev.futuretech.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -22,6 +27,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.entity.FuelValues;
 import net.minecraft.world.level.block.state.BlockState;
@@ -30,7 +36,7 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 import net.neoforged.neoforge.transfer.energy.EnergyHandlerUtil;
 
-public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntity {
+public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntity implements SideConfigurable {
     public static final int CAPACITY = 20_000;
     public static final int GENERATION_PER_TICK = 20;
     public static final int OUTPUT_PER_TICK = 80;
@@ -41,7 +47,9 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
     public static final int DATA_BURN_REMAINING = 2;
     public static final int DATA_GENERATING = 3;
     public static final int DATA_BURN_TOTAL = 4;
-    public static final int DATA_COUNT = 5;
+    public static final int DATA_SIDE_BASE = 5;
+    public static final int DATA_FRONT = DATA_SIDE_BASE + SideConfig.DATA_COUNT;
+    public static final int DATA_COUNT = DATA_FRONT + 1;
     public static final TagKey<Item> WOODEN_FUELS = TagKey.create(Registries.ITEM,
             Identifier.fromNamespaceAndPath("futuretech", "generator_wooden_fuels"));
 
@@ -50,6 +58,7 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
     private int burnTotal = BURN_TICKS;
     private boolean generating;
     private final TickLimitedEnergyHandler energy = new TickLimitedEnergyHandler(CAPACITY, 0, OUTPUT_PER_TICK, this::setChanged);
+    private final SideConfig sides;
     private final ContainerData data = new ContainerData() {
         @Override
         public int get(int index) {
@@ -59,7 +68,8 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
                 case DATA_BURN_REMAINING -> burnRemaining;
                 case DATA_GENERATING -> generating ? 1 : 0;
                 case DATA_BURN_TOTAL -> burnTotal;
-                default -> 0;
+                case DATA_FRONT -> front().ordinal();
+                default -> index >= DATA_SIDE_BASE && index < DATA_FRONT ? sides.data(index - DATA_SIDE_BASE) : 0;
             };
         }
 
@@ -74,6 +84,24 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
 
     public SolidFuelGeneratorBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.SOLID_FUEL_GENERATOR.get(), pos, state);
+        this.sides = ((SideConfigurableBlock) ModBlocks.SOLID_FUEL_GENERATOR.get()).createSideConfig(state);
+    }
+
+    @Override
+    public SideConfig sideConfig() { return sides; }
+
+    @Override
+    public Direction front() {
+        return getBlockState().hasProperty(SolidFuelGeneratorBlock.FACING)
+                ? getBlockState().getValue(SolidFuelGeneratorBlock.FACING) : Direction.NORTH;
+    }
+
+    @Override
+    public void sideConfigChanged() {
+        setChanged();
+        // Cables and capability caches next to us must see the new face modes.
+        invalidateCapabilities();
+        if (level != null) getBlockState().updateNeighbourShapes(level, worldPosition, Block.UPDATE_ALL);
     }
 
     public EnergyHandler energy() { return energy; }
@@ -114,7 +142,7 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
     void beginTick() { energy.beginTick(); }
 
     private void exportEnergy(Level level, BlockPos pos) {
-        EnergyNetworkUtil.pushToNeighbours(level, pos, energy, neighbour -> false);
+        EnergyNetworkUtil.pushToNeighbours(level, pos, energy, sides::allowsOutput);
     }
 
     void generateEnergy(FuelValues fuelValues) {
@@ -145,6 +173,7 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
         energy.set(Math.clamp(input.getIntOr("Energy", 0), 0, CAPACITY));
         burnTotal = Math.max(1, input.getIntOr("BurnTotal", BURN_TICKS));
         burnRemaining = Math.clamp(input.getIntOr("BurnRemaining", 0), 0, burnTotal);
+        sides.load(input);
         generating = false;
     }
 
@@ -155,6 +184,7 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
         output.putInt("Energy", energy.getAmountAsInt());
         output.putInt("BurnRemaining", burnRemaining);
         output.putInt("BurnTotal", burnTotal);
+        sides.save(output);
     }
 
     @Override

@@ -9,5 +9,17 @@
   "block.futuretech.battery_mk1": "Battery MK1",
   "gui.futuretech.input": "In: %s FE/t",
   "gui.futuretech.output": "Out: %s FE/t",
-  "block.futuretech.cable_mk1": "Cable MK1"
+  "block.futuretech.cable_mk1": "Cable MK1",
+  "gui.futuretech.sides": "Configuration",
+  "gui.futuretech.side.front": "Front",
+  "gui.futuretech.side.back": "Back",
+  "gui.futuretech.side.left": "Left",
+  "gui.futuretech.side.right": "Right",
+  "gui.futuretech.side.top": "Top",
+  "gui.futuretech.side.bottom": "Bottom",
+  "gui.futuretech.mode.none": "None",
+  "gui.futuretech.mode.input": "Input",
+  "gui.futuretech.mode.output": "Output",
+  "gui.futuretech.mode.both": "Input and output",
+  "gui.futuretech.side.clear_hint": "Shift + click: set every side to None"
 }

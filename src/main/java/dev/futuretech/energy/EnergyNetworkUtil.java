@@ -14,28 +14,20 @@ public final class EnergyNetworkUtil {
      * Pushes the source's remaining output budget for this tick into adjacent energy receivers.
      * The first face rotates each tick so several consumers can share a small supply.
      *
-     * @param skipNeighbour positions that must not receive energy, e.g. blocks of the same kind that
-     *                      would otherwise bounce energy back and forth
+     * @param throughSide which faces may push; lets a machine honour its side configuration and
+     *                    skip neighbours that would bounce energy back
      */
     public static void pushToNeighbours(Level level, BlockPos pos, TickLimitedEnergyHandler source,
-                                        Predicate<BlockPos> skipNeighbour) {
+                                        Predicate<Direction> throughSide) {
         Direction[] sides = Direction.values();
         int first = (int) (level.getGameTime() % sides.length);
         for (int i = 0; i < sides.length && source.outputRemaining() > 0; i++) {
             Direction side = sides[(first + i) % sides.length];
             BlockPos neighbour = pos.relative(side);
-            if (!level.hasChunkAt(neighbour.getX(), neighbour.getZ()) || skipNeighbour.test(neighbour)) continue;
+            if (!throughSide.test(side) || !level.hasChunkAt(neighbour.getX(), neighbour.getZ())) continue;
             EnergyHandler receiver = level.getCapability(Capabilities.Energy.BLOCK, neighbour, side.getOpposite());
             EnergyHandlerUtil.move(source, receiver, source.outputRemaining(), null);
         }
-    }
-
-    /** Pushes the source's remaining output budget for this tick into the one block beyond {@code side}. */
-    public static int pushToNeighbour(Level level, BlockPos pos, Direction side, TickLimitedEnergyHandler source) {
-        BlockPos neighbour = pos.relative(side);
-        if (source.outputRemaining() <= 0 || !level.hasChunkAt(neighbour.getX(), neighbour.getZ())) return 0;
-        EnergyHandler receiver = level.getCapability(Capabilities.Energy.BLOCK, neighbour, side.getOpposite());
-        return EnergyHandlerUtil.move(source, receiver, source.outputRemaining(), null);
     }
 
     private EnergyNetworkUtil() {}

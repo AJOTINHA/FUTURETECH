@@ -1,6 +1,7 @@
 package dev.futuretech.registry;
 
 import dev.futuretech.FutureTech;
+import dev.futuretech.api.side.SidedEnergy;
 import dev.futuretech.block.entity.BatteryBlockEntity;
 import dev.futuretech.block.entity.CableBlockEntity;
 import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
@@ -29,10 +30,11 @@ public final class ModBlockEntities {
                     CableBlockEntity::new, ModBlocks.CABLE_MK1.get()));
 
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
-        event.registerBlockEntity(Capabilities.Energy.BLOCK, SOLID_FUEL_GENERATOR.get(),
-                (generator, side) -> generator.energy());
-        event.registerBlockEntity(Capabilities.Energy.BLOCK, BATTERY.get(),
-                (battery, side) -> battery.energy());
+        // A null side is the machine's own unrestricted access; real faces follow their configured mode.
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, SOLID_FUEL_GENERATOR.get(), (generator, side) ->
+                side == null ? generator.energy() : SidedEnergy.view(generator.energy(), generator.sideConfig().mode(side)));
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, BATTERY.get(), (battery, side) ->
+                side == null ? battery.energy() : SidedEnergy.view(battery.energy(), battery.sideConfig().mode(side)));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, CABLE.get(),
                 (cable, side) -> cable.handler(side));
     }

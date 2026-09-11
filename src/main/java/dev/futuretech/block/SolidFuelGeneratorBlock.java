@@ -1,6 +1,9 @@
 package dev.futuretech.block;
 
 import com.mojang.serialization.MapCodec;
+import dev.futuretech.api.side.SideConfig;
+import dev.futuretech.api.side.SideConfigurableBlock;
+import dev.futuretech.api.side.SideMode;
 import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
 import dev.futuretech.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -16,11 +19,29 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.transfer.energy.EnergyHandlerUtil;
 
-public final class SolidFuelGeneratorBlock extends AbstractFurnaceBlock {
+import java.util.Set;
+
+public final class SolidFuelGeneratorBlock extends AbstractFurnaceBlock implements SideConfigurableBlock {
     public static final MapCodec<SolidFuelGeneratorBlock> CODEC = simpleCodec(SolidFuelGeneratorBlock::new);
+    // A generator only produces, so a face either hands energy out or is closed.
+    private static final Set<SideMode> ALLOWED_SIDE_MODES = Set.of(SideMode.OUTPUT, SideMode.NONE);
 
     public SolidFuelGeneratorBlock(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    public Set<SideMode> allowedSideModes() { return ALLOWED_SIDE_MODES; }
+
+    @Override
+    public SideConfig createSideConfig(BlockState state) {
+        // New machines start closed; the player opens the faces they want from the screen.
+        return new SideConfig(ALLOWED_SIDE_MODES, side -> SideMode.NONE);
+    }
+
+    @Override
+    public BlockState displayState(Direction front) {
+        return defaultBlockState().setValue(FACING, front.getAxis().isHorizontal() ? front : Direction.NORTH);
     }
 
     @Override

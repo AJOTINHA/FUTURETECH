@@ -70,8 +70,13 @@ final class MachineScreenStyle {
         private double displayedWidth = Double.NaN;
         private long lastFrameNanos;
 
-        float width(int amount, int capacity, int maxWidth) {
+        /**
+         * @param ready false while the menu has not received the server's values yet; the bar then shows
+         *              the raw target and starts animating only from the first real value
+         */
+        float width(int amount, int capacity, int maxWidth, boolean ready) {
             double target = Math.clamp(amount * (double) maxWidth / Math.max(1, capacity), 0.0, (double) maxWidth);
+            if (!ready) return (float) target;
             long now = System.nanoTime();
             if (Double.isNaN(displayedWidth)) {
                 displayedWidth = target;
