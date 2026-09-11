@@ -30,5 +30,13 @@ public final class EnergyNetworkUtil {
         }
     }
 
+    /** Pushes the source's remaining output budget for this tick into the one block beyond {@code side}. */
+    public static int pushToNeighbour(Level level, BlockPos pos, Direction side, TickLimitedEnergyHandler source) {
+        BlockPos neighbour = pos.relative(side);
+        if (source.outputRemaining() <= 0 || !level.hasChunkAt(neighbour.getX(), neighbour.getZ())) return 0;
+        EnergyHandler receiver = level.getCapability(Capabilities.Energy.BLOCK, neighbour, side.getOpposite());
+        return EnergyHandlerUtil.move(source, receiver, source.outputRemaining(), null);
+    }
+
     private EnergyNetworkUtil() {}
 }

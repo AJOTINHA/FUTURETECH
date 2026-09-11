@@ -1,7 +1,20 @@
 {
   "variants": {
-    "": {
-      "model": "futuretech:block/battery_mk1"
+    "facing=north": {
+      "model": "futuretech:block/battery_mk1",
+      "y": 0
+    },
+    "facing=east": {
+      "model": "futuretech:block/battery_mk1",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "futuretech:block/battery_mk1",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "futuretech:block/battery_mk1",
+      "y": 270
     }
   }
 }

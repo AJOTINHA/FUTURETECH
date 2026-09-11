@@ -4,7 +4,7 @@ Mod de máquinas, energia e automação industrial para **Minecraft Java 26.2**,
 
 ## Estado atual
 
-Versão `0.3.0`, com identificação `futuretech`, aba criativa própria e traduções em português e inglês.
+Versão `0.4.0`, com identificação `futuretech`, aba criativa própria e traduções em português e inglês.
 
 A **Carcaça de Máquina** está registrada na aba FUTURETECH. Usa provisoriamente a textura de bloco de ferro do Minecraft e pode ser fabricada com oito barras de ferro ao redor de um espaço vazio. Requer picareta de pedra ou superior para soltar o item.
 
@@ -38,7 +38,7 @@ A lista de peças de madeira é extensível pela tag de itens `futuretech:genera
 A **Bateria MK1** (`futuretech:battery_mk1`) armazena a energia do gerador. Clique com o botão direito para ver a reserva e as taxas de entrada e saída do último tick.
 
 - Armazena **100.000 FE**; recebe e envia até **200 FE/t** cada, por tick e não por chamada.
-- Recebe por todas as faces e envia por todas as faces para blocos que aceitem energia, exceto outras baterias, para a energia não ficar indo e voltando entre elas.
+- Tem uma **face de saída**: a frente, marcada com cobre, que fica virada para o jogador ao colocar (como a boca da fornalha). Só por ela a bateria envia energia; pelas outras cinco faces ela apenas recebe. Uma bateria nunca envia diretamente para outra bateria.
 - Ao quebrar, o item sai com a carga guardada num componente de dados (`futuretech:energy`); a tooltip mostra "x / 100000 FE" e o item exibe uma barra de carga. Ao colocar de novo, a energia volta para o bloco. Baterias vazias não carregam o componente e continuam empilháveis.
 - Um comparador mede o nível da reserva.
 
@@ -54,7 +54,25 @@ O visual da bateria MK1 reutiliza provisoriamente texturas de ferro e cobre cort
 
 Todas as baterias compartilham as mesmas classes (`BatteryBlock`, `BatteryBlockEntity`, `BatteryBlockItem`, `BatteryMenu`, `BatteryScreen`); o que muda entre elas é o `BatteryTier`, que define capacidade e taxa por tick. Uma nova bateria é uma constante no enum, um bloco e um item registrados a partir dela, e os JSONs de recurso.
 
-Cabos e fornalha elétrica ainda não estão implementados. Por enquanto, o gerador alimenta uma bateria ou um bloco compatível de outro mod colocado diretamente ao lado.
+O **Cabo MK1** (`futuretech:cable_mk1`) transporta energia entre blocos que não estão encostados. Cabos que se tocam formam uma rede única.
+
+- A rede inteira move até **400 FE/t**, no total, e guarda no máximo um tick de energia; quando não há para onde enviar, ela recusa novas inserções e o bloco de origem fica com a energia.
+- Funciona por "empurrão", igual ao gerador e à bateria: qualquer bloco vizinho que envie energia para um cabo alimenta a rede, e a rede reparte o que tem em rodízio entre todos os blocos vizinhos que aceitam energia. A rede nunca devolve energia pela face de um bloco que está tentando inserir nela, mesmo quando a inserção é recusada por o buffer estar cheio. Por isso a face de saída da bateria só sai e as demais só entram; ligar a mesma rede à saída e a uma entrada da mesma bateria faz a energia circular sem ganho.
+- Os braços do cabo aparecem para outros cabos e para qualquer bloco com capacidade de energia naquele lado, inclusive máquinas de outros mods.
+- A rede é recalculada quando um cabo é colocado ou quebrado; quebrar um cabo no meio divide a rede em duas.
+- Sem tratamento de energia guardada no item: o cabo é um bloco simples, quebrável com qualquer picareta ou à mão.
+
+A receita usa seis lingotes de cobre e três pós de redstone e rende seis cabos:
+
+```text
+Cobre     Cobre     Cobre
+Redstone  Redstone  Redstone
+Cobre     Cobre     Cobre
+```
+
+Como nas baterias, todos os cabos compartilham as mesmas classes (`CableBlock`, `CableBlockEntity`, `CableNetwork`); o `CableTier` define o throughput. Cabos de tiers diferentes se conectam, e a rede assume o menor throughput entre eles. O visual reutiliza provisoriamente a textura de cobre cortado do Minecraft.
+
+A fornalha elétrica ainda não está implementada.
 
 ## Desenvolvimento no Windows
 
@@ -67,7 +85,7 @@ Abra esta pasta como projeto Gradle na IDE, usando um JDK 25.
 # Iniciar uma instância de desenvolvimento do Minecraft
 .\gradlew.bat runClient
 
-# Testar geração, bateria, transferências, persistência e carregamento das receitas
+# Testar geração, bateria, rede de cabos, persistência e carregamento das receitas
 .\gradlew.bat test
 ```
 
@@ -81,8 +99,7 @@ O destino pode ser alterado pela propriedade `prism_mods_dir` em `gradle.propert
 
 ## Próximas etapas
 
-1. Cabos para transportar energia entre os blocos.
-2. Fornalha elétrica para consumir energia no processamento de itens.
+1. Fornalha elétrica para consumir energia no processamento de itens.
 
 ## Origem
 

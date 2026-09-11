@@ -9,6 +9,7 @@ import dev.futuretech.menu.BatteryMenu;
 import dev.futuretech.registry.ModBlockEntities;
 import dev.futuretech.registry.ModDataComponents;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.network.chat.Component;
@@ -89,10 +90,17 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
         energy.beginTick();
     }
 
+    /** The one face energy leaves through; the block state decides, so rotation is honoured. */
+    public Direction outputSide() {
+        return getBlockState().hasProperty(BatteryBlock.FACING)
+                ? getBlockState().getValue(BatteryBlock.FACING) : Direction.NORTH;
+    }
+
     private void exportEnergy(Level level, BlockPos pos) {
-        // Batteries never feed each other, which would bounce energy back and forth every tick.
-        EnergyNetworkUtil.pushToNeighbours(level, pos, energy,
-                neighbour -> level.getBlockEntity(neighbour) instanceof BatteryBlockEntity);
+        // Only the front pushes, and never straight into another battery.
+        BlockPos target = pos.relative(outputSide());
+        if (level.getBlockEntity(target) instanceof BatteryBlockEntity) return;
+        EnergyNetworkUtil.pushToNeighbour(level, pos, outputSide(), energy);
     }
 
     private void setEnergyClamped(int amount) {

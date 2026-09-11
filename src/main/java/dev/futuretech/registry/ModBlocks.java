@@ -3,6 +3,8 @@ package dev.futuretech.registry;
 import dev.futuretech.FutureTech;
 import dev.futuretech.block.BatteryBlock;
 import dev.futuretech.block.BatteryTier;
+import dev.futuretech.block.CableBlock;
+import dev.futuretech.block.CableTier;
 import dev.futuretech.block.SolidFuelGeneratorBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
@@ -37,6 +39,16 @@ public final class ModBlocks {
                     .strength(3.5F, 6.0F)
                     .sound(SoundType.METAL)
                     .requiresCorrectToolForDrops());
+    }
+
+    public static final DeferredBlock<CableBlock> CABLE_MK1 = registerCable(CableTier.MK1);
+
+    private static DeferredBlock<CableBlock> registerCable(CableTier tier) {
+        return BLOCKS.registerBlock(tier.blockName(), properties -> new CableBlock(tier, properties), properties -> properties
+                    .mapColor(MapColor.COLOR_ORANGE)
+                    .strength(1.0F, 3.0F)
+                    .sound(SoundType.COPPER)
+                    .noOcclusion());
     }
 
     private ModBlocks() {}

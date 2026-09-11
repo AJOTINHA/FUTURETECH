@@ -2,6 +2,7 @@ package dev.futuretech.block.entity;
 
 import static dev.futuretech.block.entity.BatteryBlockEntity.*;
 
+import dev.futuretech.block.BatteryBlock;
 import dev.futuretech.block.BatteryTier;
 import dev.futuretech.energy.EnergySync;
 import dev.futuretech.item.BatteryBlockItem;
@@ -9,6 +10,7 @@ import dev.futuretech.registry.ModBlocks;
 import dev.futuretech.registry.ModDataComponents;
 import dev.futuretech.registry.ModItems;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -172,6 +174,15 @@ class BatteryTest {
         assertEquals(CAPACITY, battery.energy().getCapacityAsInt());
         assertEquals("battery_mk1", ModBlocks.BATTERY_MK1.getId().getPath());
         assertEquals("battery_mk1", ModItems.BATTERY_MK1.getId().getPath());
+    }
+
+    @Test
+    void outputSideFollowsTheFacingProperty(MinecraftServer server) {
+        var state = ModBlocks.BATTERY_MK1.get().defaultBlockState();
+        assertEquals(Direction.NORTH, state.getValue(BatteryBlock.FACING));
+        assertEquals(Direction.NORTH, battery().outputSide());
+        var east = new BatteryBlockEntity(BlockPos.ZERO, state.setValue(BatteryBlock.FACING, Direction.EAST));
+        assertEquals(Direction.EAST, east.outputSide());
     }
 
     @Test

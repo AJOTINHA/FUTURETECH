@@ -25,5 +25,7 @@ public final class ModItems {
                 properties -> properties.useBlockDescriptionPrefix());
     }
 
+    public static final DeferredItem<BlockItem> CABLE_MK1 = ITEMS.registerSimpleBlockItem(ModBlocks.CABLE_MK1);
+
     private ModItems() {}
 }

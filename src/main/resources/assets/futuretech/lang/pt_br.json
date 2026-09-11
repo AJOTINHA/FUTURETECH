@@ -8,5 +8,6 @@
   "gui.futuretech.stored": "%s / %s FE",
   "block.futuretech.battery_mk1": "Bateria MK1",
   "gui.futuretech.input": "Entrada: %s FE/t",
-  "gui.futuretech.output": "Saída: %s FE/t"
+  "gui.futuretech.output": "Saída: %s FE/t",
+  "block.futuretech.cable_mk1": "Cabo MK1"
 }
