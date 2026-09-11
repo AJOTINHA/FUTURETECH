@@ -1,6 +1,7 @@
 package dev.futuretech.registry;
 
 import dev.futuretech.FutureTech;
+import dev.futuretech.block.entity.BatteryBlockEntity;
 import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -16,9 +17,15 @@ public final class ModBlockEntities {
             TYPES.register("solid_fuel_generator", () -> new BlockEntityType<>(
                     SolidFuelGeneratorBlockEntity::new, ModBlocks.SOLID_FUEL_GENERATOR.get()));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BatteryBlockEntity>> BATTERY =
+            TYPES.register("battery", () -> new BlockEntityType<>(
+                    BatteryBlockEntity::new, ModBlocks.BATTERY.get()));
+
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
         event.registerBlockEntity(Capabilities.Energy.BLOCK, SOLID_FUEL_GENERATOR.get(),
                 (generator, side) -> generator.energy());
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, BATTERY.get(),
+                (battery, side) -> battery.energy());
     }
 
     private ModBlockEntities() {}

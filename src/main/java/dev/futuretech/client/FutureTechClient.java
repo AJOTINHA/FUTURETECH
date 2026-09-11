@@ -15,5 +15,6 @@ public final class FutureTechClient {
 
     private static void registerScreens(RegisterMenuScreensEvent event) {
         event.register(ModMenus.SOLID_FUEL_GENERATOR.get(), SolidFuelGeneratorScreen::new);
+        event.register(ModMenus.BATTERY.get(), BatteryScreen::new);
     }
 }

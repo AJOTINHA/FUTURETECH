@@ -2,6 +2,7 @@ package dev.futuretech.block.entity;
 
 import static dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity.*;
 
+import dev.futuretech.energy.EnergySync;
 import dev.futuretech.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -235,11 +236,11 @@ class SolidFuelGeneratorTest {
         var synced = new SimpleContainerData(DATA_COUNT);
         // The vanilla packet writes and reads each slot as a signed short.
         for (int i = 0; i < DATA_COUNT; i++) synced.set(i, (short) generator.menuData().get(i));
-        assertEquals(20_000, unpackEnergy(synced.get(DATA_ENERGY_LOW), synced.get(DATA_ENERGY_HIGH)));
+        assertEquals(20_000, EnergySync.unpack(synced.get(DATA_ENERGY_LOW), synced.get(DATA_ENERGY_HIGH)));
         for (int amount : new int[] {0, 32_767, 32_768, 65_535, 65_536, 100_000, 1_000_000}) {
-            int low = (short) (amount & 0xFFFF);
-            int high = (short) (amount >>> 16);
-            assertEquals(amount, unpackEnergy(low, high), Integer.toString(amount));
+            int low = (short) EnergySync.low(amount);
+            int high = (short) EnergySync.high(amount);
+            assertEquals(amount, EnergySync.unpack(low, high), Integer.toString(amount));
         }
     }
 

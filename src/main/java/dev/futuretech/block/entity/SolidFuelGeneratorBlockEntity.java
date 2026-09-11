@@ -1,11 +1,12 @@
 package dev.futuretech.block.entity;
 
 import dev.futuretech.block.SolidFuelGeneratorBlock;
-import dev.futuretech.energy.GeneratorEnergyHandler;
+import dev.futuretech.energy.EnergyNetworkUtil;
+import dev.futuretech.energy.EnergySync;
+import dev.futuretech.energy.TickLimitedEnergyHandler;
 import dev.futuretech.menu.SolidFuelGeneratorMenu;
 import dev.futuretech.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -26,7 +27,6 @@ import net.minecraft.world.level.block.entity.FuelValues;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 import net.neoforged.neoforge.transfer.energy.EnergyHandlerUtil;
 
@@ -35,7 +35,7 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
     public static final int GENERATION_PER_TICK = 20;
     public static final int OUTPUT_PER_TICK = 80;
     public static final int BURN_TICKS = 1_600;
-    // Menu data is synced as 16-bit values, so the energy amount travels as two halves.
+    // Energy is synced as two 16-bit halves; see EnergySync.
     public static final int DATA_ENERGY_LOW = 0;
     public static final int DATA_ENERGY_HIGH = 1;
     public static final int DATA_BURN_REMAINING = 2;
@@ -49,13 +49,13 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
     private int burnRemaining;
     private int burnTotal = BURN_TICKS;
     private boolean generating;
-    private final GeneratorEnergyHandler energy = new GeneratorEnergyHandler(CAPACITY, OUTPUT_PER_TICK, this::setChanged);
+    private final TickLimitedEnergyHandler energy = new TickLimitedEnergyHandler(CAPACITY, 0, OUTPUT_PER_TICK, this::setChanged);
     private final ContainerData data = new ContainerData() {
         @Override
         public int get(int index) {
             return switch (index) {
-                case DATA_ENERGY_LOW -> energy.getAmountAsInt() & 0xFFFF;
-                case DATA_ENERGY_HIGH -> energy.getAmountAsInt() >>> 16;
+                case DATA_ENERGY_LOW -> EnergySync.low(energy.getAmountAsInt());
+                case DATA_ENERGY_HIGH -> EnergySync.high(energy.getAmountAsInt());
                 case DATA_BURN_REMAINING -> burnRemaining;
                 case DATA_GENERATING -> generating ? 1 : 0;
                 case DATA_BURN_TOTAL -> burnTotal;
@@ -79,11 +79,6 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
     public EnergyHandler energy() { return energy; }
 
     public ContainerData menuData() { return data; }
-
-    /** Rebuilds the energy amount from the two synced halves, tolerating sign extension of the low half. */
-    public static int unpackEnergy(int low, int high) {
-        return (high << 16) | (low & 0xFFFF);
-    }
 
     public static boolean isFuel(ItemStack stack) {
         return !stack.isEmpty() && (stack.is(Items.COAL) || stack.is(Items.CHARCOAL) || stack.is(WOODEN_FUELS));
@@ -119,16 +114,7 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
     void beginTick() { energy.beginTick(); }
 
     private void exportEnergy(Level level, BlockPos pos) {
-        // Rotate the first output face so several consumers can share a small supply.
-        Direction[] sides = Direction.values();
-        int first = (int) (level.getGameTime() % sides.length);
-        for (int i = 0; i < sides.length && energy.outputRemaining() > 0; i++) {
-            Direction side = sides[(first + i) % sides.length];
-            BlockPos neighbor = pos.relative(side);
-            if (!level.hasChunkAt(neighbor.getX(), neighbor.getZ())) continue;
-            EnergyHandler receiver = level.getCapability(Capabilities.Energy.BLOCK, neighbor, side.getOpposite());
-            EnergyHandlerUtil.move(energy, receiver, energy.outputRemaining(), null);
-        }
+        EnergyNetworkUtil.pushToNeighbours(level, pos, energy, neighbour -> false);
     }
 
     void generateEnergy(FuelValues fuelValues) {

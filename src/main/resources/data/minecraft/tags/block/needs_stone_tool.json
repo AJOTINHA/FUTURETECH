@@ -1,7 +1,8 @@
 {
   "values": [
     "futuretech:machine_casing",
-    "futuretech:solid_fuel_generator"
+    "futuretech:solid_fuel_generator",
+    "futuretech:battery"
   ],
   "replace": false
 }

@@ -1,6 +1,7 @@
 package dev.futuretech.registry;
 
 import dev.futuretech.FutureTech;
+import dev.futuretech.item.BatteryBlockItem;
 import net.minecraft.world.item.BlockItem;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -13,6 +14,11 @@ public final class ModItems {
 
     public static final DeferredItem<BlockItem> SOLID_FUEL_GENERATOR = ITEMS.registerSimpleBlockItem(
             "solid_fuel_generator", ModBlocks.SOLID_FUEL_GENERATOR);
+
+    // Custom block item so the stored charge shows in the tooltip and as a bar.
+    public static final DeferredItem<BatteryBlockItem> BATTERY = ITEMS.registerItem(
+            "battery", properties -> new BatteryBlockItem(ModBlocks.BATTERY.get(), properties),
+            properties -> properties.useBlockDescriptionPrefix());
 
     private ModItems() {}
 }

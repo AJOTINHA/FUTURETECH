@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IRI",
+    "RCR",
+    "IGI"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "R": "minecraft:redstone",
+    "C": "futuretech:machine_casing",
+    "G": "minecraft:gold_ingot"
+  },
+  "result": {
+    "id": "futuretech:battery",
+    "count": 1
+  }
+}

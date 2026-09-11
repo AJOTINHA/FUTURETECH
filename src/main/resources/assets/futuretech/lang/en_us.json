@@ -5,5 +5,8 @@
   "gui.futuretech.empty": "Empty",
   "gui.futuretech.energy": "Energy",
   "gui.futuretech.rate": "%s FE/t",
-  "gui.futuretech.stored": "%s / %s FE"
+  "gui.futuretech.stored": "%s / %s FE",
+  "block.futuretech.battery": "Battery",
+  "gui.futuretech.input": "In: %s FE/t",
+  "gui.futuretech.output": "Out: %s FE/t"
 }

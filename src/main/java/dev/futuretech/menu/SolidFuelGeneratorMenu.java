@@ -3,6 +3,7 @@ package dev.futuretech.menu;
 import static dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity.*;
 
 import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
+import dev.futuretech.energy.EnergySync;
 import dev.futuretech.registry.ModMenus;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
@@ -36,7 +37,7 @@ public final class SolidFuelGeneratorMenu extends AbstractContainerMenu {
         addDataSlots(data);
     }
 
-    public int energyStored() { return unpackEnergy(data.get(DATA_ENERGY_LOW), data.get(DATA_ENERGY_HIGH)); }
+    public int energyStored() { return EnergySync.unpack(data.get(DATA_ENERGY_LOW), data.get(DATA_ENERGY_HIGH)); }
     public int burnRemaining() { return data.get(DATA_BURN_REMAINING); }
     public int burnTotal() { return Math.max(1, data.get(DATA_BURN_TOTAL)); }
     public boolean isGenerating() { return data.get(DATA_GENERATING) != 0; }

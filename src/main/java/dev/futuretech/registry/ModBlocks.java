@@ -1,6 +1,7 @@
 package dev.futuretech.registry;
 
 import dev.futuretech.FutureTech;
+import dev.futuretech.block.BatteryBlock;
 import dev.futuretech.block.SolidFuelGeneratorBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
@@ -25,6 +26,13 @@ public final class ModBlocks {
                     .sound(SoundType.METAL)
                     .requiresCorrectToolForDrops()
                     .lightLevel(state -> state.getValue(SolidFuelGeneratorBlock.LIT) ? 10 : 0));
+
+    public static final DeferredBlock<BatteryBlock> BATTERY = BLOCKS.registerBlock(
+            "battery", BatteryBlock::new, properties -> properties
+                    .mapColor(MapColor.METAL)
+                    .strength(3.5F, 6.0F)
+                    .sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops());
 
     private ModBlocks() {}
 }

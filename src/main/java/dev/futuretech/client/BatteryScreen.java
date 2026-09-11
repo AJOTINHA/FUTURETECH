@@ -1,0 +1,46 @@
+package dev.futuretech.client;
+
+import static dev.futuretech.client.MachineScreenStyle.*;
+
+import dev.futuretech.block.entity.BatteryBlockEntity;
+import dev.futuretech.menu.BatteryMenu;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
+
+public final class BatteryScreen extends AbstractContainerScreen<BatteryMenu> {
+    private final AnimatedBar energyBar = new AnimatedBar();
+
+    public BatteryScreen(BatteryMenu menu, Inventory inventory, Component title) {
+        super(menu, inventory, title, 176, 184);
+        titleLabelX = 7;
+        inventoryLabelX = titleLabelX;
+        inventoryLabelY = 90;
+    }
+
+    @Override
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+        super.extractBackground(graphics, mouseX, mouseY, partialTick);
+        int x = leftPos;
+        int y = topPos;
+        drawPanel(graphics, x, y, imageWidth, imageHeight);
+        drawSlots(graphics, x, y, menu.slots);
+        // One wide bar spans the panel, with the same height as the generator's energy bar.
+        graphics.fill(x + 7, y + 38, x + 169, y + 52, BAR_BACK);
+        float energyWidth = energyBar.width(menu.energyStored(), BatteryBlockEntity.CAPACITY, 160);
+        drawGradientBar(graphics, x + 8, y + 39, energyWidth, 12, ENERGY_START, ENERGY_END);
+    }
+
+    @Override
+    protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+        graphics.text(font, title, titleLabelX, titleLabelY, TITLE, false);
+        graphics.text(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, TEXT, false);
+        graphics.text(font, Component.translatable("gui.futuretech.energy"), 7, 26, TEXT, false);
+        graphics.text(font, Component.translatable("gui.futuretech.stored", menu.energyStored(),
+                BatteryBlockEntity.CAPACITY), 7, 55, TEXT, false);
+        graphics.text(font, Component.translatable("gui.futuretech.input", menu.inputRate()), 7, 68, TEXT, false);
+        Component output = Component.translatable("gui.futuretech.output", menu.outputRate());
+        graphics.text(font, output, 169 - font.width(output), 68, TEXT, false);
+    }
+}
