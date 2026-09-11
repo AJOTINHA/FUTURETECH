@@ -21,5 +21,14 @@
   "gui.futuretech.mode.input": "Entrada",
   "gui.futuretech.mode.output": "Saída",
   "gui.futuretech.mode.both": "Entrada e saída",
-  "gui.futuretech.side.clear_hint": "Shift + clique: todos os lados em Nenhum"
+  "gui.futuretech.side.clear_hint": "Shift + clique: todos os lados em Nenhum",
+  "gui.futuretech.redstone": "Redstone",
+  "gui.futuretech.redstone.ignored": "Ignorar",
+  "gui.futuretech.redstone.ignored.desc": "Funciona independente de redstone",
+  "gui.futuretech.redstone.low": "Sinal baixo",
+  "gui.futuretech.redstone.low.desc": "Funciona só sem sinal de redstone",
+  "gui.futuretech.redstone.high": "Sinal alto",
+  "gui.futuretech.redstone.high.desc": "Funciona só com sinal de redstone",
+  "gui.futuretech.redstone.powered": "Sinal: ligado",
+  "gui.futuretech.redstone.unpowered": "Sinal: desligado"
 }

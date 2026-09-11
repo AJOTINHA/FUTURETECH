@@ -2,7 +2,9 @@ package dev.futuretech.client;
 
 import static dev.futuretech.client.MachineScreenStyle.*;
 
-import dev.futuretech.api.side.client.SideConfigPanel;
+import dev.futuretech.api.gui.TabStrip;
+import dev.futuretech.api.redstone.client.RedstoneControlTab;
+import dev.futuretech.api.side.client.SideConfigTab;
 import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
 import dev.futuretech.menu.SolidFuelGeneratorMenu;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -14,14 +16,14 @@ import net.minecraft.world.entity.player.Inventory;
 public final class SolidFuelGeneratorScreen extends AbstractContainerScreen<SolidFuelGeneratorMenu> {
     private final AnimatedBar energyBar = new AnimatedBar();
     private final AnimatedBar fuelBar = new AnimatedBar();
-    private final SideConfigPanel<SolidFuelGeneratorMenu> sidePanel;
+    private final TabStrip tabs;
 
     public SolidFuelGeneratorScreen(SolidFuelGeneratorMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, 176, 184);
         titleLabelX = menu.slots.getFirst().x - 1;
         inventoryLabelX = titleLabelX;
         inventoryLabelY = 90;
-        sidePanel = new SideConfigPanel<>(menu, font);
+        tabs = new TabStrip(new SideConfigTab<>(menu, font), new RedstoneControlTab<>(menu, font));
     }
 
     @Override
@@ -38,18 +40,18 @@ public final class SolidFuelGeneratorScreen extends AbstractContainerScreen<Soli
         graphics.fill(x + 7, y + 65, x + 25, y + 69, 0xFF56616D);
         float burnWidth = fuelBar.width(menu.burnRemaining(), menu.burnTotal(), 18, menu.isSynced());
         drawGradientBar(graphics, x + 7, y + 65, burnWidth, 4, 0xFFEC761C, 0xFFFFD76A);
-        sidePanel.render(graphics, x, y, imageWidth, mouseX, mouseY);
+        tabs.render(graphics, x, y, imageWidth, mouseX, mouseY);
     }
 
     @Override
     protected void extractTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         super.extractTooltip(graphics, mouseX, mouseY);
-        sidePanel.extractTooltip(graphics, mouseX, mouseY);
+        tabs.extractTooltip(graphics, mouseX, mouseY);
     }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        return sidePanel.mouseClicked(event) || super.mouseClicked(event, doubleClick);
+        return tabs.mouseClicked(event) || super.mouseClicked(event, doubleClick);
     }
 
     @Override

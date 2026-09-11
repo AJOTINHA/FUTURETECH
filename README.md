@@ -82,7 +82,13 @@ Toda máquina tem um botão ao lado do título da interface que abre o painel **
 - Bateria: Entrada, Saída ou Nenhum; nunca ambos na mesma face.
 - Faces em Nenhum não oferecem energia a vizinhos nem se conectam a cabos; a configuração é salva com o bloco.
 
-A API fica em `dev.futuretech.api.side` e é reaproveitável por qualquer máquina nova: o bloco implementa `SideConfigurableBlock` (modos permitidos, padrões por face, estado para desenhar), o block entity implementa `SideConfigurable` e guarda um `SideConfig` (salvo/carregado e exposto em slots de dados do menu), o menu implementa `SideConfigMenu` e encaminha `clickMenuButton` para `SideConfigMenu.handleButton`, a capability de energia passa por `SidedEnergy.view`, e a tela instancia um `SideConfigPanel` e repassa desenho, tooltip e cliques. Os cliques viajam pelo pacote vanilla de botão de menu, sem rede própria.
+## Controle de redstone
+
+Logo abaixo da aba de configuração fica a aba **Redstone**, com três modos: **Ignorar** (funciona sempre), **Sinal baixo** (funciona só sem sinal) e **Sinal alto** (funciona só com sinal). A aba mostra se o bloco está recebendo sinal agora. No gerador, o sinal controla a geração (o combustível em queima fica preservado; a energia guardada continua saindo). Na bateria, controla a saída; a carga pelas faces de entrada nunca é bloqueada.
+
+A API fica em `dev.futuretech.api.redstone` (`RedstoneMode`, `RedstoneControl`, `RedstoneControllable`, `RedstoneControlMenu`, `RedstoneControlTab`) e segue o mesmo desenho da configuração de lados. As abas em si vêm de `dev.futuretech.api.gui` (`MachineTab`, `TabStrip`): uma tela cria um `TabStrip` com as abas que quiser e repassa desenho, tooltip e cliques; abas abertas empurram as de baixo.
+
+A API fica em `dev.futuretech.api.side` e é reaproveitável por qualquer máquina nova: o bloco implementa `SideConfigurableBlock` (modos permitidos, padrões por face, estado para desenhar), o block entity implementa `SideConfigurable` e guarda um `SideConfig` (salvo/carregado e exposto em slots de dados do menu), o menu implementa `SideConfigMenu` e encaminha `clickMenuButton` para `SideConfigMenu.handleButton`, a capability de energia passa por `SidedEnergy.view`, e a tela coloca um `SideConfigTab` no seu `TabStrip`. Os cliques viajam pelo pacote vanilla de botão de menu, sem rede própria.
 
 A fornalha elétrica ainda não está implementada.
 

@@ -2,6 +2,9 @@ package dev.futuretech.menu;
 
 import static dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity.*;
 
+import dev.futuretech.api.redstone.RedstoneControlMenu;
+import dev.futuretech.api.redstone.RedstoneControllable;
+import dev.futuretech.api.redstone.RedstoneMode;
 import dev.futuretech.api.side.SideConfigMenu;
 import dev.futuretech.api.side.SideConfigurable;
 import dev.futuretech.api.side.SideConfigurableBlock;
@@ -23,7 +26,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Set;
 
-public final class SolidFuelGeneratorMenu extends MachineMenu implements SideConfigMenu {
+public final class SolidFuelGeneratorMenu extends MachineMenu implements SideConfigMenu, RedstoneControlMenu {
     private final Container fuel;
     private final ContainerData data;
 
@@ -67,8 +70,15 @@ public final class SolidFuelGeneratorMenu extends MachineMenu implements SideCon
     }
 
     @Override
+    public RedstoneMode redstoneMode() { return RedstoneMode.byOrdinal(data.get(DATA_REDSTONE_BASE)); }
+
+    @Override
+    public boolean isPowered() { return data.get(DATA_REDSTONE_BASE + 1) != 0; }
+
+    @Override
     public boolean clickMenuButton(Player player, int buttonId) {
-        return SideConfigMenu.handleButton(fuel instanceof SideConfigurable target ? target : null, buttonId);
+        return SideConfigMenu.handleButton(fuel instanceof SideConfigurable target ? target : null, buttonId)
+                || RedstoneControlMenu.handleButton(fuel instanceof RedstoneControllable target ? target : null, buttonId);
     }
 
     @Override

@@ -1,5 +1,7 @@
 package dev.futuretech.block.entity;
 
+import dev.futuretech.api.redstone.RedstoneControl;
+import dev.futuretech.api.redstone.RedstoneControllable;
 import dev.futuretech.api.side.SideConfig;
 import dev.futuretech.api.side.SideConfigurable;
 import dev.futuretech.api.side.SideConfigurableBlock;
@@ -36,7 +38,7 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 import net.neoforged.neoforge.transfer.energy.EnergyHandlerUtil;
 
-public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntity implements SideConfigurable {
+public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntity implements SideConfigurable, RedstoneControllable {
     public static final int CAPACITY = 20_000;
     public static final int GENERATION_PER_TICK = 20;
     public static final int OUTPUT_PER_TICK = 80;
@@ -49,7 +51,8 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
     public static final int DATA_BURN_TOTAL = 4;
     public static final int DATA_SIDE_BASE = 5;
     public static final int DATA_FRONT = DATA_SIDE_BASE + SideConfig.DATA_COUNT;
-    public static final int DATA_COUNT = DATA_FRONT + 1;
+    public static final int DATA_REDSTONE_BASE = DATA_FRONT + 1;
+    public static final int DATA_COUNT = DATA_REDSTONE_BASE + RedstoneControl.DATA_COUNT;
     public static final TagKey<Item> WOODEN_FUELS = TagKey.create(Registries.ITEM,
             Identifier.fromNamespaceAndPath("futuretech", "generator_wooden_fuels"));
 
@@ -59,6 +62,7 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
     private boolean generating;
     private final TickLimitedEnergyHandler energy = new TickLimitedEnergyHandler(CAPACITY, 0, OUTPUT_PER_TICK, this::setChanged);
     private final SideConfig sides;
+    private final RedstoneControl redstone = new RedstoneControl();
     private final ContainerData data = new ContainerData() {
         @Override
         public int get(int index) {
@@ -69,7 +73,11 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
                 case DATA_GENERATING -> generating ? 1 : 0;
                 case DATA_BURN_TOTAL -> burnTotal;
                 case DATA_FRONT -> front().ordinal();
-                default -> index >= DATA_SIDE_BASE && index < DATA_FRONT ? sides.data(index - DATA_SIDE_BASE) : 0;
+                default -> {
+                    if (index >= DATA_SIDE_BASE && index < DATA_FRONT) yield sides.data(index - DATA_SIDE_BASE);
+                    if (index >= DATA_REDSTONE_BASE && index < DATA_COUNT) yield redstone.data(index - DATA_REDSTONE_BASE);
+                    yield 0;
+                }
             };
         }
 
@@ -89,6 +97,12 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
 
     @Override
     public SideConfig sideConfig() { return sides; }
+
+    @Override
+    public RedstoneControl redstoneControl() { return redstone; }
+
+    @Override
+    public void redstoneControlChanged() { setChanged(); }
 
     @Override
     public Direction front() {
@@ -129,7 +143,10 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
         int previousSignal = EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(generator.energy);
         generator.beginTick();
         generator.exportEnergy(level, pos);
-        generator.generateEnergy(level.fuelValues());
+        // Redstone only gates generation; stored energy still leaves through the output faces.
+        generator.redstone.update(level, pos);
+        if (generator.redstone.allowsRunning()) generator.generateEnergy(level.fuelValues());
+        else generator.generating = false;
         if (state.getValue(SolidFuelGeneratorBlock.LIT) != generator.generating) {
             level.setBlock(pos, state.setValue(SolidFuelGeneratorBlock.LIT, generator.generating), 3);
         }
@@ -174,6 +191,7 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
         burnTotal = Math.max(1, input.getIntOr("BurnTotal", BURN_TICKS));
         burnRemaining = Math.clamp(input.getIntOr("BurnRemaining", 0), 0, burnTotal);
         sides.load(input);
+        redstone.load(input);
         generating = false;
     }
 
@@ -185,6 +203,7 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
         output.putInt("BurnRemaining", burnRemaining);
         output.putInt("BurnTotal", burnTotal);
         sides.save(output);
+        redstone.save(output);
     }
 
     @Override

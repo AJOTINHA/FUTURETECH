@@ -2,6 +2,8 @@ package dev.futuretech.menu;
 
 import static dev.futuretech.block.entity.BatteryBlockEntity.*;
 
+import dev.futuretech.api.redstone.RedstoneControlMenu;
+import dev.futuretech.api.redstone.RedstoneMode;
 import dev.futuretech.api.side.SideConfigMenu;
 import dev.futuretech.api.side.SideMode;
 import dev.futuretech.block.BatteryTier;
@@ -22,7 +24,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.Set;
 
-public final class BatteryMenu extends MachineMenu implements SideConfigMenu {
+public final class BatteryMenu extends MachineMenu implements SideConfigMenu, RedstoneControlMenu {
     private final ContainerData data;
     private final @Nullable BatteryBlockEntity battery;
 
@@ -62,8 +64,14 @@ public final class BatteryMenu extends MachineMenu implements SideConfigMenu {
     public Set<SideMode> allowedModes() { return ModBlocks.BATTERY_MK1.get().allowedSideModes(); }
 
     @Override
+    public RedstoneMode redstoneMode() { return RedstoneMode.byOrdinal(data.get(DATA_REDSTONE_BASE)); }
+
+    @Override
+    public boolean isPowered() { return data.get(DATA_REDSTONE_BASE + 1) != 0; }
+
+    @Override
     public boolean clickMenuButton(Player player, int buttonId) {
-        return SideConfigMenu.handleButton(battery, buttonId);
+        return SideConfigMenu.handleButton(battery, buttonId) || RedstoneControlMenu.handleButton(battery, buttonId);
     }
 
     @Override

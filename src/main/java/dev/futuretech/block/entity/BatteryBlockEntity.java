@@ -1,5 +1,7 @@
 package dev.futuretech.block.entity;
 
+import dev.futuretech.api.redstone.RedstoneControl;
+import dev.futuretech.api.redstone.RedstoneControllable;
 import dev.futuretech.api.side.SideConfig;
 import dev.futuretech.api.side.SideConfigurable;
 import dev.futuretech.block.BatteryBlock;
@@ -30,7 +32,7 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 import net.neoforged.neoforge.transfer.energy.EnergyHandlerUtil;
 
-public final class BatteryBlockEntity extends BlockEntity implements MenuProvider, SideConfigurable {
+public final class BatteryBlockEntity extends BlockEntity implements MenuProvider, SideConfigurable, RedstoneControllable {
     public static final int DATA_ENERGY_LOW = 0;
     public static final int DATA_ENERGY_HIGH = 1;
     public static final int DATA_INPUT = 2;
@@ -38,11 +40,13 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
     public static final int DATA_TIER = 4;
     public static final int DATA_SIDE_BASE = 5;
     public static final int DATA_FRONT = DATA_SIDE_BASE + SideConfig.DATA_COUNT;
-    public static final int DATA_COUNT = DATA_FRONT + 1;
+    public static final int DATA_REDSTONE_BASE = DATA_FRONT + 1;
+    public static final int DATA_COUNT = DATA_REDSTONE_BASE + RedstoneControl.DATA_COUNT;
 
     private final BatteryTier tier;
     private final TickLimitedEnergyHandler energy;
     private final SideConfig sides;
+    private final RedstoneControl redstone = new RedstoneControl();
     // Transfer totals of the previous tick, shown in the menu as FE/t.
     private int lastInput;
     private int lastOutput;
@@ -56,7 +60,11 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
                 case DATA_OUTPUT -> lastOutput;
                 case DATA_TIER -> tier.ordinal();
                 case DATA_FRONT -> front().ordinal();
-                default -> index >= DATA_SIDE_BASE && index < DATA_FRONT ? sides.data(index - DATA_SIDE_BASE) : 0;
+                default -> {
+                    if (index >= DATA_SIDE_BASE && index < DATA_FRONT) yield sides.data(index - DATA_SIDE_BASE);
+                    if (index >= DATA_REDSTONE_BASE && index < DATA_COUNT) yield redstone.data(index - DATA_REDSTONE_BASE);
+                    yield 0;
+                }
             };
         }
 
@@ -82,6 +90,12 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
     public SideConfig sideConfig() { return sides; }
 
     @Override
+    public RedstoneControl redstoneControl() { return redstone; }
+
+    @Override
+    public void redstoneControlChanged() { setChanged(); }
+
+    @Override
     public void sideConfigChanged() {
         setChanged();
         // Cables and capability caches next to us must see the new face modes.
@@ -98,7 +112,9 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
     public static void serverTick(Level level, BlockPos pos, BlockState state, BatteryBlockEntity battery) {
         int previousSignal = EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(battery.energy);
         battery.beginTick();
-        battery.exportEnergy(level, pos);
+        // Redstone gates the output; charging through input faces is never blocked.
+        battery.redstone.update(level, pos);
+        if (battery.redstone.allowsRunning()) battery.exportEnergy(level, pos);
         if (previousSignal != EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(battery.energy)) {
             level.updateNeighbourForOutputSignal(pos, state.getBlock());
         }
@@ -133,6 +149,7 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
         super.loadAdditional(input);
         setEnergyClamped(input.getIntOr("Energy", 0));
         sides.load(input);
+        redstone.load(input);
     }
 
     @Override
@@ -140,6 +157,7 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
         super.saveAdditional(output);
         output.putInt("Energy", energy.getAmountAsInt());
         sides.save(output);
+        redstone.save(output);
     }
 
     // The stored charge travels with the dropped item and returns when it is placed again.

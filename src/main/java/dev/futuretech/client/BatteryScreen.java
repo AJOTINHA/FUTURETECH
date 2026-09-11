@@ -2,7 +2,9 @@ package dev.futuretech.client;
 
 import static dev.futuretech.client.MachineScreenStyle.*;
 
-import dev.futuretech.api.side.client.SideConfigPanel;
+import dev.futuretech.api.gui.TabStrip;
+import dev.futuretech.api.redstone.client.RedstoneControlTab;
+import dev.futuretech.api.side.client.SideConfigTab;
 import dev.futuretech.menu.BatteryMenu;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -12,14 +14,14 @@ import net.minecraft.world.entity.player.Inventory;
 
 public final class BatteryScreen extends AbstractContainerScreen<BatteryMenu> {
     private final AnimatedBar energyBar = new AnimatedBar();
-    private final SideConfigPanel<BatteryMenu> sidePanel;
+    private final TabStrip tabs;
 
     public BatteryScreen(BatteryMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, 176, 184);
         titleLabelX = 7;
         inventoryLabelX = titleLabelX;
         inventoryLabelY = 90;
-        sidePanel = new SideConfigPanel<>(menu, font);
+        tabs = new TabStrip(new SideConfigTab<>(menu, font), new RedstoneControlTab<>(menu, font));
     }
 
     @Override
@@ -33,18 +35,18 @@ public final class BatteryScreen extends AbstractContainerScreen<BatteryMenu> {
         graphics.fill(x + 7, y + 38, x + 169, y + 52, BAR_BACK);
         float energyWidth = energyBar.width(menu.energyStored(), menu.tier().capacity(), 160, menu.isSynced());
         drawGradientBar(graphics, x + 8, y + 39, energyWidth, 12, ENERGY_START, ENERGY_END);
-        sidePanel.render(graphics, x, y, imageWidth, mouseX, mouseY);
+        tabs.render(graphics, x, y, imageWidth, mouseX, mouseY);
     }
 
     @Override
     protected void extractTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         super.extractTooltip(graphics, mouseX, mouseY);
-        sidePanel.extractTooltip(graphics, mouseX, mouseY);
+        tabs.extractTooltip(graphics, mouseX, mouseY);
     }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        return sidePanel.mouseClicked(event) || super.mouseClicked(event, doubleClick);
+        return tabs.mouseClicked(event) || super.mouseClicked(event, doubleClick);
     }
 
     @Override
