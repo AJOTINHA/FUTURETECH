@@ -35,7 +35,7 @@ O visual do gerador reutiliza provisoriamente texturas de ferro e do alto-forno 
 
 A lista de peças de madeira é extensível pela tag de itens `futuretech:generator_wooden_fuels`, que inclui as categorias de madeira do Minecraft. Madeiras de outros mods que pertençam a essas tags também são aceitas; itens adicionais podem ser incluídos por datapack. Itens que só contêm madeira em parte (camas, estandartes, tochas, quadros, molduras, jukebox, sensor de luz e colmeias naturais) ficam de fora de propósito.
 
-A **Bateria** armazena a energia do gerador. Clique com o botão direito para ver a reserva e as taxas de entrada e saída do último tick.
+A **Bateria MK1** (`futuretech:battery_mk1`) armazena a energia do gerador. Clique com o botão direito para ver a reserva e as taxas de entrada e saída do último tick.
 
 - Armazena **100.000 FE**; recebe e envia até **200 FE/t** cada, por tick e não por chamada.
 - Recebe por todas as faces e envia por todas as faces para blocos que aceitem energia, exceto outras baterias, para a energia não ficar indo e voltando entre elas.
@@ -50,7 +50,9 @@ Redstone  Carcaça    Redstone
 Ferro     Ouro       Ferro
 ```
 
-O visual da bateria reutiliza provisoriamente texturas de ferro e cobre cortado do Minecraft.
+O visual da bateria MK1 reutiliza provisoriamente texturas de ferro e cobre cortado do Minecraft.
+
+Todas as baterias compartilham as mesmas classes (`BatteryBlock`, `BatteryBlockEntity`, `BatteryBlockItem`, `BatteryMenu`, `BatteryScreen`); o que muda entre elas é o `BatteryTier`, que define capacidade e taxa por tick. Uma nova bateria é uma constante no enum, um bloco e um item registrados a partir dela, e os JSONs de recurso.
 
 Cabos e fornalha elétrica ainda não estão implementados. Por enquanto, o gerador alimenta uma bateria ou um bloco compatível de outro mod colocado diretamente ao lado.
 

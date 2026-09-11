@@ -2,6 +2,7 @@ package dev.futuretech.registry;
 
 import dev.futuretech.FutureTech;
 import dev.futuretech.block.BatteryBlock;
+import dev.futuretech.block.BatteryTier;
 import dev.futuretech.block.SolidFuelGeneratorBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
@@ -27,12 +28,16 @@ public final class ModBlocks {
                     .requiresCorrectToolForDrops()
                     .lightLevel(state -> state.getValue(SolidFuelGeneratorBlock.LIT) ? 10 : 0));
 
-    public static final DeferredBlock<BatteryBlock> BATTERY = BLOCKS.registerBlock(
-            "battery", BatteryBlock::new, properties -> properties
+    public static final DeferredBlock<BatteryBlock> BATTERY_MK1 = registerBattery(BatteryTier.MK1);
+
+    // Every tier shares BatteryBlock; only the numbers in BatteryTier change.
+    private static DeferredBlock<BatteryBlock> registerBattery(BatteryTier tier) {
+        return BLOCKS.registerBlock(tier.blockName(), properties -> new BatteryBlock(tier, properties), properties -> properties
                     .mapColor(MapColor.METAL)
                     .strength(3.5F, 6.0F)
                     .sound(SoundType.METAL)
                     .requiresCorrectToolForDrops());
+    }
 
     private ModBlocks() {}
 }

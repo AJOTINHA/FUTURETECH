@@ -6,7 +6,7 @@
   "gui.futuretech.energy": "Energy",
   "gui.futuretech.rate": "%s FE/t",
   "gui.futuretech.stored": "%s / %s FE",
-  "block.futuretech.battery": "Battery",
+  "block.futuretech.battery_mk1": "Battery MK1",
   "gui.futuretech.input": "In: %s FE/t",
   "gui.futuretech.output": "Out: %s FE/t"
 }

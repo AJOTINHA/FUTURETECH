@@ -2,7 +2,6 @@ package dev.futuretech.client;
 
 import static dev.futuretech.client.MachineScreenStyle.*;
 
-import dev.futuretech.block.entity.BatteryBlockEntity;
 import dev.futuretech.menu.BatteryMenu;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -28,7 +27,7 @@ public final class BatteryScreen extends AbstractContainerScreen<BatteryMenu> {
         drawSlots(graphics, x, y, menu.slots);
         // One wide bar spans the panel, with the same height as the generator's energy bar.
         graphics.fill(x + 7, y + 38, x + 169, y + 52, BAR_BACK);
-        float energyWidth = energyBar.width(menu.energyStored(), BatteryBlockEntity.CAPACITY, 160);
+        float energyWidth = energyBar.width(menu.energyStored(), menu.tier().capacity(), 160);
         drawGradientBar(graphics, x + 8, y + 39, energyWidth, 12, ENERGY_START, ENERGY_END);
     }
 
@@ -38,7 +37,7 @@ public final class BatteryScreen extends AbstractContainerScreen<BatteryMenu> {
         graphics.text(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, TEXT, false);
         graphics.text(font, Component.translatable("gui.futuretech.energy"), 7, 26, TEXT, false);
         graphics.text(font, Component.translatable("gui.futuretech.stored", menu.energyStored(),
-                BatteryBlockEntity.CAPACITY), 7, 55, TEXT, false);
+                menu.tier().capacity()), 7, 55, TEXT, false);
         graphics.text(font, Component.translatable("gui.futuretech.input", menu.inputRate()), 7, 68, TEXT, false);
         Component output = Component.translatable("gui.futuretech.output", menu.outputRate());
         graphics.text(font, output, 169 - font.width(output), 68, TEXT, false);

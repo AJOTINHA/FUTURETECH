@@ -2,6 +2,7 @@ package dev.futuretech.menu;
 
 import static dev.futuretech.block.entity.BatteryBlockEntity.*;
 
+import dev.futuretech.block.BatteryTier;
 import dev.futuretech.block.entity.BatteryBlockEntity;
 import dev.futuretech.energy.EnergySync;
 import dev.futuretech.registry.ModMenus;
@@ -31,6 +32,9 @@ public final class BatteryMenu extends AbstractContainerMenu {
         addStandardInventorySlots(inventory, 8, 102);
         addDataSlots(data);
     }
+
+    /** The tier travels as a data slot so the client screen knows the capacity to draw against. */
+    public BatteryTier tier() { return BatteryTier.byOrdinal(data.get(DATA_TIER)); }
 
     public int energyStored() { return EnergySync.unpack(data.get(DATA_ENERGY_LOW), data.get(DATA_ENERGY_HIGH)); }
 

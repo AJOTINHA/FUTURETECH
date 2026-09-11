@@ -17,9 +17,10 @@ public final class ModBlockEntities {
             TYPES.register("solid_fuel_generator", () -> new BlockEntityType<>(
                     SolidFuelGeneratorBlockEntity::new, ModBlocks.SOLID_FUEL_GENERATOR.get()));
 
+    // One block entity type serves every battery tier; list each tier's block here.
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BatteryBlockEntity>> BATTERY =
             TYPES.register("battery", () -> new BlockEntityType<>(
-                    BatteryBlockEntity::new, ModBlocks.BATTERY.get()));
+                    BatteryBlockEntity::new, ModBlocks.BATTERY_MK1.get()));
 
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
         event.registerBlockEntity(Capabilities.Energy.BLOCK, SOLID_FUEL_GENERATOR.get(),

@@ -6,7 +6,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "futuretech:battery",
+          "name": "futuretech:battery_mk1",
           "functions": [
             {
               "function": "minecraft:copy_components",

@@ -1,6 +1,7 @@
 package dev.futuretech.block;
 
 import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.futuretech.block.entity.BatteryBlockEntity;
 import dev.futuretech.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -16,12 +17,20 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.neoforge.transfer.energy.EnergyHandlerUtil;
 
+/** One block class for every {@link BatteryTier}; the tier supplies capacity and transfer rate. */
 public final class BatteryBlock extends BaseEntityBlock {
-    public static final MapCodec<BatteryBlock> CODEC = simpleCodec(BatteryBlock::new);
+    public static final MapCodec<BatteryBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+            BatteryTier.CODEC.fieldOf("tier").forGetter(BatteryBlock::tier), propertiesCodec()
+    ).apply(i, BatteryBlock::new));
 
-    public BatteryBlock(Properties properties) {
+    private final BatteryTier tier;
+
+    public BatteryBlock(BatteryTier tier, Properties properties) {
         super(properties);
+        this.tier = tier;
     }
+
+    public BatteryTier tier() { return tier; }
 
     @Override
     protected MapCodec<BatteryBlock> codec() {

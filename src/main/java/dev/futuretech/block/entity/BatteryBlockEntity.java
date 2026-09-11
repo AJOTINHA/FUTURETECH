@@ -1,5 +1,7 @@
 package dev.futuretech.block.entity;
 
+import dev.futuretech.block.BatteryBlock;
+import dev.futuretech.block.BatteryTier;
 import dev.futuretech.energy.EnergyNetworkUtil;
 import dev.futuretech.energy.EnergySync;
 import dev.futuretech.energy.TickLimitedEnergyHandler;
@@ -24,16 +26,15 @@ import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 import net.neoforged.neoforge.transfer.energy.EnergyHandlerUtil;
 
 public final class BatteryBlockEntity extends BlockEntity implements MenuProvider {
-    public static final int CAPACITY = 100_000;
-    public static final int TRANSFER_PER_TICK = 200;
     public static final int DATA_ENERGY_LOW = 0;
     public static final int DATA_ENERGY_HIGH = 1;
     public static final int DATA_INPUT = 2;
     public static final int DATA_OUTPUT = 3;
-    public static final int DATA_COUNT = 4;
+    public static final int DATA_TIER = 4;
+    public static final int DATA_COUNT = 5;
 
-    private final TickLimitedEnergyHandler energy =
-            new TickLimitedEnergyHandler(CAPACITY, TRANSFER_PER_TICK, TRANSFER_PER_TICK, this::setChanged);
+    private final BatteryTier tier;
+    private final TickLimitedEnergyHandler energy;
     // Transfer totals of the previous tick, shown in the menu as FE/t.
     private int lastInput;
     private int lastOutput;
@@ -45,6 +46,7 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
                 case DATA_ENERGY_HIGH -> EnergySync.high(energy.getAmountAsInt());
                 case DATA_INPUT -> lastInput;
                 case DATA_OUTPUT -> lastOutput;
+                case DATA_TIER -> tier.ordinal();
                 default -> 0;
             };
         }
@@ -60,7 +62,12 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
 
     public BatteryBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.BATTERY.get(), pos, state);
+        this.tier = state.getBlock() instanceof BatteryBlock block ? block.tier() : BatteryTier.MK1;
+        this.energy = new TickLimitedEnergyHandler(
+                tier.capacity(), tier.transferPerTick(), tier.transferPerTick(), this::setChanged);
     }
+
+    public BatteryTier tier() { return tier; }
 
     public EnergyHandler energy() { return energy; }
 
@@ -88,10 +95,14 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
                 neighbour -> level.getBlockEntity(neighbour) instanceof BatteryBlockEntity);
     }
 
+    private void setEnergyClamped(int amount) {
+        energy.set(Math.clamp(amount, 0, tier.capacity()));
+    }
+
     @Override
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
-        energy.set(Math.clamp(input.getIntOr("Energy", 0), 0, CAPACITY));
+        setEnergyClamped(input.getIntOr("Energy", 0));
     }
 
     @Override
@@ -104,7 +115,7 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
     @Override
     protected void applyImplicitComponents(DataComponentGetter components) {
         super.applyImplicitComponents(components);
-        energy.set(Math.clamp(components.getOrDefault(ModDataComponents.ENERGY.get(), 0), 0, CAPACITY));
+        setEnergyClamped(components.getOrDefault(ModDataComponents.ENERGY.get(), 0));
     }
 
     @Override
@@ -121,7 +132,7 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
     }
 
     @Override
-    public Component getDisplayName() { return Component.translatable("block.futuretech.battery"); }
+    public Component getDisplayName() { return getBlockState().getBlock().getName(); }
 
     @Override
     public AbstractContainerMenu createMenu(int id, Inventory inventory, Player player) {

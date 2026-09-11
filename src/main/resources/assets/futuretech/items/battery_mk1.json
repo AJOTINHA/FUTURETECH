@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "futuretech:item/battery"
+    "model": "futuretech:item/battery_mk1"
   }
 }

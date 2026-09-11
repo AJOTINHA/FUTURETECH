@@ -2,6 +2,7 @@ package dev.futuretech.block.entity;
 
 import static dev.futuretech.block.entity.BatteryBlockEntity.*;
 
+import dev.futuretech.block.BatteryTier;
 import dev.futuretech.energy.EnergySync;
 import dev.futuretech.item.BatteryBlockItem;
 import dev.futuretech.registry.ModBlocks;
@@ -27,13 +28,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(EphemeralTestServerProvider.class)
 class BatteryTest {
+    private static final int CAPACITY = BatteryTier.MK1.capacity();
+
     private static BatteryBlockEntity battery() {
-        return new BatteryBlockEntity(BlockPos.ZERO, ModBlocks.BATTERY.get().defaultBlockState());
+        return new BatteryBlockEntity(BlockPos.ZERO, ModBlocks.BATTERY_MK1.get().defaultBlockState());
     }
 
     private static BatteryBlockEntity chargedBattery(int amount) {
         var battery = battery();
-        var stack = new ItemStack(ModItems.BATTERY.get());
+        var stack = new ItemStack(ModItems.BATTERY_MK1.get());
         stack.set(ModDataComponents.ENERGY.get(), amount);
         battery.applyComponentsFromItemStack(stack);
         return battery;
@@ -132,7 +135,7 @@ class BatteryTest {
         var components = placed.collectComponents();
         assertEquals(65_000, components.get(ModDataComponents.ENERGY.get()));
 
-        var dropped = new ItemStack(ModItems.BATTERY.get());
+        var dropped = new ItemStack(ModItems.BATTERY_MK1.get());
         dropped.applyComponents(components);
         assertEquals(65_000, BatteryBlockItem.storedEnergy(dropped));
         assertTrue(dropped.getItem().isBarVisible(dropped));
@@ -144,7 +147,7 @@ class BatteryTest {
 
         // An empty battery carries no component, so fresh items stay stackable and bar-less.
         assertFalse(battery().collectComponents().has(ModDataComponents.ENERGY.get()));
-        var fresh = new ItemStack(ModItems.BATTERY.get());
+        var fresh = new ItemStack(ModItems.BATTERY_MK1.get());
         assertFalse(fresh.getItem().isBarVisible(fresh));
         assertEquals(0, BatteryBlockItem.storedEnergy(fresh));
     }
@@ -153,15 +156,27 @@ class BatteryTest {
     void overchargedItemsAreClampedToCapacity(MinecraftServer server) {
         var battery = chargedBattery(CAPACITY * 3);
         assertEquals(CAPACITY, battery.energy().getAmountAsInt());
-        var stack = new ItemStack(ModItems.BATTERY.get());
+        var stack = new ItemStack(ModItems.BATTERY_MK1.get());
         stack.set(ModDataComponents.ENERGY.get(), CAPACITY * 3);
         assertEquals(CAPACITY, BatteryBlockItem.storedEnergy(stack));
         assertEquals(13, stack.getItem().getBarWidth(stack));
     }
 
     @Test
+    void tierFlowsFromBlockToEntityItemAndMenu(MinecraftServer server) {
+        var battery = battery();
+        assertEquals(BatteryTier.MK1, battery.tier());
+        assertEquals(BatteryTier.MK1, ModItems.BATTERY_MK1.get().tier());
+        assertEquals(BatteryTier.MK1, ModBlocks.BATTERY_MK1.get().tier());
+        assertEquals(BatteryTier.MK1.ordinal(), battery.menuData().get(DATA_TIER));
+        assertEquals(CAPACITY, battery.energy().getCapacityAsInt());
+        assertEquals("battery_mk1", ModBlocks.BATTERY_MK1.getId().getPath());
+        assertEquals("battery_mk1", ModItems.BATTERY_MK1.getId().getPath());
+    }
+
+    @Test
     void batteryRecipeIsLoadedByTheServer(MinecraftServer server) {
         assertTrue(server.getRecipeManager().byKey(ResourceKey.create(
-                Registries.RECIPE, Identifier.fromNamespaceAndPath("futuretech", "battery"))).isPresent());
+                Registries.RECIPE, Identifier.fromNamespaceAndPath("futuretech", "battery_mk1"))).isPresent());
     }
 }
