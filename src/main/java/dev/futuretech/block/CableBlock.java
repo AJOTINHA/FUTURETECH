@@ -9,6 +9,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.EntityBlock;
@@ -19,6 +20,9 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -42,6 +46,13 @@ public final class CableBlock extends PipeBlock implements EntityBlock {
     }
 
     public CableTier tier() { return tier; }
+
+    @Override
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        VoxelShape cable = super.getShape(state, level, pos, context);
+        int connectors = CableConnector.mask(level, pos, state);
+        return connectors == 0 ? cable : Shapes.or(cable, CableConnector.shape(connectors));
+    }
 
     @Override
     protected MapCodec<CableBlock> codec() {

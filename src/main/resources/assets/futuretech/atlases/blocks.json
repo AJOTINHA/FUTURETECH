@@ -2,6 +2,10 @@
   "sources": [
     {
       "type": "single",
+      "resource": "futuretech:block/cable_connector"
+    },
+    {
+      "type": "single",
       "resource": "futuretech:block/machine_side_input"
     },
     {

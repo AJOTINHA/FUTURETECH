@@ -58,7 +58,7 @@ O **Cabo MK1** (`futuretech:cable_mk1`) transporta energia entre blocos que não
 
 - A rede inteira move até **400 FE/t**, no total, e guarda no máximo um tick de energia; quando não há para onde enviar, ela recusa novas inserções e o bloco de origem fica com a energia.
 - Funciona por "empurrão", igual ao gerador e à bateria: qualquer bloco vizinho que envie energia para um cabo alimenta a rede, e a rede reparte o que tem em rodízio entre todos os blocos vizinhos que aceitam energia. A rede nunca devolve energia para um bloco que está tentando inserir nela, mesmo quando a inserção é recusada por o buffer estar cheio, e mesmo que esse bloco encoste na rede por mais de uma face. Isso é o que impede uma bateria com uma face de saída e outra de entrada na mesma rede de ficar recebendo a própria energia de volta a cada tick. Faces configuradas como "Nenhum" não se conectam a cabos.
-- Os braços do cabo aparecem para outros cabos e para qualquer bloco com capacidade de energia naquele lado, inclusive máquinas de outros mods.
+- Os braços do cabo aparecem para outros cabos e para qualquer bloco com capacidade de energia naquele lado, inclusive máquinas de outros mods. Nas conexões com máquinas, geradores e baterias, aparece um conector metálico de 9 × 9 unidades, com dois níveis de espessura e abertura central. Funciona nas seis direções, acompanha a conexão ativa e faz parte da área clicável e da colisão; emendas entre cabos continuam sem o conector.
 - A rede é recalculada quando um cabo é colocado ou quebrado; quebrar um cabo no meio divide a rede em duas.
 - Sem tratamento de energia guardada no item: o cabo é um bloco simples, quebrável com qualquer picareta ou à mão.
 
@@ -70,7 +70,7 @@ Redstone  Redstone  Redstone
 Cobre     Cobre     Cobre
 ```
 
-Como nas baterias, todos os cabos compartilham as mesmas classes (`CableBlock`, `CableBlockEntity`, `CableNetwork`); o `CableTier` define o throughput. Cabos de tiers diferentes se conectam, e a rede assume o menor throughput entre eles. O visual reutiliza provisoriamente a textura de cobre cortado do Minecraft.
+Como nas baterias, todos os cabos compartilham as mesmas classes (`CableBlock`, `CableBlockEntity`, `CableNetwork`); o `CableTier` define o throughput. Cabos de tiers diferentes se conectam, e a rede assume o menor throughput entre eles. O MK1 tem geometria 3D própria: quatro trilhos elevados em cada braço, molduras salientes nas junções e corpo fechado com faces prateadas recuadas e uma faixa ciano estreita no centro. As junções usam 19 volumes e cada braço usa cinco, dentro da espessura original de seis unidades. O atlas de materiais tem 32 × 32 pixels. O acabamento acompanha conexões horizontais, verticais e curvas; o item no inventário mostra somente o nó central ciano. Os recursos podem ser recriados com `art/cable_mk1/Export-Cable.ps1`.
 
 A **Fornalha Elétrica** (`futuretech:electric_furnace`) é a primeira máquina que consome energia. Ela funde exatamente o que uma fornalha comum funde, sem combustível e no dobro da velocidade.
 

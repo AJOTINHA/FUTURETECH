@@ -57,6 +57,7 @@ public final class ModBlocks {
                     .mapColor(MapColor.COLOR_ORANGE)
                     .strength(1.0F, 3.0F)
                     .sound(SoundType.COPPER)
+                    .dynamicShape()
                     .noOcclusion());
     }
 
