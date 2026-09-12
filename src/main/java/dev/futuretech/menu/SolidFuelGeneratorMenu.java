@@ -2,6 +2,7 @@ package dev.futuretech.menu;
 
 import static dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity.*;
 
+import dev.futuretech.api.gui.EnergyInfoMenu;
 import dev.futuretech.api.redstone.RedstoneControlMenu;
 import dev.futuretech.api.redstone.RedstoneControllable;
 import dev.futuretech.api.redstone.RedstoneMode;
@@ -28,7 +29,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Set;
 
-public final class SolidFuelGeneratorMenu extends MachineMenu implements SideConfigMenu, RedstoneControlMenu {
+public final class SolidFuelGeneratorMenu extends MachineMenu implements SideConfigMenu, RedstoneControlMenu, EnergyInfoMenu {
     private final Container fuel;
     private final ContainerData data;
 
@@ -55,10 +56,30 @@ public final class SolidFuelGeneratorMenu extends MachineMenu implements SideCon
         if (fuel instanceof SolidFuelGeneratorBlockEntity) markSynced();
     }
 
+    @Override
     public int energyStored() { return EnergySync.unpack(data.get(DATA_ENERGY_LOW), data.get(DATA_ENERGY_HIGH)); }
+
+    @Override
+    public int energyCapacity() { return CAPACITY; }
+
+    @Override
+    public int energyRatePerTick() { return GENERATION_PER_TICK; }
+
+    @Override
+    public int energyOutputPerTick() { return OUTPUT_PER_TICK; }
+
+    @Override
+    public EnergyInfoMenu.Kind kind() { return EnergyInfoMenu.Kind.GENERATOR; }
+
+    @Override
+    public boolean isWorking() { return isGenerating(); }
+
     public int burnRemaining() { return data.get(DATA_BURN_REMAINING); }
+
     public int burnTotal() { return Math.max(1, data.get(DATA_BURN_TOTAL)); }
+
     public boolean isGenerating() { return data.get(DATA_GENERATING) != 0; }
+
     public boolean isFull() { return CAPACITY - energyStored() < GENERATION_PER_TICK; }
 
     @Override

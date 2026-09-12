@@ -2,6 +2,7 @@ package dev.futuretech.client;
 
 import static dev.futuretech.client.MachineScreenStyle.*;
 
+import dev.futuretech.api.gui.EnergyInfoTab;
 import dev.futuretech.api.gui.TabStrip;
 import dev.futuretech.api.redstone.client.RedstoneControlTab;
 import dev.futuretech.api.side.client.SideConfigTab;
@@ -24,7 +25,8 @@ public final class SolidFuelGeneratorScreen extends AbstractContainerScreen<Soli
         titleLabelX = menu.slots.getFirst().x - 1;
         inventoryLabelX = titleLabelX;
         inventoryLabelY = 90;
-        tabs = new TabStrip(new UpgradeTab(menu, font), new SideConfigTab<>(menu, font), new RedstoneControlTab<>(menu, font));
+        tabs = new TabStrip(new UpgradeTab(menu, font), new SideConfigTab<>(menu, font),
+                new RedstoneControlTab<>(menu, font), new EnergyInfoTab(menu, font));
     }
 
     @Override

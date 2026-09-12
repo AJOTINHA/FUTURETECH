@@ -68,7 +68,10 @@ public final class ElectricFurnaceMenu extends MachineMenu implements SideConfig
     public int energyCapacity() { return CAPACITY; }
 
     @Override
-    public int energyUsagePerTick() { return ENERGY_PER_TICK; }
+    public int energyRatePerTick() { return ENERGY_PER_TICK; }
+
+    @Override
+    public EnergyInfoMenu.Kind kind() { return EnergyInfoMenu.Kind.CONSUMER; }
 
     public int progress() { return data.get(DATA_PROGRESS); }
 

@@ -43,5 +43,8 @@
   "gui.futuretech.info.usage": "Power usage:",
   "gui.futuretech.info.maximum": "Maximum power:",
   "gui.futuretech.info.stored": "Energy stored:",
-  "gui.futuretech.info.amount": "%s FE"
+  "gui.futuretech.info.amount": "%s FE",
+  "gui.futuretech.info.generation": "Power generation:",
+  "gui.futuretech.info.maximum_generation": "Maximum generation:",
+  "gui.futuretech.info.maximum_output": "Maximum output:"
 }

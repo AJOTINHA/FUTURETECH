@@ -6,9 +6,13 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
+
 /**
- * Read-only energy readout for the left edge of a machine screen: what the machine is drawing, the
- * most it can draw and what is left in its buffer. Nothing here is clickable.
+ * Read-only energy readout for the left edge of a machine screen: what the machine is drawing or
+ * making, the most it can move and what is left in its buffer. Nothing here is clickable.
  */
 public final class EnergyInfoTab extends MachineTab {
     /** Drop from a label to its value. */
@@ -19,32 +23,43 @@ public final class EnergyInfoTab extends MachineTab {
     private static final int PAIR_GAP = 3;
     private static final int LABEL_COLOR = 0xFF56616D;
 
-    private final EnergyInfoMenu menu;
+    /**
+     * @param widest the longest this row's value can ever be, so the panel is sized once instead of
+     *               resizing itself as the numbers move
+     */
+    private record Row(Component label, Component widest, Supplier<Component> value) {}
+
+    private final List<Row> rows;
 
     public EnergyInfoTab(EnergyInfoMenu menu, Font font) {
         super(font, Side.LEFT);
-        this.menu = menu;
+        // Rates and the capacity are fixed per machine, so the rows are built once.
+        boolean generator = menu.kind() == EnergyInfoMenu.Kind.GENERATOR;
+        int rate = menu.energyRatePerTick();
+        int output = menu.energyOutputPerTick();
+        rows = new ArrayList<>(4);
+        rows.add(new Row(label(generator ? "generation" : "usage"), rate(rate),
+                // Idle machines move nothing, so this line drops to zero while the maximum stays put.
+                () -> rate(menu.isWorking() ? rate : 0)));
+        rows.add(new Row(label(generator ? "maximum_generation" : "maximum"), rate(rate), () -> rate(rate)));
+        if (output > 0) rows.add(new Row(label("maximum_output"), rate(output), () -> rate(output)));
+        rows.add(new Row(label("stored"), amount(menu.energyCapacity()), () -> amount(menu.energyStored())));
     }
 
     @Override
     protected Component title() { return Component.translatable("gui.futuretech.info"); }
 
-    /**
-     * Sized for the widest text the tab can ever show — the maximum draw and a full buffer — so the
-     * panel does not resize itself as the numbers move.
-     */
     @Override
     protected int contentWidth() {
         int widest = 0;
-        for (String key : new String[] {"usage", "maximum", "stored"}) {
-            widest = Math.max(widest, font.width(label(key)));
+        for (Row row : rows) {
+            widest = Math.max(widest, Math.max(font.width(row.label()), INDENT + font.width(row.widest())));
         }
-        widest = Math.max(widest, INDENT + font.width(rate(menu.energyUsagePerTick())));
-        return Math.max(widest, INDENT + font.width(amount(menu.energyCapacity())));
+        return widest;
     }
 
     @Override
-    protected int contentHeight() { return pairY(2) + VALUE_DROP + font.lineHeight; }
+    protected int contentHeight() { return pairY(rows.size() - 1) + VALUE_DROP + font.lineHeight; }
 
     @Override
     protected void drawIcon(GuiGraphicsExtractor graphics, int x, int y) {
@@ -69,16 +84,12 @@ public final class EnergyInfoTab extends MachineTab {
 
     @Override
     protected void drawContent(GuiGraphicsExtractor graphics, int contentX, int contentY, int mouseX, int mouseY) {
-        // Idle machines draw nothing, so the usage line drops to zero while the maximum stays put.
-        drawPair(graphics, contentX, contentY + pairY(0), "usage",
-                rate(menu.isWorking() ? menu.energyUsagePerTick() : 0));
-        drawPair(graphics, contentX, contentY + pairY(1), "maximum", rate(menu.energyUsagePerTick()));
-        drawPair(graphics, contentX, contentY + pairY(2), "stored", amount(menu.energyStored()));
-    }
-
-    private void drawPair(GuiGraphicsExtractor graphics, int x, int y, String key, Component value) {
-        graphics.text(font, label(key), x, y, LABEL_COLOR, false);
-        graphics.text(font, value, x + INDENT, y + VALUE_DROP, TEXT_COLOR, false);
+        for (int index = 0; index < rows.size(); index++) {
+            Row row = rows.get(index);
+            int y = contentY + pairY(index);
+            graphics.text(font, row.label(), contentX, y, LABEL_COLOR, false);
+            graphics.text(font, row.value().get(), contentX + INDENT, y + VALUE_DROP, TEXT_COLOR, false);
+        }
     }
 
     private int pairY(int index) { return index * (VALUE_DROP + font.lineHeight + PAIR_GAP); }
