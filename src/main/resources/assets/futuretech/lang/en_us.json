@@ -38,5 +38,10 @@
   "gui.futuretech.auto.push": "Push items",
   "gui.futuretech.auto.push.desc": "Hands results to whatever sits against an Output face",
   "gui.futuretech.auto.on": "On",
-  "gui.futuretech.auto.off": "Off"
+  "gui.futuretech.auto.off": "Off",
+  "gui.futuretech.info": "Information",
+  "gui.futuretech.info.usage": "Power usage:",
+  "gui.futuretech.info.maximum": "Maximum power:",
+  "gui.futuretech.info.stored": "Energy stored:",
+  "gui.futuretech.info.amount": "%s FE"
 }

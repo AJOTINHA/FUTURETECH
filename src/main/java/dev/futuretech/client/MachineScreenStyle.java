@@ -11,7 +11,7 @@ public final class MachineScreenStyle {
     static final int TITLE = 0xFFFFFFFF;
     static final int BAR_BACK = 0xFF283541;
     static final int ENERGY_START = 0xFF1676C4;
-    static final int ENERGY_END = 0xFF55E7ED;
+    public static final int ENERGY_END = 0xFF55E7ED;
 
     public static void drawPanel(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
         // Small pixel steps reproduce vanilla-style corners without rounded panels.

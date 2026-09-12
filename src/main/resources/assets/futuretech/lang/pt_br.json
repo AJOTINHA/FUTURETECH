@@ -38,5 +38,10 @@
   "gui.futuretech.auto.push": "Empurrar itens",
   "gui.futuretech.auto.push.desc": "Entrega o resultado ao que estiver encostado numa face de Saída",
   "gui.futuretech.auto.on": "Ligado",
-  "gui.futuretech.auto.off": "Desligado"
+  "gui.futuretech.auto.off": "Desligado",
+  "gui.futuretech.info": "Informações",
+  "gui.futuretech.info.usage": "Consumo de energia:",
+  "gui.futuretech.info.maximum": "Potência máxima:",
+  "gui.futuretech.info.stored": "Energia armazenada:",
+  "gui.futuretech.info.amount": "%s FE"
 }

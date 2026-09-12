@@ -2,6 +2,7 @@ package dev.futuretech.menu;
 
 import static dev.futuretech.block.entity.ElectricFurnaceBlockEntity.*;
 
+import dev.futuretech.api.gui.EnergyInfoMenu;
 import dev.futuretech.api.redstone.RedstoneControlMenu;
 import dev.futuretech.api.redstone.RedstoneControllable;
 import dev.futuretech.api.redstone.RedstoneMode;
@@ -28,7 +29,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Set;
 
-public final class ElectricFurnaceMenu extends MachineMenu implements SideConfigMenu, RedstoneControlMenu {
+public final class ElectricFurnaceMenu extends MachineMenu implements SideConfigMenu, RedstoneControlMenu, EnergyInfoMenu {
     private final Container contents;
     private final ContainerData data;
 
@@ -60,9 +61,20 @@ public final class ElectricFurnaceMenu extends MachineMenu implements SideConfig
         if (contents instanceof ElectricFurnaceBlockEntity) markSynced();
     }
 
+    @Override
     public int energyStored() { return EnergySync.unpack(data.get(DATA_ENERGY_LOW), data.get(DATA_ENERGY_HIGH)); }
+
+    @Override
+    public int energyCapacity() { return CAPACITY; }
+
+    @Override
+    public int energyUsagePerTick() { return ENERGY_PER_TICK; }
+
     public int progress() { return data.get(DATA_PROGRESS); }
+
     public int progressTotal() { return Math.max(1, data.get(DATA_PROGRESS_TOTAL)); }
+
+    @Override
     public boolean isWorking() { return data.get(DATA_WORKING) != 0; }
 
     @Override
