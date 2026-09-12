@@ -42,6 +42,9 @@ public final class BatteryScreen extends AbstractContainerScreen<BatteryMenu> {
     @Override
     protected void extractTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         super.extractTooltip(graphics, mouseX, mouseY);
+        // Same outer box the bar's backing plate fills.
+        energyTooltip(graphics, mouseX, mouseY, leftPos + 7, topPos + 38, 162, 14,
+                menu.energyStored(), menu.tier().capacity());
         tabs.extractTooltip(graphics, mouseX, mouseY);
     }
 

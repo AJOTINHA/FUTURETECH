@@ -50,8 +50,9 @@ public final class ElectricFurnaceMenu extends MachineMenu implements SideConfig
         checkContainerDataCount(data, DATA_COUNT);
         this.contents = contents;
         this.data = data;
-        addSlot(new Slot(contents, SLOT_INPUT, 8, 45));
-        addSlot(new Slot(contents, SLOT_OUTPUT, 35, 45) {
+        // The pair straddles the panel's centre line, leaving room for progress between them.
+        addSlot(new Slot(contents, SLOT_INPUT, 56, 45));
+        addSlot(new Slot(contents, SLOT_OUTPUT, 104, 45) {
             @Override
             public boolean mayPlace(ItemStack stack) { return false; }
         });
