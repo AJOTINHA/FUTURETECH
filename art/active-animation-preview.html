@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="pt-BR"><meta charset="utf-8"><title>Frentes animadas</title>
+<style>
+body{margin:0;background:#20242a;color:#eee;font:18px system-ui;display:flex;justify-content:center;gap:48px;align-items:center;min-height:100vh}
+figure{margin:0;text-align:center}figcaption{margin-top:18px}
+.face{width:256px;height:256px;background-size:256px 4096px;image-rendering:pixelated;animation:frames 1.6s steps(16) infinite}
+@keyframes frames{to{background-position-y:-4096px}}
+</style>
+<figure><div class="face" style="background-image:url('../src/main/resources/assets/futuretech/textures/block/electric_furnace_front_on.png')"></div><figcaption>Fornalha ligada</figcaption></figure>
+<figure><div class="face" style="background-image:url('../src/main/resources/assets/futuretech/textures/block/solid_fuel_generator_front_on.png')"></div><figcaption>Gerador ligado</figcaption></figure>
+</html>

@@ -1,0 +1,16 @@
+{
+  "sources": [
+    {
+      "type": "single",
+      "resource": "futuretech:block/machine_side_input"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/machine_side_output"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/machine_side_input_output"
+    }
+  ]
+}

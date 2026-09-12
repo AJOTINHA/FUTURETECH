@@ -184,12 +184,12 @@ class BatteryTest {
         var east = new BatteryBlockEntity(BlockPos.ZERO, state.setValue(BatteryBlock.FACING, Direction.EAST));
         assertEquals(Direction.EAST, east.front());
         for (Direction side : Direction.values()) {
-            assertFalse(east.sideConfig().allowsInput(side), side.toString());
-            assertFalse(east.sideConfig().allowsOutput(side), side.toString());
+            assertFalse(east.sideConfig().allowsEnergyInput(side), side.toString());
+            assertFalse(east.sideConfig().allowsEnergyOutput(side), side.toString());
         }
         // The machine's own sideless access is never blocked by the configuration.
-        assertTrue(east.sideConfig().allowsInput(null));
-        assertTrue(east.sideConfig().allowsOutput(null));
+        assertTrue(east.sideConfig().allowsEnergyInput(null));
+        assertTrue(east.sideConfig().allowsEnergyOutput(null));
     }
 
     @Test

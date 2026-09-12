@@ -5,6 +5,7 @@ import dev.futuretech.block.BatteryBlock;
 import dev.futuretech.block.BatteryTier;
 import dev.futuretech.block.CableBlock;
 import dev.futuretech.block.CableTier;
+import dev.futuretech.block.ElectricFurnaceBlock;
 import dev.futuretech.block.SolidFuelGeneratorBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
@@ -29,6 +30,14 @@ public final class ModBlocks {
                     .sound(SoundType.METAL)
                     .requiresCorrectToolForDrops()
                     .lightLevel(state -> state.getValue(SolidFuelGeneratorBlock.LIT) ? 10 : 0));
+
+    public static final DeferredBlock<ElectricFurnaceBlock> ELECTRIC_FURNACE = BLOCKS.registerBlock(
+            "electric_furnace", ElectricFurnaceBlock::new, properties -> properties
+                    .mapColor(MapColor.METAL)
+                    .strength(3.5F, 6.0F)
+                    .sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops()
+                    .lightLevel(state -> state.getValue(ElectricFurnaceBlock.LIT) ? 10 : 0));
 
     public static final DeferredBlock<BatteryBlock> BATTERY_MK1 = registerBattery(BatteryTier.MK1);
 

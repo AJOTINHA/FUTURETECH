@@ -76,6 +76,18 @@ public final class SolidFuelGeneratorMenu extends MachineMenu implements SideCon
     }
 
     @Override
+    public boolean supportsAutoPull() { return ModBlocks.SOLID_FUEL_GENERATOR.get().supportsAutoPull(); }
+
+    @Override
+    public boolean supportsAutoPush() { return ModBlocks.SOLID_FUEL_GENERATOR.get().supportsAutoPush(); }
+
+    @Override
+    public boolean isAutoPulling() { return data.get(DATA_AUTO_BASE) != 0; }
+
+    @Override
+    public boolean isAutoPushing() { return data.get(DATA_AUTO_BASE + 1) != 0; }
+
+    @Override
     public RedstoneMode redstoneMode() { return RedstoneMode.byOrdinal(data.get(DATA_REDSTONE_BASE)); }
 
     @Override

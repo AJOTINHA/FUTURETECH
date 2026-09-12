@@ -6,7 +6,7 @@ Mod de máquinas, energia e automação industrial para **Minecraft Java 26.2**,
 
 Versão `0.5.0`, com identificação `futuretech`, aba criativa própria e traduções em português e inglês.
 
-A **Carcaça de Máquina** está registrada na aba FUTURETECH. Usa provisoriamente a textura de bloco de ferro do Minecraft e pode ser fabricada com oito barras de ferro ao redor de um espaço vazio. Requer picareta de pedra ou superior para soltar o item.
+A **Carcaça de Máquina** está registrada na aba FUTURETECH. Usa a textura padrão `machine_side` nas seis faces, a mesma usada nos cinco lados não frontais das máquinas, e pode ser fabricada com oito barras de ferro ao redor de um espaço vazio. Requer picareta de pedra ou superior para soltar o item.
 
 O **Gerador a Combustível Sólido** é a primeira máquina funcional. Clique com o botão direito para abrir sua interface e coloque carvão, carvão vegetal ou um combustível de madeira no slot. Aceita troncos, madeiras descascadas, tábuas, gravetos, ferramentas de madeira, portas, cercas, escadas, lajes, placas, barcos, baús e outros itens de madeira, incluindo bambu e madeiras do Nether. Também é possível usar Shift + clique para mover combustível do inventário.
 
@@ -17,7 +17,7 @@ O nome acima do slot acompanha o item inserido e o idioma do jogo. Quando o slot
 - Os combustíveis de madeira usam a duração da fornalha quando disponível: troncos e tábuas geram normalmente **6.000 FE**, lajes **3.000 FE** e gravetos **2.000 FE**. Peças de madeira sem valor de fornalha, como as do Nether, recebem uma duração por categoria.
 - A barra de queima acompanha a duração do combustível em uso, mesmo após salvar e carregar o mundo.
 - Armazena **20.000 FE** e pausa quando não há espaço para mais um tick de geração; o combustível em queima fica preservado.
-- Envia automaticamente até **80 FE/t**, no total, para blocos adjacentes que aceitem energia pela API do NeoForge. Todas as faces oferecem saída; o gerador não recebe energia. O limite vale por tick e não por chamada: blocos vizinhos que puxem energia por conta própria dividem os mesmos 80 FE/t com o envio automático.
+- Envia automaticamente até **80 FE/t**, no total, para blocos adjacentes que aceitem energia pela API do NeoForge. Todas as faces entregam energia sem precisar de configuração, inclusive as que estão em Nenhum; o gerador não recebe energia. A configuração de lado do gerador serve só para escolher por onde entra combustível. O limite vale por tick e não por chamada: blocos vizinhos que puxem energia por conta própria dividem os mesmos 80 FE/t com o envio automático.
 - Salva energia, combustível e progresso de queima ao sair do mundo ou descarregar o chunk.
 - Mostra energia e geração atual na interface. A frente acende durante a geração; um comparador mede o nível da reserva.
 - A energia é sincronizada para a interface em duas metades de 16 bits, então capacidades acima de 32.767 FE (como a futura bateria) não estouram o pacote de dados do menu.
@@ -31,14 +31,14 @@ Fornalha  Carcaça    Fornalha
 Ferro     Redstone   Ferro
 ```
 
-O visual do gerador reutiliza provisoriamente texturas de ferro e do alto-forno do Minecraft. Ao quebrá-lo com picareta de pedra ou superior, ele solta o bloco e o combustível restante no inventário; a energia e o combustível já em queima não são preservados no item.
+O gerador usa texturas próprias de 32 × 32 pixels, com carcaça de aço cinza, moldura escura, detalhes discretos em azul e uma abertura que acende em laranja durante a geração. O visual industrial simples é inspirado no Thermal Expansion. Ao quebrá-lo com picareta de pedra ou superior, ele solta o bloco e o combustível restante no inventário; a energia e o combustível já em queima não são preservados no item.
 
 A lista de peças de madeira é extensível pela tag de itens `futuretech:generator_wooden_fuels`, que inclui as categorias de madeira do Minecraft. Madeiras de outros mods que pertençam a essas tags também são aceitas; itens adicionais podem ser incluídos por datapack. Itens que só contêm madeira em parte (camas, estandartes, tochas, quadros, molduras, jukebox, sensor de luz e colmeias naturais) ficam de fora de propósito.
 
 A **Bateria MK1** (`futuretech:battery_mk1`) armazena a energia do gerador. Clique com o botão direito para ver a reserva e as taxas de entrada e saída do último tick.
 
 - Armazena **100.000 FE**; recebe e envia até **200 FE/t** cada, por tick e não por chamada.
-- Cada face é configurável (veja "Configuração de lados"); a frente, marcada com cobre e virada para o jogador ao colocar, é a referência do painel. Uma face de bateria nunca é entrada e saída ao mesmo tempo, para um cabo não devolver à bateria a energia dela mesma. Uma bateria nunca envia diretamente para outra bateria.
+- Cada face é configurável (veja "Configuração de lados"); a frente, marcada com um símbolo azul de bateria e virada para o jogador ao colocar, é a referência do painel. Uma face de bateria nunca é entrada e saída ao mesmo tempo, para um cabo não devolver à bateria a energia dela mesma. Uma bateria nunca envia diretamente para outra bateria.
 - Ao quebrar, o item sai com a carga guardada num componente de dados (`futuretech:energy`); a tooltip mostra "x / 100000 FE" e o item exibe uma barra de carga. Ao colocar de novo, a energia volta para o bloco. Baterias vazias não carregam o componente e continuam empilháveis.
 - Um comparador mede o nível da reserva.
 
@@ -50,14 +50,14 @@ Redstone  Carcaça    Redstone
 Ferro     Ouro       Ferro
 ```
 
-O visual da bateria MK1 reutiliza provisoriamente texturas de ferro e cobre cortado do Minecraft.
+A bateria MK1 usa texturas próprias e opacas de 32 × 32 pixels, com símbolo azul de bateria e pequenos contatos de cobre na frente. Gerador e bateria compartilham o modelo `machine_base`: topo, base, laterais e traseira usam a mesma textura `machine_side`, com chapa cinza lisa, moldura escura e parafusos nos cantos, sem linha interna ou grade. Só a frente muda entre as máquinas. Novas máquinas podem herdar esse modelo e definir apenas a textura frontal. O símbolo frontal da bateria é decorativo; a carga real continua visível na interface e no item.
 
 Todas as baterias compartilham as mesmas classes (`BatteryBlock`, `BatteryBlockEntity`, `BatteryBlockItem`, `BatteryMenu`, `BatteryScreen`); o que muda entre elas é o `BatteryTier`, que define capacidade e taxa por tick. Uma nova bateria é uma constante no enum, um bloco e um item registrados a partir dela, e os JSONs de recurso.
 
 O **Cabo MK1** (`futuretech:cable_mk1`) transporta energia entre blocos que não estão encostados. Cabos que se tocam formam uma rede única.
 
 - A rede inteira move até **400 FE/t**, no total, e guarda no máximo um tick de energia; quando não há para onde enviar, ela recusa novas inserções e o bloco de origem fica com a energia.
-- Funciona por "empurrão", igual ao gerador e à bateria: qualquer bloco vizinho que envie energia para um cabo alimenta a rede, e a rede reparte o que tem em rodízio entre todos os blocos vizinhos que aceitam energia. A rede nunca devolve energia pela face de um bloco que está tentando inserir nela, mesmo quando a inserção é recusada por o buffer estar cheio. Faces configuradas como "Nenhum" não se conectam a cabos.
+- Funciona por "empurrão", igual ao gerador e à bateria: qualquer bloco vizinho que envie energia para um cabo alimenta a rede, e a rede reparte o que tem em rodízio entre todos os blocos vizinhos que aceitam energia. A rede nunca devolve energia para um bloco que está tentando inserir nela, mesmo quando a inserção é recusada por o buffer estar cheio, e mesmo que esse bloco encoste na rede por mais de uma face. Isso é o que impede uma bateria com uma face de saída e outra de entrada na mesma rede de ficar recebendo a própria energia de volta a cada tick. Faces configuradas como "Nenhum" não se conectam a cabos.
 - Os braços do cabo aparecem para outros cabos e para qualquer bloco com capacidade de energia naquele lado, inclusive máquinas de outros mods.
 - A rede é recalculada quando um cabo é colocado ou quebrado; quebrar um cabo no meio divide a rede em duas.
 - Sem tratamento de energia guardada no item: o cabo é um bloco simples, quebrável com qualquer picareta ou à mão.
@@ -72,15 +72,74 @@ Cobre     Cobre     Cobre
 
 Como nas baterias, todos os cabos compartilham as mesmas classes (`CableBlock`, `CableBlockEntity`, `CableNetwork`); o `CableTier` define o throughput. Cabos de tiers diferentes se conectam, e a rede assume o menor throughput entre eles. O visual reutiliza provisoriamente a textura de cobre cortado do Minecraft.
 
+A **Fornalha Elétrica** (`futuretech:electric_furnace`) é a primeira máquina que consome energia. Ela funde exatamente o que uma fornalha comum funde, sem combustível e no dobro da velocidade.
+
+- Buffer de **20.000 FE**, recebendo até **200 FE/t**. Nunca entrega energia: cada face é Entrada ou Nenhum.
+- Gasta **20 FE/t** enquanto trabalha, e leva metade do tempo de cozimento da receita — 100 ticks nos 200 ticks padrão. Um gerador a combustível sólido no talo sustenta exatamente uma fornalha.
+- Sem energia ela para e a barra recua aos poucos, como uma fornalha esfriando; o progresso não zera de uma vez e o item continua no slot.
+- Slot de entrada à esquerda, saída à direita. A saída não aceita itens colocados à mão.
+- Automatizável com funis, mas as faces não são fixas: configure Entrada onde o ingrediente entra e Saída onde o resultado sai (veja "Configuração de lados"). Uma máquina recém-colocada está fechada para itens. Como na fornalha comum, o slot de entrada aceita qualquer item — a consulta de receita precisa do servidor, então a checagem acontece na hora de fundir.
+- Tem as mesmas abas de Melhorias, Configuração e Redstone das outras máquinas, e um comparador mede a energia guardada.
+- Ao quebrar, solta o bloco e os itens dentro; a energia guardada não é preservada.
+
+A receita gasta uma fornalha, quatro lingotes de ferro, dois de cobre, uma carcaça e um pó de redstone:
+
+```text
+Ferro     Fornalha  Ferro
+Cobre     Carcaça   Cobre
+Ferro     Redstone  Ferro
+```
+
+O bloco herda o modelo `machine_base`, com a textura `machine_side` nas cinco faces não frontais. A frente própria tem versões desligada e ligada, com porta metálica, duas resistências e visor azul. Fornalha e gerador ligados usam animações de 16 quadros de 32 × 32 pixels: o aquecimento varia e um brilho percorre o visor azul, mantendo a carcaça parada. As versões desligadas são estáticas.
+
+As fontes e os exportadores PowerShell ficam em `art/`. Execute `art/electric_furnace/Export-Textures.ps1` ou `art/solid_fuel_generator/Export-Textures.ps1` para recriar as frentes e os arquivos `.png.mcmeta`. Os dois usam `art/Export-ActiveAnimation.ps1` e a paleta compartilhada de `art/StatusDisplay.ps1`. A prévia animada está em `art/active-animation-preview.html`.
+
 ## Configuração de lados
 
-Toda máquina tem, na lateral direita da interface, a aba **Configuração** (segunda da tira, abaixo de Melhorias): o cubo desdobrado com as seis faces do bloco, desenhadas com as texturas reais e nomeadas em relação à frente (Frente, Trás, Esquerda, Direita, Cima, Baixo). Clicar numa face alterna o modo dela — **Entrada → Saída → Entrada e saída → Nenhum** — pulando os modos que aquela máquina não permite. A borda da face mostra o modo (azul entrada, laranja saída, verde ambos, cinza nenhum), e o tooltip diz o nome e o modo.
+Toda máquina tem, na lateral direita da interface, a aba **Configuração** (ícone de cubo desdobrado). Ela mostra as seis faces do bloco com as texturas reais, a frente no meio, e os lados nomeados como quem olha de frente para a máquina.
 
-- Toda máquina nova é colocada com **todas as faces em Nenhum**; o jogador abre as faces que quer usar.
-- **Shift + clique na Frente** volta todas as faces para Nenhum.
-- Gerador: cada face é Saída ou Nenhum (ele só produz).
-- Bateria: Entrada, Saída ou Nenhum; nunca ambos na mesma face.
-- Faces em Nenhum não oferecem energia a vizinhos nem se conectam a cabos; a configuração é salva com o bloco.
+O modo de uma face **sempre** decide os itens. Se ele também decide a energia depende da máquina:
+
+| | itens | energia |
+|---|---|---|
+| **Máquinas** (fornalha) | o modo decide | livre — recebe por qualquer face, não precisa configurar |
+| **Gerador** | Entrada aceita combustível | livre — envia por qualquer face, mesmo em Nenhum |
+| **Bateria** | o modo decide (quando tiver slot) | **o modo decide** — Entrada carrega, Saída descarrega |
+
+A ideia é não fazer o jogador configurar energia à toa: uma máquina liga em qualquer lado e um gerador alimenta o que estiver encostado. Na bateria é o contrário, porque escolher por onde a energia entra e sai é a função dela; uma face em Nenhum não carrega nem descarrega.
+
+- Clicar numa face avança o modo: Entrada → Saída → Ambos → Nenhum, pulando os que a máquina não permite.
+- Shift + clique na frente põe todas as faces em Nenhum.
+- Faces em Nenhum não oferecem a capability de itens ao vizinho e somem para os funis.
+- A configuração é salva com o bloco.
+
+Modos por máquina:
+
+| máquina | modos | por quê |
+|---|---|---|
+| Gerador | Entrada, Nenhum | só tem slot de combustível, e não produz item de resultado |
+| Bateria | Entrada, Saída, Nenhum | direção da energia; nunca Ambos, para não devolver energia a si mesma |
+| Fornalha | Entrada, Saída, Ambos, Nenhum | ingrediente entra, resultado sai, ou os dois na mesma face |
+
+- Faces configuradas usam a textura do modo, no mundo e na aba: **Entrada** com detalhes azuis (`machine_side_input`), **Saída** com detalhes laranja (`machine_side_output`) e **Ambos** combinando as duas cores (`machine_side_input_output`). Faces em Nenhum mantêm a lateral normal. Vale também para a frente, se ela for configurada.
+- A aparência é sincronizada para os jogadores próximos e restaurada ao carregar o mundo.
+
+### Transporte automático
+
+Máquinas com inventário ganham dois botões na lateral esquerda da aba, desenhados nas mesmas cores dos modos:
+
+- **Seta azul para baixo — Puxar itens.** A máquina tira itens por conta própria de qualquer baú, máquina ou tubo encostado numa face configurada como **Entrada**.
+- **Seta laranja para cima — Empurrar itens.** A máquina entrega o resultado a qualquer baú, máquina ou tubo encostado numa face configurada como **Saída**.
+
+Os dois começam **desligados**, então uma máquina recém-colocada nunca mexe num vizinho sem você mandar. Cada um move até **4 itens por tick**, no total, com a primeira face sorteada a cada tick para uma vizinha ocupada não travar as outras — o mesmo rodízio que o envio de energia usa.
+
+O transporte respeita as mesmas regras de face do funil: uma face em Entrada só recebe, uma em Saída só entrega, e uma em Nenhum não faz nem uma coisa nem outra. Ligar o botão sem configurar face nenhuma não faz nada.
+
+Quais botões aparecem depende da máquina: a fornalha tem os dois, o gerador só o de puxar (ele consome combustível mas não produz item), e a bateria nenhum, por não ter inventário.
+
+Os funis seguem a configuração em vez de faces fixas: uma face em Entrada aceita item no slot de entrada, uma em Saída deixa puxar do slot de resultado, e uma em Ambos faz as duas coisas. A mesma configuração alimenta `Capabilities.Item.BLOCK`, então tubos e máquinas de outros mods enxergam exatamente o mesmo que um funil.
+
+A API fica em `dev.futuretech.api.side` e é reaproveitável por qualquer máquina nova: o bloco implementa `SideConfigurableBlock` (modos permitidos, padrões por face, estado para desenhar), o block entity implementa `SideConfigurable` e guarda um `SideConfig` (salvo/carregado e exposto em slots de dados do menu), o menu implementa `SideConfigMenu` e encaminha `clickMenuButton` para `SideConfigMenu.handleButton`, as capabilities passam por `SidedEnergy.view` e `SidedItems.view`, e a tela coloca um `SideConfigTab` no seu `TabStrip`. O construtor do `SideConfig` recebe se aquela máquina deixa a configuração governar energia. Os cliques viajam pelo pacote vanilla de botão de menu, sem rede própria.
 
 ## Controle de redstone
 
@@ -95,8 +154,6 @@ Como os slots de menu têm posição fixa, a aba de melhorias é a primeira da t
 A API fica em `dev.futuretech.api.redstone` (`RedstoneMode`, `RedstoneControl`, `RedstoneControllable`, `RedstoneControlMenu`, `RedstoneControlTab`) e segue o mesmo desenho da configuração de lados. As abas em si vêm de `dev.futuretech.api.gui` (`MachineTab`, `TabStrip`): uma tela cria um `TabStrip` com as abas que quiser e repassa desenho, tooltip e cliques; abas abertas empurram as de baixo.
 
 A API fica em `dev.futuretech.api.side` e é reaproveitável por qualquer máquina nova: o bloco implementa `SideConfigurableBlock` (modos permitidos, padrões por face, estado para desenhar), o block entity implementa `SideConfigurable` e guarda um `SideConfig` (salvo/carregado e exposto em slots de dados do menu), o menu implementa `SideConfigMenu` e encaminha `clickMenuButton` para `SideConfigMenu.handleButton`, a capability de energia passa por `SidedEnergy.view`, e a tela coloca um `SideConfigTab` no seu `TabStrip`. Os cliques viajam pelo pacote vanilla de botão de menu, sem rede própria.
-
-A fornalha elétrica ainda não está implementada.
 
 ## Desenvolvimento no Windows
 
@@ -123,7 +180,7 @@ O destino pode ser alterado pela propriedade `prism_mods_dir` em `gradle.propert
 
 ## Próximas etapas
 
-1. Fornalha elétrica para consumir energia no processamento de itens.
+1. Tiers de máquina (velocidade e buffer) reaproveitando o padrão de `BatteryTier` e `CableTier`.
 
 ## Origem
 

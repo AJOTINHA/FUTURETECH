@@ -13,8 +13,12 @@ import java.util.Set;
 import java.util.function.Function;
 
 /**
- * Per-face energy modes of one machine. The machine decides which modes it allows and what each
- * face starts as; players cycle faces through the allowed modes from the machine's screen.
+ * Per-face modes of one machine. A mode always decides what items may cross that face.
+ *
+ * <p>Whether it also decides energy depends on the machine. Machines and generators leave energy
+ * unconfigured: a machine draws power from any side and a generator pushes power out of any side,
+ * so the player only ever configures items on them. A battery is the exception - moving energy is
+ * its whole job - so there the same mode governs energy too.
  */
 public final class SideConfig {
     /** Order a face moves through when clicked; modes the machine does not allow are skipped. */
@@ -25,22 +29,47 @@ public final class SideConfig {
     private static final Codec<Map<Direction, SideMode>> CODEC = Codec.unboundedMap(Direction.CODEC, SideMode.CODEC);
 
     private final Set<SideMode> allowed;
+    private final boolean governsEnergy;
     private final EnumMap<Direction, SideMode> modes = new EnumMap<>(Direction.class);
 
+    /** A configuration that only governs items; energy flows through every face untouched. */
     public SideConfig(Set<SideMode> allowed, Function<Direction, SideMode> defaults) {
+        this(allowed, false, defaults);
+    }
+
+    /**
+     * @param governsEnergy true when a face's mode also decides which way energy may flow, as on a
+     *                      battery; false when energy ignores the configuration, as on every machine
+     */
+    public SideConfig(Set<SideMode> allowed, boolean governsEnergy, Function<Direction, SideMode> defaults) {
         if (allowed.isEmpty()) throw new IllegalArgumentException("A side config needs at least one allowed mode");
         this.allowed = Set.copyOf(allowed);
+        this.governsEnergy = governsEnergy;
         for (Direction side : Direction.values()) set(side, defaults.apply(side));
     }
+
+    /** Whether the face modes decide energy flow as well as items. */
+    public boolean governsEnergy() { return governsEnergy; }
 
     public Set<SideMode> allowed() { return allowed; }
 
     public SideMode mode(Direction side) { return modes.get(side); }
 
-    /** Sideless access (context {@code null}) is unrestricted; it is how the machine itself reaches its buffer. */
-    public boolean allowsInput(@Nullable Direction side) { return side == null || modes.get(side).allowsInput(); }
+    /** Items this face lets in. Sideless access (context {@code null}) is the machine's own, unrestricted. */
+    public boolean allowsItemInput(@Nullable Direction side) { return side == null || modes.get(side).allowsInput(); }
 
-    public boolean allowsOutput(@Nullable Direction side) { return side == null || modes.get(side).allowsOutput(); }
+    /** Items this face lets out. */
+    public boolean allowsItemOutput(@Nullable Direction side) { return side == null || modes.get(side).allowsOutput(); }
+
+    /** Energy this face lets in; unconfigured machines take power from any side. */
+    public boolean allowsEnergyInput(@Nullable Direction side) {
+        return side == null || !governsEnergy || modes.get(side).allowsInput();
+    }
+
+    /** Energy this face lets out; unconfigured generators push power out of any side. */
+    public boolean allowsEnergyOutput(@Nullable Direction side) {
+        return side == null || !governsEnergy || modes.get(side).allowsOutput();
+    }
 
     public void set(Direction side, SideMode mode) {
         if (!allowed.contains(mode)) {

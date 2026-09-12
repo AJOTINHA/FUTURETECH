@@ -5,6 +5,7 @@ import dev.futuretech.api.redstone.RedstoneControllable;
 import dev.futuretech.api.upgrade.UpgradeInventory;
 import dev.futuretech.api.upgrade.Upgradeable;
 import dev.futuretech.api.side.SideConfig;
+import dev.futuretech.api.side.SideConfigVisuals;
 import dev.futuretech.api.side.SideConfigurable;
 import dev.futuretech.block.BatteryBlock;
 import dev.futuretech.block.BatteryTier;
@@ -16,6 +17,11 @@ import dev.futuretech.registry.ModBlockEntities;
 import dev.futuretech.registry.ModBlocks;
 import dev.futuretech.registry.ModDataComponents;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.neoforged.neoforge.model.data.ModelData;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentMap;
@@ -94,6 +100,24 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
     public SideConfig sideConfig() { return sides; }
 
     @Override
+    public ModelData getModelData() { return SideConfigVisuals.modelData(sides); }
+
+    @Override
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) { return SideConfigVisuals.updateTag(sides); }
+
+    @Override
+    public ClientboundBlockEntityDataPacket getUpdatePacket() { return ClientboundBlockEntityDataPacket.create(this); }
+
+    @Override
+    public void handleUpdateTag(ValueInput input) {
+        sides.load(input);
+        SideConfigVisuals.refresh(this);
+    }
+
+    @Override
+    public void onDataPacket(Connection connection, ValueInput input) { handleUpdateTag(input); }
+
+    @Override
     public RedstoneControl redstoneControl() { return redstone; }
 
     @Override
@@ -113,6 +137,7 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
         setChanged();
         // Cables and capability caches next to us must see the new face modes.
         invalidateCapabilities();
+        SideConfigVisuals.refresh(this);
         if (level != null) getBlockState().updateNeighbourShapes(level, worldPosition, Block.UPDATE_ALL);
     }
 
@@ -149,7 +174,7 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
 
     private void exportEnergy(Level level, BlockPos pos) {
         // Only output faces push, and never straight into another battery.
-        EnergyNetworkUtil.pushToNeighbours(level, pos, energy, side -> sides.allowsOutput(side)
+        EnergyNetworkUtil.pushToNeighbours(level, pos, energy, side -> sides.allowsEnergyOutput(side)
                 && !(level.getBlockEntity(pos.relative(side)) instanceof BatteryBlockEntity));
     }
 

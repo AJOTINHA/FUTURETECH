@@ -70,6 +70,19 @@ public final class BatteryMenu extends MachineMenu implements SideConfigMenu, Re
     @Override
     public Set<SideMode> allowedModes() { return ModBlocks.BATTERY_MK1.get().allowedSideModes(); }
 
+    // A battery holds no items, so it offers neither toggle.
+    @Override
+    public boolean supportsAutoPull() { return false; }
+
+    @Override
+    public boolean supportsAutoPush() { return false; }
+
+    @Override
+    public boolean isAutoPulling() { return false; }
+
+    @Override
+    public boolean isAutoPushing() { return false; }
+
     @Override
     public RedstoneMode redstoneMode() { return RedstoneMode.byOrdinal(data.get(DATA_REDSTONE_BASE)); }
 

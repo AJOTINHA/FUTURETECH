@@ -14,4 +14,10 @@ public interface SideConfigurableBlock {
 
     /** State used to draw the six face textures for a machine whose front points {@code front}. */
     BlockState displayState(Direction front);
+
+    /** Whether this machine can take items from whatever sits against an input face. */
+    default boolean supportsAutoPull() { return false; }
+
+    /** Whether it can hand results to whatever sits against an output face. */
+    default boolean supportsAutoPush() { return false; }
 }

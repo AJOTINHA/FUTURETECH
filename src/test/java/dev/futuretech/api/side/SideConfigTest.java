@@ -41,22 +41,56 @@ class SideConfigTest {
     @Test
     void sidelessAccessIsUnrestrictedAndDataSlotsMirrorModes(MinecraftServer server) {
         var config = new SideConfig(EnumSet.allOf(SideMode.class), side -> side == Direction.UP ? SideMode.OUTPUT : SideMode.NONE);
-        assertTrue(config.allowsInput(null));
-        assertTrue(config.allowsOutput(null));
-        assertFalse(config.allowsInput(Direction.UP));
-        assertTrue(config.allowsOutput(Direction.UP));
-        assertFalse(config.allowsOutput(Direction.DOWN));
+        assertTrue(config.allowsItemInput(null));
+        assertTrue(config.allowsItemOutput(null));
+        assertFalse(config.allowsItemInput(Direction.UP));
+        assertTrue(config.allowsItemOutput(Direction.UP));
+        assertFalse(config.allowsItemOutput(Direction.DOWN));
         assertEquals(SideMode.OUTPUT.ordinal(), config.data(Direction.UP.ordinal()));
         assertEquals(SideMode.NONE.ordinal(), config.data(Direction.DOWN.ordinal()));
     }
 
     @Test
+    void onlyMachinesThatGovernEnergySeeTheirFacesRestrictIt(MinecraftServer server) {
+        // A machine leaves energy alone: every face takes power in and hands it out, whatever the mode.
+        var free = new SideConfig(EnumSet.allOf(SideMode.class), side -> SideMode.NONE);
+        assertFalse(free.governsEnergy());
+        for (Direction side : Direction.values()) {
+            assertTrue(free.allowsEnergyInput(side));
+            assertTrue(free.allowsEnergyOutput(side));
+        }
+
+        // A battery does govern it, so a closed face neither charges nor discharges.
+        var battery = new SideConfig(Set.of(SideMode.INPUT, SideMode.OUTPUT, SideMode.NONE), true, side -> SideMode.NONE);
+        assertTrue(battery.governsEnergy());
+        assertFalse(battery.allowsEnergyInput(Direction.UP));
+        assertFalse(battery.allowsEnergyOutput(Direction.UP));
+        battery.set(Direction.UP, SideMode.INPUT);
+        assertTrue(battery.allowsEnergyInput(Direction.UP));
+        assertFalse(battery.allowsEnergyOutput(Direction.UP));
+        battery.set(Direction.UP, SideMode.OUTPUT);
+        assertFalse(battery.allowsEnergyInput(Direction.UP));
+        assertTrue(battery.allowsEnergyOutput(Direction.UP));
+    }
+
+    @Test
     void sidedViewsHideOrLimitTheHandler(MinecraftServer server) {
         var full = new SimpleEnergyHandler(1_000, 1_000, 1_000, 500);
-        assertNull(SidedEnergy.view(full, SideMode.NONE));
-        assertSame(full, SidedEnergy.view(full, SideMode.BOTH));
-        var inputOnly = SidedEnergy.view(full, SideMode.INPUT);
-        var outputOnly = SidedEnergy.view(full, SideMode.OUTPUT);
+        // Only a configuration that governs energy can narrow the handler; a machine's passes through.
+        var machine = new SideConfig(EnumSet.allOf(SideMode.class), side -> SideMode.NONE);
+        assertSame(full, SidedEnergy.view(full, machine, Direction.UP));
+
+        var battery = new SideConfig(EnumSet.allOf(SideMode.class), true, side -> switch (side) {
+            case UP -> SideMode.INPUT;
+            case DOWN -> SideMode.OUTPUT;
+            case NORTH -> SideMode.BOTH;
+            default -> SideMode.NONE;
+        });
+        assertNull(SidedEnergy.view(full, battery, Direction.EAST));
+        assertSame(full, SidedEnergy.view(full, battery, Direction.NORTH));
+        assertSame(full, SidedEnergy.view(full, battery, null), "the machine's own access is unrestricted");
+        var inputOnly = SidedEnergy.view(full, battery, Direction.UP);
+        var outputOnly = SidedEnergy.view(full, battery, Direction.DOWN);
         try (var transaction = Transaction.openRoot()) {
             assertEquals(100, inputOnly.insert(100, transaction));
             assertEquals(0, inputOnly.extract(100, transaction));
@@ -85,6 +119,7 @@ class SideConfigTest {
         assertEquals(SideMode.OUTPUT, battery.sideConfig().mode(Direction.EAST));
         assertTrue(SideConfigMenu.handleButton(battery, Direction.EAST.ordinal()));
         assertEquals(SideMode.NONE, battery.sideConfig().mode(Direction.EAST));
+        // Offset 7 is the unused slot in a channel's button group, and a battery has no resource channel.
         assertFalse(SideConfigMenu.handleButton(battery, SideConfigMenu.BUTTON_CLEAR_ALL + 1));
         assertFalse(SideConfigMenu.handleButton(null, 0));
     }
@@ -104,16 +139,25 @@ class SideConfigTest {
     }
 
     @Test
-    void generatorFacesOnlyOutputOrClose(MinecraftServer server) {
+    void generatorFacesOnlyChooseWhetherFuelMayEnter(MinecraftServer server) {
         var generator = new SolidFuelGeneratorBlockEntity(BlockPos.ZERO,
                 ModBlocks.SOLID_FUEL_GENERATOR.get().defaultBlockState());
-        for (Direction side : Direction.values()) assertEquals(SideMode.NONE, generator.sideConfig().mode(side));
+        var sides = generator.sideConfig();
+        assertFalse(sides.governsEnergy(), "a generator pushes energy out of any face, configured or not");
+        for (Direction side : Direction.values()) {
+            assertEquals(SideMode.NONE, sides.mode(side));
+            // A closed face still hands energy over; it just refuses fuel.
+            assertTrue(sides.allowsEnergyOutput(side));
+            assertFalse(sides.allowsItemInput(side));
+        }
         SideConfigMenu.handleButton(generator, Direction.UP.ordinal());
-        assertEquals(SideMode.OUTPUT, generator.sideConfig().mode(Direction.UP));
+        assertEquals(SideMode.INPUT, sides.mode(Direction.UP));
+        assertTrue(sides.allowsItemInput(Direction.UP));
+        // The generator has no result item, so output is not on offer at all.
+        assertThrows(IllegalArgumentException.class, () -> sides.set(Direction.UP, SideMode.OUTPUT));
         SideConfigMenu.handleButton(generator, Direction.UP.ordinal());
-        assertEquals(SideMode.NONE, generator.sideConfig().mode(Direction.UP));
-        SideConfigMenu.handleButton(generator, Direction.UP.ordinal());
-        assertEquals(SideMode.OUTPUT.ordinal(),
+        assertEquals(SideMode.NONE, sides.mode(Direction.UP));
+        assertEquals(SideMode.NONE.ordinal(),
                 generator.menuData().get(SolidFuelGeneratorBlockEntity.DATA_SIDE_BASE + Direction.UP.ordinal()));
         assertEquals(Direction.NORTH.ordinal(), generator.menuData().get(SolidFuelGeneratorBlockEntity.DATA_FRONT));
     }
@@ -137,5 +181,48 @@ class SideConfigTest {
         permissive.save(out);
         strict.load(TagValueInput.create(ProblemReporter.DISCARDING, server.registryAccess(), out.buildResult()));
         for (Direction side : Direction.values()) assertEquals(SideMode.INPUT, strict.mode(side));
+    }
+
+    @Test
+    void autoTransferTogglesFlipAndSurviveReload(MinecraftServer server) {
+        var furnace = new dev.futuretech.block.entity.ElectricFurnaceBlockEntity(BlockPos.ZERO,
+                ModBlocks.ELECTRIC_FURNACE.get().defaultBlockState());
+        var auto = furnace.autoTransfer();
+        assertFalse(auto.isPulling(), "a fresh machine never touches a neighbour on its own");
+        assertFalse(auto.isPushing());
+
+        assertTrue(SideConfigMenu.handleButton(furnace, SideConfigMenu.BUTTON_AUTO_PULL));
+        assertTrue(auto.isPulling());
+        assertFalse(auto.isPushing(), "the toggles are independent");
+        assertTrue(SideConfigMenu.handleButton(furnace, SideConfigMenu.BUTTON_AUTO_PUSH));
+        assertTrue(auto.isPushing());
+        assertEquals(1, furnace.menuData().get(
+                dev.futuretech.block.entity.ElectricFurnaceBlockEntity.DATA_AUTO_BASE));
+        assertEquals(1, furnace.menuData().get(
+                dev.futuretech.block.entity.ElectricFurnaceBlockEntity.DATA_AUTO_BASE + 1));
+
+        // Clicking again turns it back off.
+        assertTrue(SideConfigMenu.handleButton(furnace, SideConfigMenu.BUTTON_AUTO_PULL));
+        assertFalse(auto.isPulling());
+
+        var restored = new dev.futuretech.block.entity.ElectricFurnaceBlockEntity(BlockPos.ZERO,
+                ModBlocks.ELECTRIC_FURNACE.get().defaultBlockState());
+        restored.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, server.registryAccess(),
+                furnace.saveWithoutMetadata(server.registryAccess())));
+        assertFalse(restored.autoTransfer().isPulling());
+        assertTrue(restored.autoTransfer().isPushing());
+    }
+
+    @Test
+    void aMachineWithoutAnInventoryHasNoToggles(MinecraftServer server) {
+        var battery = new BatteryBlockEntity(BlockPos.ZERO, ModBlocks.BATTERY_MK1.get().defaultBlockState());
+        assertFalse(ModBlocks.BATTERY_MK1.get().supportsAutoPull());
+        assertFalse(ModBlocks.BATTERY_MK1.get().supportsAutoPush());
+        // The button ids must be ignored rather than crash on a crafted packet.
+        assertFalse(SideConfigMenu.handleButton(battery, SideConfigMenu.BUTTON_AUTO_PULL));
+        assertFalse(SideConfigMenu.handleButton(battery, SideConfigMenu.BUTTON_AUTO_PUSH));
+        // A generator pulls fuel but has no result item to hand back.
+        assertTrue(ModBlocks.SOLID_FUEL_GENERATOR.get().supportsAutoPull());
+        assertFalse(ModBlocks.SOLID_FUEL_GENERATOR.get().supportsAutoPush());
     }
 }

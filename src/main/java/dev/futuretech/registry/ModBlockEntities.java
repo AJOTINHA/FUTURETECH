@@ -2,8 +2,10 @@ package dev.futuretech.registry;
 
 import dev.futuretech.FutureTech;
 import dev.futuretech.api.side.SidedEnergy;
+import dev.futuretech.api.side.SidedItems;
 import dev.futuretech.block.entity.BatteryBlockEntity;
 import dev.futuretech.block.entity.CableBlockEntity;
+import dev.futuretech.block.entity.ElectricFurnaceBlockEntity;
 import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -19,6 +21,10 @@ public final class ModBlockEntities {
             TYPES.register("solid_fuel_generator", () -> new BlockEntityType<>(
                     SolidFuelGeneratorBlockEntity::new, ModBlocks.SOLID_FUEL_GENERATOR.get()));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ElectricFurnaceBlockEntity>> ELECTRIC_FURNACE =
+            TYPES.register("electric_furnace", () -> new BlockEntityType<>(
+                    ElectricFurnaceBlockEntity::new, ModBlocks.ELECTRIC_FURNACE.get()));
+
     // One block entity type serves every battery tier; list each tier's block here.
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BatteryBlockEntity>> BATTERY =
             TYPES.register("battery", () -> new BlockEntityType<>(
@@ -31,10 +37,19 @@ public final class ModBlockEntities {
 
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
         // A null side is the machine's own unrestricted access; real faces follow their configured mode.
+        // Only the battery configures energy; the generator and furnace pass every face straight through.
         event.registerBlockEntity(Capabilities.Energy.BLOCK, SOLID_FUEL_GENERATOR.get(), (generator, side) ->
-                side == null ? generator.energy() : SidedEnergy.view(generator.energy(), generator.sideConfig().mode(side)));
+                SidedEnergy.view(generator.energy(), generator.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, ELECTRIC_FURNACE.get(), (furnace, side) ->
+                SidedEnergy.view(furnace.energy(), furnace.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, BATTERY.get(), (battery, side) ->
-                side == null ? battery.energy() : SidedEnergy.view(battery.energy(), battery.sideConfig().mode(side)));
+                SidedEnergy.view(battery.energy(), battery.sideConfig(), side));
+
+        // Items follow the face modes. The battery has no inventory, so it offers no item handler.
+        event.registerBlockEntity(Capabilities.Item.BLOCK, SOLID_FUEL_GENERATOR.get(), (generator, side) ->
+                SidedItems.view(generator, generator.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Item.BLOCK, ELECTRIC_FURNACE.get(), (furnace, side) ->
+                SidedItems.view(furnace, furnace.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, CABLE.get(),
                 (cable, side) -> cable.handler(side));
     }

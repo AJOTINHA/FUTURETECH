@@ -9,7 +9,7 @@ import org.jspecify.annotations.Nullable;
  * mode's ordinal, right after the side configuration's button ids.
  */
 public interface RedstoneControlMenu {
-    int BUTTON_BASE = SideConfigMenu.BUTTON_CLEAR_ALL + 1;
+    int BUTTON_BASE = SideConfigMenu.BUTTON_COUNT;
 
     RedstoneMode redstoneMode();
 

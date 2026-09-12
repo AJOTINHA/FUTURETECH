@@ -2,6 +2,7 @@ package dev.futuretech.api.redstone;
 
 import dev.futuretech.block.entity.BatteryBlockEntity;
 import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
+import dev.futuretech.api.side.SideConfigMenu;
 import dev.futuretech.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
@@ -38,7 +39,8 @@ class RedstoneControlTest {
         assertFalse(RedstoneControlMenu.handleButton(battery, RedstoneControlMenu.BUTTON_BASE - 1));
         assertFalse(RedstoneControlMenu.handleButton(battery, RedstoneControlMenu.BUTTON_BASE + 3));
         assertFalse(RedstoneControlMenu.handleButton(null, RedstoneControlMenu.BUTTON_BASE));
-        assertEquals(7, RedstoneControlMenu.BUTTON_BASE);
+        // Redstone ids start right after the side configuration's, toggles included.
+        assertEquals(SideConfigMenu.BUTTON_COUNT, RedstoneControlMenu.BUTTON_BASE);
     }
 
     @Test

@@ -1,8 +1,6 @@
 {
-  "parent": "minecraft:block/orientable",
+  "parent": "futuretech:block/machine_base",
   "textures": {
-    "top": "minecraft:block/iron_block",
-    "front": "minecraft:block/copper_block",
-    "side": "minecraft:block/cut_copper"
+    "front": "futuretech:block/battery_mk1_front"
   }
 }

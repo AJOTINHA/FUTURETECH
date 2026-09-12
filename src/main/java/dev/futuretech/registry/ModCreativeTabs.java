@@ -18,6 +18,7 @@ public final class ModCreativeTabs {
                     .displayItems((parameters, output) -> {
                         output.accept(ModItems.MACHINE_CASING.get());
                         output.accept(ModItems.SOLID_FUEL_GENERATOR.get());
+                        output.accept(ModItems.ELECTRIC_FURNACE.get());
                         output.accept(ModItems.BATTERY_MK1.get());
                         output.accept(ModItems.CABLE_MK1.get());
                     })

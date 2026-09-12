@@ -3,6 +3,7 @@ package dev.futuretech.block;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.futuretech.api.side.SideConfig;
+import dev.futuretech.api.side.SideConfig;
 import dev.futuretech.api.side.SideConfigurableBlock;
 import dev.futuretech.api.side.SideMode;
 import dev.futuretech.block.entity.BatteryBlockEntity;
@@ -77,7 +78,8 @@ public final class BatteryBlock extends BaseEntityBlock implements SideConfigura
     @Override
     public SideConfig createSideConfig(BlockState state) {
         // New machines start closed; the player opens the faces they want from the screen.
-        return new SideConfig(ALLOWED_SIDE_MODES, side -> SideMode.NONE);
+        // A battery moves energy for a living, so here the face modes do govern energy.
+        return new SideConfig(ALLOWED_SIDE_MODES, true, side -> SideMode.NONE);
     }
 
     @Override

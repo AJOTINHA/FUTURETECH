@@ -107,6 +107,36 @@ class CableNetworkTest {
         assertEquals(50_000 - THROUGHPUT, battery.getAmountAsInt());
     }
 
+    /** Endpoint on an explicit cable face, for a network that touches one block from two sides. */
+    private record FakeEndpointAt(CableNetwork.EndpointKey key, @Nullable EnergyHandler handler)
+            implements CableNetwork.Endpoint {}
+
+    @Test
+    void energyIsNotHandedBackThroughASecondFaceOfTheSameBlock(MinecraftServer server) {
+        // Regression: a battery with an output face and an input face on the same network used to get
+        // its own energy back through the other face, draining and refilling every tick.
+        BlockPos battery = BlockPos.ZERO;
+        BlockPos westCable = battery.west();
+        BlockPos eastCable = battery.east();
+        var batteryHandler = new SimpleEnergyHandler(100_000, 200, 200, 50_000);
+        var consumer = new SimpleEnergyHandler(1_000);
+        var outputFace = new CableNetwork.EndpointKey(westCable, Direction.EAST);
+        var inputFace = new CableNetwork.EndpointKey(eastCable, Direction.WEST);
+        assertEquals(battery, outputFace.cablePos().relative(outputFace.side()));
+        assertEquals(battery, inputFace.cablePos().relative(inputFace.side()));
+        var network = new CableNetwork(THROUGHPUT, Set.of(westCable, eastCable),
+                List.of(new FakeEndpointAt(outputFace, batteryHandler),
+                        new FakeEndpointAt(inputFace, batteryHandler),
+                        new FakeEndpointAt(new CableNetwork.EndpointKey(westCable, Direction.UP), consumer)));
+        try (var transaction = Transaction.openRoot()) {
+            assertEquals(100, network.handlerFor(outputFace).insert(100, transaction));
+            transaction.commit();
+        }
+        network.tick(1);
+        assertEquals(100, consumer.getAmountAsInt(), "the consumer should get all of it");
+        assertEquals(50_000, batteryHandler.getAmountAsInt(), "the battery must not receive its own energy back");
+    }
+
     @Test
     void tickRunsOnceEvenWhenEveryCableCallsIt(MinecraftServer server) {
         var consumer = new SimpleEnergyHandler(50, 50, 0);

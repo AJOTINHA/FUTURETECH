@@ -31,5 +31,12 @@
   "gui.futuretech.redstone.high.desc": "Funciona só com sinal de redstone",
   "gui.futuretech.redstone.powered": "Sinal: ligado",
   "gui.futuretech.redstone.unpowered": "Sinal: desligado",
-  "gui.futuretech.upgrades": "Melhorias"
+  "gui.futuretech.upgrades": "Melhorias",
+  "block.futuretech.electric_furnace": "Fornalha Elétrica",
+  "gui.futuretech.auto.pull": "Puxar itens",
+  "gui.futuretech.auto.pull.desc": "Tira itens do que estiver encostado numa face de Entrada",
+  "gui.futuretech.auto.push": "Empurrar itens",
+  "gui.futuretech.auto.push.desc": "Entrega o resultado ao que estiver encostado numa face de Saída",
+  "gui.futuretech.auto.on": "Ligado",
+  "gui.futuretech.auto.off": "Desligado"
 }

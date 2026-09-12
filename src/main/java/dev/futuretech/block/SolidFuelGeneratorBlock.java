@@ -2,6 +2,7 @@ package dev.futuretech.block;
 
 import com.mojang.serialization.MapCodec;
 import dev.futuretech.api.side.SideConfig;
+import dev.futuretech.api.side.SideConfig;
 import dev.futuretech.api.side.SideConfigurableBlock;
 import dev.futuretech.api.side.SideMode;
 import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
@@ -23,8 +24,9 @@ import java.util.Set;
 
 public final class SolidFuelGeneratorBlock extends AbstractFurnaceBlock implements SideConfigurableBlock {
     public static final MapCodec<SolidFuelGeneratorBlock> CODEC = simpleCodec(SolidFuelGeneratorBlock::new);
-    // A generator only produces, so a face either hands energy out or is closed.
-    private static final Set<SideMode> ALLOWED_SIDE_MODES = Set.of(SideMode.OUTPUT, SideMode.NONE);
+    // Energy leaves through every face without being configured, so a face only decides fuel.
+    // The generator has no result item, so there is nothing for an output face to hand over.
+    private static final Set<SideMode> ALLOWED_SIDE_MODES = Set.of(SideMode.INPUT, SideMode.NONE);
 
     public SolidFuelGeneratorBlock(Properties properties) {
         super(properties);
@@ -38,6 +40,10 @@ public final class SolidFuelGeneratorBlock extends AbstractFurnaceBlock implemen
         // New machines start closed; the player opens the faces they want from the screen.
         return new SideConfig(ALLOWED_SIDE_MODES, side -> SideMode.NONE);
     }
+
+    /** A generator pulls fuel, but produces no item to hand back. */
+    @Override
+    public boolean supportsAutoPull() { return true; }
 
     @Override
     public BlockState displayState(Direction front) {

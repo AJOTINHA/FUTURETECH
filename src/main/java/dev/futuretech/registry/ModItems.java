@@ -17,6 +17,9 @@ public final class ModItems {
     public static final DeferredItem<BlockItem> SOLID_FUEL_GENERATOR = ITEMS.registerSimpleBlockItem(
             "solid_fuel_generator", ModBlocks.SOLID_FUEL_GENERATOR);
 
+    public static final DeferredItem<BlockItem> ELECTRIC_FURNACE = ITEMS.registerSimpleBlockItem(
+            "electric_furnace", ModBlocks.ELECTRIC_FURNACE);
+
     // Custom block item so the stored charge shows in the tooltip and as a bar.
     public static final DeferredItem<BatteryBlockItem> BATTERY_MK1 = registerBattery(ModBlocks.BATTERY_MK1);
 

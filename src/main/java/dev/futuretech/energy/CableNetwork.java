@@ -22,11 +22,14 @@ import java.util.Set;
 /**
  * A group of touching cables that behaves as one energy buffer. Neighbours push energy into any
  * cable of the group; once per tick the group spreads what it holds over every adjacent block
- * that accepts energy, never handing it straight back through a face that is pushing into it.
+ * that accepts energy, never handing it straight back to a block that is pushing into it.
  */
 public final class CableNetwork {
     /** A cable face that borders a non-cable block. */
-    public record EndpointKey(BlockPos cablePos, Direction side) {}
+    public record EndpointKey(BlockPos cablePos, Direction side) {
+        /** The bordering block; a network wrapping around one machine reaches it from several faces. */
+        public BlockPos neighbour() { return cablePos.relative(side); }
+    }
 
     /** Resolves the energy handler of the block beyond an endpoint; may change as blocks are placed. */
     public interface Endpoint {
@@ -39,7 +42,7 @@ public final class CableNetwork {
     private final TickLimitedEnergyHandler buffer;
     private final Set<BlockPos> cables;
     private final List<Endpoint> endpoints;
-    private final Set<EndpointKey> insertedSinceLastDistribution = new HashSet<>();
+    private final Set<BlockPos> fedSinceLastDistribution = new HashSet<>();
     private long lastTick = Long.MIN_VALUE;
     private int lastMoved;
     private boolean valid = true;
@@ -107,8 +110,8 @@ public final class CableNetwork {
 
     /**
      * The handler a neighbour beyond the given cable face sees. Any insert attempt through it, accepted
-     * or not, keeps that face out of the next distribution: a full buffer must not start returning
-     * energy to the block that is trying to push more in.
+     * or not, keeps that whole block out of the next distribution: a full buffer must not start returning
+     * energy to the block that is trying to push more in, not even through another face it touches.
      */
     public EnergyHandler handlerFor(@Nullable EndpointKey key) {
         return new EnergyHandler() {
@@ -120,7 +123,7 @@ public final class CableNetwork {
 
             @Override
             public int insert(int amount, TransactionContext transaction) {
-                if (amount > 0 && key != null) insertedSinceLastDistribution.add(key);
+                if (amount > 0 && key != null) fedSinceLastDistribution.add(key.neighbour());
                 return buffer.insert(amount, transaction);
             }
 
@@ -138,11 +141,11 @@ public final class CableNetwork {
         buffer.beginTick();
         List<EnergyHandler> sinks = new ArrayList<>();
         for (Endpoint endpoint : endpoints) {
-            if (insertedSinceLastDistribution.contains(endpoint.key())) continue;
+            if (fedSinceLastDistribution.contains(endpoint.key().neighbour())) continue;
             EnergyHandler handler = endpoint.handler();
             if (handler != null) sinks.add(handler);
         }
-        insertedSinceLastDistribution.clear();
+        fedSinceLastDistribution.clear();
         lastMoved = distribute(buffer, sinks);
     }
 

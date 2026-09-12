@@ -1,8 +1,6 @@
 {
   "textures": {
-    "top": "minecraft:block/blast_furnace_top",
-    "front": "minecraft:block/blast_furnace_front",
-    "side": "minecraft:block/iron_block"
+    "front": "futuretech:block/solid_fuel_generator_front"
   },
-  "parent": "minecraft:block/orientable"
+  "parent": "futuretech:block/machine_base"
 }

@@ -31,5 +31,12 @@
   "gui.futuretech.redstone.high.desc": "Runs only with a redstone signal",
   "gui.futuretech.redstone.powered": "Signal: on",
   "gui.futuretech.redstone.unpowered": "Signal: off",
-  "gui.futuretech.upgrades": "Upgrades"
+  "gui.futuretech.upgrades": "Upgrades",
+  "block.futuretech.electric_furnace": "Electric Furnace",
+  "gui.futuretech.auto.pull": "Pull items",
+  "gui.futuretech.auto.pull.desc": "Takes items from whatever sits against an Input face",
+  "gui.futuretech.auto.push": "Push items",
+  "gui.futuretech.auto.push.desc": "Hands results to whatever sits against an Output face",
+  "gui.futuretech.auto.on": "On",
+  "gui.futuretech.auto.off": "Off"
 }
