@@ -37,6 +37,7 @@ public final class FutureTechClient {
         event.register(ModMenus.SOLID_FUEL_GENERATOR.get(), SolidFuelGeneratorScreen::new);
         event.register(ModMenus.BATTERY.get(), BatteryScreen::new);
         event.register(ModMenus.ELECTRIC_FURNACE.get(), ElectricFurnaceScreen::new);
+        event.register(ModMenus.CRUSHER.get(), CrusherScreen::new);
     }
 
     private static void configureSideModels(ModelEvent.ModifyBakingResult event) {

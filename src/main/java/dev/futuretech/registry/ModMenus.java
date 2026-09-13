@@ -3,6 +3,7 @@ package dev.futuretech.registry;
 import dev.futuretech.FutureTech;
 import dev.futuretech.menu.BatteryMenu;
 import dev.futuretech.menu.ElectricFurnaceMenu;
+import dev.futuretech.menu.CrusherMenu;
 import dev.futuretech.menu.SolidFuelGeneratorMenu;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.flag.FeatureFlags;
@@ -21,6 +22,9 @@ public final class ModMenus {
 
     public static final DeferredHolder<MenuType<?>, MenuType<BatteryMenu>> BATTERY = TYPES.register(
             "battery", () -> new MenuType<>(BatteryMenu::new, FeatureFlags.DEFAULT_FLAGS));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<CrusherMenu>> CRUSHER = TYPES.register(
+            "crusher", () -> new MenuType<>(CrusherMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
     private ModMenus() {}
 }

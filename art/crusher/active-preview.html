@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8">
+<title>Triturador — frente animada</title>
+<style>
+body{margin:0;background:#141b23;color:#e3edf4;font:16px system-ui;display:grid;place-content:center;min-height:100vh}
+h1{font-size:24px}main{display:flex;gap:32px;flex-wrap:wrap}figure{margin:0}figcaption{margin:16px 0}
+.texture{width:320px;height:320px;image-rendering:pixelated;background-size:320px auto}
+.off{background-image:url('../../src/main/resources/assets/futuretech/textures/block/crusher_front.png')}
+.on{background-image:url('../../src/main/resources/assets/futuretech/textures/block/crusher_front_on.png');animation:rollers 1s steps(10) infinite}
+@keyframes rollers{to{background-position-y:-3200px}}
+button{padding:10px 18px;background:#29495c;color:white;border:1px solid #70ceda;border-radius:6px;cursor:pointer}
+</style>
+<h1>Triturador</h1>
+<main><figure><div class="texture off"></div><figcaption>Desligado</figcaption></figure>
+<figure><div class="texture on"></div><figcaption>Ligado · rolos opostos e visor ciano</figcaption></figure></main>
+<button onclick="const s=document.querySelector('.on').style;s.animationPlayState=s.animationPlayState==='paused'?'running':'paused';this.textContent=s.animationPlayState==='paused'?'Continuar animação':'Pausar animação'">Pausar animação</button>
+</html>

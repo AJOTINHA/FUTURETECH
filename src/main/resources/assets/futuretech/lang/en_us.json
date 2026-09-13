@@ -1,5 +1,6 @@
 {
   "itemGroup.futuretech": "FUTURETECH",
+  "block.futuretech.crusher": "Crusher",
   "block.futuretech.machine_casing": "Machine Casing",
   "block.futuretech.solid_fuel_generator": "Solid Fuel Generator",
   "gui.futuretech.empty": "Empty",

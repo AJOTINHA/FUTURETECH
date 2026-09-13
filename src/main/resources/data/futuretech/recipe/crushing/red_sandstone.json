@@ -1,0 +1,8 @@
+{
+  "result": {
+    "count": 4,
+    "id": "minecraft:red_sand"
+  },
+  "type": "futuretech:crushing",
+  "ingredient": "minecraft:red_sandstone"
+}

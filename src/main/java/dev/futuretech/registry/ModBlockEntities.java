@@ -6,6 +6,7 @@ import dev.futuretech.api.side.SidedItems;
 import dev.futuretech.block.entity.BatteryBlockEntity;
 import dev.futuretech.block.entity.CableBlockEntity;
 import dev.futuretech.block.entity.ElectricFurnaceBlockEntity;
+import dev.futuretech.block.entity.CrusherBlockEntity;
 import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -25,6 +26,9 @@ public final class ModBlockEntities {
             TYPES.register("electric_furnace", () -> new BlockEntityType<>(
                     ElectricFurnaceBlockEntity::new, ModBlocks.ELECTRIC_FURNACE.get()));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CrusherBlockEntity>> CRUSHER =
+            TYPES.register("crusher", () -> new BlockEntityType<>(CrusherBlockEntity::new, ModBlocks.CRUSHER.get()));
+
     // One block entity type serves every battery tier; list each tier's block here.
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BatteryBlockEntity>> BATTERY =
             TYPES.register("battery", () -> new BlockEntityType<>(
@@ -36,6 +40,10 @@ public final class ModBlockEntities {
                     CableBlockEntity::new, ModBlocks.CABLE_MK1.get()));
 
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, CRUSHER.get(), (crusher, side) ->
+                SidedEnergy.view(crusher.energy(), crusher.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Item.BLOCK, CRUSHER.get(), (crusher, side) ->
+                SidedItems.view(crusher, crusher.sideConfig(), side));
         // A null side is the machine's own unrestricted access; real faces follow their configured mode.
         // Only the battery configures energy; the generator and furnace pass every face straight through.
         event.registerBlockEntity(Capabilities.Energy.BLOCK, SOLID_FUEL_GENERATOR.get(), (generator, side) ->

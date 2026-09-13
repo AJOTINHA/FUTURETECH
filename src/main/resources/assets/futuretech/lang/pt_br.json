@@ -1,5 +1,6 @@
 {
   "itemGroup.futuretech": "FUTURETECH",
+  "block.futuretech.crusher": "Triturador",
   "block.futuretech.machine_casing": "Carcaça de Máquina",
   "block.futuretech.solid_fuel_generator": "Gerador a Combustível Sólido",
   "gui.futuretech.empty": "Vazio",

@@ -6,6 +6,7 @@ import dev.futuretech.registry.ModDataComponents;
 import dev.futuretech.registry.ModItems;
 import dev.futuretech.registry.ModBlockEntities;
 import dev.futuretech.registry.ModMenus;
+import dev.futuretech.registry.ModRecipes;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 
@@ -19,6 +20,9 @@ public final class FutureTech {
         ModItems.ITEMS.register(modEventBus);
         ModBlockEntities.TYPES.register(modEventBus);
         ModMenus.TYPES.register(modEventBus);
+        ModRecipes.TYPES.register(modEventBus);
+        ModRecipes.SERIALIZERS.register(modEventBus);
+        ModRecipes.BOOKS.register(modEventBus);
         modEventBus.addListener(ModBlockEntities::registerCapabilities);
         ModCreativeTabs.TABS.register(modEventBus);
     }

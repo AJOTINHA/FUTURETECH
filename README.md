@@ -94,6 +94,24 @@ O bloco herda o modelo `machine_base`, com a textura `machine_side` nas cinco fa
 
 As fontes e os exportadores PowerShell ficam em `art/`. Execute `art/electric_furnace/Export-Textures.ps1` ou `art/solid_fuel_generator/Export-Textures.ps1` para recriar as frentes e os arquivos `.png.mcmeta`. Os dois usam `art/Export-ActiveAnimation.ps1` e a paleta compartilhada de `art/StatusDisplay.ps1`. A prévia animada está em `art/active-animation-preview.html`.
 
+O **Triturador** (`futuretech:crusher`) usa uma frente de rolos dentados, carcaça grafite e indicador ciano. Sua GUI segue o layout da fornalha elétrica: entrada à esquerda, saída à direita, energia na lateral e abas de melhorias, lados, redstone e informações. Um símbolo de rolos indica o funcionamento e a seta ciano acompanha o progresso.
+
+- Reserva de **20.000 FE**, entrada de até **200 FE/t**, consumo de **20 FE/t** e **100 ticks (5 segundos)** por operação: 2.000 FE por item.
+- Sem energia ou espaço para o resultado completo, pausa e preserva o progresso. Trocar o ingrediente por outro reinicia o trabalho. Itens, energia e progresso são salvos com o mundo.
+- Recebe energia por qualquer face. Para automatizar itens, configure faces de entrada e saída; elas começam fechadas. Possui extração/inserção automática, controle de redstone e slots para melhorias, como as outras máquinas.
+- Ao quebrar, solta a máquina e seus itens; não guarda energia no item.
+- Receitas próprias, extensíveis por datapacks com o tipo `futuretech:crushing`: pedregulho → cascalho; cascalho → areia; arenito → 4 areias; arenito vermelho → 4 areias vermelhas; osso → 6 farinhas de osso; vara de blaze → 4 pós de blaze; vidro → areia.
+
+A fabricação usa quatro ferros, um pistão, dois cobres, uma carcaça e uma redstone:
+
+```text
+Ferro     Pistão    Ferro
+Cobre     Carcaça   Cobre
+Ferro     Redstone  Ferro
+```
+
+A arte e seus exportadores ficam em `art/crusher/`; a textura estática é `assets/futuretech/textures/block/crusher_front.png`. Durante o processamento, `crusher_front_on.png` mostra os rolos girando em sentidos opostos e o visor ciano pulsante, em dez quadros com ciclo de um segundo. A carcaça permanece idêntica e parada. Veja `art/crusher/active-preview.html` para comparar as duas versões.
+
 ## Configuração de lados
 
 Toda máquina tem, na lateral direita da interface, a aba **Configuração** (ícone de cubo desdobrado). Ela mostra as seis faces do bloco com as texturas reais, a frente no meio, e os lados nomeados como quem olha de frente para a máquina.
