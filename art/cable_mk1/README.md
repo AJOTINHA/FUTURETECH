@@ -1,16 +1,47 @@
 # Cabo MK1
 
-O relevo é modelado com cuboides reais, em vez de desenhado em uma superfície plana.
+Gerado inteiro por `Build-Cable.ps1` — sprites, modelos, modelo de item e blockstate.
+Roda no Windows PowerShell 5.1, sem depender do `pwsh`.
 
-- Junção: carcaça recuada, 12 arestas metálicas e seis indicadores de 4 × 4 unidades com borda prateada (19 volumes).
-- Braço: quatro trilhos de 1 × 1 unidade e corpo fechado de 5 × 5 unidades. As faces ficam meia unidade abaixo dos trilhos, com laterais prateadas e uma faixa ciano estreita no centro, seguindo a referência.
-- Limites externos: 5 a 11 nos eixos transversais, compatíveis com a forma de seis unidades do `CableBlock`.
-- O condutor alcança a carcaça central recuada; os trilhos e o condutor chegam ao limite do bloco para encontrar o próximo cabo.
-- O mesmo braço é rotacionado pelo blockstate nas seis direções. O ícone do item usa somente o nó central ciano, ampliado no inventário para facilitar a identificação.
-- A faixa do miolo é centralizada e o desenho dos trilhos e do miolo é simétrico nos dois eixos da textura. As metades rotacionadas se encontram sem deslocar as faixas ou inverter os brilhos na emenda entre blocos.
-- Os nós usam `cable_mk1_node.png`: um desenho completo por face, com UVs posicionados pelas coordenadas de cada peça. Os cantos da moldura se encontram sem cortar as linhas. O indicador aparece apenas na face externa de cada contato; a espessura e as faces internas usam material escuro.
-- Ao tocar uma máquina em uma face com conexão de energia ativa, o cabo recebe um conector de aço de 9 × 9 unidades, com dois níveis de espessura e abertura de 6 × 6. A geometria e a área clicável vêm de `CableConnector`; o modelo usa os estados dos blocos vizinhos, sem novas propriedades ou alterações na rede de energia. As emendas entre cabos não recebem esse conector.
-- `Export-Connector.ps1` gera `cable_connector.png` e exporta a geometria Java para a prévia local. É executado também por `Export-Cable.ps1`.
-- As laterais e as molduras frontais dos dois níveis do conector usam aço grafite com chanfros de baixo contraste e pequenos parafusos, combinando com a paleta das máquinas. O UV acompanha a posição ao longo de cada lateral; as molduras frontais compartilham um desenho contínuo nos cantos.
+`Export-Connector.ps1` é separado e cuida do colar de ligação com máquinas: desenha
+`cable_connector.png` e regenera `connector-preview-model.json` a partir da geometria em
+`CableConnector.java`. O colar é desenhado por código, não por modelo.
 
-Execute `Export-Cable.ps1` para gerar o atlas e os três modelos JSON. Execute `Render-Preview.ps1` para renderizar esses modelos em `preview.png`. Essa prévia é uma renderização local dos recursos, não uma captura do Minecraft.
+Núcleo de 6×6 em azul-marinho e verde-azulado dentro de uma gaiola de 8×8, cantos cinza e
+trilhos brancos, com o meio de cada aresta aberto para o núcleo aparecer.
+
+## Decisões que importam
+
+- **Trecho reto é uma caixa só.** `cable_mk1_line` tem 13 volumes de 16 unidades de
+  comprimento. O desenho anterior fatiava o bloco em 4 segmentos de 4 unidades, e cada
+  junta entre segmentos aparecia no jogo como um fio escuro atravessando o cabo. Não é
+  z-fighting nem mipmap nem ambient occlusion: é a junta em si. Não volte a fatiar.
+- **A tira da textura cabe uma vez por bloco.** `cable_mk1.png` tem 32 linhas — oito
+  faixas de 4 px, quatro períodos inteiros — mapeadas de uma vez sobre as 16 unidades.
+  O padrão continua sem quebrar de um bloco para o outro. São dois texels por unidade,
+  tanto na linha quanto no braço.
+- **Nenhuma face de tampa interna.** Braço e linha não desenham as faces perpendiculares
+  ao eixo do cabo: as duas pontas sempre encostam em algo que as cobre. Quem fecha a boca
+  contra uma máquina é o tampão do colar, em `CableConnectorModelPart`.
+- **As faces escondidas são provadas, não listadas.** O gerador descarta toda face que
+  outro volume do mesmo modelo cobre por inteiro. A linha sai com 28 quads.
+- **`ambientocclusion: false`** em todos os modelos de bloco. O cabo é convexo e não tem
+  o que ocluir.
+- **Padding em todas as sprites.** Fora do recorte desenhado, o pixel mais próximo é
+  repetido, então o mipmap nunca mistura preenchimento com o cabo.
+
+## Geometria
+
+- Seção: núcleo 5..11, e uma coroa de doze barras de 1×1 no quadrado 4..12 — quatro
+  cantos cinza e duas brancas ladeando cada canto.
+- Nó: núcleo 6×6×6 dentro das doze arestas do cubo 4..12.
+- Braço: núcleo até z=5, trilhos até z=4, encaixando no nó.
+- Tampa: quatro barras brancas fechando uma face sem conexão, com janela de 4×4.
+- `cable_contact.png` é o contato em 8×8 que o colar usa para tapar o furo.
+
+O blockstate usa o nó em tudo que não seja reto; multipart não tem `NOT`, então o
+complemento dos três casos retos está escrito à mão. `Build-Cable.ps1` monta as 19
+cláusulas sozinho.
+
+As molduras vêm de `frame_materials/`, pintadas à mão e quase chapadas; o gerador copia
+os dois PNGs em vez de tentar reproduzir o ruído sutil delas.

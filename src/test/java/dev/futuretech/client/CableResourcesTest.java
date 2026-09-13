@@ -1,0 +1,162 @@
+package dev.futuretech.client;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import org.junit.jupiter.api.Test;
+
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class CableResourcesTest {
+    private static final List<String> SIDES = List.of("north", "east", "south", "west", "up", "down");
+    private static final int[] TURN_X = {0, 0, 0, 0, 270, 90};
+    private static final int[] TURN_Y = {0, 90, 180, 270, 0, 0};
+
+    private static JsonObject resource(String path) throws Exception {
+        try (var stream = CableResourcesTest.class.getResourceAsStream("/assets/futuretech/" + path)) {
+            assertNotNull(stream, path);
+            return JsonParser.parseReader(new InputStreamReader(stream, StandardCharsets.UTF_8)).getAsJsonObject();
+        }
+    }
+
+    private static JsonObject model(String id) throws Exception {
+        return resource("models/" + id.substring("futuretech:".length()) + ".json");
+    }
+
+    private static int turn(JsonObject apply, String axis) {
+        return apply.has(axis) ? apply.get(axis).getAsInt() : 0;
+    }
+
+    private static List<JsonObject> selected(JsonObject state, int mask) {
+        var result = new ArrayList<JsonObject>();
+        for (var part : state.getAsJsonArray("multipart")) {
+            var entry = part.getAsJsonObject();
+            if (!entry.has("when") || matches(entry.getAsJsonObject("when"), mask)) {
+                result.add(entry.getAsJsonObject("apply"));
+            }
+        }
+        return result;
+    }
+
+    private static boolean matches(JsonObject when, int mask) {
+        if (when.has("OR")) {
+            for (var term : when.getAsJsonArray("OR")) if (matches(term.getAsJsonObject(), mask)) return true;
+            return false;
+        }
+        if (when.has("AND")) {
+            for (var term : when.getAsJsonArray("AND")) if (!matches(term.getAsJsonObject(), mask)) return false;
+            return true;
+        }
+        for (var condition : when.entrySet()) {
+            int index = SIDES.indexOf(condition.getKey());
+            assertTrue(index >= 0, condition.getKey());
+            if (((mask & (1 << index)) != 0) != condition.getValue().getAsBoolean()) return false;
+        }
+        return true;
+    }
+
+    /** Every box stays inside the block and every texture it names actually ships. */
+    private void validate(String id) throws Exception {
+        var geometry = model(id);
+        for (var element : geometry.getAsJsonArray("elements")) {
+            var cube = element.getAsJsonObject();
+            for (int axis = 0; axis < 3; axis++) {
+                double from = cube.getAsJsonArray("from").get(axis).getAsDouble();
+                double to = cube.getAsJsonArray("to").get(axis).getAsDouble();
+                assertTrue(from >= 0 && from < to && to <= 16, id);
+            }
+            for (var face : cube.getAsJsonObject("faces").entrySet()) {
+                String ref = face.getValue().getAsJsonObject().get("texture").getAsString().substring(1);
+                String texture = geometry.getAsJsonObject("textures").get(ref).getAsString();
+                assertNotNull(getClass().getResource("/assets/futuretech/textures/"
+                        + texture.substring("futuretech:".length()) + ".png"), texture);
+            }
+        }
+    }
+
+    @Test
+    void everyConnectionStateIsAStraightRunOrANodeWithAnArmOrCapPerFace() throws Exception {
+        var state = resource("blockstates/cable_mk1.json");
+        for (int mask = 0; mask < 64; mask++) {
+            var parts = selected(state, mask);
+            boolean straight = mask == 5 || mask == 10 || mask == 48;
+            assertEquals(straight ? 1 : 7, parts.size(), "A straight run, or a node with six face parts: " + mask);
+            for (var part : parts) validate(part.get("model").getAsString());
+            if (straight) {
+                var run = parts.getFirst();
+                assertEquals("futuretech:block/cable_mk1_line", run.get("model").getAsString());
+                assertEquals(mask == 48 ? 270 : 0, turn(run, "x"));
+                assertEquals(mask == 10 ? 90 : 0, turn(run, "y"));
+                continue;
+            }
+            assertTrue(parts.stream().anyMatch(p -> p.get("model").getAsString().equals("futuretech:block/cable_mk1_node")),
+                    "Anything but a straight run keeps the node: " + mask);
+            for (int side = 0; side < 6; side++) {
+                boolean connected = (mask & (1 << side)) != 0;
+                String wanted = "futuretech:block/cable_mk1_" + (connected ? "arm" : "cap");
+                int x = TURN_X[side];
+                int y = TURN_Y[side];
+                assertTrue(parts.stream().anyMatch(p -> p.get("model").getAsString().equals(wanted)
+                                && turn(p, "x") == x && turn(p, "y") == y),
+                        SIDES.get(side) + (connected ? " needs an arm on " : " needs a cap on ") + mask);
+            }
+        }
+    }
+
+    /**
+     * The regression this guards: the run used to be four four-unit segments, and every joint
+     * between them showed up in game as a thin dark line across the cable. One box per section,
+     * spanning the whole block, is what removed them. Never slice it again.
+     */
+    @Test
+    void straightRunIsOneBoxPerSectionWithNoFacesAcrossItsAxis() throws Exception {
+        var elements = model("futuretech:block/cable_mk1_line").getAsJsonArray("elements");
+        assertEquals(13, elements.size(), "One box per section of the cross section, never segments");
+        for (var element : elements) {
+            var cube = element.getAsJsonObject();
+            assertEquals(0, cube.getAsJsonArray("from").get(2).getAsDouble(), "Boxes span the whole block");
+            assertEquals(16, cube.getAsJsonArray("to").get(2).getAsDouble(), "Boxes span the whole block");
+            var faces = cube.getAsJsonObject("faces");
+            assertFalse(faces.has("north"), "A run is capped by its neighbour, never by itself");
+            assertFalse(faces.has("south"), "A run is capped by its neighbour, never by itself");
+        }
+    }
+
+    @Test
+    void inventoryShowsTheNodeWithAllSixFacesClosed() throws Exception {
+        var item = resource("models/item/cable_mk1.json").getAsJsonArray("elements");
+        assertEquals(37, item.size(), "Thirteen node boxes and four closing bars on each of the six faces");
+        var placed = new HashMap<String, JsonObject>();
+        for (var element : item) {
+            var cube = element.getAsJsonObject();
+            placed.put(cube.get("name") + "" + cube.getAsJsonArray("from") + cube.getAsJsonArray("to"), cube);
+        }
+        for (var element : model("futuretech:block/cable_mk1_node").getAsJsonArray("elements")) {
+            var cube = element.getAsJsonObject();
+            var shown = placed.get(cube.get("name") + "" + cube.getAsJsonArray("from") + cube.getAsJsonArray("to"));
+            assertNotNull(shown, "The item keeps every node box");
+            // Closing a face buries some of the node's own faces, so the item may drop one of
+            // them, never invent one the node does not have.
+            for (var face : shown.getAsJsonObject("faces").entrySet()) {
+                assertTrue(cube.getAsJsonObject("faces").has(face.getKey()), "No face the node lacks");
+            }
+        }
+        for (int axis = 0; axis < 3; axis++) {
+            for (int near = 4, far = 5; near == 4 || near == 11; near += 7, far += 7) {
+                int bars = 0;
+                for (var element : item) {
+                    var cube = element.getAsJsonObject();
+                    if (!cube.get("name").getAsString().equals("white")) continue;
+                    if (cube.getAsJsonArray("from").get(axis).getAsDouble() == near
+                            && cube.getAsJsonArray("to").get(axis).getAsDouble() == far) bars++;
+                }
+                assertEquals(4, bars, "Four bars close the face at " + near + " on axis " + axis);
+            }
+        }
+    }
+}
