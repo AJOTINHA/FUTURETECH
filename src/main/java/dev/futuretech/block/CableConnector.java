@@ -16,16 +16,19 @@ public final class CableConnector {
     public record Point(float x, float y, float z) {}
     public record Box(float x0, float y0, float z0, float x1, float y1, float z1, boolean flange) {}
 
-    /** North-facing collar, entirely inside the cable block, with a six-unit opening. */
+    /** Depth of the collar's bore. The cable's mouth is closed at its back. */
+    public static final float BORE_DEPTH = 2.5F;
+
+    /** North-facing collar, entirely inside the cable block, with an eight-unit opening. */
     public static final List<Box> BOXES = List.of(
-            new Box(3.5F,3.5F,0,5,12.5F,1,true),
-            new Box(11,3.5F,0,12.5F,12.5F,1,true),
-            new Box(5,3.5F,0,11,5,1,true),
-            new Box(5,11,0,11,12.5F,1,true),
-            new Box(4.25F,4.25F,1,5,11.75F,2.5F,false),
-            new Box(11,4.25F,1,11.75F,11.75F,2.5F,false),
-            new Box(5,4.25F,1,11,5,2.5F,false),
-            new Box(5,11,1,11,11.75F,2.5F,false));
+            new Box(2.5F,2.5F,0,4,13.5F,1,true),
+            new Box(12,2.5F,0,13.5F,13.5F,1,true),
+            new Box(4,2.5F,0,12,4,1,true),
+            new Box(4,12,0,12,13.5F,1,true),
+            new Box(3.25F,3.25F,1,4,12.75F,2.5F,false),
+            new Box(12,3.25F,1,12.75F,12.75F,2.5F,false),
+            new Box(4,3.25F,1,12,4,2.5F,false),
+            new Box(4,12,1,12,12.75F,2.5F,false));
 
     public static Point rotate(Point p, Direction side) {
         return switch (side) {

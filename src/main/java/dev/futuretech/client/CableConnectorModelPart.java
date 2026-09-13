@@ -20,7 +20,7 @@ public final class CableConnectorModelPart implements BlockStateModelPart {
     private final List<BakedQuad> quads;
     private final Material.Baked metal;
 
-    public CableConnectorModelPart(Direction side, TextureAtlasSprite sprite) {
+    public CableConnectorModelPart(Direction side, TextureAtlasSprite sprite, TextureAtlasSprite contact) {
         metal=new Material.Baked(sprite,false);
         var output=new ArrayList<BakedQuad>();
         for (var b : CableConnector.BOXES) {
@@ -32,7 +32,40 @@ public final class CableConnectorModelPart implements BlockStateModelPart {
             add(output,side,sprite,b.flange(),a,new Point(a.x(),a.y(),c.z()),new Point(a.x(),c.y(),c.z()),new Point(a.x(),c.y(),a.z()));
             add(output,side,sprite,b.flange(),new Point(c.x(),a.y(),a.z()),new Point(c.x(),c.y(),a.z()),c,new Point(c.x(),a.y(),c.z()));
         }
+        addContact(output,side,contact);
         quads=List.copyOf(output);
+    }
+
+    /**
+     * A solid plug filling the bore, flush with the neighbour's face. The run models carry no
+     * faces across their own axis, so the collar would otherwise be a recess with the cable's
+     * open mouth at the bottom of it. Filling the bore leaves nothing to look into at all.
+     */
+    private static void addContact(List<BakedQuad> output, Direction side, TextureAtlasSprite contact) {
+        Point a=new Point(4,4,0), c=new Point(12,12,CableConnector.BORE_DEPTH);
+        addPlate(output,side,contact,new Point(a.x(),c.y(),a.z()),new Point(a.x(),c.y(),c.z()),c,new Point(c.x(),c.y(),a.z()));
+        addPlate(output,side,contact,a,new Point(c.x(),a.y(),a.z()),new Point(c.x(),a.y(),c.z()),new Point(a.x(),a.y(),c.z()));
+        addPlate(output,side,contact,a,new Point(a.x(),c.y(),a.z()),new Point(c.x(),c.y(),a.z()),new Point(c.x(),a.y(),a.z()));
+        addPlate(output,side,contact,new Point(a.x(),a.y(),c.z()),new Point(c.x(),a.y(),c.z()),c,new Point(a.x(),c.y(),c.z()));
+        addPlate(output,side,contact,a,new Point(a.x(),a.y(),c.z()),new Point(a.x(),c.y(),c.z()),new Point(a.x(),c.y(),a.z()));
+        addPlate(output,side,contact,new Point(c.x(),a.y(),a.z()),new Point(c.x(),c.y(),a.z()),c,new Point(c.x(),a.y(),c.z()));
+    }
+
+    private static void addPlate(List<BakedQuad> output, Direction side, TextureAtlasSprite contact, Point... points) {
+        Vector3f[] vertices=new Vector3f[4];
+        long[] uvs=new long[4];
+        boolean cap=points[0].z()==points[1].z() && points[0].z()==points[2].z();
+        boolean alongX=points[0].x()!=points[1].x() || points[0].x()!=points[2].x();
+        for (int i=0;i<4;i++) {
+            Point p=CableConnector.rotate(points[i],side);
+            vertices[i]=new Vector3f(p.x(),p.y(),p.z()).div(16);
+            // Eight texels over the eight-unit bore keeps the contact on the pixel grid. The
+            // plug's sides are buried in the collar and only need a sane, non-degenerate strip.
+            float u=((cap || alongX ? points[i].x() : points[i].y())-4)/16;
+            float v=cap ? (points[i].y()-4)/16 : points[i].z()/CableConnector.BORE_DEPTH*8/16;
+            uvs[i]=UVPair.pack(contact.getU(u),contact.getV(v));
+        }
+        emit(output,contact,vertices,uvs);
     }
 
     private static void add(List<BakedQuad> output, Direction side, TextureAtlasSprite sprite, boolean flange, Point... points) {
@@ -50,6 +83,10 @@ public final class CableConnectorModelPart implements BlockStateModelPart {
                     ? points[i].z()*6/32 : (26+(points[i].z()-1)*4)/32;
             uvs[i]=UVPair.pack(sprite.getU(u),sprite.getV(v));
         }
+        emit(output,sprite,vertices,uvs);
+    }
+
+    private static void emit(List<BakedQuad> output, TextureAtlasSprite sprite, Vector3f[] vertices, long[] uvs) {
         Vector3f normal=new Vector3f(vertices[1]).sub(vertices[0]).cross(new Vector3f(vertices[2]).sub(vertices[0])).normalize();
         Direction facing=Math.abs(normal.x)>.5F ? (normal.x>0 ? Direction.EAST : Direction.WEST)
                 : Math.abs(normal.y)>.5F ? (normal.y>0 ? Direction.UP : Direction.DOWN)

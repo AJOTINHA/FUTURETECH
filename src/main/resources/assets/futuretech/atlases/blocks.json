@@ -6,6 +6,18 @@
     },
     {
       "type": "single",
+      "resource": "futuretech:block/cable_contact"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/battery_port_input"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/battery_port_output"
+    },
+    {
+      "type": "single",
       "resource": "futuretech:block/machine_side_input"
     },
     {
@@ -15,6 +27,18 @@
     {
       "type": "single",
       "resource": "futuretech:block/machine_side_input_output"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/battery_frame_preview"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/battery_frame_preview_input"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/battery_frame_preview_output"
     }
   ]
 }
