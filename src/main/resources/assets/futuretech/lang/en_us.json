@@ -1,5 +1,8 @@
 {
   "itemGroup.futuretech": "FUTURETECH",
+  "item.futuretech.iron_powder": "Iron Powder",
+  "item.futuretech.gold_powder": "Gold Powder",
+  "item.futuretech.copper_powder": "Copper Powder",
   "block.futuretech.crusher": "Crusher",
   "block.futuretech.machine_casing": "Machine Casing",
   "block.futuretech.solid_fuel_generator": "Solid Fuel Generator",

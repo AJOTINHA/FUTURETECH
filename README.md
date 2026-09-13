@@ -102,6 +102,8 @@ O **Triturador** (`futuretech:crusher`) usa uma frente de rolos dentados, carca�
 - Ao quebrar, solta a máquina e seus itens; não guarda energia no item.
 - Receitas próprias, extensíveis por datapacks com o tipo `futuretech:crushing`: pedregulho → cascalho; cascalho → areia; arenito → 4 areias; arenito vermelho → 4 areias vermelhas; osso → 6 farinhas de osso; vara de blaze → 4 pós de blaze; vidro → areia.
 
+O triturador também duplica os metais brutos: **1 ferro bruto → 2 pós de ferro**, **1 ouro bruto → 2 pós de ouro** e **1 cobre bruto → 2 pós de cobre**. Cada pó vira **1 lingote** na fornalha comum (200 ticks) ou elétrica (100 ticks e 2.000 FE). Assim, um bruto rende dois lingotes após triturar e fundir. Os três pós aparecem na aba FUTURETECH e têm ícones próprios em `art/powders/`. Cada lingote de ferro, ouro ou cobre também pode ser triturado e rende **1 pó** do mesmo metal. Os ícones dos pós aparecem 30% maiores na GUI. A fundição dos pós não concede experiência adicional.
+
 A fabricação usa quatro ferros, um pistão, dois cobres, uma carcaça e uma redstone:
 
 ```text

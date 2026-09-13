@@ -4,6 +4,10 @@ import static dev.futuretech.block.entity.CrusherBlockEntity.*;
 
 import dev.futuretech.api.side.SideMode;
 import dev.futuretech.registry.ModBlocks;
+import dev.futuretech.registry.ModItems;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.MinecraftServer;
@@ -25,11 +29,14 @@ class CrusherTest {
     void loadsAllCrushingRecipesWithTheirFullOutputCounts(MinecraftServer server) {
         var inputs = new net.minecraft.world.item.Item[] {
                 Items.COBBLESTONE, Items.GRAVEL, Items.SANDSTONE, Items.RED_SANDSTONE,
-                Items.BONE, Items.BLAZE_ROD, Items.GLASS};
+                Items.BONE, Items.BLAZE_ROD, Items.GLASS, Items.RAW_IRON, Items.RAW_GOLD, Items.RAW_COPPER,
+                Items.IRON_INGOT, Items.GOLD_INGOT, Items.COPPER_INGOT};
         var outputs = new net.minecraft.world.item.Item[] {
                 Items.GRAVEL, Items.SAND, Items.SAND, Items.RED_SAND,
-                Items.BONE_MEAL, Items.BLAZE_POWDER, Items.SAND};
-        int[] counts = {1, 1, 4, 4, 6, 4, 1};
+                Items.BONE_MEAL, Items.BLAZE_POWDER, Items.SAND,
+                ModItems.IRON_POWDER.get(), ModItems.GOLD_POWDER.get(), ModItems.COPPER_POWDER.get(),
+                ModItems.IRON_POWDER.get(), ModItems.GOLD_POWDER.get(), ModItems.COPPER_POWDER.get()};
+        int[] counts = {1, 1, 4, 4, 6, 4, 1, 2, 2, 2, 1, 1, 1};
         for (int i = 0; i < inputs.length; i++) {
             var machine = crusher();
             charge(machine, CRUSH_TICKS * ENERGY_PER_TICK);
@@ -75,10 +82,66 @@ class CrusherTest {
     void doesNotUseFurnaceRecipes(MinecraftServer server) {
         var machine = crusher();
         charge(machine, CAPACITY);
-        machine.setItem(SLOT_INPUT, new ItemStack(Items.RAW_IRON));
+        machine.setItem(SLOT_INPUT, new ItemStack(Items.WET_SPONGE));
         assertFalse(tick(machine, recipes(server)));
         assertEquals(CAPACITY, machine.energy().getAmountAsInt());
         assertTrue(machine.getItem(SLOT_OUTPUT).isEmpty());
+    }
+
+    @Test
+    void rawMetalsBecomeTwoPowdersThenTwoIngotsOneAtATime(MinecraftServer server) {
+        Item[] raw = {Items.RAW_IRON, Items.RAW_GOLD, Items.RAW_COPPER};
+        Item[] powder = {ModItems.IRON_POWDER.get(), ModItems.GOLD_POWDER.get(), ModItems.COPPER_POWDER.get()};
+        Item[] ingots = {Items.IRON_INGOT, Items.GOLD_INGOT, Items.COPPER_INGOT};
+        for (int i = 0; i < raw.length; i++) {
+            var machine = crusher();
+            machine.setItem(SLOT_INPUT, new ItemStack(raw[i]));
+            charge(machine, CRUSH_TICKS * ENERGY_PER_TICK);
+            for (int t = 0; t < CRUSH_TICKS; t++) assertTrue(tick(machine, recipes(server)));
+            ItemStack dust = machine.getItem(SLOT_OUTPUT).copy();
+            assertTrue(dust.is(powder[i]));
+            assertEquals(2, dust.getCount());
+            assertTrue(machine.getItem(SLOT_INPUT).isEmpty());
+
+            // The vanilla furnace and electric furnace share the SMELTING recipe book.
+            var input = new SingleRecipeInput(dust);
+            var vanillaRecipe = server.getRecipeManager().getRecipeFor(RecipeType.SMELTING, input, null).orElseThrow();
+            ItemStack result = vanillaRecipe.value().assemble(input);
+            assertTrue(result.is(ingots[i]));
+            assertEquals(1, result.getCount());
+            assertEquals(200, vanillaRecipe.value().cookingTime());
+
+            var furnace = new ElectricFurnaceBlockEntity(BlockPos.ZERO,
+                    ModBlocks.ELECTRIC_FURNACE.get().defaultBlockState());
+            furnace.setItem(ElectricFurnaceBlockEntity.SLOT_INPUT, dust);
+            for (int t = 0; t < 20; t++) {
+                furnace.beginTick();
+                try (var transaction = Transaction.openRoot()) {
+                    assertEquals(200, furnace.energy().insert(200, transaction));
+                    transaction.commit();
+                }
+            }
+            for (int completed = 1; completed <= 2; completed++) {
+                for (int t = 0; t < ElectricFurnaceBlockEntity.SMELT_TICKS; t++) {
+                    furnace.beginTick();
+                    assertTrue(furnace.smelt(in -> server.getRecipeManager()
+                            .getRecipeFor(RecipeType.SMELTING, in, null).orElse(null)));
+                }
+                assertTrue(furnace.getItem(ElectricFurnaceBlockEntity.SLOT_OUTPUT).is(ingots[i]));
+                assertEquals(completed, furnace.getItem(ElectricFurnaceBlockEntity.SLOT_OUTPUT).getCount());
+                assertEquals(2 - completed, furnace.getItem(ElectricFurnaceBlockEntity.SLOT_INPUT).getCount());
+            }
+            assertEquals(0, furnace.energy().getAmountAsInt());
+            // Recycling a finished ingot produces exactly one powder, with no doubling.
+            machine.setItem(SLOT_INPUT, new ItemStack(ingots[i]));
+            machine.setItem(SLOT_OUTPUT, ItemStack.EMPTY);
+            charge(machine, CAPACITY);
+            for (int t = 0; t < CRUSH_TICKS; t++) assertTrue(tick(machine, recipes(server)));
+            assertTrue(machine.getItem(SLOT_INPUT).isEmpty());
+            assertTrue(machine.getItem(SLOT_OUTPUT).is(powder[i]));
+            assertEquals(1, machine.getItem(SLOT_OUTPUT).getCount());
+            assertEquals(CAPACITY - CRUSH_TICKS * ENERGY_PER_TICK, machine.energy().getAmountAsInt());
+        }
     }
 
     private static CrusherBlockEntity crusher() {

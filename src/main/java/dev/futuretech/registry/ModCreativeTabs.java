@@ -22,6 +22,9 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.CRUSHER.get());
                         output.accept(ModItems.BATTERY_MK1.get());
                         output.accept(ModItems.CABLE_MK1.get());
+                        output.accept(ModItems.IRON_POWDER.get());
+                        output.accept(ModItems.GOLD_POWDER.get());
+                        output.accept(ModItems.COPPER_POWDER.get());
                     })
                     .build());
 

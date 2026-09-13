@@ -1,0 +1,8 @@
+{
+  "type": "futuretech:crushing",
+  "result": {
+    "count": 2,
+    "id": "futuretech:copper_powder"
+  },
+  "ingredient": "minecraft:raw_copper"
+}

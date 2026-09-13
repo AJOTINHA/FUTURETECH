@@ -1,0 +1,11 @@
+{
+  "ingredient": "futuretech:iron_powder",
+  "experience": 0.0,
+  "result": {
+    "count": 1,
+    "id": "minecraft:iron_ingot"
+  },
+  "cookingtime": 200,
+  "category": "misc",
+  "type": "minecraft:smelting"
+}

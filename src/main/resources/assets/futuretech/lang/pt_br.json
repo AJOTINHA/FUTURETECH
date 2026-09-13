@@ -1,5 +1,8 @@
 {
   "itemGroup.futuretech": "FUTURETECH",
+  "item.futuretech.iron_powder": "Pó de Ferro",
+  "item.futuretech.gold_powder": "Pó de Ouro",
+  "item.futuretech.copper_powder": "Pó de Cobre",
   "block.futuretech.crusher": "Triturador",
   "block.futuretech.machine_casing": "Carcaça de Máquina",
   "block.futuretech.solid_fuel_generator": "Gerador a Combustível Sólido",
