@@ -3,7 +3,6 @@ package dev.futuretech.block;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.futuretech.api.side.SideConfig;
-import dev.futuretech.api.side.SideConfig;
 import dev.futuretech.api.side.SideConfigurableBlock;
 import dev.futuretech.api.side.SideMode;
 import dev.futuretech.block.entity.BatteryBlockEntity;
@@ -14,6 +13,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
@@ -25,6 +25,9 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.transfer.energy.EnergyHandlerUtil;
 
 import java.util.Set;
@@ -42,6 +45,30 @@ public final class BatteryBlock extends BaseEntityBlock implements SideConfigura
     ).apply(i, BatteryBlock::new));
 
     private final BatteryTier tier;
+    private static final VoxelShape FRAME_SHAPE = createFrameShape();
+
+    private static VoxelShape createFrameShape() {
+        VoxelShape shape = Shapes.empty();
+        for (int x : new int[]{0, 13}) for (int y : new int[]{0, 13}) for (int z : new int[]{0, 13}) {
+            shape = Shapes.or(shape, box(x, y, z, x + 3, y + 3, z + 3));
+        }
+        for (double a : new double[]{0.25, 13.25}) for (double b : new double[]{0.25, 13.25}) {
+            shape = Shapes.or(shape, box(3, a, b, 13, a + 2.5, b + 2.5),
+                    box(a, 3, b, a + 2.5, 13, b + 2.5), box(a, b, 3, a + 2.5, b + 2.5, 13));
+        }
+        return shape.optimize();
+    }
+
+    @Override
+    protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        // Catch targeting rays across the open faces so clicks cannot reach blocks behind the battery.
+        return Shapes.block();
+    }
+
+    @Override
+    protected VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return FRAME_SHAPE;
+    }
 
     public BatteryBlock(BatteryTier tier, Properties properties) {
         super(properties);

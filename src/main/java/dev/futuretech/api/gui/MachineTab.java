@@ -58,6 +58,9 @@ public abstract class MachineTab {
     /** Handles a click on the content while fully open; return true when it was consumed. */
     protected abstract boolean clickContent(MouseButtonEvent event, int contentX, int contentY);
 
+    /** Tabs opt in to additional buttons without changing header or other tab behaviour. */
+    protected boolean acceptsContentButton(int button) { return button == 0; }
+
     protected abstract void contentTooltip(GuiGraphicsExtractor graphics, int contentX, int contentY, int mouseX, int mouseY);
 
     public Side side() { return side; }
@@ -122,12 +125,12 @@ public abstract class MachineTab {
 
     /** Returns true when the click landed on this tab. */
     public boolean mouseClicked(MouseButtonEvent event) {
-        if (event.button() != 0) return false;
         if (isOver(event.x(), event.y(), iconX(), y, SIZE, SIZE)) {
+            if (event.button() != 0) return false;
             open = !open;
             return true;
         }
-        return isFullyOpen() && isOver(event.x(), event.y(), x, y, width, height)
+        return acceptsContentButton(event.button()) && isFullyOpen() && isOver(event.x(), event.y(), x, y, width, height)
                 && clickContent(event, contentX(), contentY());
     }
 

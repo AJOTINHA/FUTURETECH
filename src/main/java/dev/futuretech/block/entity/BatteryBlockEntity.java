@@ -60,6 +60,31 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
     // Transfer totals of the previous tick, shown in the menu as FE/t.
     private int lastInput;
     private int lastOutput;
+    private int lastSentVisualCharge = -1;
+    private float visualChargeFrom;
+    private float visualChargeTarget;
+    private double visualChargeTime;
+    private boolean visualChargeInitialized;
+
+    /** Normalized visual charge only; no inventory or energy-handler mutation on the client. */
+    public float visualCharge(float partialTick) {
+        double now = level == null ? visualChargeTime + 5 : level.getGameTime() + partialTick;
+        float progress = (float)Math.clamp((now - visualChargeTime) / 5.0, 0.0, 1.0);
+        return visualChargeFrom + (visualChargeTarget - visualChargeFrom) * progress;
+    }
+
+    private int visualChargeUnits() {
+        return (int)((long)energy.getAmountAsInt() * 1000 / tier.capacity());
+    }
+
+    private void syncVisualCharge(Level level, BlockPos pos, BlockState state) {
+        int charge = visualChargeUnits();
+        if (charge != lastSentVisualCharge && (level.getGameTime() % 5 == 0
+                || lastSentVisualCharge < 0 || charge == 0 || charge == 1000)) {
+            lastSentVisualCharge = charge;
+            level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
+        }
+    }
     private final ContainerData data = new ContainerData() {
         @Override
         public int get(int index) {
@@ -103,15 +128,27 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
     public ModelData getModelData() { return SideConfigVisuals.modelData(sides); }
 
     @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider registries) { return SideConfigVisuals.updateTag(sides); }
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        var tag = SideConfigVisuals.updateTag(sides);
+        tag.putInt("VisualCharge", visualChargeUnits());
+        return tag;
+    }
 
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() { return ClientboundBlockEntityDataPacket.create(this); }
 
     @Override
     public void handleUpdateTag(ValueInput input) {
+        int previousModes = SideConfigVisuals.faceModes(sides);
         sides.load(input);
-        SideConfigVisuals.refresh(this);
+        if (previousModes != SideConfigVisuals.faceModes(sides)) SideConfigVisuals.refresh(this);
+        input.getInt("VisualCharge").ifPresent(charge -> {
+            float target = Math.clamp(charge, 0, 1000) / 1000.0F;
+            visualChargeFrom = visualChargeInitialized ? visualCharge(0) : target;
+            visualChargeTarget = target;
+            visualChargeTime = level == null ? 0 : level.getGameTime();
+            visualChargeInitialized = true;
+        });
     }
 
     @Override
@@ -153,6 +190,7 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
         // Redstone gates the output; charging through input faces is never blocked.
         battery.redstone.update(level, pos);
         if (battery.redstone.allowsRunning()) battery.exportEnergy(level, pos);
+        battery.syncVisualCharge(level, pos, state);
         if (previousSignal != EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(battery.energy)) {
             level.updateNeighbourForOutputSignal(pos, state.getBlock());
         }

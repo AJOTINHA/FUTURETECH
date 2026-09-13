@@ -22,6 +22,50 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(EphemeralTestServerProvider.class)
 class SideConfigTest {
     @Test
+    void reverseCycleWrapsAndSkipsUnsupportedModes(MinecraftServer server) {
+        var all = new SideConfig(EnumSet.allOf(SideMode.class), side -> SideMode.NONE);
+        for (SideMode expected : new SideMode[]{SideMode.BOTH, SideMode.OUTPUT, SideMode.INPUT, SideMode.NONE}) {
+            assertEquals(expected, all.cycle(Direction.UP, true));
+        }
+        assertEquals(SideMode.NONE, all.mode(Direction.DOWN));
+        var battery = new SideConfig(Set.of(SideMode.INPUT, SideMode.OUTPUT, SideMode.NONE), side -> SideMode.NONE);
+        for (SideMode expected : new SideMode[]{SideMode.OUTPUT, SideMode.INPUT, SideMode.NONE}) {
+            assertEquals(expected, battery.cycle(Direction.NORTH, true));
+        }
+        // Going back must undo a forward click even for restricted and single-mode machines.
+        for (int mask = 1; mask < 16; mask++) {
+            var allowed = EnumSet.noneOf(SideMode.class);
+            for (SideMode mode : SideMode.values()) if ((mask & 1 << mode.ordinal()) != 0) allowed.add(mode);
+            for (SideMode initial : allowed) {
+                var config = new SideConfig(allowed, side -> initial);
+                config.cycle(Direction.SOUTH);
+                assertEquals(initial, config.cycle(Direction.SOUTH, true));
+            }
+        }
+    }
+
+    @Test
+    void reverseMenuButtonsReachEachFaceWithoutOverlappingRedstone(MinecraftServer server) {
+        var battery = new BatteryBlockEntity(BlockPos.ZERO, ModBlocks.BATTERY_MK1.get().defaultBlockState());
+        for (Direction side : Direction.values()) {
+            battery.sideConfig().clear();
+            int reverseId = SideConfigMenu.BUTTON_REVERSE_BASE + side.ordinal();
+            assertTrue(SideConfigMenu.handleButton(battery, reverseId));
+            assertEquals(SideMode.OUTPUT, battery.sideConfig().mode(side));
+            for (Direction other : Direction.values()) {
+                if (other != side) assertEquals(SideMode.NONE, battery.sideConfig().mode(other));
+            }
+            assertTrue(SideConfigMenu.handleButton(battery, reverseId));
+            assertEquals(SideMode.INPUT, battery.sideConfig().mode(side));
+            assertTrue(SideConfigMenu.handleButton(battery, side.ordinal()));
+            assertEquals(SideMode.OUTPUT, battery.sideConfig().mode(side));
+        }
+        assertFalse(SideConfigMenu.handleButton(battery, -1));
+        assertFalse(SideConfigMenu.handleButton(battery, SideConfigMenu.BUTTON_COUNT));
+        assertFalse(SideConfigMenu.handleButton(battery, dev.futuretech.api.redstone.RedstoneControlMenu.BUTTON_BASE));
+    }
+
+    @Test
     void cycleVisitsOnlyAllowedModesInOrder(MinecraftServer server) {
         var all = new SideConfig(EnumSet.allOf(SideMode.class), side -> SideMode.NONE);
         assertEquals(SideMode.INPUT, all.cycle(Direction.UP));

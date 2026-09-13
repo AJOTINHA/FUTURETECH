@@ -28,7 +28,7 @@ import java.util.Map;
 
 /**
  * Face configuration tab: an unfolded view of the block's six faces, drawn with their real
- * textures; clicking a face cycles its mode on the server, shift-clicking the front closes all.
+ * textures; left/right clicks cycle forwards/backwards, shift-left-clicking the front closes all.
  *
  * <p>Machines with an inventory also get two toggles down the left edge: a blue arrow that pulls
  * items from whatever sits against an input face, and an orange one that pushes results to whatever
@@ -248,7 +248,8 @@ public final class SideConfigTab<M extends AbstractContainerMenu & SideConfigMen
             SideMode mode = menu.sideMode(face.resolve(front));
             List<FormattedCharSequence> lines = new ArrayList<>(List.of(
                     Component.translatable(face.key).getVisualOrderText(),
-                    Component.translatable(mode.translationKey()).getVisualOrderText()));
+                    Component.translatable(mode.translationKey()).getVisualOrderText(),
+                    Component.translatable("gui.futuretech.side.cycle_hint").getVisualOrderText()));
             if (face == Face.FRONT) lines.add(Component.translatable("gui.futuretech.side.clear_hint").getVisualOrderText());
             graphics.setTooltipForNextFrame(lines, mouseX, mouseY);
             return;
@@ -256,10 +257,14 @@ public final class SideConfigTab<M extends AbstractContainerMenu & SideConfigMen
     }
 
     @Override
+    protected boolean acceptsContentButton(int button) { return button == 0 || button == 1; }
+
+    @Override
     protected boolean clickContent(MouseButtonEvent event, int contentX, int contentY) {
         List<Toggle> shown = toggles();
         for (int index = 0; index < shown.size(); index++) {
             if (!isOver(event.x(), event.y(), contentX + 1, toggleY(contentY, index, shown.size()), TILE, TILE)) continue;
+            if (event.button() != 0) return true;
             send(shown.get(index).buttonId);
             return true;
         }
@@ -267,9 +272,10 @@ public final class SideConfigTab<M extends AbstractContainerMenu & SideConfigMen
         Direction front = menu.front();
         for (Face face : Face.values()) {
             if (!isOver(event.x(), event.y(), tileX(gridX, face), tileY(contentY, face), TILE, TILE)) continue;
-            // Shift-clicking the front is the quick way to close every face at once.
-            int buttonId = face == Face.FRONT && event.hasShiftDown()
-                    ? SideConfigMenu.BUTTON_CLEAR_ALL : face.resolve(front).ordinal();
+            // Shift-left-click closes all faces; right-click always goes back one mode.
+            int buttonId = face == Face.FRONT && event.hasShiftDown() && event.button() == 0
+                    ? SideConfigMenu.BUTTON_CLEAR_ALL : face.resolve(front).ordinal()
+                    + (event.button() == 1 ? SideConfigMenu.BUTTON_REVERSE_BASE : 0);
             send(buttonId);
             return true;
         }

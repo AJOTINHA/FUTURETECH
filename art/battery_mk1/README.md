@@ -2,9 +2,9 @@
 
 Arte original gerada com ImageGen usando a textura do gerador como referência visual: carcaça cinza, moldura escura, detalhes azuis e contatos de cobre.
 
-`source.png` preserva a imagem gerada. Ordem dos quadrantes: frente, lateral, topo e base. `Export-Textures.ps1` exporta somente a frente de `source-fronts.png` em 32 × 32 pixels para `src/main/resources/assets/futuretech/textures/block/battery_mk1_*.png`, com alpha 255 em todos os pixels. `preview.png` mostra as texturas finais ampliadas sem suavização.
+`source.png` preserva a imagem gerada. Ordem dos quadrantes: frente, lateral, topo e base. `Export-Textures.ps1` exporta somente a frente de `source-fronts.png` em 32 × 32 pixels para `art/battery_mk1/exported/battery_mk1_front.png`, com alpha 255 em todos os pixels. `preview.png` mostra a textura histórica ampliada sem suavização. O exportador não grava mais nos recursos do mod.
 
-O símbolo de bateria na frente é decorativo; a carga real continua sendo mostrada pela interface e pelo item. No jogo, somente a frente desta folha é usada: as outras cinco faces herdam `machine_side.png` pelo modelo compartilhado `machine_base`, igual ao gerador. A folha original fica preservada como material de arte; a prévia atual mostra apenas a frente. A textura compartilhada é a chapa lisa sem linha, exportada por `art/machine_side/Export-Texture.ps1`.
+Esta frente pertence ao modelo antigo e não é mais usada no jogo. A bateria atual usa a estrutura vazada de `art/battery_frame`. A folha original e a prévia ficam preservadas como referência histórica.
 
 ## Prompt de geração
 

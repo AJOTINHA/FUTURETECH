@@ -38,7 +38,7 @@ A lista de peças de madeira é extensível pela tag de itens `futuretech:genera
 A **Bateria MK1** (`futuretech:battery_mk1`) armazena a energia do gerador. Clique com o botão direito para ver a reserva e as taxas de entrada e saída do último tick.
 
 - Armazena **100.000 FE**; recebe e envia até **200 FE/t** cada, por tick e não por chamada.
-- Cada face é configurável (veja "Configuração de lados"); a frente, marcada com um símbolo azul de bateria e virada para o jogador ao colocar, é a referência do painel. Uma face de bateria nunca é entrada e saída ao mesmo tempo, para um cabo não devolver à bateria a energia dela mesma. Uma bateria nunca envia diretamente para outra bateria.
+- Cada face é configurável (veja "Configuração de lados"); a orientação voltada para o jogador ao colocar é a referência do painel. Uma face de bateria nunca é entrada e saída ao mesmo tempo, para um cabo não devolver à bateria a energia dela mesma. Uma bateria nunca envia diretamente para outra bateria.
 - Ao quebrar, o item sai com a carga guardada num componente de dados (`futuretech:energy`); a tooltip mostra "x / 100000 FE" e o item exibe uma barra de carga. Ao colocar de novo, a energia volta para o bloco. Baterias vazias não carregam o componente e continuam empilháveis.
 - Um comparador mede o nível da reserva.
 
@@ -50,7 +50,7 @@ Redstone  Carcaça    Redstone
 Ferro     Ouro       Ferro
 ```
 
-A bateria MK1 usa texturas próprias e opacas de 32 × 32 pixels, com símbolo azul de bateria e pequenos contatos de cobre na frente. Gerador e bateria compartilham o modelo `machine_base`: topo, base, laterais e traseira usam a mesma textura `machine_side`, com chapa cinza lisa, moldura escura e parafusos nos cantos, sem linha interna ou grade. Só a frente muda entre as máquinas. Novas máquinas podem herdar esse modelo e definir apenas a textura frontal. O símbolo frontal da bateria é decorativo; a carga real continua visível na interface e no item.
+A bateria MK1 usa uma estrutura 3D vazada, com doze vigas de metal escuro e cantos reforçados. Cada face em Nenhum permanece aberta. Entrada acrescenta uma chapa de aço com furo quadrado e aro azul; Saída usa o mesmo modelo com aro laranja, nas seis orientações. As vigas mantêm o metal original. No centro, uma esfera azul-ciano com malha hexagonal luminosa gira uma volta a cada 20 segundos, sem encostar nas vigas. A colisão física acompanha apenas a estrutura; as aberturas são reais, sem painéis transparentes. A área de seleção e clique ocupa o bloco inteiro, impedindo interagir com blocos atrás da bateria através das aberturas. Faces configuradas como Saída exibem partículas luminosas em espiral, do núcleo até o centro do encaixe, passando de ciano para laranja. Faces em Entrada exibem o fluxo inverso: partículas azuis partem do encaixe e chegam ao núcleo em ciano. O fluxo acompanha o tamanho do núcleo, funciona nas seis direções e aparece pela configuração da face, independentemente de transferência de energia ou cabo conectado. A carga continua visível na interface e no item. O modelo está em `assets/futuretech/models/block/battery_mk1.json`; as imagens da frente antiga em `art/battery_mk1` ficam preservadas como referência.
 
 Todas as baterias compartilham as mesmas classes (`BatteryBlock`, `BatteryBlockEntity`, `BatteryBlockItem`, `BatteryMenu`, `BatteryScreen`); o que muda entre elas é o `BatteryTier`, que define capacidade e taxa por tick. Uma nova bateria é uma constante no enum, um bloco e um item registrados a partir dela, e os JSONs de recurso.
 
@@ -70,7 +70,7 @@ Redstone  Redstone  Redstone
 Cobre     Cobre     Cobre
 ```
 
-Como nas baterias, todos os cabos compartilham as mesmas classes (`CableBlock`, `CableBlockEntity`, `CableNetwork`); o `CableTier` define o throughput. Cabos de tiers diferentes se conectam, e a rede assume o menor throughput entre eles. O MK1 tem geometria 3D própria: quatro trilhos elevados em cada braço, molduras salientes nas junções e corpo fechado com faces prateadas recuadas e uma faixa ciano estreita no centro. As junções usam 19 volumes e cada braço usa cinco, dentro da espessura original de seis unidades. O atlas de materiais tem 32 × 32 pixels. O acabamento acompanha conexões horizontais, verticais e curvas; o item no inventário mostra somente o nó central ciano. Os recursos podem ser recriados com `art/cable_mk1/Export-Cable.ps1`.
+Como nas baterias, todos os cabos compartilham as mesmas classes (`CableBlock`, `CableBlockEntity`, `CableNetwork`); o `CableTier` define o throughput. Cabos de tiers diferentes se conectam, e a rede assume o menor throughput entre eles. O MK1 usa os modelos de `Model/cabo_no.bbmodel` e `Model/cabo.bbmodel`: exterior de 8 unidades, miolo ciano de 6 e frames de 1. O nó fechado tem 37 volumes e cada braço 13. O importador centraliza o conjunto sem redimensioná-lo e extrai o branco e o cinza com variações sutis do nó. Nos trechos retos, duas conexões opostas formam uma linha contínua sem nó intermediário. Pontas, curvas e ramificações mostram o nó com braços apenas nas faces conectadas. A colisão tem largura de 8 e os conectores com máquinas têm abertura de 8 × 8. O item mostra o nó completo. Os recursos podem ser recriados com `art/cable_mk1/Export-Cable.ps1`.
 
 A **Fornalha Elétrica** (`futuretech:electric_furnace`) é a primeira máquina que consome energia. Ela funde exatamente o que uma fornalha comum funde, sem combustível e no dobro da velocidade.
 
@@ -128,8 +128,8 @@ O modo de uma face **sempre** decide os itens. Se ele também decide a energia d
 
 A ideia é não fazer o jogador configurar energia à toa: uma máquina liga em qualquer lado e um gerador alimenta o que estiver encostado. Na bateria é o contrário, porque escolher por onde a energia entra e sai é a função dela; uma face em Nenhum não carrega nem descarrega.
 
-- Clicar numa face avança o modo: Entrada → Saída → Ambos → Nenhum, pulando os que a máquina não permite.
-- Shift + clique na frente põe todas as faces em Nenhum.
+- Clique esquerdo numa face avança o modo: Entrada → Saída → Ambos → Nenhum; clique direito percorre a ordem inversa. Os dois pulam os modos que a máquina não permite.
+- Shift + clique esquerdo na frente põe todas as faces em Nenhum.
 - Faces em Nenhum não oferecem a capability de itens ao vizinho e somem para os funis.
 - A configuração é salva com o bloco.
 

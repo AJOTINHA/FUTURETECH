@@ -2,8 +2,8 @@ param([ValidateSet(16, 32, 64)][int]$Size = 32)
 
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
-$repository = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
-$destination = Join-Path $repository 'src/main/resources/assets/futuretech/textures/block'
+# Historical artwork only; the current battery uses the open frame and port textures.
+$destination = Join-Path $PSScriptRoot 'exported'
 [System.IO.Directory]::CreateDirectory($destination) | Out-Null
 $frontSource = [System.Drawing.Bitmap]::new((Join-Path $PSScriptRoot 'source-fronts.png'))
 $preview = [System.Drawing.Bitmap]::new(256, 256)

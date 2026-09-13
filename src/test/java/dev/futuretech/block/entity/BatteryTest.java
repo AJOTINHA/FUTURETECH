@@ -32,6 +32,48 @@ import static org.junit.jupiter.api.Assertions.*;
 class BatteryTest {
     private static final int CAPACITY = BatteryTier.MK1.capacity();
 
+    @Test
+    void frameCollisionIsOpenButClicksStopAtEveryFace(MinecraftServer server) {
+        var state = ModBlocks.BATTERY_MK1.get().defaultBlockState();
+        var shape = state.getCollisionShape(server.overworld(), BlockPos.ZERO);
+        var emptyCentre = net.minecraft.world.level.block.Block.box(3, 0, 3, 13, 16, 13);
+        var cornerBeam = net.minecraft.world.level.block.Block.box(0, 4, 0, 2, 12, 2);
+        assertFalse(state.canOcclude());
+        assertFalse(net.minecraft.world.phys.shapes.Shapes.joinIsNotEmpty(
+                shape, emptyCentre, net.minecraft.world.phys.shapes.BooleanOp.AND));
+        assertTrue(net.minecraft.world.phys.shapes.Shapes.joinIsNotEmpty(
+                shape, cornerBeam, net.minecraft.world.phys.shapes.BooleanOp.AND));
+        var centre = new net.minecraft.world.phys.Vec3(0.5, 0.5, 0.5);
+        for (var face : Direction.values()) {
+            var offset = new net.minecraft.world.phys.Vec3(face.getStepX(), face.getStepY(), face.getStepZ());
+            var hit = state.getShape(server.overworld(), BlockPos.ZERO).clip(
+                    centre.add(offset.scale(2)), centre.subtract(offset.scale(2)), BlockPos.ZERO);
+            assertNotNull(hit, "Clicks must stop at the battery's " + face + " face");
+            assertEquals(face, hit.getDirection());
+        }
+    }
+
+    @Test
+    void renderChargeTracksChunkAndLiveUpdatesWithoutChangingStoredEnergy(MinecraftServer server) {
+        var client = chargedBattery(123);
+        for (int amount : new int[]{0, CAPACITY / 4, CAPACITY / 2, CAPACITY, 0}) {
+            var source = chargedBattery(amount);
+            var tag = source.getUpdateTag(server.registryAccess());
+            assertFalse(tag.contains("Energy"));
+            var input = TagValueInput.create(ProblemReporter.DISCARDING, server.registryAccess(), tag);
+            if (amount == CAPACITY / 2) client.onDataPacket(null, input);
+            else client.handleUpdateTag(input);
+            assertEquals((float)amount / CAPACITY, client.visualCharge(0), 0.001F);
+            assertEquals(123, client.energy().getAmountAsInt());
+        }
+        var invalid = chargedBattery(0).getUpdateTag(server.registryAccess());
+        invalid.putInt("VisualCharge", 2000);
+        client.handleUpdateTag(TagValueInput.create(ProblemReporter.DISCARDING, server.registryAccess(), invalid));
+        assertEquals(1.0F, client.visualCharge(0));
+        invalid.putInt("VisualCharge", -100);
+        client.handleUpdateTag(TagValueInput.create(ProblemReporter.DISCARDING, server.registryAccess(), invalid));
+        assertEquals(0.0F, client.visualCharge(0));
+    }
     private static BatteryBlockEntity battery() {
         return new BatteryBlockEntity(BlockPos.ZERO, ModBlocks.BATTERY_MK1.get().defaultBlockState());
     }

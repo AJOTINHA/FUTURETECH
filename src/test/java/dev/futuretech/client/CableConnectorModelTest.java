@@ -31,6 +31,24 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(EphemeralTestServerProvider.class)
 class CableConnectorModelTest {
+    @Test
+    void approvedNodeAndArmsHaveEightUnitSelectionAndCollision(MinecraftServer server) {
+        var state=ModBlocks.CABLE_MK1.get().defaultBlockState();
+        var node=net.minecraft.world.level.block.Block.box(4,4,4,12,12,12);
+        assertFalse(Shapes.joinIsNotEmpty(node,state.getShape(snapshot(Map.of()),BlockPos.ZERO),BooleanOp.NOT_SAME));
+        for (Direction side : Direction.values()) {
+            var connected=state.setValue(CableBlock.PROPERTY_BY_DIRECTION.get(side),true);
+            var a=CableConnector.rotate(new CableConnector.Point(4,4,0),side);
+            var b=CableConnector.rotate(new CableConnector.Point(12,12,4),side);
+            var expected=Shapes.or(node,net.minecraft.world.level.block.Block.box(
+                    Math.min(a.x(),b.x()),Math.min(a.y(),b.y()),Math.min(a.z(),b.z()),
+                    Math.max(a.x(),b.x()),Math.max(a.y(),b.y()),Math.max(a.z(),b.z())));
+            var empty=snapshot(Map.of());
+            assertFalse(Shapes.joinIsNotEmpty(expected,connected.getShape(empty,BlockPos.ZERO),BooleanOp.NOT_SAME));
+            assertFalse(Shapes.joinIsNotEmpty(expected,connected.getCollisionShape(empty,BlockPos.ZERO),BooleanOp.NOT_SAME));
+        }
+    }
+
     private static final BlockStateModel BASE=new BlockStateModel() {
         @Override public void collectParts(RandomSource random,List<BlockStateModelPart> output) {}
         @Override public Material.Baked particleMaterial() { throw new UnsupportedOperationException(); }
@@ -94,7 +112,7 @@ class CableConnectorModelTest {
             assertEquals(8+side.getStepY()*8,center.y());
             assertEquals(8+side.getStepZ()*8,center.z());
             for (var box : CableConnector.BOXES) {
-                assertFalse(box.x0()<11 && box.x1()>5 && box.y0()<11 && box.y1()>5,"Bore must clear six-unit cable");
+                assertFalse(box.x0()<12 && box.x1()>4 && box.y0()<12 && box.y1()>4,"Bore must clear eight-unit cable");
                 for (var p : List.of(new CableConnector.Point(box.x0(),box.y0(),box.z0()),new CableConnector.Point(box.x1(),box.y1(),box.z1()))) {
                     var rotated=CableConnector.rotate(p,side);
                     assertTrue(rotated.x()>=0 && rotated.x()<=16 && rotated.y()>=0 && rotated.y()<=16 && rotated.z()>=0 && rotated.z()<=16);

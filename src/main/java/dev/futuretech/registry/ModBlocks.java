@@ -51,6 +51,7 @@ public final class ModBlocks {
     private static DeferredBlock<BatteryBlock> registerBattery(BatteryTier tier) {
         return BLOCKS.registerBlock(tier.blockName(), properties -> new BatteryBlock(tier, properties), properties -> properties
                     .mapColor(MapColor.METAL)
+                    .noOcclusion()
                     .strength(3.5F, 6.0F)
                     .sound(SoundType.METAL)
                     .requiresCorrectToolForDrops());

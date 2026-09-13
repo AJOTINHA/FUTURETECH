@@ -33,7 +33,7 @@ public final class CableBlock extends PipeBlock implements EntityBlock {
     public static final MapCodec<CableBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
             CableTier.CODEC.fieldOf("tier").forGetter(CableBlock::tier), propertiesCodec()
     ).apply(i, CableBlock::new));
-    private static final float SIZE = 6.0F;
+    private static final float SIZE = 8.0F;
 
     private final CableTier tier;
 
