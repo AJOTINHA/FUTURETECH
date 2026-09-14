@@ -127,7 +127,7 @@ class CableConnectorModelTest {
         // ends in a collar there, and only a cable of the same kind continues it.
         var model=new CableConnectorModel(BASE,uniformParts(CONNECTOR));
         var energy=ModBlocks.CABLE_MK1.get().defaultBlockState();
-        var items=ModBlocks.ITEM_CABLE_MK1.get().defaultBlockState();
+        var items=ModBlocks.ITEM_CABLE.get().defaultBlockState();
         for (var pair : List.of(List.of(energy,items),List.of(items,energy))) {
             var connected=pair.get(0).setValue(CableBlock.PROPERTY_BY_DIRECTION.get(Direction.NORTH),true);
             var output=new ArrayList<BlockStateModelPart>();

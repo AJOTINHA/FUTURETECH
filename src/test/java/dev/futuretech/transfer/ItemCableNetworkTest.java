@@ -24,8 +24,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(EphemeralTestServerProvider.class)
 class ItemCableNetworkTest {
-    private static final int BATCH = ItemCableTier.MK1.batch();
-    private static final int INTERVAL = ItemCableTier.MK1.interval();
+    private static final int BATCH = ItemCableTier.STANDARD.batch();
+    private static final int INTERVAL = ItemCableTier.STANDARD.interval();
     private static final BlockPos CABLE = BlockPos.ZERO;
 
     /**
@@ -232,16 +232,19 @@ class ItemCableNetworkTest {
     }
 
     @Test
-    void pumpsWithHigherPriorityAreEmptiedFirst(MinecraftServer server) {
+    void pumpsWithHigherPriorityGetTheRoomFirst(MinecraftServer server) {
+        // Each pump has its own budget, so priority only matters when the room runs out: a sink
+        // with space for one item takes it from the favoured pump, and the other stays full.
         var urgent = chest(64);
         var later = chest(64);
-        var sink = chest(0);
+        var sink = new ItemStacksResourceHandler(1);
+        sink.set(0, ItemResource.of(Items.COBBLESTONE), 64 - BATCH);
         var network = network(new ExtractOnlyEndpoint(Direction.NORTH, later),
                 new PrioritisedPump(Direction.SOUTH, 5, urgent), new FakeEndpoint(Direction.EAST, sink));
         for (int round = 1; round <= 3; round++) network.tick(round * INTERVAL);
-        assertEquals(64 - 3 * BATCH, count(urgent));
+        assertEquals(64 - BATCH, count(urgent));
         assertEquals(64, count(later));
-        assertEquals(3 * BATCH, count(sink));
+        assertEquals(64, count(sink));
     }
 
     private record PrioritisedPump(Direction side, int priority, @Nullable ResourceHandler<ItemResource> handler)
@@ -270,6 +273,42 @@ class ItemCableNetworkTest {
     }
 
     private static final Predicate<ItemResource> COBBLESTONE_ONLY = resource -> resource.is(Items.COBBLESTONE);
+
+    /** An extract-only connector carrying speed upgrades. */
+    private record UpgradedPump(Direction side, int upgrades, @Nullable ResourceHandler<ItemResource> handler)
+            implements ItemCableNetwork.Endpoint {
+        @Override
+        public ItemCableNetwork.EndpointKey key() { return new ItemCableNetwork.EndpointKey(CABLE, side); }
+
+        @Override
+        public boolean delivers() { return false; }
+
+        @Override
+        public boolean pulls() { return true; }
+
+        @Override
+        public int priority() { return 0; }
+    }
+
+    @Test
+    void speedUpgradesWidenTheBudgetOfTheConnectorTheyAreOn(MinecraftServer server) {
+        var fast = chest(64);
+        var slow = chest(64);
+        var sink = new ItemStacksResourceHandler(9);
+        var network = network(new UpgradedPump(Direction.NORTH, 3, fast), new ExtractOnlyEndpoint(Direction.SOUTH, slow),
+                new FakeEndpoint(Direction.EAST, sink));
+        network.tick(INTERVAL);
+        // Three upgrades add six to the batch of one; the plain pump keeps its one.
+        assertEquals(64 - (BATCH + 3 * ItemCableNetwork.PER_UPGRADE), count(fast));
+        assertEquals(64 - BATCH, count(slow));
+        assertEquals(2 * BATCH + 3 * ItemCableNetwork.PER_UPGRADE, network.moved());
+        // A full load of upgrades moves a whole stack per interval, never more.
+        var loaded = chest(64);
+        var stacked = network(new UpgradedPump(Direction.NORTH, 32, loaded), new FakeEndpoint(Direction.EAST, new ItemStacksResourceHandler(9)));
+        stacked.tick(INTERVAL);
+        assertEquals(0, count(loaded));
+        assertEquals(ItemCableNetwork.MAX_PER_INTERVAL, stacked.moved());
+    }
 
     /** A connector on a colour, and optionally a numbered channel. */
     private record ColouredEndpoint(Direction side, boolean delivers, boolean pulls, DyeColor color, int channel,

@@ -6,6 +6,8 @@ Mod de máquinas, energia e automação industrial para **Minecraft Java 26.2**,
 
 Versão `0.5.0`, com identificação `futuretech`, aba criativa própria e traduções em português e inglês.
 
+O **Speed Upgrade** (`futuretech:speed_upgrade`) é um módulo 3D com textura própria, setas ciano e contatos dourados. Aparece na aba FUTURETECH e pode ser instalado nos slots de melhorias, um por slot, com persistência ao salvar o mundo. A receita usa quatro lingotes de ferro nos cantos, dois de ouro no centro superior e inferior, redstone nas laterais e açúcar no centro. Por enquanto o item não altera a velocidade das máquinas. A fonte da textura e seu exportador ficam em `art/speed_upgrade/`.
+
 O **Filtro** (`futuretech:filter`) é um item destinado ao cabo de itens. Aparece na aba FUTURETECH, ao lado do cabo de itens, e usa um modelo 3D com moldura espessa, grade metálica vazada, parafusos e marcador ciano nos dois lados. O inventário mostra a peça levemente inclinada para evidenciar a espessura. A receita rende um filtro com quatro pepitas de ferro nos cantos e cinco linhas nas demais posições da bancada. Colocado no slot de um conector do cabo de itens, decide o que atravessa aquele conector, nas duas direções: a engrenagem ao lado do slot abre a lista de nove itens e o botão Permitir/Bloquear. Permitir deixa passar só o que está na lista (vazia, não passa nada); Bloquear deixa passar tudo menos o listado. A comparação olha só o tipo do item, então uma picareta gasta continua sendo picareta. A lista e o modo ficam no próprio item, em componentes, e viajam com ele. O exportador do modelo e as fontes visuais ficam em `art/filter/`.
 
 A **Carcaça de Máquina** está registrada na aba FUTURETECH. Usa a textura padrão `machine_side` nas seis faces, a mesma usada nos cinco lados não frontais das máquinas, e pode ser fabricada com oito barras de ferro ao redor de um espaço vazio. Requer picareta de pedra ou superior para soltar o item.
@@ -74,10 +76,10 @@ Cobre     Cobre     Cobre
 
 Como nas baterias, todos os cabos compartilham as mesmas classes (`CableBlock`, `CableBlockEntity`, `CableNetwork`); o `CableTier` define o throughput. Cabos de tiers diferentes se conectam, e a rede assume o menor throughput entre eles. O MK1 usa os modelos de `Model/cabo_no.bbmodel` e `Model/cabo.bbmodel`: exterior de 8 unidades, miolo ciano de 6 e frames de 1. O nó fechado tem 37 volumes e cada braço 13. O importador centraliza o conjunto sem redimensioná-lo e extrai o branco e o cinza com variações sutis do nó. Nos trechos retos, duas conexões opostas formam uma linha contínua sem nó intermediário. Pontas, curvas e ramificações mostram o nó com braços apenas nas faces conectadas. A colisão tem largura de 8 e os conectores com máquinas têm abertura de 8 × 8. O item mostra o nó completo. Os recursos podem ser recriados com `art/cable_mk1/Export-Cable.ps1`.
 
-O **Cabo de Itens MK1** (`futuretech:item_cable_mk1`) é o irmão do cabo de energia para itens: mesma geometria e mesmos conectores, em latão em vez de ciano. Cabos de itens que se tocam formam uma rede; um cabo de itens ao lado de um cabo de energia é só um vizinho, nunca continuação.
+O **Cabo de Itens** (`futuretech:item_cable`) é o irmão do cabo de energia para itens: mesma geometria e mesmos conectores, em latão em vez de ciano. Cabos de itens que se tocam formam uma rede; um cabo de itens ao lado de um cabo de energia é só um vizinho, nunca continuação.
 
 - A rede **não guarda nada**: um item empurrado para dentro de qualquer cabo atravessa na mesma transação até um inventário do outro lado. Se ninguém aceita, o empurrão é recusado e o item fica na máquina. A rede nunca devolve um item ao bloco que o empurrou, nem por outra face.
-- O MK1 move **1 item a cada 20 ticks** por rede, o ritmo dos cabos básicos de outros mods; a cota não acumula entre intervalos. O `ItemCableTier` define lote e intervalo, e uma rede com tiers misturados anda no ritmo do mais lento.
+- Move **1 item a cada 20 ticks** por conector de entrada, o ritmo dos cabos básicos de outros mods; a cota não acumula entre intervalos. O `ItemCableTier` define lote e intervalo, e uma rede com tiers misturados anda no ritmo do mais lento.
 - Cada conector com um bloco (baú, barril, fornalha, máquina do mod, hopper) abre uma interface própria com clique direito: **Inserir** e **Extrair** como no cabo de energia; um conector só em Extrair bombeia do inventário vizinho, e um conector normal nunca esvazia o baú que encosta.
 - **Prioridade** de −100 a +100 (shift + clique anda de 10): quem tem prioridade maior recebe primeiro, e só o que não coube desce para os demais; empatados se revezam. Vale também para as bombas.
 - **Cor** (uma das 16 tintas, branco por padrão, escolhida num painel que abre ao clicar no quadrado) e **Canal** de 0 a 100: um item que entra por um conector só sai por conectores da **mesma cor e mesmo canal**. Prioridade e filtro valem dentro de cada linha.
@@ -92,7 +94,7 @@ G G G
 I I I
 ```
 
-Os dois cabos compartilham `AbstractCableBlock` e `AbstractCableBlockEntity` (forma, conexões, modos dos conectores, menu); cada tipo só diz o que emenda e qual capability o vizinho precisa oferecer. O cabo de itens usa os modelos do MK1 como pai, trocando apenas as texturas do miolo (`item_cable_mk1.png`, `item_cable_mk1_node.png`) e o tampão do colar (`item_cable_contact.png`). A lógica fica em `transfer/ItemCableNetwork`.
+Os dois cabos compartilham `AbstractCableBlock` e `AbstractCableBlockEntity` (forma, conexões, modos dos conectores, menu); cada tipo só diz o que emenda e qual capability o vizinho precisa oferecer. O cabo de itens usa os modelos do Cabo MK1 como pai, trocando apenas as texturas do miolo (`item_cable.png`, `item_cable_node.png`) e o tampão do colar (`item_cable_contact.png`). A lógica fica em `transfer/ItemCableNetwork`.
 
 A **Fornalha Elétrica** (`futuretech:electric_furnace`) é a primeira máquina que consome energia. Ela funde exatamente o que uma fornalha comum funde, sem combustível e no dobro da velocidade.
 
@@ -189,7 +191,7 @@ Abaixo da aba de configuração fica a aba **Redstone**, com três modos: **Igno
 
 ## Melhorias
 
-A primeira aba, **Melhorias**, tem quatro slots para itens de upgrade. Ainda não existe nenhum item de upgrade: os slots aceitam só itens da tag `futuretech:upgrades`, que está vazia, então por enquanto a aba não tem efeito. Quando os upgrades existirem, entram por essa tag e as máquinas passam a lê-los pela `UpgradeInventory` (`dev.futuretech.api.upgrade`). Os slots são slots reais do menu (Shift + clique funciona) e o conteúdo é salvo com o bloco e cai ao quebrá-lo.
+A primeira aba, **Melhorias**, tem quatro slots para itens de upgrade. Os slots aceitam só itens da tag `futuretech:upgrades`, que inclui o Speed Upgrade, um por slot. Os efeitos nas máquinas ainda não estão implementados. As máquinas guardam os itens pela `UpgradeInventory` (`dev.futuretech.api.upgrade`). Os slots são slots reais do menu (Shift + clique funciona) e o conteúdo é salvo com o bloco e cai ao quebrá-lo.
 
 Como os slots de menu têm posição fixa, a aba de melhorias é a primeira da tira, onde nenhuma aba aberta acima pode empurrá-la.
 

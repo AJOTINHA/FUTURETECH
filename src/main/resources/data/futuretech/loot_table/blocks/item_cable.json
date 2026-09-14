@@ -6,7 +6,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "futuretech:item_cable_mk1"
+          "name": "futuretech:item_cable"
         }
       ],
       "conditions": [

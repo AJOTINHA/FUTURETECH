@@ -4,9 +4,10 @@ import com.mojang.serialization.Codec;
 import dev.futuretech.block.CableKind;
 import dev.futuretech.block.ItemCableBlock;
 import dev.futuretech.block.ItemCableTier;
+import dev.futuretech.api.upgrade.UpgradeInventory;
 import dev.futuretech.item.ItemFilterItem;
 import dev.futuretech.registry.ModBlockEntities;
-import dev.futuretech.transfer.ConnectorFilters;
+import dev.futuretech.transfer.ConnectorItems;
 import dev.futuretech.transfer.ItemCableNetwork;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -31,6 +32,8 @@ public final class ItemCableBlockEntity extends AbstractCableBlockEntity {
     public static final int MIN_PRIORITY = -100;
     public static final int MAX_PRIORITY = 100;
     public static final int MAX_CHANNEL = 100;
+    /** Speed upgrades one connector takes. */
+    public static final int MAX_UPGRADES = 32;
     private static final String PRIORITIES_TAG = "Priorities";
     private static final Codec<Map<Direction, Integer>> PRIORITIES_CODEC =
             Codec.unboundedMap(Direction.CODEC, Codec.INT);
@@ -50,7 +53,12 @@ public final class ItemCableBlockEntity extends AbstractCableBlockEntity {
     private final EnumMap<Direction, Integer> channels = new EnumMap<>(Direction.class);
     // Swapping or editing a card changes what a connector lets through, and the network reads the
     // card live, so a rebuild only matters when a card is put in or taken out.
-    private final ConnectorFilters filters = new ConnectorFilters(() -> {
+    private final ConnectorItems filters = new ConnectorItems("Filters", ItemFilterItem::isFilter, 1, () -> {
+        setChanged();
+        invalidateNetwork();
+    });
+    /** Speed upgrades per connector; the network caches the count, so it is rebuilt on a change. */
+    private final ConnectorItems upgrades = new ConnectorItems("Upgrades", UpgradeInventory::isUpgrade, MAX_UPGRADES, () -> {
         setChanged();
         invalidateNetwork();
     });
@@ -58,7 +66,7 @@ public final class ItemCableBlockEntity extends AbstractCableBlockEntity {
 
     public ItemCableBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.ITEM_CABLE.get(), pos, state);
-        this.tier = state.getBlock() instanceof ItemCableBlock block ? block.tier() : ItemCableTier.MK1;
+        this.tier = state.getBlock() instanceof ItemCableBlock block ? block.tier() : ItemCableTier.STANDARD;
     }
 
     public ItemCableTier tier() { return tier; }
@@ -108,7 +116,13 @@ public final class ItemCableBlockEntity extends AbstractCableBlockEntity {
     }
 
     @Override
-    public ConnectorFilters connectorFilters() { return filters; }
+    public ConnectorItems connectorFilters() { return filters; }
+
+    @Override
+    public ConnectorItems connectorUpgrades() { return upgrades; }
+
+    /** How many speed upgrades sit on {@code side}'s connector. */
+    public int connectorSpeedUpgrades(Direction side) { return upgrades.on(side).getCount(); }
 
     /** The filter card on {@code side}'s connector, or an empty stack. */
     public ItemStack connectorFilter(Direction side) { return filters.on(side); }
@@ -121,13 +135,17 @@ public final class ItemCableBlockEntity extends AbstractCableBlockEntity {
     @Override
     public void preRemoveSideEffects(BlockPos pos, BlockState state) {
         super.preRemoveSideEffects(pos, state);
-        if (level != null) Containers.dropContents(level, pos, filters);
+        if (level != null) {
+            Containers.dropContents(level, pos, filters);
+            Containers.dropContents(level, pos, upgrades);
+        }
     }
 
     @Override
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
         filters.load(input);
+        upgrades.load(input);
         colors.clear();
         input.read(COLORS_TAG, COLORS_CODEC).ifPresent(colors::putAll);
         channels.clear();
@@ -146,6 +164,7 @@ public final class ItemCableBlockEntity extends AbstractCableBlockEntity {
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
         filters.save(output);
+        upgrades.save(output);
         if (!colors.isEmpty()) output.store(COLORS_TAG, COLORS_CODEC, Map.copyOf(colors));
         if (!channels.isEmpty()) output.store(CHANNELS_TAG, CHANNELS_CODEC, Map.copyOf(channels));
         if (!priorities.isEmpty()) output.store(PRIORITIES_TAG, PRIORITIES_CODEC, Map.copyOf(priorities));

@@ -66,6 +66,9 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
      */
     public Container connectorFilters() { return new SimpleContainer(Direction.values().length); }
 
+    /** The upgrade modules of the six connectors, laid out like {@link #connectorFilters()}. */
+    public Container connectorUpgrades() { return new SimpleContainer(Direction.values().length); }
+
     /** The colour channel of a connector; white until changed. Kinds without colours stay white and ignore changes. */
     public DyeColor connectorColor(Direction side) { return DyeColor.WHITE; }
 

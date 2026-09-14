@@ -13,7 +13,7 @@ import net.minecraft.world.level.storage.ValueOutput;
 
 /**
  * The upgrade slots of one machine. Only items in the {@code futuretech:upgrades} tag fit, one per
- * slot. Upgrades have no effect yet; machines will read them once upgrade items exist.
+ * slot. Upgrade items can be installed and saved; machine effects are not implemented yet.
  */
 public final class UpgradeInventory extends SimpleContainer {
     public static final int SLOTS = 4;

@@ -9,23 +9,28 @@ import net.minecraft.util.StringRepresentable;
  * Keep the constants ordered from slowest to fastest: a network runs at its slowest tier.
  */
 public enum ItemCableTier implements StringRepresentable {
-    /** One item a second, the pace basic pipes usually have; a hopper does one every eight ticks. */
-    MK1("mk1", 1, 20);
+    /**
+     * The plain item cable: one item a second, the pace basic pipes usually have; a hopper does
+     * one every eight ticks. It carries no tier suffix in its name.
+     */
+    STANDARD("standard", "item_cable", 1, 20);
 
     public static final Codec<ItemCableTier> CODEC = StringRepresentable.fromEnum(ItemCableTier::values);
 
     private final String serializedName;
+    private final String blockName;
     private final int batch;
     private final int interval;
 
-    ItemCableTier(String serializedName, int batch, int interval) {
+    ItemCableTier(String serializedName, String blockName, int batch, int interval) {
         this.serializedName = serializedName;
+        this.blockName = blockName;
         this.batch = batch;
         this.interval = interval;
     }
 
-    /** Registry name of this tier's block and item, e.g. {@code item_cable_mk1}. */
-    public String blockName() { return "item_cable_" + serializedName; }
+    /** Registry name of this tier's block and item, e.g. {@code item_cable}. */
+    public String blockName() { return blockName; }
 
     /** Items a network of this tier moves per {@link #interval()}, in total. */
     public int batch() { return batch; }

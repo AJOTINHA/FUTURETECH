@@ -31,9 +31,10 @@ import java.util.function.Predicate;
  * A group of touching item cables. Unlike the energy network it holds nothing: an item pushed into
  * any cable of the group goes straight through to an adjacent inventory in the same transaction,
  * so nothing is ever lost in a cable and a full network simply refuses the push. Once per tick
- * the group also pumps from the inventories behind its extract-only connectors. Both paths share
- * one budget, the tier's batch, which is renewed every {@code interval} ticks; what is not used
- * in one interval does not carry over.
+ * the group also pumps from the inventories behind its extract-only connectors. Every connector an
+ * item can enter through has its own budget, renewed every {@code interval} ticks: the tier's
+ * batch plus {@value #PER_UPGRADE} per speed upgrade on that connector, up to a stack. What is not
+ * used in one interval does not carry over.
  *
  * <p>Connectors carry a colour, white unless the player picked another, and a channel number from
  * 0 to 100. An item entering through a connector only leaves through connectors of the same colour
@@ -72,8 +73,16 @@ public final class ItemCableNetwork {
         /** The connector's channel number. */
         default int channel() { return 0; }
 
+        /** Speed upgrades on the connector; each one widens the budget of what enters through it. */
+        default int upgrades() { return 0; }
+
         @Nullable ResourceHandler<ItemResource> handler();
     }
+
+    /** Items each speed upgrade adds to a connector's budget per interval. */
+    public static final int PER_UPGRADE = 2;
+    /** No connector moves more than a stack per interval, however many upgrades it carries. */
+    public static final int MAX_PER_INTERVAL = 64;
 
     private final int batch;
     private final int interval;
@@ -82,15 +91,19 @@ public final class ItemCableNetwork {
     private final List<Endpoint> endpoints;
     /** Runs of equal priority within {@link #endpoints}, so a round can rotate inside each. */
     private final List<List<Endpoint>> ranks;
-    private final Map<EndpointKey, Endpoint> byKey = new HashMap<>();
-    private int budget;
-    // Journaled so an aborted transaction gives its share of the tick budget back.
-    private final SnapshotJournal<Integer> budgetJournal = new SnapshotJournal<>() {
+    private final Map<EndpointKey, Integer> indexByKey = new HashMap<>();
+    /**
+     * What each connector may still let in this interval, indexed like {@link #endpoints}; the
+     * last entry serves inserts that do not come through a known connector.
+     */
+    private final int[] budgets;
+    // Journaled so an aborted transaction gives its share of the interval's budgets back.
+    private final SnapshotJournal<int[]> budgetJournal = new SnapshotJournal<>() {
         @Override
-        protected Integer createSnapshot() { return budget; }
+        protected int[] createSnapshot() { return budgets.clone(); }
 
         @Override
-        protected void revertToSnapshot(Integer snapshot) { budget = snapshot; }
+        protected void revertToSnapshot(int[] snapshot) { System.arraycopy(snapshot, 0, budgets, 0, budgets.length); }
     };
     private long lastTick = Long.MIN_VALUE;
     private int round;
@@ -99,7 +112,6 @@ public final class ItemCableNetwork {
     public ItemCableNetwork(int batch, int interval, Set<BlockPos> cables, List<Endpoint> endpoints) {
         this.batch = batch;
         this.interval = Math.max(1, interval);
-        this.budget = batch;
         this.cables = Set.copyOf(cables);
         List<Endpoint> sorted = new ArrayList<>(endpoints);
         sorted.sort(Comparator.comparingInt(Endpoint::priority).reversed());
@@ -110,7 +122,19 @@ public final class ItemCableNetwork {
             ranks.getLast().add(endpoint);
         }
         this.ranks = ranks.stream().map(List::copyOf).toList();
-        for (Endpoint endpoint : this.endpoints) byKey.put(endpoint.key(), endpoint);
+        for (int index = 0; index < this.endpoints.size(); index++) indexByKey.put(this.endpoints.get(index).key(), index);
+        budgets = new int[this.endpoints.size() + 1];
+        renewBudgets();
+    }
+
+    /** What the connector at {@code index} may let in per interval; the shared entry gets the bare batch. */
+    private int allowance(int index) {
+        if (index == endpoints.size()) return batch;
+        return Math.min(MAX_PER_INTERVAL, batch + PER_UPGRADE * endpoints.get(index).upgrades());
+    }
+
+    private void renewBudgets() {
+        for (int index = 0; index < budgets.length; index++) budgets[index] = allowance(index);
     }
 
     /** Flood-fills the cables touching {@code start} and gives every one of them this network. */
@@ -139,7 +163,7 @@ public final class ItemCableNetwork {
                     endpoints.add(new CachedEndpoint(new EndpointKey(pos, side),
                             mode.allowsOutput(), mode.allowsInput() && !mode.allowsOutput(),
                             cable.connectorPriority(side), cable.connectorAccepts(side),
-                            cable.connectorColor(side), cable.connectorChannel(side),
+                            cable.connectorColor(side), cable.connectorChannel(side), cable.connectorSpeedUpgrades(side),
                             BlockCapabilityCache.create(
                                     Capabilities.Item.BLOCK, level, neighbour, side.getOpposite())));
                 }
@@ -159,8 +183,12 @@ public final class ItemCableNetwork {
 
     public int size() { return cables.size(); }
 
-    /** Items moved since the current interval began. */
-    public int moved() { return batch - budget; }
+    /** Items moved since the current interval began, through every connector together. */
+    public int moved() {
+        int moved = 0;
+        for (int index = 0; index < budgets.length; index++) moved += allowance(index) - budgets[index];
+        return moved;
+    }
 
     /** Drops every member's reference so the next tick rebuilds the network from what is left. */
     public void invalidate(ServerLevel level) {
@@ -182,7 +210,9 @@ public final class ItemCableNetwork {
      */
     public ResourceHandler<ItemResource> handlerFor(@Nullable EndpointKey key) {
         BlockPos origin = key == null ? null : key.neighbour();
-        Endpoint entry = key == null ? null : byKey.get(key);
+        Integer known = key == null ? null : indexByKey.get(key);
+        int slot = known == null ? endpoints.size() : known;
+        Endpoint entry = known == null ? null : endpoints.get(known);
         DyeColor color = entry == null ? DyeColor.WHITE : entry.color();
         int channel = entry == null ? 0 : entry.channel();
         return new ResourceHandler<>() {
@@ -196,7 +226,7 @@ public final class ItemCableNetwork {
             public long getAmountAsLong(int index) { return 0; }
 
             @Override
-            public long getCapacityAsLong(int index, ItemResource resource) { return batch; }
+            public long getCapacityAsLong(int index, ItemResource resource) { return allowance(slot); }
 
             @Override
             public boolean isValid(int index, ItemResource resource) {
@@ -206,7 +236,7 @@ public final class ItemCableNetwork {
             @Override
             public int insert(int index, ItemResource resource, int amount, TransactionContext transaction) {
                 if (index != 0 || (entry != null && !entry.accepts(resource))) return 0;
-                return deliver(resource, amount, origin, color, channel, transaction);
+                return deliver(resource, amount, origin, color, channel, slot, transaction);
             }
 
             @Override
@@ -218,13 +248,14 @@ public final class ItemCableNetwork {
 
     /**
      * Hands up to {@code amount} of {@code resource} to the delivering endpoints of {@code color} on
-     * {@code channel}, skipping the block at {@code origin}. Higher priorities are offered everything
-     * first; within one priority the round starts at a different endpoint each interval so one
-     * inventory cannot hog everything that comes through.
+     * {@code channel}, skipping the block at {@code origin} and spending the budget of the connector
+     * at {@code slot}. Higher priorities are offered everything first; within one priority the round
+     * starts at a different endpoint each interval so one inventory cannot hog everything that
+     * comes through.
      */
     private int deliver(ItemResource resource, int amount, @Nullable BlockPos origin, DyeColor color, int channel,
-                        TransactionContext transaction) {
-        int allowed = Math.min(amount, budget);
+                        int slot, TransactionContext transaction) {
+        int allowed = Math.min(amount, budgets[slot]);
         if (allowed <= 0 || resource.isEmpty() || endpoints.isEmpty()) return 0;
         int moved = 0;
         for (List<Endpoint> rank : ranks) {
@@ -238,7 +269,7 @@ public final class ItemCableNetwork {
         }
         if (moved > 0) {
             budgetJournal.updateSnapshots(transaction);
-            budget -= moved;
+            budgets[slot] -= moved;
         }
         return moved;
     }
@@ -250,7 +281,7 @@ public final class ItemCableNetwork {
     public void tick(long gameTime) {
         if (gameTime == lastTick || Math.floorMod(gameTime, interval) != 0) return;
         lastTick = gameTime;
-        budget = batch;
+        renewBudgets();
         round = (int) Math.floorMod(gameTime / interval, Integer.MAX_VALUE);
         // Extract-only connectors act as pumps: a chest never pushes, so a connector on one has to
         // do the pulling or nothing ever comes out. What they pull goes through the same pass-through
@@ -258,18 +289,19 @@ public final class ItemCableNetwork {
         // same way sinks do: by priority, and round-robin within one priority.
         for (List<Endpoint> rank : ranks) {
             int count = rank.size();
-            for (int step = 0; step < count && budget > 0; step++) {
+            for (int step = 0; step < count; step++) {
                 Endpoint endpoint = rank.get((round + step) % count);
                 if (!endpoint.pulls()) continue;
+                int budget = budgets[indexByKey.get(endpoint.key())];
                 ResourceHandler<ItemResource> source = endpoint.handler();
-                if (source == null) continue;
+                if (source == null || budget <= 0) continue;
                 ResourceHandlerUtil.moveStacking(source, handlerFor(endpoint.key()), endpoint::accepts, budget, null);
             }
         }
     }
 
     private record CachedEndpoint(EndpointKey key, boolean delivers, boolean pulls, int priority,
-                                 Predicate<ItemResource> filter, DyeColor color, int channel,
+                                 Predicate<ItemResource> filter, DyeColor color, int channel, int upgrades,
                                  BlockCapabilityCache<ResourceHandler<ItemResource>, Direction> cache) implements Endpoint {
         @Override
         public boolean accepts(ItemResource resource) { return filter.test(resource); }

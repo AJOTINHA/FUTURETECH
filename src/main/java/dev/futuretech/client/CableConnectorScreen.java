@@ -70,6 +70,7 @@ public final class CableConnectorScreen extends AbstractContainerScreen<CableCon
     private static final Box LOWER_CHANNEL = new Box(LOWER.x(), CHANNEL_TOP, STEP_SIZE, STEP_SIZE);
     /** The swatch sits in the same column as the filter slot, one row above it, drawn like a slot. */
     private static final Box COLOR = new Box(CableConnectorMenu.FILTER_SLOT_X - 1, COLOR_TOP, 18, 18);
+    private static final Box UPGRADE = new Box(CableConnectorMenu.UPGRADE_SLOT_X - 1, CableConnectorMenu.UPGRADE_SLOT_Y - 1, 18, 18);
     private static final Box FILTER = new Box(CableConnectorMenu.FILTER_SLOT_X - 1, CableConnectorMenu.FILTER_SLOT_Y - 1, 18, 18);
     /** The picker hangs off the swatch's bottom edge and covers whatever is under it while open. */
     private static final Box PICKER = new Box(COLOR.x(), COLOR.y() + COLOR.height() + 1, PICKER_SIZE, PICKER_SIZE);
@@ -201,6 +202,10 @@ public final class CableConnectorScreen extends AbstractContainerScreen<CableCon
             drawCentred(graphics, CHANNEL_VALUE, Component.literal(Integer.toString(menu.channel())), TITLE);
             graphics.text(font, Component.translatable("gui.futuretech.item_cable.color"), MARGIN,
                     COLOR.y() + (COLOR.height() - font.lineHeight) / 2, TITLE, false);
+        }
+        if (menu.kind().upgradable()) {
+            graphics.text(font, Component.translatable("gui.futuretech.item_cable.upgrade"), MARGIN,
+                    UPGRADE.y() + (UPGRADE.height() - font.lineHeight) / 2, TITLE, false);
         }
         if (!menu.kind().filtered()) return;
         graphics.text(font, Component.translatable("gui.futuretech.item_cable.filter"), MARGIN,

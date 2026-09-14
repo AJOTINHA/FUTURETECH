@@ -1,8 +1,10 @@
 package dev.futuretech.menu;
 
 import dev.futuretech.api.side.SideMode;
+import dev.futuretech.api.upgrade.UpgradeInventory;
 import dev.futuretech.block.CableKind;
 import dev.futuretech.block.entity.AbstractCableBlockEntity;
+import dev.futuretech.block.entity.ItemCableBlockEntity;
 import dev.futuretech.item.ItemFilterItem;
 import dev.futuretech.registry.ModMenus;
 import net.minecraft.core.Direction;
@@ -26,8 +28,8 @@ import org.jspecify.annotations.Nullable;
  * One cable connector's two directions and, on cables that have them, its priority and filter
  * card. The face being configured and the cable's kind ride in the opening packet, so both sides
  * build the same slots from the start; the mode and priority travel as data slots and the button
- * clicks ride vanilla's own channel. Only a filtered kind has slots at all: the card's own and the
- * player's inventory to take it from.
+ * clicks ride vanilla's own channel. Only a filtered kind has slots at all: the card's own, the
+ * upgrade module's, and the player's inventory to take them from.
  *
  * <p>Directions are named from the player's side of the glass. Inserting means the cable hands
  * its resource to the neighbour, which is that cable face allowing output; extracting means the
@@ -51,16 +53,19 @@ public final class CableConnectorMenu extends AbstractContainerMenu {
     public static final int RAISE_CHANNEL_FAST = 32;
     public static final int LOWER_CHANNEL_FAST = 33;
     public static final int FAST_STEP = 10;
-    /** Where the card's slot sits on the panel, in line with the minus buttons above; the screen draws the row around it. */
+    /** Where the module's and the card's slots sit on the panel, in line with the minus buttons above; the screen draws the rows around them. */
+    public static final int UPGRADE_SLOT_X = 97;
+    public static final int UPGRADE_SLOT_Y = 142;
     public static final int FILTER_SLOT_X = 97;
-    public static final int FILTER_SLOT_Y = 142;
-    public static final int INVENTORY_TOP = 172;
+    public static final int FILTER_SLOT_Y = 168;
+    public static final int INVENTORY_TOP = 198;
     private static final int MODE = 0;
     private static final int PRIORITY = 1;
     private static final int COLOR = 2;
     private static final int CHANNEL = 3;
     private static final int FILTER_SLOT = 0;
-    private static final int INVENTORY_START = 1;
+    private static final int UPGRADE_SLOT = 1;
+    private static final int INVENTORY_START = 2;
     private static final int HOTBAR_START = INVENTORY_START + 27;
     private static final int INVENTORY_END = HOTBAR_START + 9;
     private static final double REACH_SQUARED = 64.0;
@@ -70,15 +75,17 @@ public final class CableConnectorMenu extends AbstractContainerMenu {
     private final Direction side;
     private final CableKind kind;
     private final @Nullable Slot filterSlot;
+    private final @Nullable Slot upgradeSlot;
 
     /** Client side: the opening packet says which face and which kind of cable this is. */
     public CableConnectorMenu(int id, Inventory inventory, RegistryFriendlyByteBuf extra) {
         this(id, inventory, null, extra.readEnum(Direction.class), extra.readEnum(CableKind.class),
-                new SimpleContainer(Direction.values().length), new SimpleContainerData(DATA_COUNT));
+                new SimpleContainer(Direction.values().length), new SimpleContainer(Direction.values().length),
+                new SimpleContainerData(DATA_COUNT));
     }
 
     private CableConnectorMenu(int id, Inventory inventory, @Nullable AbstractCableBlockEntity cable,
-                               Direction side, CableKind kind, Container filters, ContainerData data) {
+                               Direction side, CableKind kind, Container filters, Container upgrades, ContainerData data) {
         super(ModMenus.CABLE_CONNECTOR.get(), id);
         checkContainerDataCount(data, DATA_COUNT);
         this.cable = cable;
@@ -94,9 +101,18 @@ public final class CableConnectorMenu extends AbstractContainerMenu {
                 @Override
                 public int getMaxStackSize() { return 1; }
             });
+            checkContainerSize(upgrades, Direction.values().length);
+            upgradeSlot = addSlot(new Slot(upgrades, side.ordinal(), UPGRADE_SLOT_X, UPGRADE_SLOT_Y) {
+                @Override
+                public boolean mayPlace(ItemStack stack) { return UpgradeInventory.isUpgrade(stack); }
+
+                @Override
+                public int getMaxStackSize() { return ItemCableBlockEntity.MAX_UPGRADES; }
+            });
             addStandardInventorySlots(inventory, 8, INVENTORY_TOP);
         } else {
             filterSlot = null;
+            upgradeSlot = null;
         }
         addDataSlots(data);
     }
@@ -109,7 +125,8 @@ public final class CableConnectorMenu extends AbstractContainerMenu {
 
     /** Server side: reads straight from the cable, so an edit from anywhere reaches every viewer. */
     public static CableConnectorMenu opening(int id, Inventory inventory, AbstractCableBlockEntity cable, Direction side) {
-        return new CableConnectorMenu(id, inventory, cable, side, cable.kind(), cable.connectorFilters(), new ContainerData() {
+        return new CableConnectorMenu(id, inventory, cable, side, cable.kind(), cable.connectorFilters(),
+                cable.connectorUpgrades(), new ContainerData() {
             @Override
             public int get(int index) {
                 return switch (index) {
@@ -198,15 +215,18 @@ public final class CableConnectorMenu extends AbstractContainerMenu {
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
-        if (filterSlot == null || index < 0 || index >= slots.size()) return ItemStack.EMPTY;
+        if (filterSlot == null || upgradeSlot == null || index < 0 || index >= slots.size()) return ItemStack.EMPTY;
         Slot slot = slots.get(index);
         if (!slot.hasItem()) return ItemStack.EMPTY;
         ItemStack stack = slot.getItem();
         ItemStack original = stack.copy();
-        if (index == FILTER_SLOT) {
+        if (index == FILTER_SLOT || index == UPGRADE_SLOT) {
             if (!moveItemStackTo(stack, INVENTORY_START, INVENTORY_END, true)) return ItemStack.EMPTY;
         } else if (ItemFilterItem.isFilter(stack) && !filterSlot.hasItem()) {
             if (!moveItemStackTo(stack, FILTER_SLOT, FILTER_SLOT + 1, false)) return ItemStack.EMPTY;
+        } else if (UpgradeInventory.isUpgrade(stack) && upgradeSlot.getItem().getCount() < ItemCableBlockEntity.MAX_UPGRADES
+                && (!upgradeSlot.hasItem() || ItemStack.isSameItemSameComponents(upgradeSlot.getItem(), stack))) {
+            if (!moveItemStackTo(stack, UPGRADE_SLOT, UPGRADE_SLOT + 1, false)) return ItemStack.EMPTY;
         } else if (index < HOTBAR_START) {
             if (!moveItemStackTo(stack, HOTBAR_START, INVENTORY_END, false)) return ItemStack.EMPTY;
         } else if (!moveItemStackTo(stack, INVENTORY_START, HOTBAR_START, false)) {
