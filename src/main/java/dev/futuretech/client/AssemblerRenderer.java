@@ -32,6 +32,7 @@ public final class AssemblerRenderer implements BlockEntityRenderer<AssemblerBlo
         float toolSpin;
         float swivel;
         boolean welding;
+        final AssemblerMonitor.State monitor = new AssemblerMonitor.State();
         Vec3 hand = Vec3.ZERO;
         final List<ItemStackRenderState> items = new ArrayList<>();
         final List<Vec3> positions = new ArrayList<>();
@@ -50,7 +51,7 @@ public final class AssemblerRenderer implements BlockEntityRenderer<AssemblerBlo
             addTableItem(a, s, a.inventory.getItem(9), .5, .5, .02);
             return;
         }
-        if (s.kind == Kind.TERMINAL) return;
+        if (s.kind == Kind.TERMINAL) { AssemblerMonitor.extract(a, s.monitor, resolver); return; }
         var facing = a.getBlockState().getValue(AssemblerBlock.FACING);
         Vec3 idle = new Vec3(.5 + facing.getStepX() * .28, 1.10, .5 + facing.getStepZ() * .28);
         Vec3 table = Vec3.atLowerCornerOf(a.tablePos().subtract(a.getBlockPos())).add(.5, 1.12, .5);
@@ -104,6 +105,7 @@ public final class AssemblerRenderer implements BlockEntityRenderer<AssemblerBlo
     }
     @Override public AABB getRenderBoundingBox(AssemblerBlockEntity a) { return new AABB(a.getBlockPos()).inflate(4); }
     @Override public void submit(State s, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
+        if (s.kind == Kind.TERMINAL) { AssemblerMonitor.submit(s.monitor, pose, collector); return; }
         if (s.kind == Kind.TRANSPORT || s.kind == Kind.ASSEMBLY) {
             Vec3 shoulder = AssemblerArmPose.SHOULDER;
             Vec3 elbow = AssemblerArmPose.elbow(s.hand, s.swivel);

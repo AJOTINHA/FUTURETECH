@@ -103,16 +103,19 @@
   "gui.futuretech.assembler.work_short": "Work",
   "gui.futuretech.assembler.out_short": "Out",
   "gui.futuretech.assembler.terminal_short": "Term.",
-  "gui.futuretech.assembler.status.0": "Waiting for ingredients",
+  "gui.futuretech.assembler.status.0": "Missing ingredients",
   "gui.futuretech.assembler.status.1": "Terminal out of reach",
-  "gui.futuretech.assembler.status.2": "Choose a recipe using the arrows",
+  "gui.futuretech.assembler.status.2": "Stopped: select a recipe",
   "gui.futuretech.assembler.status.3": "Receiving ingredients",
-  "gui.futuretech.assembler.status.4": "Assembling...",
+  "gui.futuretech.assembler.status.4": "Working: assembling",
   "gui.futuretech.assembler.status.5": "Retracting tool...",
   "gui.futuretech.assembler.status.6": "Sending result",
   "gui.futuretech.assembler.status.7": "Waiting for output space",
   "gui.futuretech.assembler.status.8": "Waiting for assembly arm",
   "gui.futuretech.assembler.tool_hint": "Reach: 3 blocks. Automatically assembles the ingredients on the table.",
   "gui.futuretech.assembler.energy": "Controller energy: %s / %s FE",
-  "gui.futuretech.assembler.status.9": "Controller needs energy"
+  "gui.futuretech.assembler.status.9": "Not enough energy",
+  "gui.futuretech.assembler.status.10": "Stopped: no table",
+  "gui.futuretech.assembler.status.11": "Stopped: destination blocked",
+  "gui.futuretech.assembler.status.12": "Stopped: no input arm"
 }

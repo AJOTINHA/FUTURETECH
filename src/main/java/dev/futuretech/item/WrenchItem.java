@@ -49,7 +49,19 @@ public final class WrenchItem extends Item {
         BlockState rotated = rotated(state, level, pos);
         if (rotated == null) return InteractionResult.PASS;
         if (!level.isClientSide()) {
-            level.setBlock(pos, rotated, Block.UPDATE_ALL);
+            var entity = level.getBlockEntity(pos);
+            var configurable = entity instanceof dev.futuretech.api.side.SideConfigurable sides ? sides : null;
+            Direction oldFront = configurable == null ? null : configurable.front();
+            if (!level.setBlock(pos, rotated, Block.UPDATE_ALL)) return InteractionResult.PASS;
+            if (configurable != null && level.getBlockEntity(pos) == entity) {
+                Direction newFront = configurable.front();
+                for (Rotation rotation : Rotation.values()) {
+                    if (rotation.rotate(oldFront) != newFront) continue;
+                    configurable.sideConfig().rotate(rotation);
+                    configurable.sideConfigChanged();
+                    break;
+                }
+            }
             level.playSound(null, pos, SoundEvents.ITEM_FRAME_ROTATE_ITEM, SoundSource.BLOCKS, 0.6F, 1.2F);
         }
         return InteractionResult.SUCCESS;

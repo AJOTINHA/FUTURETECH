@@ -35,6 +35,40 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
     private final dev.futuretech.energy.TickLimitedEnergyHandler energy = new dev.futuretech.energy.TickLimitedEnergyHandler(
             ENERGY_CAPACITY, ENERGY_INPUT, 0, this::setChanged);
     private boolean moving;
+    private List<ItemStack> monitorIngredients = List.of();
+    private ItemStack monitorResult = ItemStack.EMPTY;
+    private int monitorProgress, monitorPresent, monitorStatus = 10;
+    public int monitorStatus() { return monitorStatus; }
+    public List<ItemStack> monitorIngredients() { return monitorIngredients; }
+    public ItemStack monitorResult() { return monitorResult; }
+    public int monitorProgress() { return monitorProgress; }
+    public int monitorPresent() { return monitorPresent; }
+
+    /** A compact display snapshot, independent of whether a player has opened the menu. */
+    boolean refreshMonitor() {
+        var table = nearest(Kind.TABLE);
+        var recipe = table == null ? null : table.recipe();
+        List<ItemStack> ingredients = new ArrayList<>();
+        ItemStack result = ItemStack.EMPTY;
+        int progress = 0, present = 0;
+        if (recipe != null) {
+            for (int slot = 0; slot < recipe.ingredients().size(); slot++) {
+                ItemStack actual = table.inventory.getItem(slot);
+                if (!actual.isEmpty()) present |= 1 << slot;
+                ingredients.add(actual.isEmpty() ? recipe.ingredients().get(slot).items().findFirst()
+                        .map(item -> new ItemStack(item)).orElse(ItemStack.EMPTY) : actual.copyWithCount(1));
+            }
+            result = recipe.result().create();
+            progress = table.progress();
+        }
+        int status = table == null ? 10 : table.status();
+        boolean different = status != monitorStatus || progress != monitorProgress || present != monitorPresent
+                || !ItemStack.matches(result, monitorResult) || ingredients.size() != monitorIngredients.size();
+        if (!different) for (int i = 0; i < ingredients.size(); i++) if (!ItemStack.matches(ingredients.get(i), monitorIngredients.get(i))) { different = true; break; }
+        monitorIngredients = List.copyOf(ingredients); monitorResult = result; monitorProgress = progress; monitorPresent = present;
+        monitorStatus = status;
+        return different;
+    }
     public dev.futuretech.energy.TickLimitedEnergyHandler energy() { return energy; }
     public net.neoforged.neoforge.transfer.energy.@Nullable EnergyHandler energyHandler() {
         return kind() == Kind.TERMINAL ? energy : null;
@@ -132,10 +166,12 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         if (recipe() == null) return 2;
         if (controllerEnergy() < ENERGY_PER_TICK) return 9;
         for (BlockPos p : reachable()) { var a = assemblerAt(p); if (a != null && a.phase != 0 && a.tablePos.equals(worldPosition)) {
+            if (!a.moving && a.animationTick > 0) return 11;
             if (a.phase == 2) return a.crafted ? 5 : 4;
             return a.outputMode() ? 6 : 3;
         } }
         if (!inventory.getItem(RESULT).isEmpty()) return 7;
+        if (!ready(recipe()) && (connections() & 1) == 0) return 12;
         return ready(recipe()) ? 8 : 0;
     }
     public int progress() {
@@ -153,7 +189,11 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, AssemblerBlockEntity a) {
-        if (a.kind() == Kind.TERMINAL) { a.energy.beginTick(); return; }
+        if (a.kind() == Kind.TERMINAL) {
+            a.energy.beginTick();
+            if (level.getGameTime() % 5 == 0 && a.refreshMonitor()) a.changed();
+            return;
+        }
         if (a.kind() == Kind.TABLE || a.kind() == Kind.TERMINAL) return;
         if (a.phase != 0) {
             a.advance();
@@ -226,6 +266,7 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
             if (jobRecipe == null) { idle(); return; }
             if (!crafted && !table.ready(jobRecipe)) { idle(); return; }
             animationTick++;
+            if (animationTick >= 20 && animationTick < duration + 20 && animationTick % 8 == 0) emitAssemblyParticles();
             if (!crafted && animationTick >= duration + 20) {
                 crafted = table.finish(jobRecipe);
                 if (!crafted) { idle(); return; }
@@ -259,6 +300,23 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
     public int nextIngredient(AssemblingRecipe recipe) {
         for (int i = 0; i < recipe.ingredients().size(); i++) if (inventory.getItem(i).isEmpty()) return i;
         return -1;
+    }
+    /** Light smoke and occasional vanilla lava pops follow the powered drill tip. */
+    private void emitAssemblyParticles() {
+        if (!(level instanceof ServerLevel server)) return;
+        double dx = tablePos.getX() - worldPosition.getX(), dz = tablePos.getZ() - worldPosition.getZ();
+        double radius = Math.hypot(dx, dz);
+        var facing = getBlockState().getValue(AssemblerBlock.FACING);
+        double swivel = radius < 1e-5 ? Math.atan2(-facing.getStepX(), -facing.getStepZ()) : Math.atan2(-dx, -dz);
+        double fade = Math.sin(Math.PI * (animationTick - 20) / duration);
+        double angle = swivel + Math.sin(animationTick * .25) * .04 * fade;
+        double x = worldPosition.getX() + .5 - Math.sin(angle) * radius;
+        double y = tablePos.getY() + .85 + Math.sin(animationTick * .6) * .035 * fade;
+        double z = worldPosition.getZ() + .5 - Math.cos(angle) * radius;
+        server.sendParticles(net.minecraft.core.particles.ParticleTypes.SMOKE,
+                x, y, z, 0, 0, .02, 0, 1);
+        if (animationTick % 16 == 0) server.sendParticles(net.minecraft.core.particles.ParticleTypes.LAVA,
+                x, y, z, 1, .025, .01, .025, 0);
     }
     public boolean acceptIngredient(int slot, ItemStack stack) {
         AssemblingRecipe recipe = recipe();
@@ -385,10 +443,25 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
     }
     @Override public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         var output = TagValueOutput.createWithContext(ProblemReporter.DISCARDING, registries);
-        saveAdditional(output); return output.buildResult();
+        saveAdditional(output);
+        if (kind() == Kind.TERMINAL) {
+            refreshMonitor();
+            output.store("MonitorIngredients", ItemStack.OPTIONAL_CODEC.listOf(), monitorIngredients);
+            output.store("MonitorResult", ItemStack.OPTIONAL_CODEC, monitorResult);
+            output.putInt("MonitorProgress", monitorProgress); output.putInt("MonitorPresent", monitorPresent);
+            output.putInt("MonitorStatus", monitorStatus);
+        }
+        return output.buildResult();
     }
     @Override public ClientboundBlockEntityDataPacket getUpdatePacket() { return ClientboundBlockEntityDataPacket.create(this); }
-    @Override public void handleUpdateTag(ValueInput input) { loadAdditional(input); }
+    @Override public void handleUpdateTag(ValueInput input) {
+        loadAdditional(input);
+        monitorIngredients = input.read("MonitorIngredients", ItemStack.OPTIONAL_CODEC.listOf()).orElse(List.of());
+        monitorResult = input.read("MonitorResult", ItemStack.OPTIONAL_CODEC).orElse(ItemStack.EMPTY);
+        monitorProgress = Math.clamp(input.getIntOr("MonitorProgress", 0), 0, 100);
+        monitorPresent = input.getIntOr("MonitorPresent", 0);
+        monitorStatus = Math.clamp(input.getIntOr("MonitorStatus", 10), 0, 12);
+    }
     @Override public void onDataPacket(Connection connection, ValueInput input) { handleUpdateTag(input); }
     @Override public void preRemoveSideEffects(BlockPos pos, BlockState state) {
         super.preRemoveSideEffects(pos, state);

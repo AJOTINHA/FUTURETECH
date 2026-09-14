@@ -103,16 +103,19 @@
   "gui.futuretech.assembler.work_short": "Mont.",
   "gui.futuretech.assembler.out_short": "Saída",
   "gui.futuretech.assembler.terminal_short": "Term.",
-  "gui.futuretech.assembler.status.0": "Aguardando ingredientes",
+  "gui.futuretech.assembler.status.0": "Faltando ingredientes",
   "gui.futuretech.assembler.status.1": "Terminal fora de alcance",
-  "gui.futuretech.assembler.status.2": "Escolha a receita nas setas",
+  "gui.futuretech.assembler.status.2": "Parada: selecione uma receita",
   "gui.futuretech.assembler.status.3": "Recebendo ingredientes",
-  "gui.futuretech.assembler.status.4": "Montando...",
+  "gui.futuretech.assembler.status.4": "Trabalhando: montando",
   "gui.futuretech.assembler.status.5": "Recuando ferramenta...",
   "gui.futuretech.assembler.status.6": "Enviando resultado",
   "gui.futuretech.assembler.status.7": "Aguardando saída livre",
   "gui.futuretech.assembler.status.8": "Aguardando braço de montagem",
   "gui.futuretech.assembler.tool_hint": "Alcance: 3 blocos. Monta automaticamente os ingredientes da mesa.",
   "gui.futuretech.assembler.energy": "Energia do controller: %s / %s FE",
-  "gui.futuretech.assembler.status.9": "Sem energia no controller"
+  "gui.futuretech.assembler.status.9": "Faltando energia",
+  "gui.futuretech.assembler.status.10": "Parada: sem mesa",
+  "gui.futuretech.assembler.status.11": "Parada: destino bloqueado",
+  "gui.futuretech.assembler.status.12": "Parada: sem braço de entrada"
 }

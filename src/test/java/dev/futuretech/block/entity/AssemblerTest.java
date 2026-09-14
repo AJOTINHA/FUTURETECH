@@ -76,6 +76,55 @@ class AssemblerTest {
         c.ticks(400); assertEquals(1,c.destination.getAmountAsInt(0));
         assertEquals(AssemblerBlockEntity.ENERGY_CAPACITY - 6000, c.terminal.energy().getAmountAsInt());
     }
+    @Test void monitorShowsRecipeWithoutOpeningMenuAndUpdatesDeliveredIngredients(MinecraftServer server) {
+        var c = new Cell(server);
+        assertTrue(c.terminal.refreshMonitor());
+        assertEquals(2,c.terminal.monitorIngredients().size());
+        assertTrue(c.terminal.monitorIngredients().get(0).is(Items.STONE));
+        assertTrue(c.terminal.monitorIngredients().get(1).is(Items.IRON_INGOT));
+        assertTrue(c.terminal.monitorResult().is(ModItems.MACHINE_CASING.get()));
+        assertEquals(0,c.terminal.monitorPresent());
+        assertFalse(c.terminal.refreshMonitor());
+        assertEquals(0,c.table.status()); assertEquals(c.table.status(),c.terminal.monitorStatus());
+        c.fillTable(); assertTrue(c.terminal.refreshMonitor());
+        assertEquals(3,c.terminal.monitorPresent());
+    }
+    @Test void monitorSnapshotSendsProgressAndResultToClientAndClearsMissingTable(MinecraftServer server) {
+        var c = new Cell(server); c.fillTable(); c.worker.begin();
+        for(int i=0;i<60;i++) c.worker.advance();
+        var client = new AssemblerBlockEntity(c.terminal.getBlockPos(),c.terminal.getBlockState());
+        client.handleUpdateTag(TagValueInput.create(ProblemReporter.DISCARDING,server.registryAccess(),c.terminal.getUpdateTag(server.registryAccess())));
+        assertEquals(50,client.monitorProgress()); assertEquals(3,client.monitorPresent());
+        assertEquals(4,client.monitorStatus());
+        assertTrue(client.monitorIngredients().get(0).is(Items.STONE));
+        assertTrue(client.monitorResult().is(ModItems.MACHINE_CASING.get()));
+        c.terminal.energy().set(0);
+        for(int i=0;i<30;i++) c.worker.advance();
+        c.terminal.refreshMonitor(); assertEquals(50,c.terminal.monitorProgress());
+        assertEquals(9,c.terminal.monitorStatus());
+        c.terminal.energy().set(10000);
+        for(int i=0;i<40;i++) c.worker.advance();
+        c.terminal.refreshMonitor(); assertEquals(100,c.terminal.monitorProgress());
+        assertEquals(0,c.terminal.monitorPresent());
+        c.blocks.remove(c.table.getBlockPos());
+        client.handleUpdateTag(TagValueInput.create(ProblemReporter.DISCARDING,server.registryAccess(),c.terminal.getUpdateTag(server.registryAccess())));
+        assertTrue(client.monitorIngredients().isEmpty()); assertTrue(client.monitorResult().isEmpty());
+        assertEquals(0,client.monitorProgress());
+        assertEquals(10,client.monitorStatus());
+    }
+    @Test void monitorSyncsStatusChangesEvenWhenProgressAndItemsDoNotChange(MinecraftServer server) {
+        var c = new Cell(server); c.terminal.refreshMonitor();
+        c.terminal.energy().set(0);
+        assertTrue(c.terminal.refreshMonitor()); assertEquals(9,c.terminal.monitorStatus());
+        assertFalse(c.terminal.refreshMonitor());
+        c.terminal.energy().set(10000);
+        assertTrue(c.terminal.refreshMonitor()); assertEquals(0,c.terminal.monitorStatus());
+        c.blocks.remove(c.input.getBlockPos());
+        assertTrue(c.terminal.refreshMonitor()); assertEquals(12,c.terminal.monitorStatus());
+        var client = new AssemblerBlockEntity(c.terminal.getBlockPos(),c.terminal.getBlockState());
+        client.handleUpdateTag(TagValueInput.create(ProblemReporter.DISCARDING,server.registryAccess(),c.terminal.getUpdateTag(server.registryAccess())));
+        assertEquals(c.table.status(),client.monitorStatus());
+    }
     @Test void emptyControllerPreventsIngredientExtraction(MinecraftServer server) {
         var c = new Cell(server); c.terminal.energy().set(0); c.ticks(100);
         assertEquals(1,c.source.getAmountAsInt(0)); assertEquals(1,c.source.getAmountAsInt(1));

@@ -102,6 +102,12 @@ public final class SideConfig {
         for (Direction side : Direction.values()) modes.put(side, SideMode.NONE);
     }
 
+    /** Carry the configured ports with the block, preserving top and bottom during a yaw turn. */
+    public void rotate(net.minecraft.world.level.block.Rotation rotation) {
+        var previous = new EnumMap<>(modes);
+        previous.forEach((side, mode) -> modes.put(rotation.rotate(side), mode));
+    }
+
     /** Menu data slot value for face {@code index} (a {@link Direction} ordinal). */
     public int data(int index) {
         return modes.get(Direction.values()[Math.clamp(index, 0, DATA_COUNT - 1)]).ordinal();

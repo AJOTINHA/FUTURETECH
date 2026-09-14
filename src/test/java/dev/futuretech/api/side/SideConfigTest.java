@@ -22,6 +22,30 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(EphemeralTestServerProvider.class)
 class SideConfigTest {
     @Test
+    void rotatingPortsCarriesInputOutputAndClosedFacesWithTheBlock(MinecraftServer server) {
+        var config = new SideConfig(EnumSet.allOf(SideMode.class), true, side -> switch (side) {
+            case NORTH -> SideMode.INPUT;
+            case EAST -> SideMode.OUTPUT;
+            case SOUTH -> SideMode.BOTH;
+            case WEST -> SideMode.NONE;
+            case UP -> SideMode.OUTPUT;
+            case DOWN -> SideMode.INPUT;
+        });
+        for (int turn = 1; turn <= 4; turn++) {
+            config.rotate(net.minecraft.world.level.block.Rotation.CLOCKWISE_90);
+            var rotation = net.minecraft.world.level.block.Rotation.values()[turn % 4];
+            assertEquals(SideMode.INPUT, config.mode(rotation.rotate(Direction.NORTH)));
+            assertEquals(SideMode.OUTPUT, config.mode(rotation.rotate(Direction.EAST)));
+            assertEquals(SideMode.BOTH, config.mode(rotation.rotate(Direction.SOUTH)));
+            assertEquals(SideMode.NONE, config.mode(rotation.rotate(Direction.WEST)));
+            assertEquals(SideMode.OUTPUT, config.mode(Direction.UP));
+            assertEquals(SideMode.INPUT, config.mode(Direction.DOWN));
+            assertTrue(config.allowsEnergyInput(rotation.rotate(Direction.NORTH)));
+            assertFalse(config.allowsEnergyOutput(rotation.rotate(Direction.NORTH)));
+            assertTrue(config.allowsEnergyOutput(rotation.rotate(Direction.EAST)));
+        }
+    }
+    @Test
     void reverseCycleWrapsAndSkipsUnsupportedModes(MinecraftServer server) {
         var all = new SideConfig(EnumSet.allOf(SideMode.class), side -> SideMode.NONE);
         for (SideMode expected : new SideMode[]{SideMode.BOTH, SideMode.OUTPUT, SideMode.INPUT, SideMode.NONE}) {
