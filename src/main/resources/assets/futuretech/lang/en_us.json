@@ -141,5 +141,6 @@
   "gui.futuretech.metal_press.mold_help": "Insert a plate or gear mold. The mold is not consumed.",
   "item.futuretech.steel_ingot": "Steel Ingot",
   "item.futuretech.steel_plate": "Steel Plate",
-  "item.futuretech.steel_gear": "Steel Gear"
+  "item.futuretech.steel_gear": "Steel Gear",
+  "block.futuretech.smeltery": "Smeltery"
 }

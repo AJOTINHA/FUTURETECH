@@ -1,6 +1,7 @@
 package dev.futuretech.registry;
 
 import dev.futuretech.FutureTech;
+import dev.futuretech.recipe.AlloyingRecipe;
 import dev.futuretech.recipe.CrushingRecipe;
 import dev.futuretech.recipe.PressingRecipe;
 import net.minecraft.core.registries.Registries;
@@ -35,4 +36,10 @@ public final class ModRecipes {
     public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<PressingRecipe>> PRESSING_SERIALIZER =
             SERIALIZERS.register("pressing", () -> new RecipeSerializer<>(PressingRecipe.CODEC, PressingRecipe.STREAM_CODEC));
     public static final DeferredHolder<RecipeBookCategory, RecipeBookCategory> METAL_PRESS_BOOK = BOOKS.register("metal_press", RecipeBookCategory::new);
+    public static final DeferredHolder<RecipeType<?>, RecipeType<AlloyingRecipe>> ALLOYING = TYPES.register("alloying", () -> new RecipeType<>() {
+        @Override public String toString() { return "futuretech:alloying"; }
+    });
+    public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<AlloyingRecipe>> ALLOYING_SERIALIZER =
+            SERIALIZERS.register("alloying", () -> new RecipeSerializer<>(AlloyingRecipe.CODEC, AlloyingRecipe.STREAM_CODEC));
+    public static final DeferredHolder<RecipeBookCategory, RecipeBookCategory> SMELTERY_BOOK = BOOKS.register("smeltery", RecipeBookCategory::new);
 }

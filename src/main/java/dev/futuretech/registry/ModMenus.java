@@ -8,6 +8,7 @@ import dev.futuretech.menu.ElectricFurnaceMenu;
 import dev.futuretech.menu.ItemFilterMenu;
 import dev.futuretech.menu.CrusherMenu;
 import dev.futuretech.menu.MetalPressMenu;
+import dev.futuretech.menu.SmelteryMenu;
 import dev.futuretech.menu.SolidFuelGeneratorMenu;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.flag.FeatureFlags;
@@ -37,6 +38,9 @@ public final class ModMenus {
     // The face and the kind of cable ride in the opening packet, so this one needs the extra data.
     public static final DeferredHolder<MenuType<?>, MenuType<MetalPressMenu>> METAL_PRESS = TYPES.register(
             "metal_press", () -> IMenuTypeExtension.create(MetalPressMenu::new));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<SmelteryMenu>> SMELTERY = TYPES.register(
+            "smeltery", () -> IMenuTypeExtension.create(SmelteryMenu::new));
 
     public static final DeferredHolder<MenuType<?>, MenuType<CableConnectorMenu>> CABLE_CONNECTOR = TYPES.register(
             "cable_connector", () -> IMenuTypeExtension.create(CableConnectorMenu::new));

@@ -13,6 +13,7 @@ import dev.futuretech.block.ItemCableBlock;
 import dev.futuretech.block.ItemCableTier;
 import dev.futuretech.block.CrusherBlock;
 import dev.futuretech.block.MetalPressBlock;
+import dev.futuretech.block.SmelteryBlock;
 import dev.futuretech.block.SolidFuelGeneratorBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
@@ -67,6 +68,12 @@ public final class ModBlocks {
             "metal_press", MetalPressBlock::new, properties -> properties
                     .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
                     .requiresCorrectToolForDrops());
+
+    public static final DeferredBlock<SmelteryBlock> SMELTERY = BLOCKS.registerBlock(
+            "smeltery", SmelteryBlock::new, properties -> properties
+                    .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops()
+                    .lightLevel(state -> state.getValue(SmelteryBlock.LIT) ? 13 : 0));
 
     public static final DeferredBlock<FluidTankBlock> FLUID_TANK = BLOCKS.registerBlock(
             "fluid_tank", FluidTankBlock::new, properties -> properties

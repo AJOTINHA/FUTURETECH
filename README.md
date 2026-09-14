@@ -278,7 +278,7 @@ As receitas próprias ficam em `src/main/recipes/assembler.json` (veja [Receitas
 
 ## Receitas das máquinas
 
-Cada máquina com receitas próprias tem **um único arquivo** em `src/main/recipes/`: `crusher.json` (tipo `futuretech:crushing`), `metal_press.json` (tipo `futuretech:pressing`) e `assembler.json` (tipo `futuretech:assembling`). O arquivo traz o `type` uma vez e um mapa `recipes` em que a chave é o nome da receita e o valor é o corpo dela, sem o `type`:
+Cada máquina com receitas próprias tem **um único arquivo** em `src/main/recipes/`: `crusher.json` (tipo `futuretech:crushing`), `metal_press.json` (tipo `futuretech:pressing`), `smeltery.json` (tipo `futuretech:alloying`) e `assembler.json` (tipo `futuretech:assembling`). O arquivo traz o `type` uma vez e um mapa `recipes` em que a chave é o nome da receita e o valor é o corpo dela, sem o `type`:
 
 ```json
 {
@@ -327,6 +327,25 @@ Estrutura baseada no [MDK oficial do NeoForge para 26.2 com ModDevGradle](https:
 A Metal Press transforma lingotes de ferro, ouro, cobre e netherita em chapas e engrenagens. O slot **Molde** da GUI aceita um **Molde de Chapa** (1 lingote → 1 chapa, 100 ticks) ou **Molde de Engrenagem** (4 lingotes → 1 engrenagem, 160 ticks). Um único molde reutilizável define o trabalho de todas as linhas; sem molde, a máquina não processa. Trocar ou remover o molde reinicia o progresso, preservando os lingotes. Cada linha consome 20 FE/t na MK1; falta de energia ou saída cheia pausa o trabalho. O molde não é consumido nem se desgasta. Molde, inventário, energia e progresso são salvos no mundo. Shift+clique em um molde o coloca no slot próprio; automação transporta apenas ingredientes e resultados. As receitas dos moldes usam quatro lingotes de ferro: quadrado 2×2 para chapa e cruz vazada para engrenagem. Prensas de versões anteriores precisam receber um molde para voltar a trabalhar.
 
 Suporta configuração dos lados, entrada/saída automática, redstone e kits MK2–MK4, com uma linha de processamento por MK e os mesmos ajustes de energia, velocidade e cores das outras máquinas. A entrada automática junta lotes de quatro antes de distribuir os lingotes entre linhas no modo engrenagem. A frente usa PNGs próprios de 32×32 em `textures/block/metal_press/`: `metal_press_front.png` (desligada) e `metal_press_front_on.png` (ligada, tira de quatro quadros 32×32 com o pistão descendo e subindo e indicador ciano fixo; ciclo de 16 ticks definido no `.mcmeta`). Os modelos em `models/block/metal_press/` reutilizam as laterais e quinas MK da carcaça. `tools/Generate-MetalPress.ps1` gera somente os modelos; as oito receitas são editadas diretamente em `src/main/recipes/metal_press.json`.
+## Fundidora (Smeltery)
+
+A **Fundidora** (`futuretech:smeltery`) derrete dois ingredientes numa liga: cada faixa tem **dois slots de entrada** lado a lado e um de saída, e a ordem dos dois não importa (ferro + carvão funde igual a carvão + ferro). As receitas ficam em `src/main/recipes/smeltery.json`, tipo `futuretech:alloying`, com `first` e `second` (cada um com `ingredient` e `count`, padrão 1), `result` e `duration` (padrão 200 ticks). As iniciais: **1 ferro + 2 carvões → 1 aço** (200 ticks), **1 pó de ferro + 2 carvões → 1 aço**, **1 ferro + 3 carvões vegetais → 1 aço** (240 ticks) e **4 sucatas de netherita + 4 ouros → 1 netherita** (400 ticks).
+
+- Reserva de **20.000 FE**, entrada de até **200 FE/t** e consumo de **30 FE/t** por faixa ativa na MK1: 6.000 FE por lingote de aço. Falta de energia ou saída cheia pausa e preserva o progresso; trocar um dos ingredientes reinicia a faixa. Ao concluir, cada slot paga a quantidade da parte que ele acabou sendo.
+- Segue o esquema de faixas por MK (uma por nível), kits MK2–MK4, configuração de lados, entrada/saída automática, redstone e melhorias, como o Triturador e a Prensa. No inventário do bloco as primeiras entradas são os slots 0–3, as segundas 4–7 e as saídas 8–11.
+- Um funil ou cabo que empurra um item vai para o slot que já tem menos daquele item; se nenhum tem, para um slot vazio cuja dupla já está preenchida, completando o par; senão, para a primeira entrada livre. Shift+clique na GUI segue a mesma regra, então dois shift+cliques formam um par na faixa 1 em vez de espalhar por duas faixas.
+- Ligada, emite luz 13, solta faíscas e um pouco de fumaça pela frente. Um comparador mede a reserva de energia.
+
+A GUI é a do Triturador com um segundo slot de entrada: energia à esquerda, os dois ingredientes juntos, seta ciano de progresso e o lingote à direita; sob os ingredientes, um cadinho fica cinza parado e laranja com o metal fervendo enquanto trabalha. A frente usa PNGs de 32×32 em `textures/block/smeltery/`: `smeltery_front.png` (desligada: cadinho com escória escura e indicador apagado) e `smeltery_front_on.png` (tira de oito quadros com o metal derretido ondulando e borbulhando, dutos de alimentação aquecidos e indicador laranja; 3 ticks por quadro no `.mcmeta`). As duas são desenhadas por `art/smeltery/Generate-Front.py` (Python + Pillow) sobre a `machine_side` compartilhada, e os modelos em `models/block/smeltery/` reutilizam as laterais e as quinas MK da carcaça, como na Prensa.
+
+A fabricação segue o padrão das outras máquinas, com um alto-forno no topo:
+
+```text
+Ferro     Alto-forno  Ferro
+Cobre     Carcaça     Cobre
+Ferro     Redstone    Ferro
+```
+
 ## Aço
 
-O lingote de aço (`futuretech:steel_ingot`) está disponível na aba criativa, sem receita de fabricação por enquanto. A Metal Press aceita aço com os moldes existentes: 1 lingote produz 1 chapa de aço; 4 lingotes produzem 1 engrenagem de aço. As receitas ficam no arquivo único `src/main/recipes/metal_press.json`. Os itens integram as tags `c:ingots/steel`, `c:plates/steel` e `c:gears/steel`.
+O lingote de aço (`futuretech:steel_ingot`) é produzido na Fundidora (1 ferro ou 1 pó de ferro + 2 carvões, ou 1 ferro + 3 carvões vegetais). A Metal Press aceita aço com os moldes existentes: 1 lingote produz 1 chapa de aço; 4 lingotes produzem 1 engrenagem de aço. As receitas ficam no arquivo único `src/main/recipes/metal_press.json`. Os itens integram as tags `c:ingots/steel`, `c:plates/steel` e `c:gears/steel`.

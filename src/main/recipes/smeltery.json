@@ -1,0 +1,65 @@
+{
+  "type": "futuretech:alloying",
+  "recipes": {
+    "steel_ingot": {
+      "first": {
+        "ingredient": "minecraft:iron_ingot",
+        "count": 1
+      },
+      "second": {
+        "ingredient": "minecraft:coal",
+        "count": 2
+      },
+      "result": {
+        "count": 1,
+        "id": "futuretech:steel_ingot"
+      },
+      "duration": 200
+    },
+    "steel_ingot_from_powder": {
+      "first": {
+        "ingredient": "futuretech:iron_powder",
+        "count": 1
+      },
+      "second": {
+        "ingredient": "minecraft:coal",
+        "count": 2
+      },
+      "result": {
+        "count": 1,
+        "id": "futuretech:steel_ingot"
+      },
+      "duration": 200
+    },
+    "steel_ingot_from_charcoal": {
+      "first": {
+        "ingredient": "minecraft:iron_ingot",
+        "count": 1
+      },
+      "second": {
+        "ingredient": "minecraft:charcoal",
+        "count": 3
+      },
+      "result": {
+        "count": 1,
+        "id": "futuretech:steel_ingot"
+      },
+      "duration": 240
+    },
+    "netherite_ingot": {
+      "first": {
+        "ingredient": "minecraft:netherite_scrap",
+        "count": 4
+      },
+      "second": {
+        "ingredient": "minecraft:gold_ingot",
+        "count": 4
+      },
+      "result": {
+        "count": 1,
+        "id": "minecraft:netherite_ingot"
+      },
+      "duration": 400
+    }
+  }
+}

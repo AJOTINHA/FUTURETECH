@@ -27,6 +27,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.METAL_PRESS.get());
                         output.accept(ModItems.PLATE_MOLD.get());
                         output.accept(ModItems.GEAR_MOLD.get());
+                        output.accept(ModItems.SMELTERY.get());
                         output.accept(ModItems.BATTERY_MK1.get());
                         output.accept(ModItems.FLUID_TANK.get());
                         output.accept(ModItems.CABLE_MK1.get());

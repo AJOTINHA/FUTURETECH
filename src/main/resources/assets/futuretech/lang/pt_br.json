@@ -141,5 +141,6 @@
   "gui.futuretech.metal_press.mold_help": "Insira um molde de chapa ou engrenagem. O molde não é consumido.",
   "item.futuretech.steel_ingot": "Lingote de Aço",
   "item.futuretech.steel_plate": "Chapa de Aço",
-  "item.futuretech.steel_gear": "Engrenagem de Aço"
+  "item.futuretech.steel_gear": "Engrenagem de Aço",
+  "block.futuretech.smeltery": "Fundidora"
 }
