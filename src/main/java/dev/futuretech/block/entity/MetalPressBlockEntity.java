@@ -65,6 +65,8 @@ public final class MetalPressBlockEntity extends BaseContainerBlockEntity
     public static final int INPUT_PER_TICK = 200;
     /** Five seconds of powered work per item at 20 ticks per second. */
     public static final int PRESS_TICKS = 100;
+    /** Ingots a gear recipe takes; the auto-input keeps batches of this size together on one lane. */
+    public static final int GEAR_INGOTS = 2;
     /** Input slots come first, then the outputs, so lane {@code n} is slots {@code n} and {@code LANES + n}. */
     public static final int LANES = 4;
     public static final int SLOT_INPUT = 0;
@@ -422,8 +424,8 @@ public final class MetalPressBlockEntity extends BaseContainerBlockEntity
             ItemStack held = items.get(SLOT_INPUT + lane);
             if (!held.isEmpty() && (!ItemStack.isSameItemSameComponents(held, stack) || held.getCount() >= held.getMaxStackSize())) continue;
             // Finish a batch before spreading ingots to the next lane, even when a hopper feeds one at a time.
-            if (gearMode() && held.getCount() % 4 != 0
-                    && (partial < 0 || held.getCount() % 4 > items.get(SLOT_INPUT + partial).getCount() % 4)) partial = lane;
+            if (gearMode() && held.getCount() % GEAR_INGOTS != 0
+                    && (partial < 0 || held.getCount() % GEAR_INGOTS > items.get(SLOT_INPUT + partial).getCount() % GEAR_INGOTS)) partial = lane;
             if (best < 0 || held.getCount() < items.get(SLOT_INPUT + best).getCount()) best = lane;
         }
         return partial >= 0 ? partial : best;

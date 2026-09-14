@@ -121,7 +121,7 @@ class MetalPressTest {
             for (int metal = 0; metal < ingots.length; metal++) {
                 var press = machine(1);
                 if (gear) press.setItem(SLOT_MOLD, new ItemStack(ModItems.GEAR_MOLD.get()));
-                int count = gear ? 4 : 1;
+                int count = gear ? GEAR_INGOTS : 1;
                 int duration = gear ? 160 : 100;
                 charge(press, duration * ENERGY_PER_TICK);
                 press.setItem(SLOT_INPUT, new ItemStack(ingots[metal], count + 1));
@@ -140,17 +140,17 @@ class MetalPressTest {
     }
 
     @Test
-    void switchingMoldRequiresFourIngotsAndRestartsProgress(MinecraftServer server) {
+    void switchingMoldRequiresTwoIngotsAndRestartsProgress(MinecraftServer server) {
         var press = machine(1);
         charge(press, CAPACITY);
-        press.setItem(SLOT_INPUT, new ItemStack(Items.IRON_INGOT, 3));
+        press.setItem(SLOT_INPUT, new ItemStack(Items.IRON_INGOT, 1));
         for (int t = 0; t < 30; t++) assertTrue(tick(press, server));
         press.setItem(SLOT_MOLD, new ItemStack(ModItems.GEAR_MOLD.get()));
         assertEquals(0, press.menuData().get(DATA_PROGRESS));
         int before = press.energy().getAmountAsInt();
         assertFalse(tick(press, server));
         assertEquals(before, press.energy().getAmountAsInt());
-        press.setItem(SLOT_INPUT, new ItemStack(Items.IRON_INGOT, 4));
+        press.setItem(SLOT_INPUT, new ItemStack(Items.IRON_INGOT, GEAR_INGOTS));
         for (int t = 0; t < 160; t++) assertTrue(tick(press, server));
         assertTrue(press.getItem(SLOT_INPUT).isEmpty());
         assertTrue(press.getItem(SLOT_OUTPUT).is(ModItems.IRON_GEAR.get()));
@@ -161,7 +161,7 @@ class MetalPressTest {
         var press = machine(1);
         press.setItem(SLOT_MOLD, new ItemStack(ModItems.GEAR_MOLD.get()));
         charge(press, 25 * ENERGY_PER_TICK);
-        press.setItem(SLOT_INPUT, new ItemStack(Items.GOLD_INGOT, 4));
+        press.setItem(SLOT_INPUT, new ItemStack(Items.GOLD_INGOT, GEAR_INGOTS));
         for (int t = 0; t < 25; t++) assertTrue(tick(press, server));
         assertFalse(tick(press, server));
         assertEquals(25, press.menuData().get(DATA_PROGRESS));
@@ -186,7 +186,7 @@ class MetalPressTest {
         var press = machine(4);
         press.setItem(SLOT_MOLD, new ItemStack(ModItems.GEAR_MOLD.get()));
         press.sideConfig().set(Direction.UP, SideMode.INPUT);
-        for (int n = 0; n < 16; n++) {
+        for (int n = 0; n < 4 * GEAR_INGOTS; n++) {
             ItemStack ingot = new ItemStack(Items.COPPER_INGOT);
             int accepted = -1;
             for (int lane = 0; lane < 4; lane++) {
@@ -195,7 +195,7 @@ class MetalPressTest {
                     accepted = lane;
                 }
             }
-            assertEquals(n / 4, accepted);
+            assertEquals(n / GEAR_INGOTS, accepted);
             var held = press.getItem(accepted);
             if (held.isEmpty()) press.setItem(accepted, ingot);
             else held.grow(1);

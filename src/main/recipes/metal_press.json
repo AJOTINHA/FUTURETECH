@@ -13,7 +13,7 @@
     },
     "iron_gear": {
       "ingredient": "minecraft:iron_ingot",
-      "count": 4,
+      "count": 2,
       "result": {
         "count": 1,
         "id": "futuretech:iron_gear"
@@ -33,7 +33,7 @@
     },
     "gold_gear": {
       "ingredient": "minecraft:gold_ingot",
-      "count": 4,
+      "count": 2,
       "result": {
         "count": 1,
         "id": "futuretech:gold_gear"
@@ -53,7 +53,7 @@
     },
     "copper_gear": {
       "ingredient": "minecraft:copper_ingot",
-      "count": 4,
+      "count": 2,
       "result": {
         "count": 1,
         "id": "futuretech:copper_gear"
@@ -73,7 +73,7 @@
     },
     "netherite_gear": {
       "ingredient": "minecraft:netherite_ingot",
-      "count": 4,
+      "count": 2,
       "result": {
         "count": 1,
         "id": "futuretech:netherite_gear"
@@ -98,7 +98,7 @@
         "id": "futuretech:steel_gear"
       },
       "duration": 160,
-      "count": 4,
+      "count": 2,
       "gear": true
     }
   }
