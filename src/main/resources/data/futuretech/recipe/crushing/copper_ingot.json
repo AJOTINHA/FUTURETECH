@@ -1,8 +1,0 @@
-{
-  "result": {
-    "count": 1,
-    "id": "futuretech:copper_powder"
-  },
-  "type": "futuretech:crushing",
-  "ingredient": "minecraft:copper_ingot"
-}

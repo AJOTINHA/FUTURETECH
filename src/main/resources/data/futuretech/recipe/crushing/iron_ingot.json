@@ -1,8 +1,0 @@
-{
-  "result": {
-    "count": 1,
-    "id": "futuretech:iron_powder"
-  },
-  "type": "futuretech:crushing",
-  "ingredient": "minecraft:iron_ingot"
-}

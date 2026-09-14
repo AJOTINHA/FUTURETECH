@@ -1,0 +1,96 @@
+{
+  "type": "futuretech:crushing",
+  "recipes": {
+    "blaze_rod": {
+      "ingredient": "minecraft:blaze_rod",
+      "result": {
+        "count": 4,
+        "id": "minecraft:blaze_powder"
+      }
+    },
+    "bone": {
+      "ingredient": "minecraft:bone",
+      "result": {
+        "count": 6,
+        "id": "minecraft:bone_meal"
+      }
+    },
+    "cobblestone": {
+      "ingredient": "minecraft:cobblestone",
+      "result": {
+        "count": 1,
+        "id": "minecraft:gravel"
+      }
+    },
+    "copper_ingot": {
+      "ingredient": "minecraft:copper_ingot",
+      "result": {
+        "count": 1,
+        "id": "futuretech:copper_powder"
+      }
+    },
+    "glass": {
+      "ingredient": "minecraft:glass",
+      "result": {
+        "count": 1,
+        "id": "minecraft:sand"
+      }
+    },
+    "gold_ingot": {
+      "ingredient": "minecraft:gold_ingot",
+      "result": {
+        "count": 1,
+        "id": "futuretech:gold_powder"
+      }
+    },
+    "gravel": {
+      "ingredient": "minecraft:gravel",
+      "result": {
+        "count": 1,
+        "id": "minecraft:sand"
+      }
+    },
+    "iron_ingot": {
+      "ingredient": "minecraft:iron_ingot",
+      "result": {
+        "count": 1,
+        "id": "futuretech:iron_powder"
+      }
+    },
+    "raw_copper": {
+      "ingredient": "minecraft:raw_copper",
+      "result": {
+        "count": 2,
+        "id": "futuretech:copper_powder"
+      }
+    },
+    "raw_gold": {
+      "ingredient": "minecraft:raw_gold",
+      "result": {
+        "count": 2,
+        "id": "futuretech:gold_powder"
+      }
+    },
+    "raw_iron": {
+      "ingredient": "minecraft:raw_iron",
+      "result": {
+        "count": 2,
+        "id": "futuretech:iron_powder"
+      }
+    },
+    "red_sandstone": {
+      "ingredient": "minecraft:red_sandstone",
+      "result": {
+        "count": 4,
+        "id": "minecraft:red_sand"
+      }
+    },
+    "sandstone": {
+      "ingredient": "minecraft:sandstone",
+      "result": {
+        "count": 4,
+        "id": "minecraft:sand"
+      }
+    }
+  }
+}

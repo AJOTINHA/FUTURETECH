@@ -52,7 +52,7 @@ for x in [2,13]:
 
 terminal = [box([2,0,3],[14,1.5,13],'dark'),box([3,1.5,4],[13,2,12],'silver'),box([6.5,2,7],[9.5,10,10],'gray'),
             box([0,9,5],[16,19,8],'dark'),box([.5,9.5,4.7],[15.5,18.5,5],'silver'),box([1.2,10.2,4.5],[14.8,17.8,4.7],'dark')]
-for i in range(3): terminal += [box([2.2,11+i*2,4.3],[3.5,12+i*2,4.5],'cyan'),box([4.5,11.2+i*2,4.3],[12.5-i*1.7,11.6+i*2,4.5],'gray')]
+# The display contents are rendered live by AssemblerMonitor, ahead of the glass.
 terminal += [box([3,3,3],[13,3.8,6],'dark'),box([4,3.8,3.7],[10,3.9,5],'gray'),box([11,3.8,3.7],[12,3.9,5],'cyan')]
 
 for name, elements in [('assembly_table',table),('transport_arm',base),('assembly_arm',base),('assembler_terminal',terminal)]:
@@ -83,7 +83,7 @@ recipes = {
 for name,(pattern,key) in recipes.items():
     write(DATA / f'recipe/{name}.json', {'type':'minecraft:crafting_shaped','category':'redstone','pattern':pattern,'key':key,'result':{'id':f'futuretech:{name}','count':1}})
     write(DATA / f'advancement/recipes/{name}.json', {'parent':'minecraft:recipes/root','criteria':{'has_iron':{'trigger':'minecraft:inventory_changed','conditions':{'items':[{'items':'minecraft:iron_ingot'}]}}},'requirements':[['has_iron']],'rewards':{'recipes':[f'futuretech:{name}']}})
-write(DATA / 'recipe/assembling/machine_casing.json', {'type':'futuretech:assembling','ingredients':['minecraft:stone','minecraft:iron_ingot'],'result':{'id':'futuretech:machine_casing','count':1},'duration':80})
+# Assembling recipes live in src/main/recipes/assembler.json, one file for the whole machine.
 for tag in ['mineable/pickaxe','needs_stone_tool']:
     path = ROOT / f'data/minecraft/tags/block/{tag}.json'
     data = json.loads(path.read_text(encoding='utf-8-sig'))
@@ -93,7 +93,10 @@ for tag in ['mineable/pickaxe','needs_stone_tool']:
 
 translations = {
  'gui.futuretech.assembler.energy': ('Energia do controller: %s / %s FE','Controller energy: %s / %s FE'),
- 'gui.futuretech.assembler.status.9': ('Sem energia no controller','Controller needs energy'),
+ 'gui.futuretech.assembler.status.9': ('Faltando energia','Not enough energy'),
+ 'gui.futuretech.assembler.status.10': ('Parada: sem mesa','Stopped: no table'),
+ 'gui.futuretech.assembler.status.11': ('Parada: destino bloqueado','Stopped: destination blocked'),
+ 'gui.futuretech.assembler.status.12': ('Parada: sem braço de entrada','Stopped: no input arm'),
  'block.futuretech.assembly_table': ('Mesa de montagem','Assembly Table'),
  'block.futuretech.transport_arm': ('Braço de transporte','Transport Arm'),
  'block.futuretech.assembly_arm': ('Braço de montagem','Assembly Arm'),
@@ -111,11 +114,11 @@ translations = {
  'gui.futuretech.assembler.work_short': ('Mont.','Work'),
  'gui.futuretech.assembler.out_short': ('Saída','Out'),
  'gui.futuretech.assembler.terminal_short': ('Term.','Term.'),
- 'gui.futuretech.assembler.status.0': ('Aguardando ingredientes','Waiting for ingredients'),
+ 'gui.futuretech.assembler.status.0': ('Faltando ingredientes','Missing ingredients'),
  'gui.futuretech.assembler.status.1': ('Terminal fora de alcance','Terminal out of reach'),
- 'gui.futuretech.assembler.status.2': ('Escolha a receita nas setas','Choose a recipe using the arrows'),
+ 'gui.futuretech.assembler.status.2': ('Parada: selecione uma receita','Stopped: select a recipe'),
  'gui.futuretech.assembler.status.3': ('Recebendo ingredientes','Receiving ingredients'),
- 'gui.futuretech.assembler.status.4': ('Montando...','Assembling...'),
+ 'gui.futuretech.assembler.status.4': ('Trabalhando: montando','Working: assembling'),
  'gui.futuretech.assembler.status.5': ('Recuando ferramenta...','Retracting tool...'),
  'gui.futuretech.assembler.status.6': ('Enviando resultado','Sending result'),
  'gui.futuretech.assembler.status.7': ('Aguardando saída livre','Waiting for output space'),

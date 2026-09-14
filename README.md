@@ -249,7 +249,22 @@ Abra o terminal e use as setas para selecionar **Carcaça de máquina**: **1 ped
 
 O resultado aguarda na mesa se o baú estiver cheio. Se o destino ficar indisponível durante o transporte, o braço mantém o item e tenta novamente. Cada peça salva seus itens e o estágio do movimento; os testes cobrem retomadas antes e depois da fabricação. A troca de receita exige a mesa vazia e os braços parados. É possível retirar materiais pela interface quando a mesa está livre. A energia entra somente pelo controller (Terminal do Assembler), em qualquer face: capacidade de 32.000 FE e entrada máxima de 200 FE por tick. Cada braço consome 20 FE por tick de movimento ou montagem; parado ou bloqueado não consome. Sem energia, os movimentos e a montagem pausam, preservando os itens, e continuam quando a energia retorna. A GUI do controller mostra a barra vertical com o mesmo degradê animado das máquinas e a quantidade de FE ao passar o mouse. A energia armazenada é salva com o mundo.
 
-As receitas próprias ficam em `data/futuretech/recipe/assembling`, com tipo `futuretech:assembling`, de 1 a 9 ingredientes (um item por entrada), resultado e duração em ticks. Modelos e dados podem ser regenerados com `python tools/generate_assembler.py`.
+As receitas próprias ficam em `src/main/recipes/assembler.json` (veja [Receitas das máquinas](#receitas-das-máquinas)), com tipo `futuretech:assembling`, de 1 a 9 ingredientes (um item por entrada), resultado e duração em ticks. Modelos e dados podem ser regenerados com `python tools/generate_assembler.py`.
+
+## Receitas das máquinas
+
+Cada máquina com receitas próprias tem **um único arquivo** em `src/main/recipes/`: `crusher.json` (tipo `futuretech:crushing`) e `assembler.json` (tipo `futuretech:assembling`). O arquivo traz o `type` uma vez e um mapa `recipes` em que a chave é o nome da receita e o valor é o corpo dela, sem o `type`:
+
+```json
+{
+  "type": "futuretech:crushing",
+  "recipes": {
+    "cobblestone": { "ingredient": "minecraft:cobblestone", "result": { "id": "minecraft:gravel", "count": 1 } }
+  }
+}
+```
+
+O jogo só carrega uma receita por JSON, então a tarefa `expandMachineRecipes` do Gradle (que roda em todo `build`/`runClient`) gera `data/futuretech/recipe/<tipo>/<nome>.json` em `build/generated/recipes` a partir desses arquivos. Para adicionar uma receita, basta acrescentar uma entrada no arquivo da máquina; não crie arquivos soltos em `data/futuretech/recipe/crushing` ou `assembling`. As receitas de crafting das mesas vanilla continuam uma por arquivo em `src/main/resources/data/futuretech/recipe/`.
 
 ## Desenvolvimento no Windows
 

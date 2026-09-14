@@ -12,7 +12,7 @@ import net.minecraft.world.item.ItemStack;
 import java.util.List;
 import org.jspecify.annotations.Nullable;
 
-public final class AssemblerMenu extends AbstractContainerMenu {
+public final class AssemblerMenu extends MachineMenu {
     public static final int WIDTH = 220, HEIGHT = 238;
     private final @Nullable AssemblerBlockEntity access, table;
     private final List<Entry> entries;
@@ -49,6 +49,7 @@ public final class AssemblerMenu extends AbstractContainerMenu {
             @Override public int getCount() { return 5; }
         };
         addDataSlots(data);
+        if (!client && table != null) markSynced();
     }
     public List<Entry> entries() { return entries; }
     public int selected() { return data.get(0); }

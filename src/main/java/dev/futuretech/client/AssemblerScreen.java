@@ -29,7 +29,7 @@ public final class AssemblerScreen extends AbstractContainerScreen<AssemblerMenu
         drawPanel(graphics, leftPos, topPos, imageWidth, imageHeight);
         drawSlots(graphics, leftPos, topPos, menu.slots);
         graphics.fill(leftPos + 8, topPos + 58, leftPos + 22, topPos + 112, BAR_BACK);
-        float chargeHeight = energyBar.width(menu.energyStored(), dev.futuretech.block.entity.AssemblerBlockEntity.ENERGY_CAPACITY, 52, true);
+        float chargeHeight = energyBar.width(menu.energyStored(), dev.futuretech.block.entity.AssemblerBlockEntity.ENERGY_CAPACITY, 52, menu.isSynced());
         drawVerticalGradientBar(graphics, leftPos + 9, topPos + 111, 12, chargeHeight, ENERGY_START, ENERGY_END);
         var recipe = menu.selectedRecipe();
         if (recipe != null) {
@@ -60,8 +60,8 @@ public final class AssemblerScreen extends AbstractContainerScreen<AssemblerMenu
         Component name = recipe == null ? Component.translatable("gui.futuretech.assembler.select") : recipe.result().create().getHoverName();
         String shortName = font.plainSubstrByWidth(name.getString(), 154);
         graphics.text(font, shortName, (imageWidth - font.width(shortName)) / 2, 32, TEXT, false);
-        Component status = Component.translatable("gui.futuretech.assembler.status." + menu.status());
-        graphics.text(font, status, (imageWidth - font.width(status)) / 2, 119, TEXT, false);
+        Component status = AssemblerStatusView.label(menu.status());
+        graphics.text(font, status, (imageWidth - font.width(status)) / 2, 119, AssemblerStatusView.color(menu.status(), false), false);
         String[] keys = {"in_short", "work_short", "out_short", "terminal_short"};
         for (int i = 0; i < 4; i++) graphics.text(font, Component.translatable("gui.futuretech.assembler." + keys[i]), 41 + i * 47, 131, TEXT, false);
     }
