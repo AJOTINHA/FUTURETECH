@@ -94,6 +94,16 @@ G G G
 I I I
 ```
 
+O **Cabo de Itens** (`futuretech:item_cable`) é o mesmo cabo sem o miolo: só a gaiola de cantos cinza e trilhos brancos, com os vãos abertos. Mesma velocidade, mesmos conectores, mesma interface; os dois cabos de itens se emendam entre si. A receita troca o vidro por painéis de vidro:
+
+```
+I I I
+P P P
+I I I
+```
+
+Os modelos são gerados a partir dos do Cabo MK1 removendo os volumes do miolo e recompondo as seis faces de cada barra, já que o gerador original descartava as faces que o miolo escondia.
+
 Os dois cabos compartilham `AbstractCableBlock` e `AbstractCableBlockEntity` (forma, conexões, modos dos conectores, menu); cada tipo só diz o que emenda e qual capability o vizinho precisa oferecer. O cabo de itens usa os modelos do Cabo MK1 como pai, trocando apenas as texturas do miolo (`item_cable_opaque.png`, `item_cable_opaque_node.png`) e o tampão do colar (`item_cable_contact.png`). A lógica fica em `transfer/ItemCableNetwork`.
 
 A **Fornalha Elétrica** (`futuretech:electric_furnace`) é a primeira máquina que consome energia. Ela funde exatamente o que uma fornalha comum funde, sem combustível e no dobro da velocidade.

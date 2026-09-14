@@ -153,6 +153,43 @@ class CableResourcesTest {
         assertEquals(energy.replace("futuretech:block/cable_mk1_", "futuretech:block/item_cable_opaque_"), items);
     }
 
+    /**
+     * The plain item cable is the cage with nothing inside. The MK1 models leave out the
+     * faces the core used to hide, so every box here must have all six back, or the openings
+     * would show holes.
+     */
+    @Test
+    void itemCableIsTheCageAloneWithEveryBoxClosed() throws Exception {
+        for (String part : List.of("block/item_cable_arm", "block/item_cable_cap",
+                "block/item_cable_line", "block/item_cable_node", "item/item_cable")) {
+            var model = model("futuretech:" + part);
+            var source = model("futuretech:" + part.replace("item_cable", "cable_mk1"));
+            int cage = 0;
+            for (var element : source.getAsJsonArray("elements")) {
+                var faces = element.getAsJsonObject().getAsJsonObject("faces");
+                boolean core = faces.entrySet().stream().anyMatch(face -> {
+                    String texture = face.getValue().getAsJsonObject().get("texture").getAsString();
+                    return texture.equals("#cable") || texture.equals("#node");
+                });
+                if (!core) cage++;
+            }
+            assertEquals(cage, model.getAsJsonArray("elements").size(), "Only the cage stays: " + part);
+            for (var element : model.getAsJsonArray("elements")) {
+                var faces = element.getAsJsonObject().getAsJsonObject("faces");
+                assertEquals(6, faces.size(), "Every box is closed on all sides: " + part);
+                for (var face : faces.entrySet()) {
+                    String texture = face.getValue().getAsJsonObject().get("texture").getAsString();
+                    assertTrue(texture.equals("#gray") || texture.equals("#white"), texture);
+                }
+            }
+            assertFalse(model.getAsJsonObject("textures").has("cable"), part);
+            assertFalse(model.getAsJsonObject("textures").has("node"), part);
+        }
+        var energy = resource("blockstates/cable_mk1.json").toString();
+        var items = resource("blockstates/item_cable.json").toString();
+        assertEquals(energy.replace("futuretech:block/cable_mk1_", "futuretech:block/item_cable_"), items);
+    }
+
     @Test
     void inventoryShowsTheNodeWithAllSixFacesClosed() throws Exception {
         var item = resource("models/item/cable_mk1.json").getAsJsonArray("elements");

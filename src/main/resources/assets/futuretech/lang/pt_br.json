@@ -17,6 +17,7 @@
   "gui.futuretech.output": "Saída: %s FE/t",
   "block.futuretech.cable_mk1": "Cabo MK1",
   "block.futuretech.item_cable_opaque": "Cabo de Itens Opaco",
+  "block.futuretech.item_cable": "Cabo de Itens",
   "item.futuretech.filter.mode": "Modo: %s",
   "item.futuretech.filter.empty": "Nenhum item listado",
   "gui.futuretech.sides": "Configuração",

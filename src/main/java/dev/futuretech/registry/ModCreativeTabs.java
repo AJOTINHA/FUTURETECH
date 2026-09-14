@@ -23,6 +23,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.BATTERY_MK1.get());
                         output.accept(ModItems.CABLE_MK1.get());
                         output.accept(ModItems.ITEM_CABLE_OPAQUE.get());
+                        output.accept(ModItems.ITEM_CABLE.get());
                         output.accept(ModItems.FILTER.get());
                         output.accept(ModItems.SPEED_UPGRADE.get());
                         output.accept(ModItems.IRON_POWDER.get());

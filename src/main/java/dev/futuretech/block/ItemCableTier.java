@@ -13,7 +13,9 @@ public enum ItemCableTier implements StringRepresentable {
      * The opaque item cable: one item a second, the pace basic pipes usually have; a hopper does
      * one every eight ticks.
      */
-    OPAQUE("opaque", "item_cable_opaque", 1, 20);
+    OPAQUE("opaque", "item_cable_opaque", 1, 20),
+    /** The plain item cable: the same cage left open, no core inside; same pace. */
+    STANDARD("standard", "item_cable", 1, 20);
 
     public static final Codec<ItemCableTier> CODEC = StringRepresentable.fromEnum(ItemCableTier::values);
 

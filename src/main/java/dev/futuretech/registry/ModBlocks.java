@@ -71,6 +71,7 @@ public final class ModBlocks {
     }
 
     public static final DeferredBlock<ItemCableBlock> ITEM_CABLE_OPAQUE = registerItemCable(ItemCableTier.OPAQUE);
+    public static final DeferredBlock<ItemCableBlock> ITEM_CABLE = registerItemCable(ItemCableTier.STANDARD);
 
     private static DeferredBlock<ItemCableBlock> registerItemCable(ItemCableTier tier) {
         return BLOCKS.registerBlock(tier.blockName(), properties -> new ItemCableBlock(tier, properties), properties -> properties
