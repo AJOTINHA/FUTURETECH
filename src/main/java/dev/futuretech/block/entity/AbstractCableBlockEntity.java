@@ -44,11 +44,11 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
     private static final Codec<Map<Direction, DyeColor>> COLORS_CODEC = Codec.unboundedMap(Direction.CODEC, DyeColor.CODEC);
 
     /**
-     * What each connector does. A face starts on {@link SideMode#BOTH}, which is how cables behaved
-     * before they were configurable: the resource crosses in either direction. Turning a direction
-     * off is the player narrowing that connector, so existing builds keep working untouched.
+     * What each connector does. A face starts on {@link SideMode#NONE}: a fresh connector moves
+     * nothing until the player opens it and picks insert, extract or both, so plugging a cable in
+     * never drains or floods a machine by accident.
      */
-    private final SideConfig connectors = new SideConfig(ALLOWED_MODES, true, side -> SideMode.BOTH);
+    private final SideConfig connectors = new SideConfig(ALLOWED_MODES, true, side -> SideMode.NONE);
     /** Only faces the player moved off 0 are kept, so an untouched cable saves nothing extra. */
     private final EnumMap<Direction, Integer> priorities = new EnumMap<>(Direction.class);
     /** Only faces moved off white are kept; a face without an entry is on the white channel. */

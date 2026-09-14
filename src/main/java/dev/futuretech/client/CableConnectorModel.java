@@ -22,7 +22,7 @@ import java.util.Map;
  */
 public final class CableConnectorModel extends DelegateBlockStateModel {
     /** What to draw before the block entity's data arrives: the mode a fresh connector starts on. */
-    private static final int DEFAULT_MODES=SideConfigVisuals.faceModes(SideMode.BOTH);
+    private static final int DEFAULT_MODES=SideConfigVisuals.faceModes(SideMode.NONE);
 
     private final Map<Direction,Map<SideMode,BlockStateModelPart>> connectors;
     private final int connectorFlags;
