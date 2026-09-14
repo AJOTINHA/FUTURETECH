@@ -35,17 +35,18 @@ public final class AssemblerMenu extends AbstractContainerMenu {
             @Override public boolean mayPickup(Player player) { return client || table != null && !table.locked(); }
         });
         addStandardInventorySlots(player, 30, 156);
-        data = client || table == null ? new SimpleContainerData(4) : new ContainerData() {
+        data = client || table == null ? new SimpleContainerData(5) : new ContainerData() {
             @Override public int get(int index) {
                 return switch (index) {
                     case 0 -> { int selected = -1; for (int i = 0; i < entries.size(); i++) if (entries.get(i).id().equals(table.selectedId())) selected = i; yield selected; }
                     case 1 -> table.status();
                     case 2 -> table.progress();
-                    default -> table.connections();
+                    case 3 -> table.connections();
+                    default -> table.controllerEnergy();
                 };
             }
             @Override public void set(int index, int value) {}
-            @Override public int getCount() { return 4; }
+            @Override public int getCount() { return 5; }
         };
         addDataSlots(data);
     }
@@ -54,6 +55,7 @@ public final class AssemblerMenu extends AbstractContainerMenu {
     public int status() { return data.get(1); }
     public int progress() { return data.get(2); }
     public int connections() { return data.get(3); }
+    public int energyStored() { return data.get(4); }
     public @Nullable AssemblingRecipe selectedRecipe() { return selected() < 0 || selected() >= entries.size() ? null : entries.get(selected()).recipe(); }
     @Override public boolean clickMenuButton(Player player, int button) {
         if (!stillValid(player) || table == null || button < 0 || button >= entries.size()) return false;

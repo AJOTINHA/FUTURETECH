@@ -62,6 +62,7 @@ public final class ModBlockEntities {
                     ModBlocks.ASSEMBLY_TABLE.get(), ModBlocks.TRANSPORT_ARM.get(), ModBlocks.ASSEMBLY_ARM.get(), ModBlocks.ASSEMBLER_TERMINAL.get()));
 
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, ASSEMBLER.get(), (assembler, side) -> assembler.energyHandler());
         event.registerBlockEntity(Capabilities.Fluid.BLOCK, FLUID_TANK.get(), (tank, side) -> tank.handler(side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, CRUSHER.get(), (crusher, side) ->
                 SidedEnergy.view(crusher.energy(), crusher.sideConfig(), side));

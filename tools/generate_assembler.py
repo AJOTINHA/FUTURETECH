@@ -92,6 +92,8 @@ for tag in ['mineable/pickaxe','needs_stone_tool']:
     write(path, data)
 
 translations = {
+ 'gui.futuretech.assembler.energy': ('Energia do controller: %s / %s FE','Controller energy: %s / %s FE'),
+ 'gui.futuretech.assembler.status.9': ('Sem energia no controller','Controller needs energy'),
  'block.futuretech.assembly_table': ('Mesa de montagem','Assembly Table'),
  'block.futuretech.transport_arm': ('Braço de transporte','Transport Arm'),
  'block.futuretech.assembly_arm': ('Braço de montagem','Assembly Arm'),

@@ -34,7 +34,12 @@ import java.util.function.Predicate;
  * into any cable, extract-only connectors pump from the tanks behind them, and once per tick the
  * group spreads what it holds over the tanks that accept it, never handing fluid straight back to
  * a block that is pushing into it. Each buffer holds one tick of the tier's throughput, so a
- * congested line refuses inserts and the pushing block keeps its fluid.
+ * congested line refuses inserts and the pushing block keeps its fluid. A pump fills the line
+ * even with nowhere to deliver, so a cable on a tank set to extract holds one tick of fluid until
+ * a destination shows up.
+ *
+ * <p>When the network is torn down it empties its buffers first: into the line's sinks, and what
+ * they refuse straight back into the tanks around it, so a rebuild swallows nothing.
  *
  * <p>Connectors carry a colour and a channel number, and every colour-channel pair is a line with
  * a buffer of its own: what comes in on one line only goes out on the same line. Within a line,
@@ -155,11 +160,24 @@ public final class FluidCableNetwork {
             }
         }
         var network = new FluidCableNetwork(level, slowest == null ? 0 : slowest.throughput(), cables, endpoints);
+        // A member may still sit on a live network (its chunk loaded after this one's); retiring
+        // it first empties that network's buffers instead of orphaning them.
+        members.forEach(FluidCableBlockEntity::invalidateNetwork);
         members.forEach(member -> member.setNetwork(network));
         return network;
     }
 
     public boolean isValid() { return valid; }
+
+    /** What every line's buffer holds right now, lines with nothing left out. */
+    public Map<Line, FluidStack> buffered() {
+        Map<Line, FluidStack> held = new HashMap<>();
+        buffers.forEach((line, buffer) -> {
+            int amount = buffer.getAmountAsInt(0);
+            if (amount > 0) held.put(line, buffer.getResource(0).toStack(amount));
+        });
+        return held;
+    }
 
     public int throughput() { return throughput; }
 
@@ -176,8 +194,12 @@ public final class FluidCableNetwork {
         return buffers.computeIfAbsent(line, l -> new FluidStacksResourceHandler(1, Math.max(1, throughput)));
     }
 
-    /** Drops every member's reference so the next tick rebuilds the network from what is left. */
+    /**
+     * Drops every member's reference so the next tick rebuilds the network from what is left,
+     * after emptying the buffers into the tanks so the rebuilt one starts clean without loss.
+     */
     public void invalidate(ServerLevel level) {
+        if (!valid) return;
         valid = false;
         for (BlockPos pos : cables) {
             if (level.hasChunkAt(pos.getX(), pos.getZ())
@@ -185,6 +207,30 @@ public final class FluidCableNetwork {
                 cable.clearNetwork(this);
             }
         }
+        flush(level);
+    }
+
+    /**
+     * Empties every line into its sinks and, failing that, back into any tank on the line, going
+     * around the connector modes: the fluid came out of a tank and has nowhere else to be.
+     */
+    private void flush(ServerLevel level) {
+        for (Map.Entry<Line, FluidStacksResourceHandler> entry : buffers.entrySet()) {
+            Line line = entry.getKey();
+            FluidStacksResourceHandler buffer = entry.getValue();
+            for (Endpoint endpoint : endpoints) {
+                if (buffer.getAmountAsInt(0) <= 0) break;
+                if (endpoint.delivers() && endpoint.line().equals(line)) ResourceHandlerUtil.move(buffer, endpoint.handler(), ANY, Integer.MAX_VALUE, null);
+            }
+            for (Endpoint endpoint : endpoints) {
+                if (buffer.getAmountAsInt(0) <= 0) break;
+                if (!endpoint.line().equals(line)) continue;
+                BlockPos tank = endpoint.key().neighbour();
+                if (!level.hasChunkAt(tank.getX(), tank.getZ())) continue;
+                ResourceHandlerUtil.move(buffer, level.getCapability(Capabilities.Fluid.BLOCK, tank, null), ANY, Integer.MAX_VALUE, null);
+            }
+        }
+        buffers.clear();
     }
 
     /**

@@ -9,6 +9,7 @@ import net.minecraft.world.entity.player.Inventory;
 import static dev.futuretech.client.MachineScreenStyle.*;
 
 public final class AssemblerScreen extends AbstractContainerScreen<AssemblerMenu> {
+    private final AnimatedBar energyBar = new AnimatedBar();
     public AssemblerScreen(AssemblerMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, AssemblerMenu.WIDTH, AssemblerMenu.HEIGHT);
         titleLabelX = 8; inventoryLabelX = 30; inventoryLabelY = 145;
@@ -27,6 +28,9 @@ public final class AssemblerScreen extends AbstractContainerScreen<AssemblerMenu
         super.extractBackground(graphics, mouseX, mouseY, partialTick);
         drawPanel(graphics, leftPos, topPos, imageWidth, imageHeight);
         drawSlots(graphics, leftPos, topPos, menu.slots);
+        graphics.fill(leftPos + 8, topPos + 58, leftPos + 22, topPos + 112, BAR_BACK);
+        float chargeHeight = energyBar.width(menu.energyStored(), dev.futuretech.block.entity.AssemblerBlockEntity.ENERGY_CAPACITY, 52, true);
+        drawVerticalGradientBar(graphics, leftPos + 9, topPos + 111, 12, chargeHeight, ENERGY_START, ENERGY_END);
         var recipe = menu.selectedRecipe();
         if (recipe != null) {
             for (int i = 0; i < recipe.ingredients().size(); i++) {
@@ -63,6 +67,8 @@ public final class AssemblerScreen extends AbstractContainerScreen<AssemblerMenu
     }
     @Override protected void extractTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         super.extractTooltip(graphics, mouseX, mouseY);
+        energyTooltip(graphics, mouseX, mouseY, leftPos + 8, topPos + 58, 14, 54, menu.energyStored(),
+                dev.futuretech.block.entity.AssemblerBlockEntity.ENERGY_CAPACITY);
         var recipe = menu.selectedRecipe();
         if (recipe == null) return;
         for (int i = 0; i < 10; i++) {

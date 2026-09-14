@@ -64,8 +64,9 @@ public final class AssemblerRenderer implements BlockEntityRenderer<AssemblerBlo
             var tablePose = AssemblerArmPose.waypoint(table, idlePose.swivel());
             motion = t < 20 ? AssemblerArmPose.travel(idlePose, tablePose, t / 20) : t < a.duration() + 20 ? tablePose
                     : AssemblerArmPose.travel(tablePose, idlePose, (t - a.duration() - 20) / 20);
-            s.welding = AssemblerArmPose.working(a.phase(), t, a.duration());
-            if (s.welding) {
+            boolean toolAtWork = AssemblerArmPose.working(a.phase(), t, a.duration());
+            s.welding = toolAtWork && a.moving();
+            if (toolAtWork) {
                 double fade = Math.sin(Math.PI * (t - 20) / a.duration());
                 float angle = (float)(tablePose.swivel() + Math.sin(t * .25) * .04 * fade);
                 double radius = Math.hypot(table.x - AssemblerArmPose.SHOULDER.x, table.z - AssemblerArmPose.SHOULDER.z);

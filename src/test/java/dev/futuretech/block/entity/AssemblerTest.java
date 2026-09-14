@@ -35,6 +35,7 @@ class AssemblerTest {
             output = add(new BlockPos(2,0,0), ModBlocks.TRANSPORT_ARM.get().defaultBlockState().setValue(AssemblerBlock.OUTPUT,true));
             worker = add(new BlockPos(0,0,2), ModBlocks.ASSEMBLY_ARM.get().defaultBlockState());
             terminal = add(new BlockPos(0,0,-2), ModBlocks.ASSEMBLER_TERMINAL.get().defaultBlockState());
+            terminal.energy().set(AssemblerBlockEntity.ENERGY_CAPACITY);
             chests.put(new BlockPos(-4,0,0),source); chests.put(new BlockPos(4,0,0),destination);
             source.set(0,ItemResource.of(Items.STONE),1); source.set(1,ItemResource.of(Items.IRON_INGOT),1);
             assertTrue(table.select(RECIPE));
@@ -73,6 +74,52 @@ class AssemblerTest {
         assertEquals(1,c.destination.getAmountAsInt(0));
         assertTrue(c.table.inventory.isEmpty()); assertTrue(c.input.cargo().isEmpty()); assertTrue(c.output.cargo().isEmpty());
         c.ticks(400); assertEquals(1,c.destination.getAmountAsInt(0));
+        assertEquals(AssemblerBlockEntity.ENERGY_CAPACITY - 6000, c.terminal.energy().getAmountAsInt());
+    }
+    @Test void emptyControllerPreventsIngredientExtraction(MinecraftServer server) {
+        var c = new Cell(server); c.terminal.energy().set(0); c.ticks(100);
+        assertEquals(1,c.source.getAmountAsInt(0)); assertEquals(1,c.source.getAmountAsInt(1));
+        assertTrue(c.table.inventory.isEmpty()); assertTrue(c.input.cargo().isEmpty());
+        assertEquals(9,c.table.status());
+    }
+    @Test void powerLossFreezesCargoAndAnimationThenResumesAfterReload(MinecraftServer server) {
+        var c = new Cell(server); c.terminal.energy().set(20 * 25);
+        c.ticks(100);
+        assertEquals(25,c.input.animationTick(.5F)); assertFalse(c.input.moving());
+        assertEquals(0,c.terminal.energy().getAmountAsInt()); assertTrue(c.input.cargo().is(Items.STONE));
+        c.restore(server); c.ticks(50);
+        assertEquals(25,c.input.animationTick(.5F)); assertTrue(c.input.cargo().is(Items.STONE));
+        c.terminal.energy().set(10000); c.ticks(400);
+        assertEquals(1,c.destination.getAmountAsInt(0)); assertTrue(c.table.inventory.isEmpty());
+    }
+    @Test void assemblyPausesWithoutConsumingMaterialsAndFinishesOnce(MinecraftServer server) {
+        var c = new Cell(server); c.fillTable(); c.terminal.energy().set(20 * 35); c.worker.begin();
+        for(int i=0;i<100;i++) c.worker.advance();
+        assertEquals(35,c.worker.animationTick(0)); assertFalse(c.worker.moving());
+        assertTrue(c.table.inventory.getItem(0).is(Items.STONE)); assertTrue(c.table.inventory.getItem(9).isEmpty());
+        c.terminal.energy().set(10000); c.ticks(300);
+        assertEquals(1,c.destination.getAmountAsInt(0));
+    }
+    @Test void energyEntersOnlyTheControllerWithATickLimitAndNoExtraction(MinecraftServer server) {
+        var c = new Cell(server);
+        assertNull(c.table.energyHandler()); assertNull(c.input.energyHandler()); assertNull(c.output.energyHandler()); assertNull(c.worker.energyHandler());
+        var handler = c.terminal.energyHandler(); assertNotNull(handler); c.terminal.energy().set(0);
+        try(var tx = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+            assertEquals(200,handler.insert(1000,tx)); tx.commit();
+        }
+        try(var tx = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) {
+            assertEquals(0,handler.insert(1000,tx)); assertEquals(0,handler.extract(1000,tx)); tx.commit();
+        }
+        c.terminal.energy().beginTick();
+        try(var tx = net.neoforged.neoforge.transfer.transaction.Transaction.openRoot()) { assertEquals(200,handler.insert(1000,tx)); }
+        assertEquals(200,handler.getAmountAsInt());
+        c.restore(server); assertEquals(200,c.terminal.energy().getAmountAsInt());
+    }
+    @Test void aBlockedArmStopsUsingControllerEnergy(MinecraftServer server) {
+        var c = new Cell(server); c.input.begin(); c.blocks.remove(c.table.getBlockPos());
+        int before = c.terminal.energy().getAmountAsInt();
+        for(int i=0;i<100;i++) c.input.advance();
+        assertEquals(before,c.terminal.energy().getAmountAsInt()); assertFalse(c.input.moving());
     }
     @Test void outputWaitsForAssemblyToolToRetract(MinecraftServer server) {
         var c = new Cell(server); c.fillTable(); c.worker.begin();
@@ -142,7 +189,8 @@ class AssemblerTest {
         for(int i=0;i<100;i++) c.input.advance();
         assertTrue(c.input.cargo().is(Items.STONE)); assertEquals(1,c.input.cargo().getCount());
         assertEquals(0,c.source.getAmountAsInt(0));
-        c.blocks.put(c.table.getBlockPos(),c.table); for(int i=0;i<30;i++) c.input.advance();
+        assertEquals(0,c.input.animationTick(0));
+        c.blocks.put(c.table.getBlockPos(),c.table); for(int i=0;i<60;i++) c.input.advance();
         assertTrue(c.input.cargo().isEmpty()); assertTrue(c.table.inventory.getItem(0).is(Items.STONE));
     }
     @Test void overlappingInputArmsDoNotReserveTheSameIngredient(MinecraftServer server) {

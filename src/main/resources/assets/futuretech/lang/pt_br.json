@@ -112,5 +112,7 @@
   "gui.futuretech.assembler.status.6": "Enviando resultado",
   "gui.futuretech.assembler.status.7": "Aguardando saída livre",
   "gui.futuretech.assembler.status.8": "Aguardando braço de montagem",
-  "gui.futuretech.assembler.tool_hint": "Alcance: 3 blocos. Monta automaticamente os ingredientes da mesa."
+  "gui.futuretech.assembler.tool_hint": "Alcance: 3 blocos. Monta automaticamente os ingredientes da mesa.",
+  "gui.futuretech.assembler.energy": "Energia do controller: %s / %s FE",
+  "gui.futuretech.assembler.status.9": "Sem energia no controller"
 }

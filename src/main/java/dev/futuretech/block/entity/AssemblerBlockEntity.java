@@ -31,6 +31,19 @@ import java.util.*;
 /** The table owns deposited materials; a transport arm owns its cargo until delivery commits. */
 public final class AssemblerBlockEntity extends BlockEntity implements MenuProvider {
     public static final int REACH = 3, RESULT = 9, TRAVEL_TICKS = 60;
+    public static final int ENERGY_CAPACITY = 32000, ENERGY_INPUT = 200, ENERGY_PER_TICK = 20;
+    private final dev.futuretech.energy.TickLimitedEnergyHandler energy = new dev.futuretech.energy.TickLimitedEnergyHandler(
+            ENERGY_CAPACITY, ENERGY_INPUT, 0, this::setChanged);
+    private boolean moving;
+    public dev.futuretech.energy.TickLimitedEnergyHandler energy() { return energy; }
+    public net.neoforged.neoforge.transfer.energy.@Nullable EnergyHandler energyHandler() {
+        return kind() == Kind.TERMINAL ? energy : null;
+    }
+    public boolean moving() { return moving; }
+    public int controllerEnergy() {
+        var controller = kind() == Kind.TERMINAL ? this : nearest(Kind.TERMINAL);
+        return controller == null ? 0 : controller.energy.getAmountAsInt();
+    }
     public final SimpleContainer inventory = new SimpleContainer(10) {
         @Override public void setChanged() { super.setChanged(); AssemblerBlockEntity.this.changed(); }
     };
@@ -63,7 +76,7 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
     public float animationTick(float partial) {
         if (phase == 0) return 0;
         return Math.min(phase == 2 ? duration + 40 : TRAVEL_TICKS,
-                animationTick + (level != null && level.isClientSide() ? level.getGameTime() - lastClientSync + partial : 0));
+                animationTick + (moving && level != null && level.isClientSide() ? Math.clamp(level.getGameTime() - lastClientSync + partial, 0, 5) : 0));
     }
 
     public record Entry(String id, AssemblingRecipe recipe) {}
@@ -117,6 +130,7 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         if (kind() != Kind.TABLE) return phase == 0 ? 0 : 3;
         if (nearest(Kind.TERMINAL) == null) return 1;
         if (recipe() == null) return 2;
+        if (controllerEnergy() < ENERGY_PER_TICK) return 9;
         for (BlockPos p : reachable()) { var a = assemblerAt(p); if (a != null && a.phase != 0 && a.tablePos.equals(worldPosition)) {
             if (a.phase == 2) return a.crafted ? 5 : 4;
             return a.outputMode() ? 6 : 3;
@@ -139,6 +153,7 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, AssemblerBlockEntity a) {
+        if (a.kind() == Kind.TERMINAL) { a.energy.beginTick(); return; }
         if (a.kind() == Kind.TABLE || a.kind() == Kind.TERMINAL) return;
         if (a.phase != 0) {
             a.advance();
@@ -149,6 +164,7 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
     void begin() {
         AssemblerBlockEntity table = nearest(Kind.TABLE);
         if (table == null || table.locked() || table.nearest(Kind.TERMINAL) == null) return;
+        if (table.controllerEnergy() < ENERGY_PER_TICK) return;
         AssemblingRecipe recipe = table.recipe();
         if (recipe == null) return;
         tablePos = table.worldPosition;
@@ -183,9 +199,26 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
             }
         }
     }
-    private void start(int value) { phase = value; animationTick = 0; changed(); }
-    private void idle() { phase = 0; animationTick = 0; jobRecipe = null; crafted = false; changed(); }
+    private void start(int value) { phase = value; animationTick = 0; moving = false; changed(); }
+    private void idle() { phase = 0; animationTick = 0; moving = false; jobRecipe = null; crafted = false; changed(); }
     void advance() {
+        if (phase == 0) return;
+        var table = targetTable();
+        var controller = table == null ? null : table.nearest(Kind.TERMINAL);
+        boolean wasMoving = moving;
+        if (controller == null || controller.energy.getAmountAsInt() < ENERGY_PER_TICK) {
+            moving = false;
+            if (wasMoving) changed();
+            return;
+        }
+        int previousTick = animationTick, previousPhase = phase;
+        advancePowered();
+        boolean advanced = animationTick != previousTick || phase != previousPhase;
+        if (advanced) controller.energy.set(controller.energy.getAmountAsInt() - ENERGY_PER_TICK);
+        moving = advanced && phase != 0;
+        if (wasMoving != moving) changed();
+    }
+    private void advancePowered() {
         if (phase == 2) {
             AssemblerBlockEntity table = targetTable();
             // An unloaded target pauses the job. A removed table can be recovered with the Wrench.
@@ -327,6 +360,8 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         ContainerHelper.saveAllItems(output, stacks);
         output.putString("Recipe", selected); output.putInt("Phase", phase); output.putInt("AnimationTick", animationTick);
         output.putInt("Duration", duration); output.putInt("TargetSlot", targetSlot);
+        if (kind() == Kind.TERMINAL) output.putInt("Energy", energy.getAmountAsInt());
+        output.putBoolean("Moving", moving);
         output.store("Table", BlockPos.CODEC, tablePos); output.store("Chest", BlockPos.CODEC, chestPos);
         output.putInt("ChestSide", chestSide.ordinal()); output.putBoolean("Crafted", crafted);
         if (jobRecipe != null) output.store("JobRecipe", AssemblingRecipe.CODEC.codec(), jobRecipe);
@@ -344,6 +379,8 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         chestSide = Direction.values()[Math.clamp(input.getIntOr("ChestSide", 1), 0, 5)]; crafted = input.getBooleanOr("Crafted", false);
         jobRecipe = input.read("JobRecipe", AssemblingRecipe.CODEC.codec()).orElse(null);
         lastClientSync = level == null ? 0 : level.getGameTime();
+        energy.set(kind() == Kind.TERMINAL ? Math.clamp(input.getIntOr("Energy", 0), 0, ENERGY_CAPACITY) : 0);
+        moving = phase != 0 && input.getBooleanOr("Moving", false);
         loading = false;
     }
     @Override public CompoundTag getUpdateTag(HolderLookup.Provider registries) {

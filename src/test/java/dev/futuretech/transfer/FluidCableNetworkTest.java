@@ -24,8 +24,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class FluidCableNetworkTest {
     private static final int THROUGHPUT = FluidCableTier.STANDARD.throughput();
     private static final BlockPos CABLE = BlockPos.ZERO;
-    private static final FluidResource WATER = FluidResource.of(Fluids.WATER);
-    private static final FluidResource LAVA = FluidResource.of(Fluids.LAVA);
+    // Resolved per call: a fluid's default resource needs the registries the test server binds.
+    private static FluidResource water() { return FluidResource.of(Fluids.WATER); }
+    private static FluidResource lava() { return FluidResource.of(Fluids.LAVA); }
 
     /** A connector with every setting; the builders below fill in the usual defaults. */
     private record Fake(Direction side, boolean delivers, boolean pulls, int priority, DyeColor color, int channel,
@@ -60,11 +61,11 @@ class FluidCableNetworkTest {
 
     @Test
     void networkTakesOneTickOfThroughputAndSpreadsItOverTheTanks(MinecraftServer server) {
-        var small = tank(100, WATER, 0);
-        var big = tank(10_000, WATER, 0);
+        var small = tank(100, water(), 0);
+        var big = tank(10_000, water(), 0);
         var network = network(sink(Direction.NORTH, small), sink(Direction.SOUTH, big), sink(Direction.UP, null));
-        assertEquals(THROUGHPUT, push(network, Direction.WEST, WATER, 5_000));
-        assertEquals(0, push(network, Direction.WEST, WATER, 1), "The buffer holds one tick only");
+        assertEquals(THROUGHPUT, push(network, Direction.WEST, water(), 5_000));
+        assertEquals(0, push(network, Direction.WEST, water(), 1), "The buffer holds one tick only");
         network.tick(1);
         // The small tank takes its 100 and the rest of its share flows on to the big one.
         assertEquals(100, amount(small));
@@ -74,8 +75,8 @@ class FluidCableNetworkTest {
 
     @Test
     void anExtractOnlyConnectorPumpsFromATankThatNeverPushes(MinecraftServer server) {
-        var source = tank(10_000, WATER, 10_000);
-        var target = tank(10_000, WATER, 0);
+        var source = tank(10_000, water(), 10_000);
+        var target = tank(10_000, water(), 0);
         var network = network(pump(Direction.NORTH, source), sink(Direction.SOUTH, target));
         network.tick(1);
         assertEquals(10_000 - THROUGHPUT, amount(source));
@@ -85,9 +86,19 @@ class FluidCableNetworkTest {
     }
 
     @Test
+    void aPumpFillsTheCableEvenWithNoDestinationAndTheCableHandsItOnLater(MinecraftServer server) {
+        var source = tank(10_000, water(), 10_000);
+        var deadEnd = network(pump(Direction.NORTH, source));
+        deadEnd.tick(1);
+        deadEnd.tick(2);
+        assertEquals(10_000 - THROUGHPUT, amount(source), "One tick of fluid sits in the cable, no more");
+        assertEquals(THROUGHPUT, deadEnd.buffered().get(new FluidCableNetwork.Line(DyeColor.WHITE, 0)).getAmount());
+    }
+
+    @Test
     void anOrdinaryConnectorNeverDrainsTheTankItTouches(MinecraftServer server) {
-        var full = tank(10_000, WATER, 10_000);
-        var empty = tank(10_000, WATER, 0);
+        var full = tank(10_000, water(), 10_000);
+        var empty = tank(10_000, water(), 0);
         var network = network(sink(Direction.NORTH, full), sink(Direction.SOUTH, empty));
         network.tick(1);
         assertEquals(10_000, amount(full));
@@ -96,28 +107,28 @@ class FluidCableNetworkTest {
 
     @Test
     void fluidIsNotHandedBackToTheBlockThatJustPushedIt(MinecraftServer server) {
-        var producer = tank(10_000, WATER, 0);
-        var consumer = tank(10_000, WATER, 0);
+        var producer = tank(10_000, water(), 0);
+        var consumer = tank(10_000, water(), 0);
         var network = network(sink(Direction.WEST, producer), sink(Direction.EAST, consumer));
-        push(network, Direction.WEST, WATER, 200);
+        push(network, Direction.WEST, water(), 200);
         network.tick(1);
         assertEquals(0, amount(producer));
         assertEquals(200, amount(consumer));
         // A dead end with only the pusher to give to keeps the fluid in the buffer and refuses more.
         var deadEnd = network(sink(Direction.WEST, producer));
-        assertEquals(THROUGHPUT, push(deadEnd, Direction.WEST, WATER, THROUGHPUT));
+        assertEquals(THROUGHPUT, push(deadEnd, Direction.WEST, water(), THROUGHPUT));
         deadEnd.tick(1);
         assertEquals(0, amount(producer));
-        assertEquals(0, push(deadEnd, Direction.WEST, WATER, 1));
+        assertEquals(0, push(deadEnd, Direction.WEST, water(), 1));
     }
 
     @Test
     void higherPriorityIsFilledFirstAndTheRestGetsTheOverflow(MinecraftServer server) {
-        var favoured = tank(300, WATER, 0);
-        var other = tank(10_000, WATER, 0);
+        var favoured = tank(300, water(), 0);
+        var other = tank(10_000, water(), 0);
         var network = network(sink(Direction.NORTH, other),
                 new Fake(Direction.SOUTH, true, false, 5, DyeColor.WHITE, 0, favoured));
-        push(network, Direction.WEST, WATER, THROUGHPUT);
+        push(network, Direction.WEST, water(), THROUGHPUT);
         network.tick(1);
         assertEquals(300, amount(favoured));
         assertEquals(THROUGHPUT - 300, amount(other));
@@ -125,10 +136,10 @@ class FluidCableNetworkTest {
 
     @Test
     void linesKeepColoursAndChannelsApartWithABufferEach(MinecraftServer server) {
-        var redSource = tank(10_000, WATER, 10_000);
-        var redSink = tank(10_000, WATER, 0);
-        var blueSink = tank(10_000, WATER, 0);
-        var otherChannel = tank(10_000, WATER, 0);
+        var redSource = tank(10_000, water(), 10_000);
+        var redSink = tank(10_000, water(), 0);
+        var blueSink = tank(10_000, water(), 0);
+        var otherChannel = tank(10_000, water(), 0);
         var network = network(
                 new Fake(Direction.NORTH, false, true, 0, DyeColor.RED, 3, redSource),
                 new Fake(Direction.SOUTH, true, false, 0, DyeColor.RED, 3, redSink),
@@ -139,8 +150,8 @@ class FluidCableNetworkTest {
         assertEquals(0, amount(blueSink));
         assertEquals(0, amount(otherChannel));
         // Two lines carry two fluids at once without mixing.
-        var lavaSource = tank(10_000, LAVA, 10_000);
-        var lavaSink = tank(10_000, LAVA, 0);
+        var lavaSource = tank(10_000, lava(), 10_000);
+        var lavaSink = tank(10_000, lava(), 0);
         var twoLines = network(
                 new Fake(Direction.NORTH, false, true, 0, DyeColor.RED, 0, redSource),
                 new Fake(Direction.SOUTH, true, false, 0, DyeColor.RED, 0, redSink),
@@ -164,8 +175,8 @@ class FluidCableNetworkTest {
         BlockPos a = CABLE;
         BlockPos b = a.east();
         BlockPos c = b.east();
-        var source = tank(10_000, WATER, 10_000);
-        var target = tank(10_000, WATER, 0);
+        var source = tank(10_000, water(), 10_000);
+        var target = tank(10_000, water(), 0);
         var network = new FluidCableNetwork(THROUGHPUT, Set.of(a, b, c), List.of(
                 new FakeAt(new FluidCableNetwork.EndpointKey(a, Direction.WEST), false, true, source),
                 new FakeAt(new FluidCableNetwork.EndpointKey(c, Direction.EAST), true, false, target)));
@@ -176,7 +187,7 @@ class FluidCableNetworkTest {
         assertEquals(Direction.EAST, network.flowAt(b));
         assertEquals(Direction.EAST, network.flowAt(c), "The last cable points at the tank it feeds");
         // Once the picture fades, so do the directions.
-        source.set(0, WATER, 0);
+        source.set(0, water(), 0);
         for (long tick = 2; tick <= 3 + FluidCableNetwork.SHOW_TICKS; tick++) network.tick(tick);
         assertTrue(network.shown().isEmpty());
         assertNull(network.flowAt(b));
@@ -184,8 +195,8 @@ class FluidCableNetworkTest {
 
     @Test
     void theNetworkShowsWhatItCarriesAndForgetsItAMomentAfterTheFlowStops(MinecraftServer server) {
-        var source = tank(10_000, WATER, THROUGHPUT);
-        var target = tank(10_000, WATER, 0);
+        var source = tank(10_000, water(), THROUGHPUT);
+        var target = tank(10_000, water(), 0);
         var network = network(pump(Direction.NORTH, source), sink(Direction.SOUTH, target));
         assertTrue(network.shown().isEmpty());
         network.tick(1);
