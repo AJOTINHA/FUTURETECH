@@ -1,0 +1,15 @@
+{
+  "result": {
+    "count": 1,
+    "id": "futuretech:plate_mold"
+  },
+  "type": "minecraft:crafting_shaped",
+  "key": {
+    "I": "minecraft:iron_ingot"
+  },
+  "pattern": [
+    "II",
+    "II"
+  ],
+  "category": "misc"
+}

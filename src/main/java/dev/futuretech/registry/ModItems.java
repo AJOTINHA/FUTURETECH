@@ -6,6 +6,8 @@ import dev.futuretech.item.BatteryBlockItem;
 import dev.futuretech.item.FluidTankBlockItem;
 import dev.futuretech.item.ItemFilterItem;
 import dev.futuretech.item.WrenchItem;
+import dev.futuretech.item.MachineUpgradeKitItem;
+import dev.futuretech.item.TieredMachineBlockItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.registries.DeferredBlock;
@@ -18,17 +20,38 @@ public final class ModItems {
     public static final DeferredItem<BlockItem> MACHINE_CASING = ITEMS.registerSimpleBlockItem(
             "machine_casing", ModBlocks.MACHINE_CASING);
 
-    public static final DeferredItem<BlockItem> SOLID_FUEL_GENERATOR = ITEMS.registerSimpleBlockItem(
-            "solid_fuel_generator", ModBlocks.SOLID_FUEL_GENERATOR);
+    public static final DeferredItem<TieredMachineBlockItem> SOLID_FUEL_GENERATOR = ITEMS.registerItem(
+            "solid_fuel_generator", properties -> new TieredMachineBlockItem(ModBlocks.SOLID_FUEL_GENERATOR.get(), properties),
+            properties -> properties.useBlockDescriptionPrefix());
 
-    public static final DeferredItem<BlockItem> ELECTRIC_FURNACE = ITEMS.registerSimpleBlockItem(
-            "electric_furnace", ModBlocks.ELECTRIC_FURNACE);
+    public static final DeferredItem<TieredMachineBlockItem> ELECTRIC_FURNACE = ITEMS.registerItem(
+            "electric_furnace", properties -> new TieredMachineBlockItem(ModBlocks.ELECTRIC_FURNACE.get(), properties),
+            properties -> properties.useBlockDescriptionPrefix());
 
-    public static final DeferredItem<BlockItem> CRUSHER = ITEMS.registerSimpleBlockItem("crusher", ModBlocks.CRUSHER);
+    public static final DeferredItem<TieredMachineBlockItem> CRUSHER = ITEMS.registerItem(
+            "crusher", properties -> new TieredMachineBlockItem(ModBlocks.CRUSHER.get(), properties),
+            properties -> properties.useBlockDescriptionPrefix());
 
     public static final DeferredItem<Item> IRON_POWDER = ITEMS.registerSimpleItem("iron_powder");
+    public static final DeferredItem<TieredMachineBlockItem> METAL_PRESS = ITEMS.registerItem(
+            "metal_press", properties -> new TieredMachineBlockItem(ModBlocks.METAL_PRESS.get(), properties),
+            properties -> properties.useBlockDescriptionPrefix());
     public static final DeferredItem<Item> GOLD_POWDER = ITEMS.registerSimpleItem("gold_powder");
     public static final DeferredItem<Item> COPPER_POWDER = ITEMS.registerSimpleItem("copper_powder");
+    public static final DeferredItem<Item> STEEL_INGOT = ITEMS.registerSimpleItem("steel_ingot");
+    public static final DeferredItem<Item> STEEL_PLATE = ITEMS.registerSimpleItem("steel_plate");
+    public static final DeferredItem<Item> STEEL_GEAR = ITEMS.registerSimpleItem("steel_gear");
+
+    public static final DeferredItem<Item> IRON_PLATE = ITEMS.registerSimpleItem("iron_plate");
+    public static final DeferredItem<Item> GOLD_PLATE = ITEMS.registerSimpleItem("gold_plate");
+    public static final DeferredItem<Item> COPPER_PLATE = ITEMS.registerSimpleItem("copper_plate");
+    public static final DeferredItem<Item> NETHERITE_PLATE = ITEMS.registerSimpleItem("netherite_plate");
+    public static final DeferredItem<Item> IRON_GEAR = ITEMS.registerSimpleItem("iron_gear");
+    public static final DeferredItem<Item> GOLD_GEAR = ITEMS.registerSimpleItem("gold_gear");
+    public static final DeferredItem<Item> COPPER_GEAR = ITEMS.registerSimpleItem("copper_gear");
+    public static final DeferredItem<Item> NETHERITE_GEAR = ITEMS.registerSimpleItem("netherite_gear");
+    public static final DeferredItem<Item> PLATE_MOLD = ITEMS.registerSimpleItem("plate_mold", properties -> properties.stacksTo(1));
+    public static final DeferredItem<Item> GEAR_MOLD = ITEMS.registerSimpleItem("gear_mold", properties -> properties.stacksTo(1));
 
     // Custom block item so the stored charge shows in the tooltip and as a bar.
     public static final DeferredItem<BatteryBlockItem> BATTERY_MK1 = registerBattery(ModBlocks.BATTERY_MK1);
@@ -55,6 +78,13 @@ public final class ModItems {
             "filter", ItemFilterItem::new, properties -> properties.stacksTo(1));
 
     public static final DeferredItem<Item> SPEED_UPGRADE = ITEMS.registerSimpleItem("speed_upgrade");
+
+    public static final DeferredItem<MachineUpgradeKitItem> UPGRADE_KIT_MK2 = ITEMS.registerItem(
+            "upgrade_kit_mk2", properties -> new MachineUpgradeKitItem(2, properties));
+    public static final DeferredItem<MachineUpgradeKitItem> UPGRADE_KIT_MK3 = ITEMS.registerItem(
+            "upgrade_kit_mk3", properties -> new MachineUpgradeKitItem(3, properties));
+    public static final DeferredItem<MachineUpgradeKitItem> UPGRADE_KIT_MK4 = ITEMS.registerItem(
+            "upgrade_kit_mk4", properties -> new MachineUpgradeKitItem(4, properties));
 
     /** Right-click any block to rotate it. */
     public static final DeferredItem<WrenchItem> WRENCH = ITEMS.registerItem(

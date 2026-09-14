@@ -11,6 +11,7 @@ import dev.futuretech.api.side.SideConfigurable;
 import dev.futuretech.api.side.SideConfigurableBlock;
 import dev.futuretech.api.side.SideMode;
 import dev.futuretech.api.upgrade.UpgradeInventory;
+import dev.futuretech.api.upgrade.MachineLevel;
 import dev.futuretech.api.upgrade.UpgradeSlots;
 import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
 import dev.futuretech.energy.EnergySync;
@@ -37,7 +38,12 @@ public final class SolidFuelGeneratorMenu extends MachineMenu implements SideCon
     public static final int IMAGE_WIDTH = 176;
 
     public SolidFuelGeneratorMenu(int id, Inventory inventory) {
-        this(id, inventory, new SimpleContainer(1), new UpgradeInventory(() -> {}), new SimpleContainerData(DATA_COUNT));
+        this(id, inventory, new SimpleContainerData(DATA_COUNT));
+    }
+
+    /** Client side: the upgrade slots lock by the synced MK, so the tab draws them like the server has them. */
+    private SolidFuelGeneratorMenu(int id, Inventory inventory, ContainerData data) {
+        this(id, inventory, new SimpleContainer(1), new UpgradeInventory(() -> Math.clamp(data.get(DATA_MK), 1, 4), () -> {}), data);
     }
 
     public SolidFuelGeneratorMenu(int id, Inventory inventory, Container fuel, UpgradeInventory upgrades, ContainerData data) {
@@ -60,7 +66,9 @@ public final class SolidFuelGeneratorMenu extends MachineMenu implements SideCon
     public int energyStored() { return EnergySync.unpack(data.get(DATA_ENERGY_LOW), data.get(DATA_ENERGY_HIGH)); }
 
     @Override
-    public int energyCapacity() { return CAPACITY; }
+    public int energyCapacity() { return MachineLevel.capacity(CAPACITY, mk()); }
+
+    public int mk() { return Math.clamp(data.get(DATA_MK), 1, 4); }
 
     @Override
     public int energyRatePerTick() { return GENERATION_PER_TICK; }
@@ -80,7 +88,7 @@ public final class SolidFuelGeneratorMenu extends MachineMenu implements SideCon
 
     public boolean isGenerating() { return data.get(DATA_GENERATING) != 0; }
 
-    public boolean isFull() { return CAPACITY - energyStored() < GENERATION_PER_TICK; }
+    public boolean isFull() { return energyCapacity() - energyStored() < GENERATION_PER_TICK; }
 
     @Override
     public SideMode sideMode(Direction side) { return SideMode.byOrdinal(data.get(DATA_SIDE_BASE + side.ordinal())); }
@@ -89,7 +97,7 @@ public final class SolidFuelGeneratorMenu extends MachineMenu implements SideCon
     public Direction front() { return Direction.values()[Math.clamp(data.get(DATA_FRONT), 0, 5)]; }
 
     @Override
-    public BlockState displayState() { return ModBlocks.SOLID_FUEL_GENERATOR.get().displayState(front()); }
+    public BlockState displayState() { return ModBlocks.SOLID_FUEL_GENERATOR.get().displayState(front()).setValue(MachineLevel.MK, Math.clamp(data.get(DATA_MK), 1, 4)); }
 
     @Override
     public Set<SideMode> allowedModes() {

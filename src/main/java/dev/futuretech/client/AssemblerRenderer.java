@@ -24,7 +24,7 @@ import java.util.*;
 /** Articulated steel arms, telescopic links, grippers and a separate rotating assembly tool. */
 public final class AssemblerRenderer implements BlockEntityRenderer<AssemblerBlockEntity, AssemblerRenderer.State> {
     private static final Identifier WHITE = Identifier.fromNamespaceAndPath("futuretech", "textures/entity/battery_sphere_white.png");
-    private static final int DARK = 0xFF242F3B, STEEL = 0xFFADB9C6, JOINT = 0xFF526274;
+    private static final int DARK = 0xFF242F3B, STEEL = 0xFF96A3B0, JOINT = 0xFF526274;
     private static final float TABLE_TOP = 13.15F / 16, TABLE_SCALE = .30F;
     public static final class State extends BlockEntityRenderState {
         Kind kind;

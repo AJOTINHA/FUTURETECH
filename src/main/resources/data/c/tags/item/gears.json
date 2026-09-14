@@ -1,0 +1,10 @@
+{
+  "values": [
+    "#c:gears/iron",
+    "#c:gears/gold",
+    "#c:gears/copper",
+    "#c:gears/netherite",
+    "#c:gears/steel"
+  ],
+  "replace": false
+}

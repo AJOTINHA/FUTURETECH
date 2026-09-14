@@ -4,7 +4,16 @@ Mod de máquinas, energia e automação industrial para **Minecraft Java 26.2**,
 
 ## Estado atual
 
+**Plates e gears:** oito componentes na aba FUTURETECH: placa e engrenagem de ferro, ouro, cobre e netherita (`<metal>_plate` e `<metal>_gear`). As placas são chapas finas com bordas chanfradas; as engrenagens têm oito dentes e furo central real. Os modelos 3D usam as texturas dos respectivos blocos de metal do Minecraft, ficam em `models/item/metal_parts/` e podem ser recriados com `tools/Generate-MetalParts.ps1`. Há traduções PT/EN e tags `c:plates/<metal>` e `c:gears/<metal>`. São componentes preparados para futuras receitas, ainda sem fabricação ou uso em receitas.
+
+As texturas de máquinas ficam organizadas em `assets/futuretech/textures/block/`: `machine/` guarda as faces compartilhadas; `solid_fuel_generator/`, `electric_furnace/`, `crusher/`, `battery/` e `assembler/` guardam os recursos de cada máquina. O tanque reutiliza a estrutura e as conexões da pasta `battery/`.
+
+As faces compartilhadas e as frentes do gerador, da fornalha e do triturador possuem cópias nas subpastas `mk2/` (quinas amarelas), `mk3/` (vermelhas) e `mk4/` (azul-ciano). Somente os cantos externos da carcaça mudam de cor; rebites, painéis e animações originais são preservados. Os kits de upgrade selecionam essas texturas no mundo, no inventário e na configuração dos lados. Fontes ImageGen, prompts e exportador ficam em `art/machine_tiers/`.
+
 Versão `0.5.0`, com identificação `futuretech`, aba criativa própria e traduções em português e inglês.
+Os **Kits de Upgrade MK2, MK3 e MK4** aparecem na aba FUTURETECH como maletas 3D amarelas, vermelhas e ciano. Segure o kit e use **Shift + clique direito** no Gerador a Combustível Sólido, na Fornalha Elétrica ou no Triturador. A sequência é MK1 → MK2 → MK3 → MK4, usando o kit correspondente a cada etapa. Cada aplicação válida consome um kit no sobrevivência; no criativo, ele permanece. Kits de nível errado e blocos incompatíveis mostram uma mensagem e não consomem o item. O upgrade mantém a mesma máquina, com inventário, energia, progresso e configuração dos lados. O MK é salvo no estado do bloco e acompanha o item ao quebrar ou recolher com a chave; ao recolocar, o nível e o visual são restaurados. O nome do item também mostra o MK. O nível libera slots de melhoria e, no Triturador e na Fornalha, faixas de processamento (veja [Melhorias](#melhorias) e [Faixas por MK](#faixas-por-mk)).
+
+As receitas dos kits usam uma carcaça no centro, quatro materiais A nos cantos, dois B acima/abaixo e dois C nas laterais: MK2 usa A = ferro, B = ouro e C = redstone; MK3 usa A = ouro, B = bloco de redstone e C = quartzo; MK4 usa A = diamante, B = pérola do Ender e C = bloco de redstone. Os modelos e recursos são reproduzíveis com `tools/Generate-UpgradeKits.ps1`.
 
 O **Speed Upgrade** (`futuretech:speed_upgrade`) é um módulo 3D com textura própria, setas ciano e contatos dourados. Aparece na aba FUTURETECH e pode ser instalado nos slots de melhorias, um por slot, com persistência ao salvar o mundo. A receita usa quatro lingotes de ferro nos cantos, dois de ouro no centro superior e inferior, redstone nas laterais e açúcar no centro. Por enquanto o item não altera a velocidade das máquinas. A fonte da textura e seu exportador ficam em `art/speed_upgrade/`.
 
@@ -156,7 +165,7 @@ Cobre     Carcaça   Cobre
 Ferro     Redstone  Ferro
 ```
 
-A arte e seus exportadores ficam em `art/crusher/`; a textura estática é `assets/futuretech/textures/block/crusher_front.png`. Durante o processamento, `crusher_front_on.png` mostra os rolos girando em sentidos opostos e o visor ciano pulsante, em dez quadros com ciclo de um segundo. A carcaça permanece idêntica e parada. Veja `art/crusher/active-preview.html` para comparar as duas versões.
+A arte e seus exportadores ficam em `art/crusher/`; a textura estática é `assets/futuretech/textures/block/crusher/crusher_front.png`. Durante o processamento, `crusher_front_on.png` mostra os rolos girando em sentidos opostos e o visor ciano pulsante, em dez quadros com ciclo de um segundo. A carcaça permanece idêntica e parada. Veja `art/crusher/active-preview.html` para comparar as duas versões.
 
 ## Configuração de lados
 
@@ -211,13 +220,29 @@ Abaixo da aba de configuração fica a aba **Redstone**, com três modos: **Igno
 
 ## Melhorias
 
-A primeira aba, **Melhorias**, tem quatro slots para itens de upgrade. Os slots aceitam só itens da tag `futuretech:upgrades`, que inclui o Speed Upgrade, um por slot. Os efeitos nas máquinas ainda não estão implementados. As máquinas guardam os itens pela `UpgradeInventory` (`dev.futuretech.api.upgrade`). Os slots são slots reais do menu (Shift + clique funciona) e o conteúdo é salvo com o bloco e cai ao quebrá-lo.
+A primeira aba, **Melhorias**, tem quatro slots para itens de upgrade. Os slots aceitam só itens da tag `futuretech:upgrades`, que inclui o Speed Upgrade, um por slot. As máquinas guardam os itens pela `UpgradeInventory` (`dev.futuretech.api.upgrade`). Os slots são slots reais do menu (Shift + clique funciona) e o conteúdo é salvo com o bloco e cai ao quebrá-lo.
+
+O **MK da máquina libera os slots**: MK1 (o padrão) abre um, MK2 dois, MK3 três e MK4 os quatro. Os slots fechados aparecem com um cadeado e não aceitam item (a bateria segue o próprio tier; o tanque, sem MK, tem um). Os efeitos dos itens de upgrade ainda não estão implementados.
+
+**Cada nível MK** acima do MK1 dá à máquina, além dos slots (e das faixas, no Triturador e na Fornalha):
+
+- **+25 % de energia armazenada** sobre a capacidade base (`MachineLevel.capacity`): 20.000 FE viram 25.000, 30.000 e 35.000;
+- **+15 % de velocidade**: o tempo de cada trabalho é dividido por `1 + 0,15 × (MK − 1)` (`MachineLevel.duration`), então 100 ticks viram 87, 77 e 69;
+- **+20 % de consumo por tick** para pagar essa velocidade (`MachineLevel.consumption`): 20 FE/t viram 24, 28 e 32.
+
+Os percentuais ficam em `MachineLevel`. O gerador ganha só a capacidade. Aplicar um kit muda a capacidade na hora, inclusive na barra e na aba de energia.
 
 Como os slots de menu têm posição fixa, a aba de melhorias é a primeira da tira, onde nenhuma aba aberta acima pode empurrá-la.
 
 A API fica em `dev.futuretech.api.redstone` (`RedstoneMode`, `RedstoneControl`, `RedstoneControllable`, `RedstoneControlMenu`, `RedstoneControlTab`) e segue o mesmo desenho da configuração de lados. As abas em si vêm de `dev.futuretech.api.gui` (`MachineTab`, `TabStrip`): uma tela cria um `TabStrip` com as abas que quiser e repassa desenho, tooltip e cliques; abas abertas empurram as de baixo.
 
 A API fica em `dev.futuretech.api.side` e é reaproveitável por qualquer máquina nova: o bloco implementa `SideConfigurableBlock` (modos permitidos, padrões por face, estado para desenhar), o block entity implementa `SideConfigurable` e guarda um `SideConfig` (salvo/carregado e exposto em slots de dados do menu), o menu implementa `SideConfigMenu` e encaminha `clickMenuButton` para `SideConfigMenu.handleButton`, a capability de energia passa por `SidedEnergy.view`, e a tela coloca um `SideConfigTab` no seu `TabStrip`. Os cliques viajam pelo pacote vanilla de botão de menu, sem rede própria.
+
+## Faixas por MK
+
+O Triturador e a Fornalha Elétrica têm até quatro **faixas**, cada uma um slot de entrada emparelhado com um de saída e o próprio progresso. O MK diz quantas estão abertas: MK1 uma, MK2 duas, MK3 três e MK4 quatro, então um MK4 processa quatro itens ao mesmo tempo. Cada faixa em trabalho paga o consumo por tick do nível, ou seja, quatro faixas ativas gastam quatro vezes mais; faixa parada não gasta. A interface cresce uma linha de slots por faixa extra, cada uma com a própria seta de progresso (e, com mais de uma faixa, os rolos ou a chama ao lado de cada saída). O MK viaja no pacote de abertura do menu, por isso esses dois menus usam `IMenuTypeExtension`.
+
+No inventário do bloco as entradas são os slots 0–3 e as saídas 4–7 (`SLOT_INPUT + faixa`, `SLOT_OUTPUT + faixa`); só as faixas abertas aparecem para funis, cabos e configuração de lados. Um funil ou cabo que empurra um mesmo item é distribuído entre as faixas abertas: cada item vai para a faixa que tem menos daquele item (vazias incluídas), então uma pilha se espalha e as faixas trabalham em paralelo em vez de encher a primeira. Um item diferente só entra numa faixa vazia. O progresso de cada faixa é salvo com o bloco (`Progress`, `Progress1`…) e o da faixa 0 usa as chaves antigas, então mundos anteriores continuam de onde estavam.
 
 ## Tanque de fluido
 
@@ -253,7 +278,7 @@ As receitas próprias ficam em `src/main/recipes/assembler.json` (veja [Receitas
 
 ## Receitas das máquinas
 
-Cada máquina com receitas próprias tem **um único arquivo** em `src/main/recipes/`: `crusher.json` (tipo `futuretech:crushing`) e `assembler.json` (tipo `futuretech:assembling`). O arquivo traz o `type` uma vez e um mapa `recipes` em que a chave é o nome da receita e o valor é o corpo dela, sem o `type`:
+Cada máquina com receitas próprias tem **um único arquivo** em `src/main/recipes/`: `crusher.json` (tipo `futuretech:crushing`), `metal_press.json` (tipo `futuretech:pressing`) e `assembler.json` (tipo `futuretech:assembling`). O arquivo traz o `type` uma vez e um mapa `recipes` em que a chave é o nome da receita e o valor é o corpo dela, sem o `type`:
 
 ```json
 {
@@ -296,3 +321,12 @@ O destino pode ser alterado pela propriedade `prism_mods_dir` em `gradle.propert
 ## Origem
 
 Estrutura baseada no [MDK oficial do NeoForge para 26.2 com ModDevGradle](https://github.com/NeoForgeMDKs/MDK-26.2-ModDevGradle). A licença do modelo está em `TEMPLATE_LICENSE.txt`. O código do mod mantém a configuração inicial `All Rights Reserved`.
+
+## Metal Press
+
+A Metal Press transforma lingotes de ferro, ouro, cobre e netherita em chapas e engrenagens. O slot **Molde** da GUI aceita um **Molde de Chapa** (1 lingote → 1 chapa, 100 ticks) ou **Molde de Engrenagem** (4 lingotes → 1 engrenagem, 160 ticks). Um único molde reutilizável define o trabalho de todas as linhas; sem molde, a máquina não processa. Trocar ou remover o molde reinicia o progresso, preservando os lingotes. Cada linha consome 20 FE/t na MK1; falta de energia ou saída cheia pausa o trabalho. O molde não é consumido nem se desgasta. Molde, inventário, energia e progresso são salvos no mundo. Shift+clique em um molde o coloca no slot próprio; automação transporta apenas ingredientes e resultados. As receitas dos moldes usam quatro lingotes de ferro: quadrado 2×2 para chapa e cruz vazada para engrenagem. Prensas de versões anteriores precisam receber um molde para voltar a trabalhar.
+
+Suporta configuração dos lados, entrada/saída automática, redstone e kits MK2–MK4, com uma linha de processamento por MK e os mesmos ajustes de energia, velocidade e cores das outras máquinas. A entrada automática junta lotes de quatro antes de distribuir os lingotes entre linhas no modo engrenagem. A frente usa PNGs próprios de 32×32 em `textures/block/metal_press/`: `metal_press_front.png` (desligada) e `metal_press_front_on.png` (ligada, tira de quatro quadros 32×32 com o pistão descendo e subindo e indicador ciano fixo; ciclo de 16 ticks definido no `.mcmeta`). Os modelos em `models/block/metal_press/` reutilizam as laterais e quinas MK da carcaça. `tools/Generate-MetalPress.ps1` gera somente os modelos; as oito receitas são editadas diretamente em `src/main/recipes/metal_press.json`.
+## Aço
+
+O lingote de aço (`futuretech:steel_ingot`) está disponível na aba criativa, sem receita de fabricação por enquanto. A Metal Press aceita aço com os moldes existentes: 1 lingote produz 1 chapa de aço; 4 lingotes produzem 1 engrenagem de aço. As receitas ficam no arquivo único `src/main/recipes/metal_press.json`. Os itens integram as tags `c:ingots/steel`, `c:plates/steel` e `c:gears/steel`.

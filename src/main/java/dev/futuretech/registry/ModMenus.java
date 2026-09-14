@@ -7,6 +7,7 @@ import dev.futuretech.menu.CableConnectorMenu;
 import dev.futuretech.menu.ElectricFurnaceMenu;
 import dev.futuretech.menu.ItemFilterMenu;
 import dev.futuretech.menu.CrusherMenu;
+import dev.futuretech.menu.MetalPressMenu;
 import dev.futuretech.menu.SolidFuelGeneratorMenu;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.flag.FeatureFlags;
@@ -22,7 +23,7 @@ public final class ModMenus {
             "solid_fuel_generator", () -> new MenuType<>(SolidFuelGeneratorMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
     public static final DeferredHolder<MenuType<?>, MenuType<ElectricFurnaceMenu>> ELECTRIC_FURNACE = TYPES.register(
-            "electric_furnace", () -> new MenuType<>(ElectricFurnaceMenu::new, FeatureFlags.DEFAULT_FLAGS));
+            "electric_furnace", () -> IMenuTypeExtension.create(ElectricFurnaceMenu::new));
 
     public static final DeferredHolder<MenuType<?>, MenuType<BatteryMenu>> BATTERY = TYPES.register(
             "battery", () -> new MenuType<>(BatteryMenu::new, FeatureFlags.DEFAULT_FLAGS));
@@ -31,9 +32,12 @@ public final class ModMenus {
             "fluid_tank", () -> IMenuTypeExtension.create(FluidTankMenu::new));
 
     public static final DeferredHolder<MenuType<?>, MenuType<CrusherMenu>> CRUSHER = TYPES.register(
-            "crusher", () -> new MenuType<>(CrusherMenu::new, FeatureFlags.DEFAULT_FLAGS));
+            "crusher", () -> IMenuTypeExtension.create(CrusherMenu::new));
 
     // The face and the kind of cable ride in the opening packet, so this one needs the extra data.
+    public static final DeferredHolder<MenuType<?>, MenuType<MetalPressMenu>> METAL_PRESS = TYPES.register(
+            "metal_press", () -> IMenuTypeExtension.create(MetalPressMenu::new));
+
     public static final DeferredHolder<MenuType<?>, MenuType<CableConnectorMenu>> CABLE_CONNECTOR = TYPES.register(
             "cable_connector", () -> IMenuTypeExtension.create(CableConnectorMenu::new));
 

@@ -10,6 +10,7 @@ import dev.futuretech.api.side.SideMode;
 import dev.futuretech.api.side.SideConfigurable;
 import dev.futuretech.api.side.SideConfigurableBlock;
 import dev.futuretech.api.upgrade.UpgradeInventory;
+import dev.futuretech.api.upgrade.MachineLevel;
 import dev.futuretech.api.upgrade.Upgradeable;
 import dev.futuretech.block.ElectricFurnaceBlock;
 import dev.futuretech.energy.EnergySync;
@@ -27,18 +28,17 @@ import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.Mth;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.Containers;
-import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
-import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
+import net.minecraft.util.Mth;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.SmeltingRecipe;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -50,32 +50,42 @@ import net.neoforged.neoforge.model.data.ModelData;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 import org.jspecify.annotations.Nullable;
 
-/** Smelts with energy instead of fuel: same recipes as a vanilla furnace, at twice the speed. */
+import java.util.Arrays;
+
+/**
+ * Smelts with energy instead of fuel: same recipes as a vanilla furnace, at twice the speed. The
+ * machine has up to {@link #LANES} lanes, each an input slot paired with an output slot and its
+ * own job; the MK level says how many are open, so an MK4 smelts four things at once and draws
+ * energy for each.
+ */
 public final class ElectricFurnaceBlockEntity extends BaseContainerBlockEntity
         implements AutoTransferable, SideConfigurable, RedstoneControllable, Upgradeable {
     public static final int CAPACITY = 20_000;
-    /** Drawn from the buffer for every tick of progress; one generator running flat out feeds one furnace. */
+    /** Drawn from the buffer for every tick of progress on one lane; one generator running flat out feeds one lane. */
     public static final int ENERGY_PER_TICK = 20;
     public static final int INPUT_PER_TICK = 200;
     /** Used until a recipe is known, and as the divisor on the vanilla cooking time. */
     public static final int SMELT_TICKS = 100;
+    /** Input slots come first, then the outputs, so lane {@code n} is slots {@code n} and {@code LANES + n}. */
+    public static final int LANES = 4;
     public static final int SLOT_INPUT = 0;
-    public static final int SLOT_OUTPUT = 1;
+    public static final int SLOT_OUTPUT = LANES;
     // Energy is synced as two 16-bit halves; see EnergySync.
     public static final int DATA_ENERGY_LOW = 0;
     public static final int DATA_ENERGY_HIGH = 1;
-    public static final int DATA_PROGRESS = 2;
-    public static final int DATA_PROGRESS_TOTAL = 3;
-    public static final int DATA_WORKING = 4;
-    public static final int DATA_SIDE_BASE = 5;
+    /** One progress and one total per lane, then a bit mask of the lanes at work. */
+    public static final int DATA_PROGRESS_BASE = 2;
+    public static final int DATA_PROGRESS_TOTAL_BASE = DATA_PROGRESS_BASE + LANES;
+    public static final int DATA_WORKING = DATA_PROGRESS_TOTAL_BASE + LANES;
+    public static final int DATA_PROGRESS = DATA_PROGRESS_BASE;
+    public static final int DATA_PROGRESS_TOTAL = DATA_PROGRESS_TOTAL_BASE;
+    public static final int DATA_SIDE_BASE = DATA_WORKING + 1;
     public static final int DATA_FRONT = DATA_SIDE_BASE + SideConfig.DATA_COUNT;
     public static final int DATA_AUTO_BASE = DATA_FRONT + 1;
     public static final int DATA_REDSTONE_BASE = DATA_AUTO_BASE + AutoTransfer.DATA_COUNT;
-    public static final int DATA_COUNT = DATA_REDSTONE_BASE + RedstoneControl.DATA_COUNT;
+    public static final int DATA_MK = DATA_REDSTONE_BASE + RedstoneControl.DATA_COUNT;
+    public static final int DATA_COUNT = DATA_MK + 1;
     private static final int[] NO_SLOTS = {};
-    private static final int[] INPUT_SLOTS = {SLOT_INPUT};
-    private static final int[] OUTPUT_SLOTS = {SLOT_OUTPUT};
-    private static final int[] ALL_SLOTS = {SLOT_INPUT, SLOT_OUTPUT};
 
     /**
      * How the furnace finds the recipe for a stack. The smelting book is all it really needs, so this
@@ -86,10 +96,11 @@ public final class ElectricFurnaceBlockEntity extends BaseContainerBlockEntity
         @Nullable RecipeHolder<SmeltingRecipe> find(SingleRecipeInput input);
     }
 
-    private NonNullList<ItemStack> items = NonNullList.withSize(2, ItemStack.EMPTY);
-    private int progress;
-    private int progressTotal = SMELT_TICKS;
-    private boolean working;
+    private NonNullList<ItemStack> items = NonNullList.withSize(2 * LANES, ItemStack.EMPTY);
+    private final int[] progress = new int[LANES];
+    private final int[] progressTotal = new int[LANES];
+    /** Bit {@code n} set while lane {@code n} advanced this tick. */
+    private int workingLanes;
     private final RecipeManager.CachedCheck<SingleRecipeInput, SmeltingRecipe> quickCheck =
             RecipeManager.createCheck(RecipeType.SMELTING);
     private final TickLimitedEnergyHandler energy =
@@ -97,21 +108,22 @@ public final class ElectricFurnaceBlockEntity extends BaseContainerBlockEntity
     private final SideConfig sides;
     private final AutoTransfer auto = new AutoTransfer();
     private final RedstoneControl redstone = new RedstoneControl();
-    private final UpgradeInventory upgrades = new UpgradeInventory(this::setChanged);
+    private final UpgradeInventory upgrades = new UpgradeInventory(() -> MachineLevel.of(getBlockState()), this::setChanged);
     private final ContainerData data = new ContainerData() {
         @Override
         public int get(int index) {
             return switch (index) {
                 case DATA_ENERGY_LOW -> EnergySync.low(energy.getAmountAsInt());
                 case DATA_ENERGY_HIGH -> EnergySync.high(energy.getAmountAsInt());
-                case DATA_PROGRESS -> progress;
-                case DATA_PROGRESS_TOTAL -> progressTotal;
-                case DATA_WORKING -> working ? 1 : 0;
+                case DATA_WORKING -> workingLanes;
                 case DATA_FRONT -> front().ordinal();
+                case DATA_MK -> MachineLevel.of(getBlockState());
                 default -> {
+                    if (index >= DATA_PROGRESS_BASE && index < DATA_PROGRESS_TOTAL_BASE) yield progress[index - DATA_PROGRESS_BASE];
+                    if (index >= DATA_PROGRESS_TOTAL_BASE && index < DATA_WORKING) yield progressTotal[index - DATA_PROGRESS_TOTAL_BASE];
                     if (index >= DATA_SIDE_BASE && index < DATA_FRONT) yield sides.data(index - DATA_SIDE_BASE);
                     if (index >= DATA_AUTO_BASE && index < DATA_REDSTONE_BASE) yield auto.data(index - DATA_AUTO_BASE);
-                    if (index >= DATA_REDSTONE_BASE && index < DATA_COUNT) yield redstone.data(index - DATA_REDSTONE_BASE);
+                    if (index >= DATA_REDSTONE_BASE && index < DATA_MK) yield redstone.data(index - DATA_REDSTONE_BASE);
                     yield 0;
                 }
             };
@@ -129,6 +141,18 @@ public final class ElectricFurnaceBlockEntity extends BaseContainerBlockEntity
     public ElectricFurnaceBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.ELECTRIC_FURNACE.get(), pos, state);
         this.sides = ((SideConfigurableBlock) ModBlocks.ELECTRIC_FURNACE.get()).createSideConfig(state);
+        Arrays.fill(progressTotal, SMELT_TICKS);
+        energy.setCapacity(MachineLevel.capacity(CAPACITY, MachineLevel.of(state)));
+    }
+
+    /** Lanes the MK level has opened: the first {@code n} input slots and their outputs. */
+    public int lanes() { return Math.clamp(MachineLevel.of(getBlockState()), 1, LANES); }
+
+    /** An upgrade kit swaps the block state under us; the buffer grows with the new level. */
+    @Override
+    public void setBlockState(BlockState state) {
+        super.setBlockState(state);
+        energy.setCapacity(MachineLevel.capacity(CAPACITY, MachineLevel.of(state)));
     }
 
     @Override
@@ -197,37 +221,51 @@ public final class ElectricFurnaceBlockEntity extends BaseContainerBlockEntity
         furnace.redstone.update(level, pos);
         if (furnace.auto.isPulling()) ItemTransferUtil.pullFromNeighbours(level, pos, furnace, furnace.sides);
         if (furnace.auto.isPushing()) ItemTransferUtil.pushToNeighbours(level, pos, furnace, furnace.sides);
-        boolean wasWorking = furnace.working;
-        furnace.working = furnace.redstone.allowsRunning() && level instanceof ServerLevel server
+        int wasWorking = furnace.workingLanes;
+        boolean working = furnace.redstone.allowsRunning() && level instanceof ServerLevel server
                 && furnace.smelt(input -> furnace.quickCheck.getRecipeFor(input, server).orElse(null));
-        // Losing power mid-item keeps most of the progress, the way a cooling furnace does.
-        if (!furnace.working) furnace.progress = Mth.clamp(furnace.progress - 2, 0, furnace.progressTotal);
-        if (state.getValue(ElectricFurnaceBlock.LIT) != furnace.working) {
-            level.setBlock(pos, state.setValue(ElectricFurnaceBlock.LIT, furnace.working), 3);
+        // A lane losing power mid-item keeps most of its progress, the way a cooling furnace does.
+        for (int lane = 0; lane < LANES; lane++) {
+            if ((furnace.workingLanes & 1 << lane) == 0) {
+                furnace.progress[lane] = Mth.clamp(furnace.progress[lane] - 2, 0, furnace.progressTotal[lane]);
+            }
         }
-        if (wasWorking != furnace.working) furnace.setChanged();
+        if (state.getValue(ElectricFurnaceBlock.LIT) != working) {
+            level.setBlock(pos, state.setValue(ElectricFurnaceBlock.LIT, working), 3);
+        }
+        if (wasWorking != furnace.workingLanes) furnace.setChanged();
     }
 
     /** Opens a new tick's input budget so neighbours can push their rated amount in. */
     void beginTick() { energy.beginTick(); }
 
-    /** Advances one tick of smelting; false when there is nothing to do or no energy to do it with. */
+    /** Advances one tick on every open lane; false when none had anything to do or energy to do it with. */
     boolean smelt(SmeltingLookup recipes) {
-        ItemStack ingredient = items.get(SLOT_INPUT);
+        int mk = MachineLevel.of(getBlockState());
+        int perTick = MachineLevel.consumption(ENERGY_PER_TICK, mk);
+        workingLanes = 0;
+        for (int lane = 0; lane < lanes(); lane++) {
+            if (smeltLane(lane, recipes, perTick, mk)) workingLanes |= 1 << lane;
+        }
+        return workingLanes != 0;
+    }
+
+    private boolean smeltLane(int lane, SmeltingLookup recipes, int perTick, int mk) {
+        ItemStack ingredient = items.get(SLOT_INPUT + lane);
         if (ingredient.isEmpty()) return false;
         var input = new SingleRecipeInput(ingredient);
         RecipeHolder<SmeltingRecipe> recipe = recipes.find(input);
         if (recipe == null) return false;
         ItemStack result = recipe.value().assemble(input);
-        if (result.isEmpty() || !canAccept(result)) return false;
-        if (energy.getAmountAsInt() < ENERGY_PER_TICK) return false;
-        progressTotal = Math.max(1, recipe.value().cookingTime() / 2);
-        energy.set(energy.getAmountAsInt() - ENERGY_PER_TICK);
-        progress++;
-        if (progress >= progressTotal) {
-            progress = 0;
-            ItemStack output = items.get(SLOT_OUTPUT);
-            if (output.isEmpty()) items.set(SLOT_OUTPUT, result.copy());
+        if (result.isEmpty() || !canAccept(lane, result)) return false;
+        if (energy.getAmountAsInt() < perTick) return false;
+        progressTotal[lane] = MachineLevel.duration(Math.max(1, recipe.value().cookingTime() / 2), mk);
+        energy.set(energy.getAmountAsInt() - perTick);
+        progress[lane]++;
+        if (progress[lane] >= progressTotal[lane]) {
+            progress[lane] = 0;
+            ItemStack output = items.get(SLOT_OUTPUT + lane);
+            if (output.isEmpty()) items.set(SLOT_OUTPUT + lane, result.copy());
             else output.grow(result.getCount());
             ingredient.shrink(1);
         }
@@ -235,9 +273,9 @@ public final class ElectricFurnaceBlockEntity extends BaseContainerBlockEntity
         return true;
     }
 
-    /** Whether the output slot has room for one more result. */
-    private boolean canAccept(ItemStack result) {
-        ItemStack output = items.get(SLOT_OUTPUT);
+    /** Whether the lane's output slot has room for one more result. */
+    private boolean canAccept(int lane, ItemStack result) {
+        ItemStack output = items.get(SLOT_OUTPUT + lane);
         if (output.isEmpty()) return true;
         if (!ItemStack.isSameItemSameComponents(output, result)) return false;
         return output.getCount() + result.getCount() <= Math.min(getMaxStackSize(), output.getMaxStackSize());
@@ -246,16 +284,20 @@ public final class ElectricFurnaceBlockEntity extends BaseContainerBlockEntity
     @Override
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
-        items = NonNullList.withSize(2, ItemStack.EMPTY);
+        items = NonNullList.withSize(2 * LANES, ItemStack.EMPTY);
         ContainerHelper.loadAllItems(input, items);
-        energy.set(Math.clamp(input.getIntOr("Energy", 0), 0, CAPACITY));
-        progressTotal = Math.max(1, input.getIntOr("ProgressTotal", SMELT_TICKS));
-        progress = Math.clamp(input.getIntOr("Progress", 0), 0, progressTotal);
+        upgrades.load(input);
+        energy.setCapacity(MachineLevel.capacity(CAPACITY, MachineLevel.of(getBlockState())));
+        energy.set(Math.clamp(input.getIntOr("Energy", 0), 0, energy.getCapacityAsInt()));
+        for (int lane = 0; lane < LANES; lane++) {
+            String suffix = lane == 0 ? "" : String.valueOf(lane);
+            progressTotal[lane] = Math.max(1, input.getIntOr("ProgressTotal" + suffix, SMELT_TICKS));
+            progress[lane] = Math.clamp(input.getIntOr("Progress" + suffix, 0), 0, progressTotal[lane]);
+        }
         sides.load(input);
         auto.load(input);
         redstone.load(input);
-        upgrades.load(input);
-        working = false;
+        workingLanes = 0;
     }
 
     @Override
@@ -263,8 +305,12 @@ public final class ElectricFurnaceBlockEntity extends BaseContainerBlockEntity
         super.saveAdditional(output);
         ContainerHelper.saveAllItems(output, items);
         output.putInt("Energy", energy.getAmountAsInt());
-        output.putInt("Progress", progress);
-        output.putInt("ProgressTotal", progressTotal);
+        // Lane 0 keeps the unsuffixed keys older saves used, so their jobs carry over.
+        for (int lane = 0; lane < LANES; lane++) {
+            String suffix = lane == 0 ? "" : String.valueOf(lane);
+            output.putInt("Progress" + suffix, progress[lane]);
+            output.putInt("ProgressTotal" + suffix, progressTotal[lane]);
+        }
         sides.save(output);
         auto.save(output);
         redstone.save(output);
@@ -274,35 +320,62 @@ public final class ElectricFurnaceBlockEntity extends BaseContainerBlockEntity
     /** Hoppers and the item capability both read the face's resource mode from here. */
     @Override
     public int[] getSlotsForFace(Direction side) {
+        int lanes = lanes();
         return switch (sides.mode(side)) {
             case NONE -> NO_SLOTS;
-            case INPUT -> INPUT_SLOTS;
-            case OUTPUT -> OUTPUT_SLOTS;
-            case BOTH -> ALL_SLOTS;
+            case INPUT -> laneSlots(SLOT_INPUT, lanes);
+            case OUTPUT -> laneSlots(SLOT_OUTPUT, lanes);
+            case BOTH -> {
+                int[] all = Arrays.copyOf(laneSlots(SLOT_INPUT, lanes), 2 * lanes);
+                System.arraycopy(laneSlots(SLOT_OUTPUT, lanes), 0, all, lanes, lanes);
+                yield all;
+            }
         };
     }
 
+    private static int[] laneSlots(int first, int lanes) {
+        int[] slots = new int[lanes];
+        for (int lane = 0; lane < lanes; lane++) slots[lane] = first + lane;
+        return slots;
+    }
+
+    /**
+     * Incoming items go to the open lane holding the least of that item, empty lanes included, so
+     * a hopper feeding one stack spreads it over every lane instead of piling it onto the first.
+     * The machine's own access (a null side) is not steered.
+     */
     @Override
     public boolean canPlaceItemThroughFace(int slot, ItemStack stack, @Nullable Direction side) {
-        return slot == SLOT_INPUT && sides.allowsItemInput(side);
+        if (slot < SLOT_INPUT || slot >= SLOT_INPUT + lanes() || !sides.allowsItemInput(side)) return false;
+        return side == null || slot == preferredLane(stack);
+    }
+
+    private int preferredLane(ItemStack stack) {
+        int best = -1;
+        for (int lane = 0; lane < lanes(); lane++) {
+            ItemStack held = items.get(SLOT_INPUT + lane);
+            if (!held.isEmpty() && (!ItemStack.isSameItemSameComponents(held, stack) || held.getCount() >= held.getMaxStackSize())) continue;
+            if (best < 0 || held.getCount() < items.get(SLOT_INPUT + best).getCount()) best = lane;
+        }
+        return best;
     }
 
     @Override
     public boolean canTakeItemThroughFace(int slot, ItemStack stack, Direction side) {
-        return slot == SLOT_OUTPUT && sides.allowsItemOutput(side);
+        return slot >= SLOT_OUTPUT && slot < SLOT_OUTPUT + lanes() && sides.allowsItemOutput(side);
     }
 
     /**
-     * Anything may go in the input slot, as in a vanilla furnace: the recipe lookup needs a server
+     * Anything may go in an open input slot, as in a vanilla furnace: the recipe lookup needs a server
      * level, and a client-side slot that rejected everything would stop players filling it by hand.
      */
     @Override
     public boolean canPlaceItem(int slot, ItemStack stack) {
-        return slot == SLOT_INPUT;
+        return slot >= SLOT_INPUT && slot < SLOT_INPUT + lanes();
     }
 
     @Override
-    public int getContainerSize() { return 2; }
+    public int getContainerSize() { return 2 * LANES; }
 
     @Override
     protected NonNullList<ItemStack> getItems() { return items; }

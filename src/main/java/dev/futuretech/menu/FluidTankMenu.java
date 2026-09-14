@@ -41,7 +41,7 @@ public final class FluidTankMenu extends AbstractContainerMenu implements SideCo
 
     public FluidTankMenu(int id, Inventory inventory, RegistryFriendlyByteBuf extra) {
         this(id, inventory, findTank(inventory, extra.readBlockPos()), new SimpleContainer(2),
-                new UpgradeInventory(() -> {}), new SimpleContainerData(FluidTankBlockEntity.DATA_COUNT));
+                new UpgradeInventory(() -> 1, () -> {}), new SimpleContainerData(FluidTankBlockEntity.DATA_COUNT));
     }
 
     public FluidTankMenu(int id, Inventory inventory, FluidTankBlockEntity tank) {

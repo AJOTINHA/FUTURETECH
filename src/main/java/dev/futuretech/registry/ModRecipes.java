@@ -2,6 +2,7 @@ package dev.futuretech.registry;
 
 import dev.futuretech.FutureTech;
 import dev.futuretech.recipe.CrushingRecipe;
+import dev.futuretech.recipe.PressingRecipe;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.crafting.RecipeBookCategory;
 import net.minecraft.world.item.crafting.RecipeSerializer;
@@ -28,4 +29,10 @@ public final class ModRecipes {
             SERIALIZERS.register("assembling", () -> new RecipeSerializer<>(dev.futuretech.recipe.AssemblingRecipe.CODEC, dev.futuretech.recipe.AssemblingRecipe.STREAM_CODEC));
     public static final DeferredHolder<RecipeBookCategory, RecipeBookCategory> ASSEMBLER_BOOK = BOOKS.register("assembler", RecipeBookCategory::new);
     private ModRecipes() {}
+    public static final DeferredHolder<RecipeType<?>, RecipeType<PressingRecipe>> PRESSING = TYPES.register("pressing", () -> new RecipeType<>() {
+        @Override public String toString() { return "futuretech:pressing"; }
+    });
+    public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<PressingRecipe>> PRESSING_SERIALIZER =
+            SERIALIZERS.register("pressing", () -> new RecipeSerializer<>(PressingRecipe.CODEC, PressingRecipe.STREAM_CODEC));
+    public static final DeferredHolder<RecipeBookCategory, RecipeBookCategory> METAL_PRESS_BOOK = BOOKS.register("metal_press", RecipeBookCategory::new);
 }

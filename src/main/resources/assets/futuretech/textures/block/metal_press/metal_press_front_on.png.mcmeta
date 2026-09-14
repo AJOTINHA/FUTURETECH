@@ -1,0 +1,9 @@
+{
+  "animation": {
+    "width": 32,
+    "height": 32,
+    "frametime": 2,
+    "interpolate": false,
+    "frames": [0, 1, 2, {"index": 3, "time": 3}, 2, 1, {"index": 0, "time": 3}]
+  }
+}

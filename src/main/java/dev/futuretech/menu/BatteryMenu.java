@@ -34,7 +34,12 @@ public final class BatteryMenu extends MachineMenu implements SideConfigMenu, Re
     public static final int IMAGE_WIDTH = 176;
 
     public BatteryMenu(int id, Inventory inventory) {
-        this(id, inventory, null, new UpgradeInventory(() -> {}), new SimpleContainerData(DATA_COUNT));
+        this(id, inventory, new SimpleContainerData(DATA_COUNT));
+    }
+
+    /** Client side: the upgrade slots unlock by the synced tier, one per MK. */
+    private BatteryMenu(int id, Inventory inventory, ContainerData data) {
+        this(id, inventory, null, new UpgradeInventory(() -> BatteryTier.byOrdinal(data.get(DATA_TIER)).ordinal() + 1, () -> {}), data);
     }
 
     public BatteryMenu(int id, Inventory inventory, @Nullable BatteryBlockEntity battery, UpgradeInventory upgrades,

@@ -12,6 +12,7 @@ import dev.futuretech.block.FluidCableTier;
 import dev.futuretech.block.ItemCableBlock;
 import dev.futuretech.block.ItemCableTier;
 import dev.futuretech.block.CrusherBlock;
+import dev.futuretech.block.MetalPressBlock;
 import dev.futuretech.block.SolidFuelGeneratorBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
@@ -61,6 +62,11 @@ public final class ModBlocks {
                     .requiresCorrectToolForDrops());
 
     public static final DeferredBlock<BatteryBlock> BATTERY_MK1 = registerBattery(BatteryTier.MK1);
+
+    public static final DeferredBlock<MetalPressBlock> METAL_PRESS = BLOCKS.registerBlock(
+            "metal_press", MetalPressBlock::new, properties -> properties
+                    .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops());
 
     public static final DeferredBlock<FluidTankBlock> FLUID_TANK = BLOCKS.registerBlock(
             "fluid_tank", FluidTankBlock::new, properties -> properties

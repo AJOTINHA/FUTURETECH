@@ -10,6 +10,7 @@ import dev.futuretech.block.entity.ElectricFurnaceBlockEntity;
 import dev.futuretech.block.entity.FluidCableBlockEntity;
 import dev.futuretech.block.entity.ItemCableBlockEntity;
 import dev.futuretech.block.entity.CrusherBlockEntity;
+import dev.futuretech.block.entity.MetalPressBlockEntity;
 import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -33,6 +34,9 @@ public final class ModBlockEntities {
             TYPES.register("crusher", () -> new BlockEntityType<>(CrusherBlockEntity::new, ModBlocks.CRUSHER.get()));
 
     // One block entity type serves every battery tier; list each tier's block here.
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MetalPressBlockEntity>> METAL_PRESS =
+            TYPES.register("metal_press", () -> new BlockEntityType<>(MetalPressBlockEntity::new, ModBlocks.METAL_PRESS.get()));
+
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BatteryBlockEntity>> BATTERY =
             TYPES.register("battery", () -> new BlockEntityType<>(
                     BatteryBlockEntity::new, ModBlocks.BATTERY_MK1.get()));
@@ -62,6 +66,10 @@ public final class ModBlockEntities {
                     ModBlocks.ASSEMBLY_TABLE.get(), ModBlocks.TRANSPORT_ARM.get(), ModBlocks.ASSEMBLY_ARM.get(), ModBlocks.ASSEMBLER_TERMINAL.get()));
 
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, METAL_PRESS.get(), (press, side) ->
+                SidedEnergy.view(press.energy(), press.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Item.BLOCK, METAL_PRESS.get(), (press, side) ->
+                SidedItems.view(press, press.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, ASSEMBLER.get(), (assembler, side) -> assembler.energyHandler());
         event.registerBlockEntity(Capabilities.Fluid.BLOCK, FLUID_TANK.get(), (tank, side) -> tank.handler(side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, CRUSHER.get(), (crusher, side) ->

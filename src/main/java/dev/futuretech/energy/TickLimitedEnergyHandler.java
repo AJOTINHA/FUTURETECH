@@ -38,6 +38,17 @@ public final class TickLimitedEnergyHandler extends SimpleEnergyHandler {
         this.onChanged = onChanged;
     }
 
+    /**
+     * Changes how much the buffer holds, for upgrades coming and going. Energy above a smaller
+     * capacity stays until it is drawn down; nothing more goes in until then.
+     */
+    public void setCapacity(int capacity) {
+        if (this.capacity != capacity) {
+            this.capacity = capacity;
+            onChanged.run();
+        }
+    }
+
     /** Restores the full transfer budgets; call once at the start of each server tick. */
     public void beginTick() {
         inputRemaining = inputPerTick;

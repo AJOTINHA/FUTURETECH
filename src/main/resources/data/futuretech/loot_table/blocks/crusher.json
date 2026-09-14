@@ -6,7 +6,16 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "futuretech:crusher"
+          "name": "futuretech:crusher",
+          "functions": [
+            {
+              "function": "minecraft:copy_state",
+              "properties": [
+                "mk"
+              ],
+              "block": "futuretech:crusher"
+            }
+          ]
         }
       ],
       "conditions": [

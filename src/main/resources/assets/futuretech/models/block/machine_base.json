@@ -2,6 +2,6 @@
   "parent": "minecraft:block/orientable",
   "textures": {
     "top": "#side",
-    "side": "futuretech:block/machine_side"
+    "side": "futuretech:block/machine/machine_side"
   }
 }

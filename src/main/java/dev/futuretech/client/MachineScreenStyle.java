@@ -1,6 +1,7 @@
 package dev.futuretech.client;
 
 import dev.futuretech.api.upgrade.UpgradeSlot;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.Slot;
@@ -13,6 +14,18 @@ public final class MachineScreenStyle {
     static final int BAR_BACK = 0xFF283541;
     static final int ENERGY_START = 0xFF1676C4;
     public static final int ENERGY_END = 0xFF55E7ED;
+
+    /** Append the synchronized level and keep long translated/custom names inside the header. */
+    static void drawMachineTitle(GuiGraphicsExtractor graphics, Font font, Component name, int mk,
+                                 int x, int y, int maxWidth) {
+        Component title = mk > 1 ? Component.translatable("item.futuretech.machine_level", name, mk) : name;
+        float scale = Math.min(1.0F, (float) maxWidth / Math.max(1, font.width(title)));
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(x, y + font.lineHeight * (1 - scale) / 2);
+        graphics.pose().scale(scale, scale);
+        graphics.text(font, title, 0, 0, TITLE, false);
+        graphics.pose().popMatrix();
+    }
 
     public static void drawPanel(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
         // Small pixel steps reproduce vanilla-style corners without rounded panels.

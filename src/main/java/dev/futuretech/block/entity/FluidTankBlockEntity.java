@@ -64,7 +64,7 @@ public final class FluidTankBlockEntity extends BlockEntity implements MenuProvi
     public static final int DATA_COUNT = DATA_REDSTONE + RedstoneControl.DATA_COUNT;
     private final SideConfig sides;
     private final RedstoneControl redstone = new RedstoneControl();
-    private final UpgradeInventory upgrades = new UpgradeInventory(this::setChanged);
+    private final UpgradeInventory upgrades = new UpgradeInventory(() -> 1, this::setChanged);
     private final ContainerData menuData = new ContainerData() {
         @Override
         public int get(int index) {

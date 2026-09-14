@@ -3,6 +3,7 @@ package dev.futuretech.block.entity;
 import static dev.futuretech.block.entity.CrusherBlockEntity.*;
 
 import dev.futuretech.api.side.SideMode;
+import dev.futuretech.api.upgrade.MachineLevel;
 import dev.futuretech.registry.ModBlocks;
 import dev.futuretech.registry.ModItems;
 import net.minecraft.world.item.Item;
@@ -145,7 +146,107 @@ class CrusherTest {
     }
 
     private static CrusherBlockEntity crusher() {
-        return new CrusherBlockEntity(BlockPos.ZERO, ModBlocks.CRUSHER.get().defaultBlockState());
+        return crusher(1);
+    }
+
+    private static CrusherBlockEntity crusher(int mk) {
+        return new CrusherBlockEntity(BlockPos.ZERO, ModBlocks.CRUSHER.get().defaultBlockState().setValue(MachineLevel.MK, mk));
+    }
+
+    @Test
+    void anMk4CrushesOnEveryLaneAtOnceAndPaysForEachOfThem(MinecraftServer server) {
+        var crusher = crusher(4);
+        charge(crusher, CAPACITY);
+        Item[] inputs = {Items.COBBLESTONE, Items.BONE, Items.RAW_IRON, Items.BLAZE_ROD};
+        for (int lane = 0; lane < 4; lane++) crusher.setItem(SLOT_INPUT + lane, new ItemStack(inputs[lane]));
+        int before = crusher.energy().getAmountAsInt();
+        int ticks = MachineLevel.duration(CRUSH_TICKS, 4);
+        int perTick = MachineLevel.consumption(ENERGY_PER_TICK, 4);
+        for (int tick = 0; tick < ticks; tick++) assertTrue(tick(crusher, recipes(server)));
+        assertEquals(before - 4 * ticks * perTick, crusher.energy().getAmountAsInt(), "four jobs, four times the draw");
+        assertTrue(crusher.getItem(SLOT_OUTPUT).is(Items.GRAVEL));
+        assertEquals(6, crusher.getItem(SLOT_OUTPUT + 1).getCount());
+        assertEquals(2, crusher.getItem(SLOT_OUTPUT + 2).getCount());
+        assertEquals(4, crusher.getItem(SLOT_OUTPUT + 3).getCount());
+        for (int lane = 0; lane < 4; lane++) assertTrue(crusher.getItem(SLOT_INPUT + lane).isEmpty());
+        assertEquals(0b1111, crusher.menuData().get(DATA_WORKING), "the last tick had every lane at work");
+
+        // An MK1 leaves the other lanes shut: nothing in them is touched or paid for.
+        var single = crusher(1);
+        charge(single, CAPACITY);
+        single.setItem(SLOT_INPUT + 1, new ItemStack(Items.COBBLESTONE));
+        assertFalse(tick(single, recipes(server)));
+        assertEquals(CAPACITY, single.energy().getAmountAsInt());
+        assertArrayEquals(new int[] {SLOT_INPUT}, lanesOf(single, SideMode.INPUT));
+        assertArrayEquals(new int[] {SLOT_INPUT, SLOT_INPUT + 1, SLOT_INPUT + 2, SLOT_INPUT + 3}, lanesOf(crusher, SideMode.INPUT));
+        assertArrayEquals(new int[] {SLOT_OUTPUT, SLOT_OUTPUT + 1, SLOT_OUTPUT + 2, SLOT_OUTPUT + 3}, lanesOf(crusher, SideMode.OUTPUT));
+    }
+
+    private static int[] lanesOf(CrusherBlockEntity crusher, SideMode mode) {
+        crusher.sideConfig().set(Direction.UP, mode);
+        return crusher.getSlotsForFace(Direction.UP);
+    }
+
+    @Test
+    void aHopperSpreadsOneKindOfItemOverTheOpenLanes(MinecraftServer server) {
+        var crusher = crusher(3);
+        crusher.sideConfig().set(Direction.UP, SideMode.INPUT);
+        var cobble = new ItemStack(Items.COBBLESTONE);
+        // Empty lanes take turns from the first; a lane that already holds more waits its turn.
+        assertTrue(crusher.canPlaceItemThroughFace(SLOT_INPUT, cobble, Direction.UP));
+        assertFalse(crusher.canPlaceItemThroughFace(SLOT_INPUT + 1, cobble, Direction.UP));
+        crusher.setItem(SLOT_INPUT, new ItemStack(Items.COBBLESTONE, 2));
+        assertFalse(crusher.canPlaceItemThroughFace(SLOT_INPUT, cobble, Direction.UP));
+        assertTrue(crusher.canPlaceItemThroughFace(SLOT_INPUT + 1, cobble, Direction.UP));
+        crusher.setItem(SLOT_INPUT + 1, new ItemStack(Items.COBBLESTONE, 2));
+        assertTrue(crusher.canPlaceItemThroughFace(SLOT_INPUT + 2, cobble, Direction.UP));
+        crusher.setItem(SLOT_INPUT + 2, new ItemStack(Items.COBBLESTONE, 3));
+        assertTrue(crusher.canPlaceItemThroughFace(SLOT_INPUT, cobble, Direction.UP), "back to the lane with the least");
+        // A different item only goes where it will not mix, and a shut lane never opens.
+        assertFalse(crusher.canPlaceItemThroughFace(SLOT_INPUT, new ItemStack(Items.BONE), Direction.UP));
+        assertFalse(crusher.canPlaceItemThroughFace(SLOT_INPUT + 3, cobble, Direction.UP));
+    }
+
+    @Test
+    void everyLevelAddsStorageSpeedAndDrawAndUnlocksASlot(MinecraftServer server) {
+        assertEquals(CAPACITY, crusher(1).energy().getCapacityAsInt());
+        assertEquals(25_000, crusher(2).energy().getCapacityAsInt());
+        assertEquals(30_000, crusher(3).energy().getCapacityAsInt());
+        assertEquals(35_000, crusher(4).energy().getCapacityAsInt());
+        assertEquals(100, MachineLevel.duration(CRUSH_TICKS, 1));
+        assertEquals(87, MachineLevel.duration(CRUSH_TICKS, 2));
+        assertEquals(77, MachineLevel.duration(CRUSH_TICKS, 3));
+        assertEquals(69, MachineLevel.duration(CRUSH_TICKS, 4));
+        assertEquals(20, MachineLevel.consumption(ENERGY_PER_TICK, 1));
+        assertEquals(24, MachineLevel.consumption(ENERGY_PER_TICK, 2));
+        assertEquals(28, MachineLevel.consumption(ENERGY_PER_TICK, 3));
+        assertEquals(32, MachineLevel.consumption(ENERGY_PER_TICK, 4));
+
+        var crusher = crusher(2);
+        charge(crusher, 25_000);
+        crusher.setItem(SLOT_INPUT, new ItemStack(Items.COBBLESTONE));
+        for (int tick = 0; tick < 87; tick++) assertTrue(tick(crusher, recipes(server)), "tick " + tick);
+        assertEquals(1, crusher.getItem(SLOT_OUTPUT).getCount());
+        assertEquals(25_000 - 87 * 24, crusher.energy().getAmountAsInt());
+
+        // The MK unlocks as many upgrade slots as its number: the third slot of an MK2 is shut.
+        var upgrade = new ItemStack(ModItems.SPEED_UPGRADE.get());
+        assertTrue(crusher.upgrades().canPlaceItem(1, upgrade));
+        assertFalse(crusher.upgrades().canPlaceItem(2, upgrade));
+        assertEquals(1, crusher(1).upgrades().unlocked());
+        assertEquals(4, crusher(4).upgrades().unlocked());
+
+        // A kit swaps the state in place and the buffer grows with it; the charge survives a reload.
+        var upgraded = crusher(1);
+        charge(upgraded, 20_000);
+        upgraded.setBlockState(upgraded.getBlockState().setValue(MachineLevel.MK, 3));
+        assertEquals(30_000, upgraded.energy().getCapacityAsInt());
+        assertEquals(3, upgraded.lanes());
+        var restored = crusher(3);
+        restored.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, server.registryAccess(),
+                upgraded.saveWithoutMetadata(server.registryAccess())));
+        assertEquals(30_000, restored.energy().getCapacityAsInt());
+        assertEquals(20_000, restored.energy().getAmountAsInt());
     }
 
     /** Fills the buffer the way a cable would: the handler only accepts INPUT_PER_TICK each tick. */

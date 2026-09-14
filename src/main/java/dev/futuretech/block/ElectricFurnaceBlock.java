@@ -1,7 +1,9 @@
 package dev.futuretech.block;
 
 import com.mojang.serialization.MapCodec;
-import dev.futuretech.api.side.SideConfig;
+import dev.futuretech.api.upgrade.MachineLevel;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.StateDefinition;
 import dev.futuretech.api.side.SideConfig;
 import dev.futuretech.api.side.SideConfigurableBlock;
 import dev.futuretech.api.side.SideMode;
@@ -30,6 +32,12 @@ public final class ElectricFurnaceBlock extends AbstractFurnaceBlock implements 
 
     public ElectricFurnaceBlock(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(MachineLevel.MK);
     }
 
     @Override
@@ -72,7 +80,7 @@ public final class ElectricFurnaceBlock extends AbstractFurnaceBlock implements 
     @Override
     protected void openContainer(Level level, BlockPos pos, Player player) {
         if (level.getBlockEntity(pos) instanceof ElectricFurnaceBlockEntity furnace) {
-            player.openMenu(furnace);
+            player.openMenu(furnace, buffer -> dev.futuretech.menu.ElectricFurnaceMenu.writeOpeningData(buffer, furnace));
         }
     }
 

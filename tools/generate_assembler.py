@@ -15,9 +15,10 @@ def write(path, value):
 UV = {'dark': [1, 1, 7, 7], 'gray': [9, 1, 15, 7], 'silver': [1, 9, 7, 15], 'cyan': [9, 9, 15, 15]}
 # Minecraft 26.2 requires each cuboid model to use a single atlas, and block models
 # must use the blocks atlas. Keep the shared palette in that atlas for this cell.
-shutil.copyfile(ASSETS / 'textures/item/filter_materials.png', ASSETS / 'textures/block/assembler_materials.png')
-TEXTURES = {'palette': 'futuretech:block/assembler_materials', 'particle': 'futuretech:block/machine_side',
-            'blue': 'futuretech:block/battery_port_input', 'orange': 'futuretech:block/battery_port_output'}
+(ASSETS / 'textures/block/assembler').mkdir(parents=True, exist_ok=True)
+shutil.copyfile(ASSETS / 'textures/item/filter_materials.png', ASSETS / 'textures/block/assembler/assembler_materials.png')
+TEXTURES = {'palette': 'futuretech:block/assembler/assembler_materials', 'particle': 'futuretech:block/machine/machine_side',
+            'blue': 'futuretech:block/battery/battery_port_input', 'orange': 'futuretech:block/battery/battery_port_output'}
 
 def box(a, b, material='dark', rotation=None):
     texture = material if material in ['blue', 'orange'] else 'palette'

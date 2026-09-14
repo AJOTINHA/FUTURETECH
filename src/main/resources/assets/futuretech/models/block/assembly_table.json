@@ -1,10 +1,10 @@
 {
   "parent": "minecraft:block/block",
   "textures": {
-    "palette": "futuretech:block/assembler_materials",
-    "particle": "futuretech:block/machine_side",
-    "blue": "futuretech:block/battery_port_input",
-    "orange": "futuretech:block/battery_port_output"
+    "palette": "futuretech:block/assembler/assembler_materials",
+    "particle": "futuretech:block/machine/machine_side",
+    "blue": "futuretech:block/battery/battery_port_input",
+    "orange": "futuretech:block/battery/battery_port_output"
   },
   "elements": [
     {

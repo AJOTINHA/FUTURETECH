@@ -56,7 +56,7 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
     private final TickLimitedEnergyHandler energy;
     private final SideConfig sides;
     private final RedstoneControl redstone = new RedstoneControl();
-    private final UpgradeInventory upgrades = new UpgradeInventory(this::setChanged);
+    private final UpgradeInventory upgrades = new UpgradeInventory(() -> tier().ordinal() + 1, this::setChanged);
     // Transfer totals of the previous tick, shown in the menu as FE/t.
     private int lastInput;
     private int lastOutput;

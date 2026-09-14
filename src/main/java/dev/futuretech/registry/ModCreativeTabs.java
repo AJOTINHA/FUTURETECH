@@ -24,6 +24,9 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.SOLID_FUEL_GENERATOR.get());
                         output.accept(ModItems.ELECTRIC_FURNACE.get());
                         output.accept(ModItems.CRUSHER.get());
+                        output.accept(ModItems.METAL_PRESS.get());
+                        output.accept(ModItems.PLATE_MOLD.get());
+                        output.accept(ModItems.GEAR_MOLD.get());
                         output.accept(ModItems.BATTERY_MK1.get());
                         output.accept(ModItems.FLUID_TANK.get());
                         output.accept(ModItems.CABLE_MK1.get());
@@ -33,10 +36,24 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.FLUID_CABLE.get());
                         output.accept(ModItems.FILTER.get());
                         output.accept(ModItems.SPEED_UPGRADE.get());
+                        output.accept(ModItems.UPGRADE_KIT_MK2.get());
+                        output.accept(ModItems.UPGRADE_KIT_MK3.get());
+                        output.accept(ModItems.UPGRADE_KIT_MK4.get());
                         output.accept(ModItems.WRENCH.get());
                         output.accept(ModItems.IRON_POWDER.get());
                         output.accept(ModItems.GOLD_POWDER.get());
                         output.accept(ModItems.COPPER_POWDER.get());
+                        output.accept(ModItems.IRON_PLATE.get());
+                        output.accept(ModItems.STEEL_INGOT.get());
+                        output.accept(ModItems.STEEL_PLATE.get());
+                        output.accept(ModItems.STEEL_GEAR.get());
+                        output.accept(ModItems.GOLD_PLATE.get());
+                        output.accept(ModItems.COPPER_PLATE.get());
+                        output.accept(ModItems.NETHERITE_PLATE.get());
+                        output.accept(ModItems.IRON_GEAR.get());
+                        output.accept(ModItems.GOLD_GEAR.get());
+                        output.accept(ModItems.COPPER_GEAR.get());
+                        output.accept(ModItems.NETHERITE_GEAR.get());
                     })
                     .build());
 

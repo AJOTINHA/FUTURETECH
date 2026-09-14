@@ -7,6 +7,7 @@ import dev.futuretech.block.AbstractCableBlock;
 import dev.futuretech.block.CableKind;
 import dev.futuretech.api.side.SideConfigurableBlock;
 import dev.futuretech.api.side.SideMode;
+import dev.futuretech.api.upgrade.MachineLevel;
 import dev.futuretech.api.side.client.ConfiguredSideModel;
 import dev.futuretech.registry.ModMenus;
 import dev.futuretech.registry.ModBlockEntities;
@@ -32,9 +33,9 @@ import java.util.function.Function;
 public final class FutureTechClient {
     /** Face texture per mode; a mode left out here keeps the machine's own side texture. */
     private static final Map<SideMode, String> SIDE_TEXTURES = Map.of(
-            SideMode.INPUT, "block/machine_side_input",
-            SideMode.OUTPUT, "block/machine_side_output",
-            SideMode.BOTH, "block/machine_side_input_output");
+            SideMode.INPUT, "block/machine/machine_side_input",
+            SideMode.OUTPUT, "block/machine/machine_side_output",
+            SideMode.BOTH, "block/machine/machine_side_input_output");
 
     public FutureTechClient(IEventBus modEventBus) {
         modEventBus.addListener(FutureTechClient::registerScreens);
@@ -60,6 +61,7 @@ public final class FutureTechClient {
         event.register(ModMenus.BATTERY.get(), BatteryScreen::new);
         event.register(ModMenus.ELECTRIC_FURNACE.get(), ElectricFurnaceScreen::new);
         event.register(ModMenus.CRUSHER.get(), CrusherScreen::new);
+        event.register(ModMenus.METAL_PRESS.get(), MetalPressScreen::new);
         event.register(ModMenus.CABLE_CONNECTOR.get(), CableConnectorScreen::new);
         event.register(ModMenus.ITEM_FILTER.get(), ItemFilterScreen::new);
     }
@@ -69,6 +71,15 @@ public final class FutureTechClient {
         Map<SideMode, TextureAtlasSprite> sprites = new EnumMap<>(SideMode.class);
         SIDE_TEXTURES.forEach((mode, path) ->
                 sprites.put(mode, textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, path))));
+        Map<Integer, Map<SideMode, TextureAtlasSprite>> tierSprites = new java.util.HashMap<>();
+        tierSprites.put(1, sprites);
+        for (int mk = 2; mk <= 4; mk++) {
+            Map<SideMode, TextureAtlasSprite> perTier = new EnumMap<>(SideMode.class);
+            String folder = "block/machine/mk" + mk + "/";
+            SIDE_TEXTURES.forEach((mode, path) -> perTier.put(mode, textures.apply(
+                    Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, folder + path.substring(path.lastIndexOf('/') + 1)))));
+            tierSprites.put(mk, perTier);
+        }
         Map<SideMode, TextureAtlasSprite> batterySprites = new EnumMap<>(SideMode.class);
         Map<SideMode, TextureAtlasSprite> batteryPreviews = new EnumMap<>(SideMode.class);
         for (SideMode mode : new SideMode[]{SideMode.NONE, SideMode.INPUT, SideMode.OUTPUT}) {
@@ -78,9 +89,9 @@ public final class FutureTechClient {
                 default -> "";
             };
             batteryPreviews.put(mode, textures.apply(Identifier.fromNamespaceAndPath(
-                    FutureTech.MOD_ID, "block/battery_frame_preview" + suffix)));
+                    FutureTech.MOD_ID, "block/battery/battery_frame_preview" + suffix)));
             if (mode != SideMode.NONE) batterySprites.put(mode, textures.apply(Identifier.fromNamespaceAndPath(
-                    FutureTech.MOD_ID, "block/battery_port" + suffix)));
+                    FutureTech.MOD_ID, "block/battery/battery_port" + suffix)));
         }
         Map<Direction, Map<SideMode, BlockStateModelPart>> batteryPorts = new EnumMap<>(Direction.class);
         Map<SideMode, TextureAtlasSprite> tankPreviews = new EnumMap<>(batteryPreviews);
@@ -88,7 +99,7 @@ public final class FutureTechClient {
         Map<Direction, Map<SideMode, BlockStateModelPart>> tankPorts = new EnumMap<>(Direction.class);
         // The frame's material is a UV sheet, not a face icon. Use its assembled front for None.
         tankPreviews.put(SideMode.NONE, batteryPreviews.get(SideMode.NONE));
-        TextureAtlasSprite steel = textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "block/machine_side"));
+        TextureAtlasSprite steel = textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "block/machine/machine_side"));
         // One collar per connector mode: the band on its rim says what that connector does without
         // the player opening it. A closed connector keeps the plain steel, which reads as no band.
         // The bands mean direction, so they are the same blue and orange on every kind; only the
@@ -127,7 +138,8 @@ public final class FutureTechClient {
             if (state.getBlock() instanceof AbstractCableBlock cable) return new CableConnectorModel(model, connectorsByKind.get(cable.kind()));
             if (state.getBlock() instanceof BatteryBlock) return new ConfiguredSideModel(model, Map.of(), batteryPreviews, batteryPorts);
             if (state.getBlock() instanceof FluidTankBlock) return new ConfiguredSideModel(model, Map.of(), tankPreviews, tankPorts);
-            return state.getBlock() instanceof SideConfigurableBlock ? new ConfiguredSideModel(model, sprites) : model;
+            return state.getBlock() instanceof SideConfigurableBlock
+                    ? new ConfiguredSideModel(model, tierSprites.get(MachineLevel.of(state))) : model;
         });
     }
 }

@@ -22,35 +22,35 @@
     },
     {
       "type": "single",
-      "resource": "futuretech:block/battery_port_input"
+      "resource": "futuretech:block/battery/battery_port_input"
     },
     {
       "type": "single",
-      "resource": "futuretech:block/battery_port_output"
+      "resource": "futuretech:block/battery/battery_port_output"
     },
     {
       "type": "single",
-      "resource": "futuretech:block/machine_side_input"
+      "resource": "futuretech:block/machine/machine_side_input"
     },
     {
       "type": "single",
-      "resource": "futuretech:block/machine_side_output"
+      "resource": "futuretech:block/machine/machine_side_output"
     },
     {
       "type": "single",
-      "resource": "futuretech:block/machine_side_input_output"
+      "resource": "futuretech:block/machine/machine_side_input_output"
     },
     {
       "type": "single",
-      "resource": "futuretech:block/battery_frame_preview"
+      "resource": "futuretech:block/battery/battery_frame_preview"
     },
     {
       "type": "single",
-      "resource": "futuretech:block/battery_frame_preview_input"
+      "resource": "futuretech:block/battery/battery_frame_preview_input"
     },
     {
       "type": "single",
-      "resource": "futuretech:block/battery_frame_preview_output"
+      "resource": "futuretech:block/battery/battery_frame_preview_output"
     },
     {
       "type": "single",
@@ -59,6 +59,42 @@
     {
       "type": "single",
       "resource": "futuretech:block/fluid_cable_contact"
+    },
+    {
+      "resource": "futuretech:block/machine/mk2/machine_side_input",
+      "type": "single"
+    },
+    {
+      "resource": "futuretech:block/machine/mk2/machine_side_output",
+      "type": "single"
+    },
+    {
+      "resource": "futuretech:block/machine/mk2/machine_side_input_output",
+      "type": "single"
+    },
+    {
+      "resource": "futuretech:block/machine/mk3/machine_side_input",
+      "type": "single"
+    },
+    {
+      "resource": "futuretech:block/machine/mk3/machine_side_output",
+      "type": "single"
+    },
+    {
+      "resource": "futuretech:block/machine/mk3/machine_side_input_output",
+      "type": "single"
+    },
+    {
+      "resource": "futuretech:block/machine/mk4/machine_side_input",
+      "type": "single"
+    },
+    {
+      "resource": "futuretech:block/machine/mk4/machine_side_output",
+      "type": "single"
+    },
+    {
+      "resource": "futuretech:block/machine/mk4/machine_side_input_output",
+      "type": "single"
     }
   ]
 }

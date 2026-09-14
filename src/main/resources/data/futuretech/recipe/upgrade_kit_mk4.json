@@ -1,0 +1,19 @@
+{
+  "result": {
+    "count": 1,
+    "id": "futuretech:upgrade_kit_mk4"
+  },
+  "type": "minecraft:crafting_shaped",
+  "key": {
+    "D": "futuretech:machine_casing",
+    "A": "minecraft:diamond",
+    "B": "minecraft:ender_pearl",
+    "C": "minecraft:redstone_block"
+  },
+  "pattern": [
+    "ABA",
+    "CDC",
+    "ABA"
+  ],
+  "category": "misc"
+}

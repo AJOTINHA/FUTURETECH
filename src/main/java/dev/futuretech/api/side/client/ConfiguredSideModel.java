@@ -143,8 +143,10 @@ public final class ConfiguredSideModel extends DelegateBlockStateModel {
         var replacement = BakedQuad.MaterialInfo.of(new Material.Baked(target, false), target.transparency(),
                 material.tintIndex(), material.shade(), material.lightEmission(), material.ambientOcclusion());
         return new BakedQuad(quad.position0(), quad.position1(), quad.position2(), quad.position3(),
-                remapUV(quad.packedUV0(), sprite, target), remapUV(quad.packedUV1(), sprite, target),
-                remapUV(quad.packedUV2(), sprite, target), remapUV(quad.packedUV3(), sprite, target),
+                remapUV(quad.packedUV0(), sprite, target),
+                remapUV(quad.packedUV1(), sprite, target),
+                remapUV(quad.packedUV2(), sprite, target),
+                remapUV(quad.packedUV3(), sprite, target),
                 quad.direction(), replacement, quad.bakedNormals(), quad.bakedColors());
     }
 
@@ -153,4 +155,5 @@ public final class ConfiguredSideModel extends DelegateBlockStateModel {
         float v = (UVPair.unpackV(uv) - source.getV0()) / (source.getV1() - source.getV0());
         return UVPair.pack(target.getU(u), target.getV(v));
     }
+
 }

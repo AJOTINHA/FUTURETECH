@@ -1,0 +1,7 @@
+{
+  "parent": "futuretech:block/machine_base",
+  "textures": {
+    "side": "futuretech:block/machine/mk4/machine_side",
+    "front": "futuretech:block/electric_furnace/mk4/electric_furnace_front"
+  }
+}

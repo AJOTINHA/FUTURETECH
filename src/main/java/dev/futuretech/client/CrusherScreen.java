@@ -7,7 +7,6 @@ import dev.futuretech.api.gui.TabStrip;
 import dev.futuretech.api.redstone.client.RedstoneControlTab;
 import dev.futuretech.api.side.client.SideConfigTab;
 import dev.futuretech.api.upgrade.client.UpgradeTab;
-import dev.futuretech.block.entity.CrusherBlockEntity;
 import dev.futuretech.menu.CrusherMenu;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -16,18 +15,20 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
 public final class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
-    /** The energy column down the left edge: outer box, with the fill inset by a pixel. */
+    /** The energy column down the left edge, centred on the slot rows: outer box, with the fill inset by a pixel. */
     private static final int ENERGY_X = 7;
-    private static final int ENERGY_TOP = 29;
-    private static final int ENERGY_BOTTOM = 78;
+    private static final int ENERGY_HEIGHT = 49;
     private static final int ENERGY_WIDTH = 14;
-    /** The progress arrow sits in the gap between the two slots, centred on their row. */
+    /** The progress arrow sits in the gap between a lane's two slots, centred on their row; offsets from the row's top. */
     private static final int ARROW_X = 76;
     private static final int ARROW_WIDTH = 24;
-    private static final int ARROW_TOP = 47;
-    private static final int ARROW_BOTTOM = 60;
-    private static final int ARROW_SHAFT_TOP = 51;
-    private static final int ARROW_SHAFT_BOTTOM = 56;
+    private static final int ARROW_TOP = 2;
+    private static final int ARROW_BOTTOM = 15;
+    private static final int ARROW_SHAFT_TOP = 6;
+    private static final int ARROW_SHAFT_BOTTOM = 11;
+    /** The rollers sit under the last input slot, however many lanes there are. */
+    private static final int ROLLERS_X = 57;
+    private static final int ROLLERS_BELOW_ROW = 20;
     /** Columns of the head; it loses a row off each side per step, ending in a single pixel. */
     private static final int ARROW_HEAD = 7;
     private static final int ARROW_BACK = 0xFF56616D;
@@ -35,15 +36,17 @@ public final class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
     private static final int ARROW_END = 0xFF55E7ED;
 
     private final AnimatedBar energyBar = new AnimatedBar();
-    private final AnimatedBar progressBar = new AnimatedBar();
+    private final AnimatedBar[] progressBars;
     private final TabStrip tabs;
 
     public CrusherScreen(CrusherMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title, CrusherMenu.IMAGE_WIDTH, 184);
+        super(menu, inventory, title, CrusherMenu.IMAGE_WIDTH, 184 + menu.extraHeight());
         // Title and inventory label stay against the left edge; the slots no longer sit under them.
         titleLabelX = ENERGY_X;
         inventoryLabelX = ENERGY_X;
-        inventoryLabelY = 90;
+        inventoryLabelY = 90 + menu.extraHeight();
+        progressBars = new AnimatedBar[menu.lanes()];
+        for (int lane = 0; lane < progressBars.length; lane++) progressBars[lane] = new AnimatedBar();
         tabs = new TabStrip(new UpgradeTab(menu, font), new SideConfigTab<>(menu, font),
                 new RedstoneControlTab<>(menu, font), new EnergyInfoTab(menu, font));
     }
@@ -56,16 +59,19 @@ public final class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
         drawPanel(graphics, x, y, imageWidth, imageHeight);
         drawSlots(graphics, x, y, menu.slots);
         // Energy stands on end down the left edge and fills from the bottom up.
-        graphics.fill(x + ENERGY_X, y + ENERGY_TOP, x + ENERGY_X + ENERGY_WIDTH, y + ENERGY_BOTTOM, BAR_BACK);
-        int energyHeight = ENERGY_BOTTOM - ENERGY_TOP - 2;
-        float energyFill = energyBar.width(menu.energyStored(), CrusherBlockEntity.CAPACITY,
+        int energyTop = y + energyTop();
+        graphics.fill(x + ENERGY_X, energyTop, x + ENERGY_X + ENERGY_WIDTH, energyTop + ENERGY_HEIGHT, BAR_BACK);
+        int energyHeight = ENERGY_HEIGHT - 2;
+        float energyFill = energyBar.width(menu.energyStored(), menu.energyCapacity(),
                 energyHeight, menu.isSynced());
-        drawVerticalGradientBar(graphics, x + ENERGY_X + 1, y + ENERGY_BOTTOM - 1, ENERGY_WIDTH - 2,
+        drawVerticalGradientBar(graphics, x + ENERGY_X + 1, energyTop + ENERGY_HEIGHT - 1, ENERGY_WIDTH - 2,
                 energyFill, ENERGY_START, ENERGY_END);
-        // Crushing progress runs from the input slot towards the output one.
-        float crushWidth = progressBar.width(menu.progress(), menu.progressTotal(), ARROW_WIDTH, menu.isSynced());
-        drawProgressArrow(graphics, x, y, crushWidth);
-        drawRollers(graphics, x + 57, y + 65, menu.isWorking());
+        // Each lane's crushing progress runs from its input slot towards its output one.
+        for (int lane = 0; lane < menu.lanes(); lane++) {
+            float crushWidth = progressBars[lane].width(menu.progress(lane), menu.progressTotal(lane), ARROW_WIDTH, menu.isSynced());
+            drawProgressArrow(graphics, x, y + menu.rowY(lane), crushWidth);
+        }
+        drawRollers(graphics, x + ROLLERS_X, y + menu.rowY(menu.lanes() - 1) + ROLLERS_BELOW_ROW, menu.isWorking());
         tabs.render(graphics, x, y, imageWidth, mouseX, mouseY);
     }
 
@@ -84,11 +90,11 @@ public final class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
      * at a straight edge. The last column is scaled to the leftover fraction, keeping the animation
      * off whole-pixel steps the way the gradient bars do.
      */
-    private void drawProgressArrow(GuiGraphicsExtractor graphics, int x, int y, float filled) {
+    private void drawProgressArrow(GuiGraphicsExtractor graphics, int x, int rowY, float filled) {
         for (int column = 0; column < ARROW_WIDTH; column++) {
             int left = x + ARROW_X + column;
-            int top = y + arrowTop(column);
-            int bottom = y + arrowBottom(column);
+            int top = rowY + arrowTop(column);
+            int bottom = rowY + arrowBottom(column);
             float covered = Math.clamp(filled - column, 0.0F, 1.0F);
             graphics.fill(left, top, left + 1, bottom, ARROW_BACK);
             if (covered <= 0) continue;
@@ -129,13 +135,19 @@ public final class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
         return Math.round(from + (to - from) * t);
     }
 
+    /** The column's top, relative to the panel: centred on the block of slot rows (29 on a single lane). */
+    private int energyTop() {
+        int rowsMiddle = menu.rowY(0) + menu.lanes() * CrusherMenu.ROW_SPACING / 2;
+        return rowsMiddle - (ENERGY_HEIGHT + 1) / 2;
+    }
+
     @Override
     protected void extractTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         super.extractTooltip(graphics, mouseX, mouseY);
         // The column carries the readout that used to be printed under it.
-        energyTooltip(graphics, mouseX, mouseY, leftPos + ENERGY_X, topPos + ENERGY_TOP,
-                ENERGY_WIDTH, ENERGY_BOTTOM - ENERGY_TOP,
-                menu.energyStored(), CrusherBlockEntity.CAPACITY);
+        energyTooltip(graphics, mouseX, mouseY, leftPos + ENERGY_X, topPos + energyTop(),
+                ENERGY_WIDTH, ENERGY_HEIGHT,
+                menu.energyStored(), menu.energyCapacity());
         tabs.extractTooltip(graphics, mouseX, mouseY);
     }
 
@@ -146,7 +158,7 @@ public final class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
 
     @Override
     protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        graphics.text(font, title, titleLabelX, titleLabelY, TITLE, false);
+        drawMachineTitle(graphics, font, title, menu.mk(), titleLabelX, titleLabelY, imageWidth - titleLabelX - 7);
         graphics.text(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, TEXT, false);
     }
 }

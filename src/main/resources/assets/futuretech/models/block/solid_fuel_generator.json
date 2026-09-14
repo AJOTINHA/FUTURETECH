@@ -1,6 +1,6 @@
 {
   "textures": {
-    "front": "futuretech:block/solid_fuel_generator_front"
+    "front": "futuretech:block/solid_fuel_generator/solid_fuel_generator_front"
   },
   "parent": "futuretech:block/machine_base"
 }
