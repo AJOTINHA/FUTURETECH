@@ -1,7 +1,0 @@
-{
-  "parent": "futuretech:block/cable_mk1_arm",
-  "textures": {
-    "cable": "futuretech:block/item_cable",
-    "node": "futuretech:block/item_cable_node"
-  }
-}

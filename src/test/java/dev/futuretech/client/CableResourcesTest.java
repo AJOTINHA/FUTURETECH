@@ -134,23 +134,23 @@ class CableResourcesTest {
     @Test
     void itemCableReusesTheCableGeometryWithItsOwnSkin() throws Exception {
         for (String part : List.of("arm", "cap", "line", "node")) {
-            var model = model("futuretech:block/item_cable_" + part);
+            var model = model("futuretech:block/item_cable_opaque_" + part);
             assertEquals("futuretech:block/cable_mk1_" + part, model.get("parent").getAsString(), part);
             assertFalse(model.has("elements"), "No geometry of its own: " + part);
             var textures = model.getAsJsonObject("textures");
             assertEquals(2, textures.size(), "Only the core changes colour: " + part);
             for (var texture : textures.entrySet()) {
                 String path = texture.getValue().getAsString();
-                assertTrue(path.startsWith("futuretech:block/item_cable"), path);
+                assertTrue(path.startsWith("futuretech:block/item_cable_opaque"), path);
                 assertNotNull(getClass().getResource("/assets/futuretech/textures/"
                         + path.substring("futuretech:".length()) + ".png"), path);
             }
         }
-        var item = model("futuretech:item/item_cable");
+        var item = model("futuretech:item/item_cable_opaque");
         assertEquals("futuretech:item/cable_mk1", item.get("parent").getAsString());
         var energy = resource("blockstates/cable_mk1.json").toString();
-        var items = resource("blockstates/item_cable.json").toString();
-        assertEquals(energy.replace("futuretech:block/cable_mk1_", "futuretech:block/item_cable_"), items);
+        var items = resource("blockstates/item_cable_opaque.json").toString();
+        assertEquals(energy.replace("futuretech:block/cable_mk1_", "futuretech:block/item_cable_opaque_"), items);
     }
 
     @Test

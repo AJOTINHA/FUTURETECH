@@ -1,0 +1,7 @@
+{
+  "parent": "futuretech:block/cable_mk1_arm",
+  "textures": {
+    "cable": "futuretech:block/item_cable_opaque",
+    "node": "futuretech:block/item_cable_opaque_node"
+  }
+}

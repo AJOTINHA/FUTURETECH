@@ -38,7 +38,7 @@ public final class ModItems {
 
     public static final DeferredItem<BlockItem> CABLE_MK1 = ITEMS.registerSimpleBlockItem(ModBlocks.CABLE_MK1);
 
-    public static final DeferredItem<BlockItem> ITEM_CABLE = ITEMS.registerSimpleBlockItem(ModBlocks.ITEM_CABLE);
+    public static final DeferredItem<BlockItem> ITEM_CABLE_OPAQUE = ITEMS.registerSimpleBlockItem(ModBlocks.ITEM_CABLE_OPAQUE);
 
     /** Filter card for item cable connectors; its list and mode live in data components. */
     public static final DeferredItem<ItemFilterItem> FILTER = ITEMS.registerItem(

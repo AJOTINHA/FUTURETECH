@@ -66,7 +66,7 @@ public final class ItemCableBlockEntity extends AbstractCableBlockEntity {
 
     public ItemCableBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.ITEM_CABLE.get(), pos, state);
-        this.tier = state.getBlock() instanceof ItemCableBlock block ? block.tier() : ItemCableTier.STANDARD;
+        this.tier = state.getBlock() instanceof ItemCableBlock block ? block.tier() : ItemCableTier.OPAQUE;
     }
 
     public ItemCableTier tier() { return tier; }

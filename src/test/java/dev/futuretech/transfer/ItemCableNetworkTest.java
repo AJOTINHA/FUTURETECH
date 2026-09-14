@@ -24,8 +24,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(EphemeralTestServerProvider.class)
 class ItemCableNetworkTest {
-    private static final int BATCH = ItemCableTier.STANDARD.batch();
-    private static final int INTERVAL = ItemCableTier.STANDARD.interval();
+    private static final int BATCH = ItemCableTier.OPAQUE.batch();
+    private static final int INTERVAL = ItemCableTier.OPAQUE.interval();
     private static final BlockPos CABLE = BlockPos.ZERO;
 
     /**

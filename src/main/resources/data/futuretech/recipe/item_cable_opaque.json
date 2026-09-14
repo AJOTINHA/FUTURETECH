@@ -11,7 +11,7 @@
     "G": "minecraft:glass"
   },
   "result": {
-    "id": "futuretech:item_cable",
+    "id": "futuretech:item_cable_opaque",
     "count": 6
   }
 }
