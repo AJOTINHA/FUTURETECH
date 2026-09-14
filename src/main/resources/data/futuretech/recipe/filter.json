@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "INI",
+    "NNN",
+    "INI"
+  ],
+  "key": {
+    "I": "minecraft:iron_nugget",
+    "N": "minecraft:string"
+  },
+  "result": {
+    "id": "futuretech:filter",
+    "count": 1
+  }
+}

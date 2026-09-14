@@ -1,0 +1,2895 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "gui_light": "side",
+  "textures": {
+    "steel": "futuretech:item/filter_materials",
+    "gray": "futuretech:item/filter_materials",
+    "silver": "futuretech:item/filter_materials",
+    "cyan": "futuretech:item/filter_materials",
+    "particle": "futuretech:item/filter_materials"
+  },
+  "elements": [
+    {
+      "name": "frame_left",
+      "from": [
+        1.5,
+        1.5,
+        6.75
+      ],
+      "to": [
+        3,
+        14.5,
+        9.25
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "south": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        }
+      }
+    },
+    {
+      "name": "frame_right",
+      "from": [
+        13,
+        1.5,
+        6.75
+      ],
+      "to": [
+        14.5,
+        14.5,
+        9.25
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "south": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        }
+      }
+    },
+    {
+      "name": "frame_bottom",
+      "from": [
+        3,
+        1.5,
+        6.75
+      ],
+      "to": [
+        13,
+        3,
+        9.25
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "south": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        }
+      }
+    },
+    {
+      "name": "frame_top",
+      "from": [
+        3,
+        13,
+        6.75
+      ],
+      "to": [
+        13,
+        14.5,
+        9.25
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "south": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        }
+      }
+    },
+    {
+      "name": "mesh_vertical_0",
+      "from": [
+        4.0,
+        3,
+        7.6
+      ],
+      "to": [
+        4.5,
+        13,
+        8
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "south": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        }
+      }
+    },
+    {
+      "name": "mesh_horizontal_0",
+      "from": [
+        3,
+        4.0,
+        8
+      ],
+      "to": [
+        13,
+        4.5,
+        8.4
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "south": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        }
+      }
+    },
+    {
+      "name": "mesh_vertical_1",
+      "from": [
+        5.875,
+        3,
+        7.6
+      ],
+      "to": [
+        6.375,
+        13,
+        8
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "south": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        }
+      }
+    },
+    {
+      "name": "mesh_horizontal_1",
+      "from": [
+        3,
+        5.875,
+        8
+      ],
+      "to": [
+        13,
+        6.375,
+        8.4
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "south": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        }
+      }
+    },
+    {
+      "name": "mesh_vertical_2",
+      "from": [
+        7.75,
+        3,
+        7.6
+      ],
+      "to": [
+        8.25,
+        13,
+        8
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "south": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        }
+      }
+    },
+    {
+      "name": "mesh_horizontal_2",
+      "from": [
+        3,
+        7.75,
+        8
+      ],
+      "to": [
+        13,
+        8.25,
+        8.4
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "south": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        }
+      }
+    },
+    {
+      "name": "mesh_vertical_3",
+      "from": [
+        9.625,
+        3,
+        7.6
+      ],
+      "to": [
+        10.125,
+        13,
+        8
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "south": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        }
+      }
+    },
+    {
+      "name": "mesh_horizontal_3",
+      "from": [
+        3,
+        9.625,
+        8
+      ],
+      "to": [
+        13,
+        10.125,
+        8.4
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "south": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        }
+      }
+    },
+    {
+      "name": "mesh_vertical_4",
+      "from": [
+        11.5,
+        3,
+        7.6
+      ],
+      "to": [
+        12.0,
+        13,
+        8
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "south": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        }
+      }
+    },
+    {
+      "name": "mesh_horizontal_4",
+      "from": [
+        3,
+        11.5,
+        8
+      ],
+      "to": [
+        13,
+        12.0,
+        8.4
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "south": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            8.5,
+            7.5,
+            15.5
+          ],
+          "texture": "#silver"
+        }
+      }
+    },
+    {
+      "name": "trim_left_front",
+      "from": [
+        1.75,
+        3,
+        6.5
+      ],
+      "to": [
+        2.125,
+        13,
+        6.75
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "south": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "east": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "west": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "up": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "down": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        }
+      }
+    },
+    {
+      "name": "trim_right_front",
+      "from": [
+        13.875,
+        3,
+        6.5
+      ],
+      "to": [
+        14.25,
+        13,
+        6.75
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "south": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "east": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "west": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "up": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "down": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        }
+      }
+    },
+    {
+      "name": "trim_top_front",
+      "from": [
+        3,
+        13.875,
+        6.5
+      ],
+      "to": [
+        13,
+        14.25,
+        6.75
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "south": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "east": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "west": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "up": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "down": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        }
+      }
+    },
+    {
+      "name": "trim_bottom_front",
+      "from": [
+        3,
+        1.75,
+        6.5
+      ],
+      "to": [
+        13,
+        2.125,
+        6.75
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "south": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "east": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "west": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "up": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "down": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        }
+      }
+    },
+    {
+      "name": "bolt_front_1.75_1.75",
+      "from": [
+        1.75,
+        1.75,
+        6.5
+      ],
+      "to": [
+        2.75,
+        2.75,
+        6.75
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "south": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        }
+      }
+    },
+    {
+      "name": "bolt_head_front_1.75_1.75",
+      "from": [
+        2.0,
+        2.0,
+        6.375
+      ],
+      "to": [
+        2.5,
+        2.5,
+        6.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "south": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "east": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "west": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "up": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "down": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        }
+      }
+    },
+    {
+      "name": "bolt_front_1.75_13.25",
+      "from": [
+        1.75,
+        13.25,
+        6.5
+      ],
+      "to": [
+        2.75,
+        14.25,
+        6.75
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "south": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        }
+      }
+    },
+    {
+      "name": "bolt_head_front_1.75_13.25",
+      "from": [
+        2.0,
+        13.5,
+        6.375
+      ],
+      "to": [
+        2.5,
+        14.0,
+        6.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "south": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "east": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "west": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "up": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "down": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        }
+      }
+    },
+    {
+      "name": "bolt_front_13.25_1.75",
+      "from": [
+        13.25,
+        1.75,
+        6.5
+      ],
+      "to": [
+        14.25,
+        2.75,
+        6.75
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "south": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        }
+      }
+    },
+    {
+      "name": "bolt_head_front_13.25_1.75",
+      "from": [
+        13.5,
+        2.0,
+        6.375
+      ],
+      "to": [
+        14.0,
+        2.5,
+        6.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "south": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "east": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "west": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "up": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "down": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        }
+      }
+    },
+    {
+      "name": "bolt_front_13.25_13.25",
+      "from": [
+        13.25,
+        13.25,
+        6.5
+      ],
+      "to": [
+        14.25,
+        14.25,
+        6.75
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "south": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        }
+      }
+    },
+    {
+      "name": "bolt_head_front_13.25_13.25",
+      "from": [
+        13.5,
+        13.5,
+        6.375
+      ],
+      "to": [
+        14.0,
+        14.0,
+        6.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "south": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "east": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "west": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "up": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "down": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        }
+      }
+    },
+    {
+      "name": "cyan_marker_front",
+      "from": [
+        7,
+        2.375,
+        6.5
+      ],
+      "to": [
+        9,
+        2.75,
+        6.75
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.5,
+            8.5,
+            15.5,
+            15.5
+          ],
+          "texture": "#cyan"
+        },
+        "south": {
+          "uv": [
+            8.5,
+            8.5,
+            15.5,
+            15.5
+          ],
+          "texture": "#cyan"
+        },
+        "east": {
+          "uv": [
+            8.5,
+            8.5,
+            15.5,
+            15.5
+          ],
+          "texture": "#cyan"
+        },
+        "west": {
+          "uv": [
+            8.5,
+            8.5,
+            15.5,
+            15.5
+          ],
+          "texture": "#cyan"
+        },
+        "up": {
+          "uv": [
+            8.5,
+            8.5,
+            15.5,
+            15.5
+          ],
+          "texture": "#cyan"
+        },
+        "down": {
+          "uv": [
+            8.5,
+            8.5,
+            15.5,
+            15.5
+          ],
+          "texture": "#cyan"
+        }
+      }
+    },
+    {
+      "name": "trim_left_back",
+      "from": [
+        1.75,
+        3,
+        9.25
+      ],
+      "to": [
+        2.125,
+        13,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "south": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "east": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "west": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "up": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "down": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        }
+      }
+    },
+    {
+      "name": "trim_right_back",
+      "from": [
+        13.875,
+        3,
+        9.25
+      ],
+      "to": [
+        14.25,
+        13,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "south": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "east": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "west": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "up": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "down": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        }
+      }
+    },
+    {
+      "name": "trim_top_back",
+      "from": [
+        3,
+        13.875,
+        9.25
+      ],
+      "to": [
+        13,
+        14.25,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "south": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "east": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "west": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "up": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "down": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        }
+      }
+    },
+    {
+      "name": "trim_bottom_back",
+      "from": [
+        3,
+        1.75,
+        9.25
+      ],
+      "to": [
+        13,
+        2.125,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "south": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "east": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "west": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "up": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "down": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        }
+      }
+    },
+    {
+      "name": "bolt_back_1.75_1.75",
+      "from": [
+        1.75,
+        1.75,
+        9.25
+      ],
+      "to": [
+        2.75,
+        2.75,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "south": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        }
+      }
+    },
+    {
+      "name": "bolt_head_back_1.75_1.75",
+      "from": [
+        2.0,
+        2.0,
+        9.5
+      ],
+      "to": [
+        2.5,
+        2.5,
+        9.625
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "south": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "east": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "west": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "up": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "down": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        }
+      }
+    },
+    {
+      "name": "bolt_back_1.75_13.25",
+      "from": [
+        1.75,
+        13.25,
+        9.25
+      ],
+      "to": [
+        2.75,
+        14.25,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "south": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        }
+      }
+    },
+    {
+      "name": "bolt_head_back_1.75_13.25",
+      "from": [
+        2.0,
+        13.5,
+        9.5
+      ],
+      "to": [
+        2.5,
+        14.0,
+        9.625
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "south": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "east": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "west": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "up": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "down": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        }
+      }
+    },
+    {
+      "name": "bolt_back_13.25_1.75",
+      "from": [
+        13.25,
+        1.75,
+        9.25
+      ],
+      "to": [
+        14.25,
+        2.75,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "south": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        }
+      }
+    },
+    {
+      "name": "bolt_head_back_13.25_1.75",
+      "from": [
+        13.5,
+        2.0,
+        9.5
+      ],
+      "to": [
+        14.0,
+        2.5,
+        9.625
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "south": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "east": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "west": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "up": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "down": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        }
+      }
+    },
+    {
+      "name": "bolt_back_13.25_13.25",
+      "from": [
+        13.25,
+        13.25,
+        9.25
+      ],
+      "to": [
+        14.25,
+        14.25,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "south": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "east": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "west": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "up": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        },
+        "down": {
+          "uv": [
+            0.5,
+            0.5,
+            7.5,
+            7.5
+          ],
+          "texture": "#steel"
+        }
+      }
+    },
+    {
+      "name": "bolt_head_back_13.25_13.25",
+      "from": [
+        13.5,
+        13.5,
+        9.5
+      ],
+      "to": [
+        14.0,
+        14.0,
+        9.625
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "south": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "east": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "west": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "up": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        },
+        "down": {
+          "uv": [
+            8.5,
+            0.5,
+            15.5,
+            7.5
+          ],
+          "texture": "#gray"
+        }
+      }
+    },
+    {
+      "name": "cyan_marker_back",
+      "from": [
+        7,
+        2.375,
+        9.25
+      ],
+      "to": [
+        9,
+        2.75,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.5,
+            8.5,
+            15.5,
+            15.5
+          ],
+          "texture": "#cyan"
+        },
+        "south": {
+          "uv": [
+            8.5,
+            8.5,
+            15.5,
+            15.5
+          ],
+          "texture": "#cyan"
+        },
+        "east": {
+          "uv": [
+            8.5,
+            8.5,
+            15.5,
+            15.5
+          ],
+          "texture": "#cyan"
+        },
+        "west": {
+          "uv": [
+            8.5,
+            8.5,
+            15.5,
+            15.5
+          ],
+          "texture": "#cyan"
+        },
+        "up": {
+          "uv": [
+            8.5,
+            8.5,
+            15.5,
+            15.5
+          ],
+          "texture": "#cyan"
+        },
+        "down": {
+          "uv": [
+            8.5,
+            8.5,
+            15.5,
+            15.5
+          ],
+          "texture": "#cyan"
+        }
+      }
+    }
+  ],
+  "display": {
+    "gui": {
+      "rotation": [
+        10,
+        -20,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.05,
+        1.05,
+        1.05
+      ]
+    },
+    "ground": {
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "translation": [
+        0,
+        3,
+        0
+      ],
+      "scale": [
+        0.6,
+        0.6,
+        0.6
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.85,
+        0.85,
+        0.85
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        0,
+        -90,
+        15
+      ],
+      "translation": [
+        0,
+        2,
+        0
+      ],
+      "scale": [
+        0.65,
+        0.65,
+        0.65
+      ]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [
+        0,
+        90,
+        -15
+      ],
+      "translation": [
+        0,
+        2,
+        0
+      ],
+      "scale": [
+        0.65,
+        0.65,
+        0.65
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        -30,
+        5
+      ],
+      "translation": [
+        0,
+        1,
+        0
+      ],
+      "scale": [
+        0.75,
+        0.75,
+        0.75
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        0,
+        30,
+        -5
+      ],
+      "translation": [
+        0,
+        1,
+        0
+      ],
+      "scale": [
+        0.75,
+        0.75,
+        0.75
+      ]
+    }
+  }
+}

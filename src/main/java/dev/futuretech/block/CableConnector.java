@@ -41,10 +41,14 @@ public final class CableConnector {
         };
     }
 
-    /** The server's existing connection bit already establishes energy compatibility. */
+    /**
+     * The server's existing connection bit already establishes compatibility; a collar goes on every
+     * connection that is not a run continuing into another cable of the same kind.
+     */
     public static boolean connectsToMachine(BlockState cable, BlockState neighbor, Direction side) {
-        return cable.getValue(CableBlock.PROPERTY_BY_DIRECTION.get(side))
-                && !neighbor.isAir() && !(neighbor.getBlock() instanceof CableBlock);
+        return cable.getValue(AbstractCableBlock.PROPERTY_BY_DIRECTION.get(side))
+                && !neighbor.isAir()
+                && !(cable.getBlock() instanceof AbstractCableBlock block && block.joins(neighbor));
     }
 
     public static int mask(BlockGetter level, BlockPos pos, BlockState state) {

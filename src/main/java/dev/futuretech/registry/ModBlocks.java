@@ -6,6 +6,8 @@ import dev.futuretech.block.BatteryTier;
 import dev.futuretech.block.CableBlock;
 import dev.futuretech.block.CableTier;
 import dev.futuretech.block.ElectricFurnaceBlock;
+import dev.futuretech.block.ItemCableBlock;
+import dev.futuretech.block.ItemCableTier;
 import dev.futuretech.block.CrusherBlock;
 import dev.futuretech.block.SolidFuelGeneratorBlock;
 import net.minecraft.world.level.block.Block;
@@ -62,6 +64,17 @@ public final class ModBlocks {
     private static DeferredBlock<CableBlock> registerCable(CableTier tier) {
         return BLOCKS.registerBlock(tier.blockName(), properties -> new CableBlock(tier, properties), properties -> properties
                     .mapColor(MapColor.COLOR_ORANGE)
+                    .strength(1.0F, 3.0F)
+                    .sound(SoundType.COPPER)
+                    .dynamicShape()
+                    .noOcclusion());
+    }
+
+    public static final DeferredBlock<ItemCableBlock> ITEM_CABLE_MK1 = registerItemCable(ItemCableTier.MK1);
+
+    private static DeferredBlock<ItemCableBlock> registerItemCable(ItemCableTier tier) {
+        return BLOCKS.registerBlock(tier.blockName(), properties -> new ItemCableBlock(tier, properties), properties -> properties
+                    .mapColor(MapColor.COLOR_YELLOW)
                     .strength(1.0F, 3.0F)
                     .sound(SoundType.COPPER)
                     .dynamicShape()

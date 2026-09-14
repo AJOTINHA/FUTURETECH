@@ -26,6 +26,13 @@ public final class SideConfigVisuals {
         return packed;
     }
 
+    /** Every face on one mode, for render paths that draw before a block entity's data arrives. */
+    public static int faceModes(SideMode uniform) {
+        int packed = 0;
+        for (Direction side : Direction.values()) packed |= uniform.ordinal() << (side.ordinal() * BITS);
+        return packed;
+    }
+
     public static SideMode mode(int packed, Direction side) {
         return SideMode.byOrdinal((packed >>> (side.ordinal() * BITS)) & MASK);
     }

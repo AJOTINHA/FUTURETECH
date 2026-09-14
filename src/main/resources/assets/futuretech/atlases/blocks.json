@@ -10,6 +10,18 @@
     },
     {
       "type": "single",
+      "resource": "futuretech:block/cable_connector_insert"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/cable_connector_extract"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/cable_connector_both"
+    },
+    {
+      "type": "single",
       "resource": "futuretech:block/battery_port_input"
     },
     {
@@ -39,6 +51,10 @@
     {
       "type": "single",
       "resource": "futuretech:block/battery_frame_preview_output"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/item_cable_contact"
     }
   ]
 }

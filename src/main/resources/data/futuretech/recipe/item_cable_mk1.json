@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "III",
+    "GGG",
+    "III"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "G": "minecraft:glass"
+  },
+  "result": {
+    "id": "futuretech:item_cable_mk1",
+    "count": 6
+  }
+}

@@ -3,6 +3,7 @@ package dev.futuretech.registry;
 import dev.futuretech.FutureTech;
 import dev.futuretech.block.BatteryBlock;
 import dev.futuretech.item.BatteryBlockItem;
+import dev.futuretech.item.ItemFilterItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.registries.DeferredBlock;
@@ -36,6 +37,12 @@ public final class ModItems {
     }
 
     public static final DeferredItem<BlockItem> CABLE_MK1 = ITEMS.registerSimpleBlockItem(ModBlocks.CABLE_MK1);
+
+    public static final DeferredItem<BlockItem> ITEM_CABLE_MK1 = ITEMS.registerSimpleBlockItem(ModBlocks.ITEM_CABLE_MK1);
+
+    /** Filter card for item cable connectors; its list and mode live in data components. */
+    public static final DeferredItem<ItemFilterItem> FILTER = ITEMS.registerItem(
+            "filter", ItemFilterItem::new, properties -> properties.stacksTo(1));
 
     private ModItems() {}
 }

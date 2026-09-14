@@ -27,10 +27,32 @@ class CableNetworkTest {
     private static final int THROUGHPUT = CableTier.MK1.throughput();
     private static final BlockPos CABLE = BlockPos.ZERO;
 
-    /** Stand-in for a block next to the cable; {@code handler} may be null for blocks without energy. */
+    /**
+     * Stand-in for a block next to the cable; {@code handler} may be null for blocks without energy.
+     * These connectors all deliver, which is what a cable face does until the player narrows it.
+     */
     private record FakeEndpoint(Direction side, @Nullable EnergyHandler handler) implements CableNetwork.Endpoint {
         @Override
         public CableNetwork.EndpointKey key() { return new CableNetwork.EndpointKey(CABLE, side); }
+
+        @Override
+        public boolean delivers() { return true; }
+
+        @Override
+        public boolean pulls() { return false; }
+    }
+
+    /** A connector the player set to extract only: energy may enter the cable, never leave through it. */
+    private record ExtractOnlyEndpoint(Direction side, @Nullable EnergyHandler handler)
+            implements CableNetwork.Endpoint {
+        @Override
+        public CableNetwork.EndpointKey key() { return new CableNetwork.EndpointKey(CABLE, side); }
+
+        @Override
+        public boolean delivers() { return false; }
+
+        @Override
+        public boolean pulls() { return true; }
     }
 
     private static CableNetwork network(CableNetwork.Endpoint... endpoints) {
@@ -58,6 +80,44 @@ class CableNetworkTest {
         assertEquals(10, full.getAmountAsInt());
         assertEquals(0, source.getAmountAsInt());
         assertEquals(0, CableNetwork.distribute(source, List.of(big)));
+    }
+
+    @Test
+    void aConnectorSetToExtractOnlyNeverReceivesTheDistribution(MinecraftServer server) {
+        var machine = new SimpleEnergyHandler(10_000);
+        var closed = new SimpleEnergyHandler(10_000);
+        var network = network(new FakeEndpoint(Direction.NORTH, machine),
+                new ExtractOnlyEndpoint(Direction.SOUTH, closed));
+        assertEquals(THROUGHPUT, insert(network, Direction.UP, THROUGHPUT));
+        network.tick(1);
+        // Everything the network held went out through the one connector that still delivers.
+        assertEquals(THROUGHPUT, machine.getAmountAsInt());
+        assertEquals(0, closed.getAmountAsInt());
+        assertEquals(THROUGHPUT, network.lastMoved());
+    }
+
+    @Test
+    void aConnectorSetToExtractOnlyPullsFromABlockThatNeverPushes(MinecraftServer server) {
+        // A battery only pushes through its own output faces. Set to input, it just sits on its
+        // charge, so the connector has to do the pulling or nothing ever comes out.
+        var hoarder = new SimpleEnergyHandler(50_000, 0, 50_000, 50_000);
+        var machine = new SimpleEnergyHandler(10_000);
+        var network = network(new ExtractOnlyEndpoint(Direction.NORTH, hoarder),
+                new FakeEndpoint(Direction.SOUTH, machine));
+        network.tick(1);
+        assertEquals(THROUGHPUT, machine.getAmountAsInt());
+        assertEquals(50_000 - THROUGHPUT, hoarder.getAmountAsInt());
+    }
+
+    @Test
+    void anOrdinaryConnectorNeverDrainsTheBlockItIsFeeding(MinecraftServer server) {
+        // The default leaves both directions open, and a cable touching a furnace must not start
+        // siphoning it. Only a connector narrowed to extract alone pumps.
+        var machine = new SimpleEnergyHandler(10_000, 10_000, 10_000, 4_000);
+        var network = network(new FakeEndpoint(Direction.NORTH, machine));
+        network.tick(1);
+        assertEquals(4_000, machine.getAmountAsInt());
+        assertEquals(0, network.stored());
     }
 
     @Test
@@ -109,7 +169,13 @@ class CableNetworkTest {
 
     /** Endpoint on an explicit cable face, for a network that touches one block from two sides. */
     private record FakeEndpointAt(CableNetwork.EndpointKey key, @Nullable EnergyHandler handler)
-            implements CableNetwork.Endpoint {}
+            implements CableNetwork.Endpoint {
+        @Override
+        public boolean delivers() { return true; }
+
+        @Override
+        public boolean pulls() { return false; }
+    }
 
     @Test
     void energyIsNotHandedBackThroughASecondFaceOfTheSameBlock(MinecraftServer server) {

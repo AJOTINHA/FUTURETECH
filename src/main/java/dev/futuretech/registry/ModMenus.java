@@ -2,12 +2,15 @@ package dev.futuretech.registry;
 
 import dev.futuretech.FutureTech;
 import dev.futuretech.menu.BatteryMenu;
+import dev.futuretech.menu.CableConnectorMenu;
 import dev.futuretech.menu.ElectricFurnaceMenu;
+import dev.futuretech.menu.ItemFilterMenu;
 import dev.futuretech.menu.CrusherMenu;
 import dev.futuretech.menu.SolidFuelGeneratorMenu;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.MenuType;
+import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -25,6 +28,13 @@ public final class ModMenus {
 
     public static final DeferredHolder<MenuType<?>, MenuType<CrusherMenu>> CRUSHER = TYPES.register(
             "crusher", () -> new MenuType<>(CrusherMenu::new, FeatureFlags.DEFAULT_FLAGS));
+
+    // The face and the kind of cable ride in the opening packet, so this one needs the extra data.
+    public static final DeferredHolder<MenuType<?>, MenuType<CableConnectorMenu>> CABLE_CONNECTOR = TYPES.register(
+            "cable_connector", () -> IMenuTypeExtension.create(CableConnectorMenu::new));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<ItemFilterMenu>> ITEM_FILTER = TYPES.register(
+            "item_filter", () -> IMenuTypeExtension.create(ItemFilterMenu::new));
 
     private ModMenus() {}
 }

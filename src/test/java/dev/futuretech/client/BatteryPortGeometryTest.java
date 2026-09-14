@@ -7,21 +7,31 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class BatteryPortGeometryTest {
     @Test
-    void plateHasThreePhysicalLedgesWithoutGapsAroundTheSleeve() {
+    void plateMeetsTheCollarFlushThenDescendsInPhysicalLedges() {
         var steel = BatteryPortGeometry.BOXES.stream().filter(b -> !b.rim()).toList();
         assertEquals(3, steel.stream().map(BatteryPortGeometry.Box::y1).distinct().count());
-        // Probe between the frame and connector at the left edge: each step is lower.
+        // The outer ring has to reach the face across the whole footprint of the cable's collar,
+        // which spans 2.5..13.5. Anything lower leaves the collar's flange over a recess, and the
+        // joint shows a gap all the way around.
+        for (float probe : new float[]{2.75F, 3.25F, 13.25F}) {
+            final float px = probe;
+            assertEquals(16, steel.stream().filter(b -> px > b.x0() && px < b.x1() && 8 > b.z0() && 8 < b.z1())
+                    .findFirst().orElseThrow().y1(), "The collar's flange must land on solid steel at " + probe);
+        }
+        // Probe inward from that ring: each step is lower.
         float previousHeight = 16;
-        for (float x : new float[]{3, 3.75F, 4.5F}) {
+        for (float x : new float[]{4.25F, 4.75F}) {
             float top = steel.stream().filter(b -> x > b.x0() && x < b.x1() && 8 > b.z0() && 8 < b.z1())
                     .findFirst().orElseThrow().y1();
             assertTrue(top < previousHeight);
             previousHeight = top;
         }
-        // All of the old plate footprint remains covered except the real center opening.
+        // All of the old plate footprint remains covered except the real center opening and the
+        // four corners, where the frame's own posts reach the face and the ring stays clear of them.
         for (float x = 2.875F; x < 13.25F; x += .25F) {
             for (float z = 2.875F; z < 13.25F; z += .25F) {
                 if (x > 6 && x < 10 && z > 6 && z < 10) continue;
+                if ((x < 3 || x > 13) && (z < 3 || z > 13)) continue;
                 final float px = x, pz = z;
                 assertTrue(BatteryPortGeometry.BOXES.stream().anyMatch(b ->
                         px >= b.x0() && px <= b.x1() && pz >= b.z0() && pz <= b.z1()));

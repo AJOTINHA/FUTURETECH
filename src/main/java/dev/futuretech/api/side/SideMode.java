@@ -29,6 +29,12 @@ public enum SideMode implements StringRepresentable {
     /** Translation key of the player-facing name. */
     public String translationKey() { return "gui.futuretech.mode." + serializedName; }
 
+    /** The mode that allows exactly these two directions; the inverse of the two accessors above. */
+    public static SideMode of(boolean input, boolean output) {
+        if (input) return output ? BOTH : INPUT;
+        return output ? OUTPUT : NONE;
+    }
+
     public static SideMode byOrdinal(int ordinal) {
         SideMode[] modes = values();
         return modes[Math.clamp(ordinal, 0, modes.length - 1)];

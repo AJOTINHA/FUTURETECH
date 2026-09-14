@@ -1,5 +1,7 @@
 package dev.futuretech.client;
 
+import dev.futuretech.api.side.SideConfigVisuals;
+import dev.futuretech.api.side.SideMode;
 import dev.futuretech.block.CableBlock;
 import dev.futuretech.block.CableConnector;
 import dev.futuretech.registry.ModBlocks;
@@ -16,6 +18,7 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
+import net.neoforged.neoforge.model.data.ModelData;
 import net.neoforged.testframework.junit.EphemeralTestServerProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,19 +65,33 @@ class CableConnectorModelTest {
     };
 
     private static BlockAndTintGetter snapshot(Map<BlockPos,BlockState> states) {
+        return snapshot(states,ModelData.EMPTY);
+    }
+
+    private static BlockAndTintGetter snapshot(Map<BlockPos,BlockState> states, ModelData modelData) {
         return (BlockAndTintGetter)Proxy.newProxyInstance(BlockAndTintGetter.class.getClassLoader(),
                 new Class<?>[]{BlockAndTintGetter.class},(proxy,method,args)-> {
                     if (method.getName().equals("getBlockState")) return states.getOrDefault(args[0],Blocks.AIR.defaultBlockState());
+                    if (method.getName().equals("getModelData")) return modelData;
                     throw new UnsupportedOperationException(method.getName());
                 });
+    }
+
+    /** Every mode resolves to the same stand-in, so tests that ignore the band still work. */
+    private static Map<Direction,Map<SideMode,BlockStateModelPart>> uniformParts(BlockStateModelPart part) {
+        var parts=new EnumMap<Direction,Map<SideMode,BlockStateModelPart>>(Direction.class);
+        for (Direction side : Direction.values()) {
+            var perMode=new EnumMap<SideMode,BlockStateModelPart>(SideMode.class);
+            for (SideMode mode : SideMode.values()) perMode.put(mode,part);
+            parts.put(side,perMode);
+        }
+        return parts;
     }
 
     @Test
     void connectorsFollowMachineNeighborsInAllSixDirectionsWithoutExtraBlockStates(MinecraftServer server) {
         var cable=ModBlocks.CABLE_MK1.get().defaultBlockState();
-        var parts=new EnumMap<Direction,BlockStateModelPart>(Direction.class);
-        for (Direction side : Direction.values()) parts.put(side,CONNECTOR);
-        var model=new CableConnectorModel(BASE,parts);
+        var model=new CableConnectorModel(BASE,uniformParts(CONNECTOR));
         var states=new HashMap<BlockPos,BlockState>();
         var level=snapshot(states);
         for (Direction side : Direction.values()) {
@@ -102,6 +119,24 @@ class CableConnectorModelTest {
             assertTrue(output.isEmpty(),"Removed machines leave no collar");
         }
         assertEquals(64,cable.getBlock().getStateDefinition().getPossibleStates().size());
+    }
+
+    @Test
+    void cablesOfDifferentKindsAreNeighboursNotRuns(MinecraftServer server) {
+        // An item cable beside an energy cable is a machine as far as either is concerned: the run
+        // ends in a collar there, and only a cable of the same kind continues it.
+        var model=new CableConnectorModel(BASE,uniformParts(CONNECTOR));
+        var energy=ModBlocks.CABLE_MK1.get().defaultBlockState();
+        var items=ModBlocks.ITEM_CABLE_MK1.get().defaultBlockState();
+        for (var pair : List.of(List.of(energy,items),List.of(items,energy))) {
+            var connected=pair.get(0).setValue(CableBlock.PROPERTY_BY_DIRECTION.get(Direction.NORTH),true);
+            var output=new ArrayList<BlockStateModelPart>();
+            model.collectParts(snapshot(Map.of(BlockPos.ZERO.north(),pair.get(1))),BlockPos.ZERO,connected,RandomSource.create(),output);
+            assertEquals(List.of(CONNECTOR),output,"Other kind of cable gets a collar");
+            output.clear();
+            model.collectParts(snapshot(Map.of(BlockPos.ZERO.north(),pair.get(0))),BlockPos.ZERO,connected,RandomSource.create(),output);
+            assertTrue(output.isEmpty(),"Same kind of cable is a run");
+        }
     }
 
     @Test

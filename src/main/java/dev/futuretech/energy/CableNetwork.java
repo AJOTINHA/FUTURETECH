@@ -1,5 +1,6 @@
 package dev.futuretech.energy;
 
+import dev.futuretech.api.side.SideMode;
 import dev.futuretech.block.CableBlock;
 import dev.futuretech.block.entity.CableBlockEntity;
 import net.minecraft.core.BlockPos;
@@ -34,6 +35,16 @@ public final class CableNetwork {
     /** Resolves the energy handler of the block beyond an endpoint; may change as blocks are placed. */
     public interface Endpoint {
         EndpointKey key();
+
+        /** Whether this connector hands energy to its neighbour; a connector set to extract only does not. */
+        boolean delivers();
+
+        /**
+         * Whether this connector pulls energy out of its neighbour itself, instead of waiting to be
+         * pushed. Only a connector narrowed to extract alone does: one that still inserts is an
+         * ordinary junction, and pulling there would drain every machine a cable happens to touch.
+         */
+        boolean pulls();
 
         @Nullable EnergyHandler handler();
     }
@@ -76,8 +87,13 @@ public final class CableNetwork {
                 if (level.getBlockState(neighbour).getBlock() instanceof CableBlock) {
                     if (cables.add(neighbour)) queue.add(neighbour);
                 } else {
-                    endpoints.add(new CachedEndpoint(new EndpointKey(pos, side), BlockCapabilityCache.create(
-                            Capabilities.Energy.BLOCK, level, neighbour, side.getOpposite())));
+                    // Captured here rather than read per tick: changing a connector invalidates the
+                    // network, so a rebuilt one always carries current modes.
+                    SideMode mode = cable.connectors().mode(side);
+                    endpoints.add(new CachedEndpoint(new EndpointKey(pos, side),
+                            mode.allowsOutput(), mode.allowsInput() && !mode.allowsOutput(),
+                            BlockCapabilityCache.create(
+                                    Capabilities.Energy.BLOCK, level, neighbour, side.getOpposite())));
                 }
             }
         }
@@ -139,8 +155,16 @@ public final class CableNetwork {
         if (gameTime == lastTick) return;
         lastTick = gameTime;
         buffer.beginTick();
+        // Extract-only connectors act as pumps: nothing else in the mod pulls, so a block that
+        // merely holds energy without pushing would otherwise never be drained.
+        for (Endpoint endpoint : endpoints) {
+            if (!endpoint.pulls() || buffer.inputRemaining() <= 0) continue;
+            EnergyHandler source = endpoint.handler();
+            if (source != null) EnergyHandlerUtil.move(source, buffer, buffer.inputRemaining(), null);
+        }
         List<EnergyHandler> sinks = new ArrayList<>();
         for (Endpoint endpoint : endpoints) {
+            if (!endpoint.delivers()) continue;
             if (fedSinceLastDistribution.contains(endpoint.key().neighbour())) continue;
             EnergyHandler handler = endpoint.handler();
             if (handler != null) sinks.add(handler);
@@ -169,8 +193,8 @@ public final class CableNetwork {
         return moved;
     }
 
-    private record CachedEndpoint(EndpointKey key, BlockCapabilityCache<EnergyHandler, Direction> cache)
-            implements Endpoint {
+    private record CachedEndpoint(EndpointKey key, boolean delivers, boolean pulls,
+                                 BlockCapabilityCache<EnergyHandler, Direction> cache) implements Endpoint {
         @Override
         public @Nullable EnergyHandler handler() { return cache.getCapability(); }
     }

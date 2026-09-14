@@ -11,20 +11,27 @@ public final class BatteryPortGeometry {
     public record Box(float x0, float y0, float z0, float x1, float y1, float z1, boolean rim) {}
 
     public static final List<Box> BOXES = List.of(
-            // Three real ledges descend toward the connector. These change the silhouette
-            // and expose vertical risers instead of painting steps onto one flat plate.
-            new Box(2.75F, 14, 2.75F, 3.5F, 15.65F, 13.25F, false),
-            new Box(12.5F, 14, 2.75F, 13.25F, 15.65F, 13.25F, false),
-            new Box(3.5F, 14, 2.75F, 12.5F, 15.65F, 3.5F, false),
-            new Box(3.5F, 14, 12.5F, 12.5F, 15.65F, 13.25F, false),
-            new Box(3.5F, 14, 3.5F, 4.25F, 15.05F, 12.5F, false),
-            new Box(11.75F, 14, 3.5F, 12.5F, 15.05F, 12.5F, false),
-            new Box(4.25F, 14, 3.5F, 11.75F, 15.05F, 4.25F, false),
-            new Box(4.25F, 14, 11.75F, 11.75F, 15.05F, 12.5F, false),
-            new Box(4.25F, 14, 4.25F, 5, 14.5F, 11.75F, false),
-            new Box(11, 14, 4.25F, 11.75F, 14.5F, 11.75F, false),
-            new Box(5, 14, 4.25F, 11, 14.5F, 5, false),
-            new Box(5, 14, 11, 11, 14.5F, 11.75F, false),
+            // Outer ring, flush with the face, under the cable's collar from CableConnector.BOXES:
+            // 2.5..13.5 outside, 4..12 inside. The collar's flange lands on steel across its whole
+            // width, which is what closes the gap around the joint.
+            //
+            // Each band stops at 3 and 13 on its long axis so the ring never runs into the frame's
+            // corner posts, which occupy 0..3 and 13..16 and already reach the face themselves.
+            // The four squares left open are exactly what those posts fill.
+            new Box(2.5F, 14, 3, 4, 16, 13, false),
+            new Box(12, 14, 3, 13.5F, 16, 13, false),
+            new Box(3, 14, 2.5F, 13, 16, 4, false),
+            new Box(3, 14, 12, 13, 16, 13.5F, false),
+            // Two real ledges descend inside the bore toward the sleeve. They keep the vertical
+            // risers instead of painting steps onto one flat plate.
+            new Box(4, 14, 4, 4.5F, 15.05F, 12, false),
+            new Box(11.5F, 14, 4, 12, 15.05F, 12, false),
+            new Box(4.5F, 14, 4, 11.5F, 15.05F, 4.5F, false),
+            new Box(4.5F, 14, 11.5F, 11.5F, 15.05F, 12, false),
+            new Box(4.5F, 14, 4.5F, 5, 14.5F, 11.5F, false),
+            new Box(11, 14, 4.5F, 11.5F, 14.5F, 11.5F, false),
+            new Box(5, 14, 4.5F, 11, 14.5F, 5, false),
+            new Box(5, 14, 11, 11, 14.5F, 11.5F, false),
             // Continuous colored sleeve: visible inside and flush with the neighboring cable at 16.
             new Box(5, 13.85F, 5, 6, 16, 11, true),
             new Box(10, 13.85F, 5, 11, 16, 11, true),

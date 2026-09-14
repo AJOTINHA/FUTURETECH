@@ -6,6 +6,7 @@ import dev.futuretech.api.side.SidedItems;
 import dev.futuretech.block.entity.BatteryBlockEntity;
 import dev.futuretech.block.entity.CableBlockEntity;
 import dev.futuretech.block.entity.ElectricFurnaceBlockEntity;
+import dev.futuretech.block.entity.ItemCableBlockEntity;
 import dev.futuretech.block.entity.CrusherBlockEntity;
 import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
 import net.minecraft.core.registries.Registries;
@@ -39,6 +40,11 @@ public final class ModBlockEntities {
             TYPES.register("cable", () -> new BlockEntityType<>(
                     CableBlockEntity::new, ModBlocks.CABLE_MK1.get()));
 
+    // One block entity type serves every item cable tier; list each tier's block here.
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ItemCableBlockEntity>> ITEM_CABLE =
+            TYPES.register("item_cable", () -> new BlockEntityType<>(
+                    ItemCableBlockEntity::new, ModBlocks.ITEM_CABLE_MK1.get()));
+
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
         event.registerBlockEntity(Capabilities.Energy.BLOCK, CRUSHER.get(), (crusher, side) ->
                 SidedEnergy.view(crusher.energy(), crusher.sideConfig(), side));
@@ -59,6 +65,8 @@ public final class ModBlockEntities {
         event.registerBlockEntity(Capabilities.Item.BLOCK, ELECTRIC_FURNACE.get(), (furnace, side) ->
                 SidedItems.view(furnace, furnace.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, CABLE.get(),
+                (cable, side) -> cable.handler(side));
+        event.registerBlockEntity(Capabilities.Item.BLOCK, ITEM_CABLE.get(),
                 (cable, side) -> cable.handler(side));
     }
 

@@ -127,6 +127,32 @@ class CableResourcesTest {
         }
     }
 
+    /**
+     * The item cable is the same geometry in another skin: every model is a child of the energy
+     * cable's, only the core textures change, and the blockstate is the same multipart renamed.
+     */
+    @Test
+    void itemCableReusesTheCableGeometryWithItsOwnSkin() throws Exception {
+        for (String part : List.of("arm", "cap", "line", "node")) {
+            var model = model("futuretech:block/item_cable_mk1_" + part);
+            assertEquals("futuretech:block/cable_mk1_" + part, model.get("parent").getAsString(), part);
+            assertFalse(model.has("elements"), "No geometry of its own: " + part);
+            var textures = model.getAsJsonObject("textures");
+            assertEquals(2, textures.size(), "Only the core changes colour: " + part);
+            for (var texture : textures.entrySet()) {
+                String path = texture.getValue().getAsString();
+                assertTrue(path.startsWith("futuretech:block/item_cable_mk1"), path);
+                assertNotNull(getClass().getResource("/assets/futuretech/textures/"
+                        + path.substring("futuretech:".length()) + ".png"), path);
+            }
+        }
+        var item = model("futuretech:item/item_cable_mk1");
+        assertEquals("futuretech:item/cable_mk1", item.get("parent").getAsString());
+        var energy = resource("blockstates/cable_mk1.json").toString();
+        var items = resource("blockstates/item_cable_mk1.json").toString();
+        assertEquals(energy.replace("futuretech:block/cable_mk1_", "futuretech:block/item_cable_mk1_"), items);
+    }
+
     @Test
     void inventoryShowsTheNodeWithAllSixFacesClosed() throws Exception {
         var item = resource("models/item/cable_mk1.json").getAsJsonArray("elements");
