@@ -4,6 +4,7 @@ import dev.futuretech.api.redstone.RedstoneControl;
 import dev.futuretech.api.redstone.RedstoneControllable;
 import dev.futuretech.api.upgrade.UpgradeInventory;
 import dev.futuretech.api.upgrade.Upgradeable;
+import dev.futuretech.api.upgrade.MachineLevel;
 import dev.futuretech.api.side.SideConfig;
 import dev.futuretech.api.side.SideConfigVisuals;
 import dev.futuretech.api.side.SideConfigurable;
@@ -52,7 +53,6 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
     public static final int DATA_REDSTONE_BASE = DATA_FRONT + 1;
     public static final int DATA_COUNT = DATA_REDSTONE_BASE + RedstoneControl.DATA_COUNT;
 
-    private final BatteryTier tier;
     private final TickLimitedEnergyHandler energy;
     private final SideConfig sides;
     private final RedstoneControl redstone = new RedstoneControl();
@@ -74,7 +74,7 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
     }
 
     private int visualChargeUnits() {
-        return (int)((long)energy.getAmountAsInt() * 1000 / tier.capacity());
+        return (int)((long)energy.getAmountAsInt() * 1000 / tier().capacity());
     }
 
     private void syncVisualCharge(Level level, BlockPos pos, BlockState state) {
@@ -93,7 +93,7 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
                 case DATA_ENERGY_HIGH -> EnergySync.high(energy.getAmountAsInt());
                 case DATA_INPUT -> lastInput;
                 case DATA_OUTPUT -> lastOutput;
-                case DATA_TIER -> tier.ordinal();
+                case DATA_TIER -> tier().ordinal();
                 case DATA_FRONT -> front().ordinal();
                 default -> {
                     if (index >= DATA_SIDE_BASE && index < DATA_FRONT) yield sides.data(index - DATA_SIDE_BASE);
@@ -114,11 +114,19 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
 
     public BatteryBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.BATTERY.get(), pos, state);
-        this.tier = state.getBlock() instanceof BatteryBlock block ? block.tier() : BatteryTier.MK1;
+        BatteryTier tier = tier();
         this.energy = new TickLimitedEnergyHandler(
                 tier.capacity(), tier.transferPerTick(), tier.transferPerTick(), this::setChanged);
         this.sides = state.getBlock() instanceof BatteryBlock block
                 ? block.createSideConfig(state) : ModBlocks.BATTERY_MK1.get().createSideConfig(state);
+    }
+
+    @Override
+    public void setBlockState(BlockState state) {
+        super.setBlockState(state);
+        BatteryTier tier = tier();
+        energy.setCapacity(tier.capacity());
+        energy.setTransferLimits(tier.transferPerTick(), tier.transferPerTick());
     }
 
     @Override
@@ -178,7 +186,7 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
         if (level != null) getBlockState().updateNeighbourShapes(level, worldPosition, Block.UPDATE_ALL);
     }
 
-    public BatteryTier tier() { return tier; }
+    public BatteryTier tier() { return BatteryTier.byOrdinal(MachineLevel.of(getBlockState()) - 1); }
 
     public EnergyHandler energy() { return energy; }
 
@@ -217,7 +225,7 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
     }
 
     private void setEnergyClamped(int amount) {
-        energy.set(Math.clamp(amount, 0, tier.capacity()));
+        energy.set(Math.clamp(amount, 0, tier().capacity()));
     }
 
     @Override
@@ -259,7 +267,7 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
     }
 
     @Override
-    public Component getDisplayName() { return getBlockState().getBlock().getName(); }
+    public Component getDisplayName() { return Component.translatable("block.futuretech." + tier().blockName()); }
 
     @Override
     public AbstractContainerMenu createMenu(int id, Inventory inventory, Player player) {

@@ -20,9 +20,9 @@
     }
   },
   "textures": {
-    "white": "futuretech:block/cable_mk1_frame_white",
-    "gray": "futuretech:block/cable_mk1_frame_gray",
-    "particle": "futuretech:block/cable_mk1_frame_gray"
+    "white": "futuretech:block/cable_mk1/cable_mk1_frame_white",
+    "gray": "futuretech:block/cable_mk1/cable_mk1_frame_gray",
+    "particle": "futuretech:block/cable_mk1/cable_mk1_frame_gray"
   },
   "elements": [
     {

@@ -141,7 +141,7 @@ class CableResourcesTest {
             assertEquals(2, textures.size(), "Only the core changes colour: " + part);
             for (var texture : textures.entrySet()) {
                 String path = texture.getValue().getAsString();
-                assertTrue(path.startsWith("futuretech:block/item_cable_opaque"), path);
+                assertTrue(path.startsWith("futuretech:block/item_cable/item_cable_opaque"), path);
                 assertNotNull(getClass().getResource("/assets/futuretech/textures/"
                         + path.substring("futuretech:".length()) + ".png"), path);
             }
@@ -170,7 +170,7 @@ class CableResourcesTest {
                 assertEquals(2, textures.size(), "Only the core changes: " + part);
                 for (var texture : textures.entrySet()) {
                     String path = texture.getValue().getAsString();
-                    assertTrue(path.startsWith("futuretech:block/" + name), path);
+                    assertTrue(path.startsWith("futuretech:block/fluid_cable/" + name), path);
                     assertNotNull(getClass().getResource("/assets/futuretech/textures/"
                             + path.substring("futuretech:".length()) + ".png"), path);
                 }

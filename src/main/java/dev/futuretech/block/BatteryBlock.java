@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.futuretech.api.side.SideConfig;
 import dev.futuretech.api.side.SideConfigurableBlock;
 import dev.futuretech.api.side.SideMode;
+import dev.futuretech.api.upgrade.MachineLevel;
 import dev.futuretech.block.entity.BatteryBlockEntity;
 import dev.futuretech.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -73,12 +74,13 @@ public final class BatteryBlock extends BaseEntityBlock implements SideConfigura
     public BatteryBlock(BatteryTier tier, Properties properties) {
         super(properties);
         this.tier = tier;
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH)
+                .setValue(MachineLevel.MK, tier.ordinal() + 1));
     }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<net.minecraft.world.level.block.Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, MachineLevel.MK);
     }
 
     /** The output face points at the player, like the front of a furnace. */

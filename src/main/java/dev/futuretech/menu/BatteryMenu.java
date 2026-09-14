@@ -8,6 +8,7 @@ import dev.futuretech.api.side.SideConfigMenu;
 import dev.futuretech.api.side.SideMode;
 import dev.futuretech.api.upgrade.UpgradeInventory;
 import dev.futuretech.api.upgrade.UpgradeSlots;
+import dev.futuretech.api.upgrade.MachineLevel;
 import dev.futuretech.block.BatteryTier;
 import dev.futuretech.block.entity.BatteryBlockEntity;
 import dev.futuretech.energy.EnergySync;
@@ -70,7 +71,9 @@ public final class BatteryMenu extends MachineMenu implements SideConfigMenu, Re
     public Direction front() { return Direction.values()[Math.clamp(data.get(DATA_FRONT), 0, 5)]; }
 
     @Override
-    public BlockState displayState() { return ModBlocks.BATTERY_MK1.get().displayState(front()); }
+    public BlockState displayState() {
+        return ModBlocks.BATTERY_MK1.get().displayState(front()).setValue(MachineLevel.MK, tier().ordinal() + 1);
+    }
 
     @Override
     public Set<SideMode> allowedModes() { return ModBlocks.BATTERY_MK1.get().allowedSideModes(); }

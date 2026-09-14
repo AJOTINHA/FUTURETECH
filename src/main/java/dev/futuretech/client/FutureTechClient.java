@@ -107,12 +107,14 @@ public final class FutureTechClient {
         // contact plugging the bore takes the cable's own colour.
         Map<CableKind, Map<Direction, Map<SideMode, BlockStateModelPart>>> connectorsByKind = new EnumMap<>(CableKind.class);
         for (CableKind kind : CableKind.values()) {
-            TextureAtlasSprite contact = textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "block/" + kind.id() + "_contact"));
+            String textureFolder = kind == CableKind.ENERGY ? "cable_mk1" : kind.id();
+            TextureAtlasSprite contact = textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID,
+                    "block/" + textureFolder + "/" + kind.id() + "_contact"));
             Map<SideMode, String> collarTextures = Map.of(
-                    SideMode.NONE, "block/cable_connector",
-                    SideMode.OUTPUT, "block/cable_connector_insert",
-                    SideMode.INPUT, "block/cable_connector_extract",
-                    SideMode.BOTH, "block/cable_connector_both");
+                    SideMode.NONE, "block/cable_connector/cable_connector",
+                    SideMode.OUTPUT, "block/cable_connector/cable_connector_insert",
+                    SideMode.INPUT, "block/cable_connector/cable_connector_extract",
+                    SideMode.BOTH, "block/cable_connector/cable_connector_both");
             Map<SideMode, TextureAtlasSprite> collars = new EnumMap<>(SideMode.class);
             collarTextures.forEach((mode, path) ->
                     collars.put(mode, textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, path))));

@@ -36,7 +36,13 @@ def model(elements):
 table = [box([0,10,0],[16,12,16],'dark'),box([.5,12,.5],[15.5,13,15.5],'gray'),box([2,12.98,2],[14,13.1,14],'dark')]
 for x in [1,12]:
     for z in [1,12]:
-        table += [box([x-.5,0,z-.5],[x+3.5,1,z+3.5],'dark'),box([x,1,z],[x+3,10,z+3],'silver'),box([x+.5,2,z-.05],[x+2.5,8,z+.3],'gray')]
+        table += [box([x-.5,0,z-.5],[x+3.5,1,z+3.5],'dark'),box([x,1,z],[x+3,10,z+3],'silver')]
+        # A gray plate on each side of every leg, projecting a quarter model pixel.
+        # Embed the back slightly into the leg so no faces share its surface plane.
+        table += [box([x+.5,2,z-.25],[x+2.5,8,z+.05],'gray'),
+                  box([x+.5,2,z+2.95],[x+2.5,8,z+3.25],'gray'),
+                  box([x-.25,2,z+.5],[x+.05,8,z+2.5],'gray'),
+                  box([x+2.95,2,z+.5],[x+3.25,8,z+2.5],'gray')]
 # Join the grid without overlapping horizontal strips at their intersections.
 for x in [5.9,9.9]: table.append(box([x,13.1,2],[x+.16,13.15,14],'gray'))
 for z in [5.9,9.9]:
@@ -46,6 +52,8 @@ for z in [5.9,9.9]:
 # share z=0 or z=16 with the dark shell, which caused depth-buffer flickering.
 for z0,z1 in [(-.125,.25),(15.75,16.125)]:
     table.append(box([4,10.7,z0],[12,11.3,z1],'cyan'))
+for x0,x1 in [(-.125,.25),(15.75,16.125)]:
+    table.append(box([x0,10.7,4],[x1,11.3,12],'cyan'))
 
 base = [box([1,0,1],[15,1.5,15],'dark'),box([2,1.5,2],[14,2.5,14],'silver'),box([4,2.5,4],[12,4,12],'gray'),box([5,4,5],[11,7,11],'dark')]
 for x in [2,13]:
@@ -54,7 +62,6 @@ for x in [2,13]:
 terminal = [box([2,0,3],[14,1.5,13],'dark'),box([3,1.5,4],[13,2,12],'silver'),box([6.5,2,7],[9.5,10,10],'gray'),
             box([0,9,5],[16,19,8],'dark'),box([.5,9.5,4.7],[15.5,18.5,5],'silver'),box([1.2,10.2,4.5],[14.8,17.8,4.7],'dark')]
 # The display contents are rendered live by AssemblerMonitor, ahead of the glass.
-terminal += [box([3,3,3],[13,3.8,6],'dark'),box([4,3.8,3.7],[10,3.9,5],'gray'),box([11,3.8,3.7],[12,3.9,5],'cyan')]
 
 for name, elements in [('assembly_table',table),('transport_arm',base),('assembly_arm',base),('assembler_terminal',terminal)]:
     write(ASSETS / f'models/block/{name}.json', model(elements))

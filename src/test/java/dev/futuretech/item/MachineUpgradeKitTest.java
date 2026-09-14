@@ -32,7 +32,8 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(EphemeralTestServerProvider.class)
 class MachineUpgradeKitTest {
     private static List<Block> machines() {
-        return List.of(ModBlocks.SOLID_FUEL_GENERATOR.get(), ModBlocks.ELECTRIC_FURNACE.get(), ModBlocks.CRUSHER.get(), ModBlocks.METAL_PRESS.get());
+        return List.of(ModBlocks.SOLID_FUEL_GENERATOR.get(), ModBlocks.ELECTRIC_FURNACE.get(), ModBlocks.CRUSHER.get(),
+                ModBlocks.METAL_PRESS.get(), ModBlocks.BATTERY_MK1.get());
     }
 
     @Test
@@ -48,7 +49,7 @@ class MachineUpgradeKitTest {
                 assertFalse(MachineLevel.canUpgrade(state, 1));
             }
         }
-        for (var block : List.of(Blocks.STONE, ModBlocks.MACHINE_CASING.get(), ModBlocks.BATTERY_MK1.get(), ModBlocks.FLUID_TANK.get())) {
+        for (var block : List.of(Blocks.STONE, ModBlocks.MACHINE_CASING.get(), ModBlocks.FLUID_TANK.get())) {
             for (var kit : kits) assertFalse(MachineLevel.canUpgrade(block.defaultBlockState(), kit.targetLevel()));
         }
     }
@@ -57,7 +58,8 @@ class MachineUpgradeKitTest {
     void worldStateRoundTripKeepsLevelFacingAndActiveState() {
         for (var block : machines()) for (int mk = 1; mk <= 4; mk++) {
             var state = block.defaultBlockState().setValue(MachineLevel.MK, mk)
-                    .setValue(AbstractFurnaceBlock.FACING, Direction.WEST).setValue(AbstractFurnaceBlock.LIT, true);
+                    .setValue(AbstractFurnaceBlock.FACING, Direction.WEST);
+            if (state.hasProperty(AbstractFurnaceBlock.LIT)) state = state.setValue(AbstractFurnaceBlock.LIT, true);
             var saved = BlockState.CODEC.encodeStart(NbtOps.INSTANCE, state).getOrThrow();
             assertEquals(state, BlockState.CODEC.parse(NbtOps.INSTANCE, saved).getOrThrow());
         }
@@ -104,7 +106,7 @@ class MachineUpgradeKitTest {
 
     @Test
     void everyMachineDropCopiesTheRegisteredMkProperty() throws Exception {
-        for (String machine : List.of("solid_fuel_generator", "electric_furnace", "crusher", "metal_press")) {
+        for (String machine : List.of("solid_fuel_generator", "electric_furnace", "crusher", "metal_press", "battery_mk1")) {
             try (var stream = getClass().getResourceAsStream("/data/futuretech/loot_table/blocks/" + machine + ".json")) {
                 assertNotNull(stream);
                 var table = JsonParser.parseReader(new InputStreamReader(stream, StandardCharsets.UTF_8)).getAsJsonObject();

@@ -2,23 +2,23 @@
   "sources": [
     {
       "type": "single",
-      "resource": "futuretech:block/cable_connector"
+      "resource": "futuretech:block/cable_connector/cable_connector"
     },
     {
       "type": "single",
-      "resource": "futuretech:block/cable_contact"
+      "resource": "futuretech:block/cable_mk1/cable_contact"
     },
     {
       "type": "single",
-      "resource": "futuretech:block/cable_connector_insert"
+      "resource": "futuretech:block/cable_connector/cable_connector_insert"
     },
     {
       "type": "single",
-      "resource": "futuretech:block/cable_connector_extract"
+      "resource": "futuretech:block/cable_connector/cable_connector_extract"
     },
     {
       "type": "single",
-      "resource": "futuretech:block/cable_connector_both"
+      "resource": "futuretech:block/cable_connector/cable_connector_both"
     },
     {
       "type": "single",
@@ -54,11 +54,11 @@
     },
     {
       "type": "single",
-      "resource": "futuretech:block/item_cable_contact"
+      "resource": "futuretech:block/item_cable/item_cable_contact"
     },
     {
       "type": "single",
-      "resource": "futuretech:block/fluid_cable_contact"
+      "resource": "futuretech:block/fluid_cable/fluid_cable_contact"
     },
     {
       "resource": "futuretech:block/machine/mk2/machine_side_input",

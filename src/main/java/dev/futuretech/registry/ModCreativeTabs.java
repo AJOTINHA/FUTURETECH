@@ -14,7 +14,7 @@ public final class ModCreativeTabs {
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MAIN = TABS.register(
             "main", () -> CreativeModeTab.builder()
                     .title(Component.translatable("itemGroup.futuretech"))
-                    .icon(() -> ModItems.MACHINE_CASING.get().getDefaultInstance())
+                    .icon(() -> ModItems.UPGRADE_KIT_MK4.get().getDefaultInstance())
                     .displayItems((parameters, output) -> {
                         output.accept(ModItems.MACHINE_CASING.get());
                         output.accept(ModItems.ASSEMBLY_TABLE.get());

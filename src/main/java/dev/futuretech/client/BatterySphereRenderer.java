@@ -20,13 +20,13 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/** A rotating cyan lattice with spiral energy trails following configured input and output faces. */
+/** A rotating tier-colored lattice with spiral energy trails following configured input and output faces. */
 public final class BatterySphereRenderer implements BlockEntityRenderer<BatteryBlockEntity, BatterySphereRenderer.State> {
     private static final Identifier WHITE = Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "textures/entity/battery_sphere_white.png");
     private static final BatterySphereMesh.Mesh MESH = BatterySphereMesh.create();
     private static final List<Quad> SHELL = shell();
-    private static final List<Quad> HALO = lattice(0.004, 0.267, 0x403BBAE8, 0.006);
-    private static final List<Quad> LINES = lattice(0.0009, 0.269, 0xFF83E5FF, 0.0026);
+    private static final List<Quad> HALO = lattice(0.006, 0.267, 0x40FFFFFF, 0.008);
+    private static final List<Quad> LINES = lattice(0.0018, 0.269, 0xFFFFFFFF, 0.0036);
     private static final List<Quad> INNER_RING = ring(BatteryStabilizerMesh.INNER_RADIUS);
     private static final List<Quad> OUTER_RING = ring(BatteryStabilizerMesh.OUTER_RADIUS);
     private record Quad(Point a, Point b, Point c, Point d, int color) {}
@@ -36,6 +36,7 @@ public final class BatterySphereRenderer implements BlockEntityRenderer<BatteryB
         float scale;
         float ringRotation;
         float pulse;
+        int lineColor;
         List<BatteryEnergyFlow.Segment> energyFlow = List.of();
     }
 
@@ -46,6 +47,7 @@ public final class BatterySphereRenderer implements BlockEntityRenderer<BatteryB
     public void extractRenderState(BatteryBlockEntity battery, State state, float partialTick, Vec3 camera,
                                    ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
         BlockEntityRenderer.super.extractRenderState(battery, state, partialTick, camera, breakProgress);
+        state.lineColor = battery.tier().lineColor();
         state.scale = 0.12F + 0.88F * battery.visualCharge(partialTick);
         state.rotation = battery.getLevel() == null ? 0 :
                 (Math.floorMod(battery.getLevel().getGameTime(), 400) + partialTick) * 0.9F;
@@ -72,10 +74,11 @@ public final class BatterySphereRenderer implements BlockEntityRenderer<BatteryB
         collector.submitCustomGeometry(pose, RenderTypes.entitySolid(WHITE), (p, b) -> draw(SHELL, p, b));
         float brightness = 0.55F + 0.45F * state.pulse;
         float haloAlpha = 0.3F + 0.7F * state.pulse;
+        int lineColor = state.lineColor;
         collector.submitCustomGeometry(pose, RenderTypes.entityTranslucentEmissive(WHITE),
-                (p, b) -> drawPulsing(HALO, p, b, brightness, haloAlpha));
+                (p, b) -> drawPulsing(HALO, p, b, brightness, haloAlpha, lineColor));
         collector.submitCustomGeometry(pose, RenderTypes.entityTranslucentEmissive(WHITE),
-                (p, b) -> drawPulsing(LINES, p, b, brightness, 1));
+                (p, b) -> drawPulsing(LINES, p, b, brightness, 1, lineColor));
         pose.popPose();
         // Distinct speeds prevent the inner ring from appearing locked to the rotating core.
         submitRing(pose, collector, state.ringRotation * 4, 52, INNER_RING, state.lightCoords);
@@ -172,7 +175,7 @@ public final class BatterySphereRenderer implements BlockEntityRenderer<BatteryB
             Point u = ref.cross(node).unit().scale(nodeSize);
             Point v = node.cross(u).unit().scale(nodeSize);
             Point c = node.scale(radius + 0.001);
-            int nodeColor = (color & 0xFF000000) | 0xCCF7FF;
+            int nodeColor = (color & 0xFF000000) | 0xFFFFFF;
             quads.add(new Quad(c.subtract(u).subtract(v), c.add(u).subtract(v), c.add(u).add(v), c.subtract(u).add(v), nodeColor));
         }
         return List.copyOf(quads);
@@ -193,12 +196,12 @@ public final class BatterySphereRenderer implements BlockEntityRenderer<BatteryB
 
     /** Varies light intensity only; geometry, stored charge and metal rings stay independent. */
     private static void drawPulsing(List<Quad> quads, PoseStack.Pose pose, VertexConsumer buffer,
-                                    float brightness, float opacity) {
+                                    float brightness, float opacity, int tint) {
         for (Quad q : quads) {
             int alpha = Math.round((q.color >>> 24) * opacity);
-            int red = Math.round((q.color >> 16 & 255) * brightness);
-            int green = Math.round((q.color >> 8 & 255) * brightness);
-            int blue = Math.round((q.color & 255) * brightness);
+            int red = Math.round((tint >> 16 & 255) * brightness);
+            int green = Math.round((tint >> 8 & 255) * brightness);
+            int blue = Math.round((tint & 255) * brightness);
             int color = alpha << 24 | red << 16 | green << 8 | blue;
             vertex(pose, buffer, q.a, color); vertex(pose, buffer, q.b, color);
             vertex(pose, buffer, q.c, color); vertex(pose, buffer, q.d, color);

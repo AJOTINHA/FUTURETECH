@@ -1,7 +1,7 @@
 {
   "parent": "futuretech:item/cable_mk1",
   "textures": {
-    "cable": "futuretech:block/fluid_cable_opaque",
-    "node": "futuretech:block/fluid_cable_opaque_node"
+    "cable": "futuretech:block/fluid_cable/fluid_cable_opaque",
+    "node": "futuretech:block/fluid_cable/fluid_cable_opaque_node"
   }
 }
