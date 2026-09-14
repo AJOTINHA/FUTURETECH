@@ -2,6 +2,7 @@ package dev.futuretech.registry;
 
 import dev.futuretech.FutureTech;
 import dev.futuretech.item.ItemFilterMode;
+import dev.futuretech.item.StoredTankFluid;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -19,6 +20,13 @@ public final class ModDataComponents {
             "energy", () -> DataComponentType.<Integer>builder()
                     .persistent(ExtraCodecs.NON_NEGATIVE_INT)
                     .networkSynchronized(ByteBufCodecs.VAR_INT)
+                    .build());
+
+    /** Stored fluid and its components travel with the tank item. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<StoredTankFluid>> TANK_FLUID = TYPES.register(
+            "tank_fluid", () -> DataComponentType.<StoredTankFluid>builder()
+                    .persistent(StoredTankFluid.CODEC)
+                    .networkSynchronized(StoredTankFluid.STREAM_CODEC)
                     .build());
 
     /** The item kinds an item filter lists, one per slot; only the item matters, never the count. */

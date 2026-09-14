@@ -153,6 +153,35 @@ class CableResourcesTest {
         assertEquals(energy.replace("futuretech:block/cable_mk1_", "futuretech:block/item_cable_opaque_"), items);
     }
 
+    /**
+     * Both fluid cables are the item cable's recipe again: children of the energy cable's models
+     * with their own core textures, and the see-through one drawn on the translucent layer so its
+     * glass core lets the fluid inside show.
+     */
+    @Test
+    void fluidCablesReuseTheCableGeometryWithTheirOwnSkins() throws Exception {
+        for (String name : List.of("fluid_cable_opaque", "fluid_cable")) {
+            boolean glass = name.equals("fluid_cable");
+            for (String part : List.of("arm", "cap", "line", "node")) {
+                var model = model("futuretech:block/" + name + "_" + part);
+                assertEquals("futuretech:block/cable_mk1_" + part, model.get("parent").getAsString(), part);
+                assertFalse(model.has("elements"), "No geometry of its own: " + part);
+                var textures = model.getAsJsonObject("textures");
+                assertEquals(2, textures.size(), "Only the core changes: " + part);
+                for (var texture : textures.entrySet()) {
+                    String path = texture.getValue().getAsString();
+                    assertTrue(path.startsWith("futuretech:block/" + name), path);
+                    assertNotNull(getClass().getResource("/assets/futuretech/textures/"
+                            + path.substring("futuretech:".length()) + ".png"), path);
+                }
+                assertEquals(glass, model.has("render_type"), "Only the glass cable is translucent: " + part);
+            }
+            var energy = resource("blockstates/cable_mk1.json").toString();
+            var fluid = resource("blockstates/" + name + ".json").toString();
+            assertEquals(energy.replace("futuretech:block/cable_mk1_", "futuretech:block/" + name + "_"), fluid);
+        }
+    }
+
     private static final String[] FACE_NAMES = {"west", "east", "down", "up", "north", "south"};
 
     /** Whether another box of the model touches this face over its whole area, hiding it for good. */

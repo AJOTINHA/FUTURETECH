@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "III",
+    "LGL",
+    "III"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "L": "minecraft:lime_dye",
+    "G": "minecraft:glass"
+  },
+  "result": {
+    "id": "futuretech:fluid_cable_opaque",
+    "count": 6
+  }
+}

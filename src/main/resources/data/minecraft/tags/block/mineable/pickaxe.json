@@ -5,7 +5,8 @@
     "futuretech:electric_furnace",
     "futuretech:crusher",
     "futuretech:battery_mk1",
-    "futuretech:cable_mk1"
+    "futuretech:cable_mk1",
+    "futuretech:fluid_tank"
   ],
   "replace": false
 }

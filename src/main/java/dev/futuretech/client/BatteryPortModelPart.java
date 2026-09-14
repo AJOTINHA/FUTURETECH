@@ -20,30 +20,47 @@ public final class BatteryPortModelPart implements BlockStateModelPart {
     private final Material.Baked metal;
 
     public BatteryPortModelPart(Direction side, TextureAtlasSprite steel, TextureAtlasSprite accent) {
+        this(side, steel, accent, accent, 13.85F);
+    }
+
+    /** Tank ports sit outside the glass; a second accent divides bidirectional ports into two halves. */
+    public BatteryPortModelPart(Direction side, TextureAtlasSprite steel, TextureAtlasSprite accent,
+                                TextureAtlasSprite secondAccent, float innerY) {
         metal = new Material.Baked(steel, false);
         var result = new ArrayList<BakedQuad>();
-        for (var b : BatteryPortGeometry.BOXES) {
+        var boxes = new ArrayList<BatteryPortGeometry.Box>();
+        for (var box : BatteryPortGeometry.BOXES) {
+            if (accent != secondAccent && box.x0() < 8 && box.x1() > 8) {
+                boxes.add(new BatteryPortGeometry.Box(box.x0(), box.y0(), box.z0(), 8, box.y1(), box.z1(), box.rim()));
+                boxes.add(new BatteryPortGeometry.Box(8, box.y0(), box.z0(), box.x1(), box.y1(), box.z1(), box.rim()));
+            } else boxes.add(box);
+        }
+        for (var b : boxes) {
             Point a = new Point(b.x0(), b.y0(), b.z0());
             Point c = new Point(b.x1(), b.y1(), b.z1());
-            add(result, side, steel, accent, b.rim(), new Point(a.x(),c.y(),a.z()), new Point(a.x(),c.y(),c.z()), c, new Point(c.x(),c.y(),a.z()));
-            add(result, side, steel, accent, b.rim(), a, new Point(c.x(),a.y(),a.z()), new Point(c.x(),a.y(),c.z()), new Point(a.x(),a.y(),c.z()));
-            add(result, side, steel, accent, b.rim(), a, new Point(a.x(),c.y(),a.z()), new Point(c.x(),c.y(),a.z()), new Point(c.x(),a.y(),a.z()));
-            add(result, side, steel, accent, b.rim(), new Point(a.x(),a.y(),c.z()), new Point(c.x(),a.y(),c.z()), c, new Point(a.x(),c.y(),c.z()));
-            add(result, side, steel, accent, b.rim(), a, new Point(a.x(),a.y(),c.z()), new Point(a.x(),c.y(),c.z()), new Point(a.x(),c.y(),a.z()));
-            add(result, side, steel, accent, b.rim(), new Point(c.x(),a.y(),a.z()), new Point(c.x(),c.y(),a.z()), c, new Point(c.x(),a.y(),c.z()));
+            var color = (b.x0() + b.x1()) / 2 < 8 ? accent : secondAccent;
+            add(result, side, steel, color, b.rim(), innerY, new Point(a.x(),c.y(),a.z()), new Point(a.x(),c.y(),c.z()), c, new Point(c.x(),c.y(),a.z()));
+            add(result, side, steel, color, b.rim(), innerY, a, new Point(c.x(),a.y(),a.z()), new Point(c.x(),a.y(),c.z()), new Point(a.x(),a.y(),c.z()));
+            add(result, side, steel, color, b.rim(), innerY, a, new Point(a.x(),c.y(),a.z()), new Point(c.x(),c.y(),a.z()), new Point(c.x(),a.y(),a.z()));
+            add(result, side, steel, color, b.rim(), innerY, new Point(a.x(),a.y(),c.z()), new Point(c.x(),a.y(),c.z()), c, new Point(a.x(),c.y(),c.z()));
+            add(result, side, steel, color, b.rim(), innerY, a, new Point(a.x(),a.y(),c.z()), new Point(a.x(),c.y(),c.z()), new Point(a.x(),c.y(),a.z()));
+            add(result, side, steel, color, b.rim(), innerY, new Point(c.x(),a.y(),a.z()), new Point(c.x(),c.y(),a.z()), c, new Point(c.x(),a.y(),c.z()));
         }
         quads = List.copyOf(result);
     }
 
     private static void add(List<BakedQuad> output, Direction side, TextureAtlasSprite steel,
-                            TextureAtlasSprite accent, boolean rim, Point... points) {
+                            TextureAtlasSprite accent, boolean rim, float innerY, Point... points) {
         Vector3f[] vertices = new Vector3f[4];
         long[] uvs = new long[4];
         boolean cap = points[0].y() == points[1].y() && points[0].y() == points[2].y();
         boolean alongX = points[0].x() != points[1].x() || points[0].x() != points[2].x();
         var sprite = cap || rim ? accent : steel;
         for (int i = 0; i < 4; i++) {
-            Point p = BatteryPortGeometry.rotate(points[i], side);
+            Point original = points[i];
+            float depth = innerY == 13.85F ? original.y()
+                    : innerY + (original.y() - 13.85F) * (16 - innerY) / (16 - 13.85F);
+            Point p = BatteryPortGeometry.rotate(new Point(original.x(), depth, original.z()), side);
             vertices[i] = new Vector3f(p.x(), p.y(), p.z()).div(16);
             // Both ends share the detailed face. Sleeve walls use a separate shaded strip
             // so the accent continues through the bore without stretching a single pixel.

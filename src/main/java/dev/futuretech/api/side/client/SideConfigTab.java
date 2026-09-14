@@ -3,6 +3,7 @@ package dev.futuretech.api.side.client;
 import dev.futuretech.api.gui.MachineTab;
 import dev.futuretech.api.side.SideConfigMenu;
 import dev.futuretech.api.side.SideMode;
+import dev.futuretech.block.FluidTankBlock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -158,9 +159,24 @@ public final class SideConfigTab<M extends AbstractContainerMenu & SideConfigMen
             int x = tileX(gridX, face);
             int y = tileY(contentY, face);
             graphics.fill(x - 1, y - 1, x + TILE + 1, y + TILE + 1, modeColor(menu.sideMode(side)));
+            if (menu.displayState().getBlock() instanceof FluidTankBlock) {
+                // Glass behind the assembled frame; the neutral border still identifies a closed face.
+                graphics.fill(x + 3, y + 3, x + 13, y + 13, 0xFF526570);
+                graphics.fill(x + 4, y + 4, x + 5, y + 8, 0xFF91AAB5);
+                graphics.fill(x + 5, y + 4, x + 8, y + 5, 0xFF91AAB5);
+                graphics.fill(x + 9, y + 11, x + 12, y + 12, 0xFF718B99);
+            }
             TextureAtlasSprite sprite = faceSprite(side);
             if (sprite != null) graphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, x, y, TILE, TILE);
             else graphics.fill(x, y, x + TILE, y + TILE, 0xFF8B959F);
+            if (menu.sideMode(side) == SideMode.BOTH && menu.displayState().getBlock() instanceof FluidTankBlock) {
+                var model = Minecraft.getInstance().getModelManager().getBlockStateModelSet().get(menu.displayState());
+                if (model instanceof ConfiguredSideModel configured && configured.spriteFor(SideMode.OUTPUT) != null) {
+                    graphics.enableScissor(x + TILE / 2, y, x + TILE, y + TILE);
+                    graphics.blitSprite(RenderPipelines.GUI_TEXTURED, configured.spriteFor(SideMode.OUTPUT), x, y, TILE, TILE);
+                    graphics.disableScissor();
+                }
+            }
             if (isFullyOpen() && isOver(mouseX, mouseY, x, y, TILE, TILE)) graphics.fill(x, y, x + TILE, y + TILE, 0x40FFFFFF);
         }
     }

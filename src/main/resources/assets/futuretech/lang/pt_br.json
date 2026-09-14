@@ -18,6 +18,8 @@
   "block.futuretech.cable_mk1": "Cabo MK1",
   "block.futuretech.item_cable_opaque": "Cabo de Itens Opaco",
   "block.futuretech.item_cable": "Cabo de Itens",
+  "block.futuretech.fluid_cable_opaque": "Cabo de Fluido Opaco",
+  "block.futuretech.fluid_cable": "Cabo de Fluido",
   "item.futuretech.filter.mode": "Modo: %s",
   "item.futuretech.filter.empty": "Nenhum item listado",
   "gui.futuretech.sides": "Configuração",
@@ -37,6 +39,9 @@
   "gui.futuretech.item_cable.priority": "Prioridade",
   "gui.futuretech.item_cable.channel": "Canal",
   "gui.futuretech.item_cable.color": "Cor",
+  "gui.futuretech.fluid_cable.priority": "Prioridade",
+  "gui.futuretech.fluid_cable.channel": "Canal",
+  "gui.futuretech.fluid_cable.color": "Cor",
   "gui.futuretech.item_cable.upgrade": "Melhoria",
   "gui.futuretech.item_cable.filter": "Filtro",
   "gui.futuretech.filter.title": "Filtro — %s",
@@ -74,5 +79,11 @@
   "gui.futuretech.info.amount": "%s FE",
   "gui.futuretech.info.generation": "Geração de energia:",
   "gui.futuretech.info.maximum_generation": "Geração máxima:",
-  "gui.futuretech.info.maximum_output": "Saída máxima:"
+  "gui.futuretech.info.maximum_output": "Saída máxima:",
+  "block.futuretech.fluid_tank": "Tanque de Fluido",
+  "gui.futuretech.tank.contents": "%s: %s / %s mB",
+  "gui.futuretech.tank.hint": "Use baldes para encher ou esvaziar.",
+  "gui.futuretech.tank.input": "Entrada",
+  "gui.futuretech.tank.output": "Saída",
+  "gui.futuretech.tank.amount": "%s / %s mB"
 }

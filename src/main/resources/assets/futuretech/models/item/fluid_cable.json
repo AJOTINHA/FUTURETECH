@@ -1,0 +1,8 @@
+{
+  "parent": "futuretech:item/cable_mk1",
+  "textures": {
+    "cable": "futuretech:block/fluid_cable",
+    "node": "futuretech:block/fluid_cable_node"
+  },
+  "render_type": "minecraft:translucent"
+}

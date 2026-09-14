@@ -2,10 +2,13 @@ package dev.futuretech.registry;
 
 import dev.futuretech.FutureTech;
 import dev.futuretech.block.BatteryBlock;
+import dev.futuretech.block.FluidTankBlock;
 import dev.futuretech.block.BatteryTier;
 import dev.futuretech.block.CableBlock;
 import dev.futuretech.block.CableTier;
 import dev.futuretech.block.ElectricFurnaceBlock;
+import dev.futuretech.block.FluidCableBlock;
+import dev.futuretech.block.FluidCableTier;
 import dev.futuretech.block.ItemCableBlock;
 import dev.futuretech.block.ItemCableTier;
 import dev.futuretech.block.CrusherBlock;
@@ -49,6 +52,11 @@ public final class ModBlocks {
 
     public static final DeferredBlock<BatteryBlock> BATTERY_MK1 = registerBattery(BatteryTier.MK1);
 
+    public static final DeferredBlock<FluidTankBlock> FLUID_TANK = BLOCKS.registerBlock(
+            "fluid_tank", FluidTankBlock::new, properties -> properties
+                    .mapColor(MapColor.METAL).noOcclusion().strength(3.5F, 6.0F)
+                    .sound(SoundType.METAL).requiresCorrectToolForDrops());
+
     // Every tier shares BatteryBlock; only the numbers in BatteryTier change.
     private static DeferredBlock<BatteryBlock> registerBattery(BatteryTier tier) {
         return BLOCKS.registerBlock(tier.blockName(), properties -> new BatteryBlock(tier, properties), properties -> properties
@@ -72,6 +80,18 @@ public final class ModBlocks {
 
     public static final DeferredBlock<ItemCableBlock> ITEM_CABLE_OPAQUE = registerItemCable(ItemCableTier.OPAQUE);
     public static final DeferredBlock<ItemCableBlock> ITEM_CABLE = registerItemCable(ItemCableTier.STANDARD);
+
+    public static final DeferredBlock<FluidCableBlock> FLUID_CABLE_OPAQUE = registerFluidCable(FluidCableTier.OPAQUE);
+    public static final DeferredBlock<FluidCableBlock> FLUID_CABLE = registerFluidCable(FluidCableTier.STANDARD);
+
+    private static DeferredBlock<FluidCableBlock> registerFluidCable(FluidCableTier tier) {
+        return BLOCKS.registerBlock(tier.blockName(), properties -> new FluidCableBlock(tier, properties), properties -> properties
+                    .mapColor(MapColor.COLOR_GREEN)
+                    .strength(1.0F, 3.0F)
+                    .sound(SoundType.COPPER)
+                    .dynamicShape()
+                    .noOcclusion());
+    }
 
     private static DeferredBlock<ItemCableBlock> registerItemCable(ItemCableTier tier) {
         return BLOCKS.registerBlock(tier.blockName(), properties -> new ItemCableBlock(tier, properties), properties -> properties

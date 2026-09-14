@@ -1,6 +1,5 @@
 package dev.futuretech.block.entity;
 
-import com.mojang.serialization.Codec;
 import dev.futuretech.block.CableKind;
 import dev.futuretech.block.ItemCableBlock;
 import dev.futuretech.block.ItemCableTier;
@@ -14,7 +13,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Containers;
-import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
@@ -25,36 +23,16 @@ import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Predicate;
 
 /** Holds this cable's share of an {@link ItemCableNetwork}; the network itself moves the items. */
 public final class ItemCableBlockEntity extends AbstractCableBlockEntity {
-    public static final int MIN_PRIORITY = -100;
-    public static final int MAX_PRIORITY = 100;
-    public static final int MAX_CHANNEL = 100;
     /** Speed upgrades one connector takes. */
     public static final int MAX_UPGRADES = ItemCableNetwork.MAX_UPGRADES;
-    private static final String PRIORITIES_TAG = "Priorities";
-    private static final Codec<Map<Direction, Integer>> PRIORITIES_CODEC =
-            Codec.unboundedMap(Direction.CODEC, Codec.INT);
-    private static final String CHANNELS_TAG = "Channels";
-    private static final Codec<Map<Direction, Integer>> CHANNELS_CODEC =
-            Codec.unboundedMap(Direction.CODEC, Codec.INT);
     private static final String FLIGHTS_TAG = "Flights";
-    private static final String COLORS_TAG = "Colors";
-    private static final Codec<Map<Direction, DyeColor>> COLORS_CODEC =
-            Codec.unboundedMap(Direction.CODEC, DyeColor.CODEC);
 
     private final ItemCableTier tier;
-    /** Only faces the player moved off 0 are kept, so an untouched cable saves nothing extra. */
-    private final EnumMap<Direction, Integer> priorities = new EnumMap<>(Direction.class);
-    /** Only faces moved off white are kept; a face without an entry is on the white channel. */
-    private final EnumMap<Direction, DyeColor> colors = new EnumMap<>(Direction.class);
-    /** Only faces moved off 0 are kept. */
-    private final EnumMap<Direction, Integer> channels = new EnumMap<>(Direction.class);
     // Swapping or editing a card changes what a connector lets through, and the network reads the
     // card live, so a rebuild only matters when a card is put in or taken out.
     private final ConnectorItems filters = new ConnectorItems("Filters", ItemFilterItem::isFilter, 1, () -> {
@@ -82,47 +60,6 @@ public final class ItemCableBlockEntity extends AbstractCableBlockEntity {
 
     @Override
     public CableKind kind() { return CableKind.ITEMS; }
-
-    @Override
-    public int connectorPriority(Direction side) { return priorities.getOrDefault(side, 0); }
-
-    /** Clamped to the allowed range; the network caches priorities, so it is rebuilt on a change. */
-    @Override
-    public void setConnectorPriority(Direction side, int priority) {
-        int clamped = Math.clamp(priority, MIN_PRIORITY, MAX_PRIORITY);
-        if (clamped == connectorPriority(side)) return;
-        if (clamped == 0) priorities.remove(side);
-        else priorities.put(side, clamped);
-        setChanged();
-        invalidateNetwork();
-    }
-
-    @Override
-    public DyeColor connectorColor(Direction side) { return colors.getOrDefault(side, DyeColor.WHITE); }
-
-    /** The network caches channels, so it is rebuilt on a change. */
-    @Override
-    public void setConnectorColor(Direction side, DyeColor color) {
-        if (color == connectorColor(side)) return;
-        if (color == DyeColor.WHITE) colors.remove(side);
-        else colors.put(side, color);
-        setChanged();
-        invalidateNetwork();
-    }
-
-    @Override
-    public int connectorChannel(Direction side) { return channels.getOrDefault(side, 0); }
-
-    /** Clamped to 0..{@value #MAX_CHANNEL}; the network caches channels, so it is rebuilt on a change. */
-    @Override
-    public void setConnectorChannel(Direction side, int channel) {
-        int clamped = Math.clamp(channel, 0, MAX_CHANNEL);
-        if (clamped == connectorChannel(side)) return;
-        if (clamped == 0) channels.remove(side);
-        else channels.put(side, clamped);
-        setChanged();
-        invalidateNetwork();
-    }
 
     @Override
     public ConnectorItems connectorFilters() { return filters; }
@@ -162,18 +99,6 @@ public final class ItemCableBlockEntity extends AbstractCableBlockEntity {
         upgrades.load(input);
         parked.clear();
         input.read(FLIGHTS_TAG, ItemFlight.LIST_CODEC).ifPresent(parked::addAll);
-        colors.clear();
-        input.read(COLORS_TAG, COLORS_CODEC).ifPresent(colors::putAll);
-        channels.clear();
-        input.read(CHANNELS_TAG, CHANNELS_CODEC).ifPresent(saved -> saved.forEach((side, channel) -> {
-            int clamped = Math.clamp(channel, 0, MAX_CHANNEL);
-            if (clamped != 0) channels.put(side, clamped);
-        }));
-        priorities.clear();
-        input.read(PRIORITIES_TAG, PRIORITIES_CODEC).ifPresent(saved -> saved.forEach((side, priority) -> {
-            int clamped = Math.clamp(priority, MIN_PRIORITY, MAX_PRIORITY);
-            if (clamped != 0) priorities.put(side, clamped);
-        }));
     }
 
     @Override
@@ -183,9 +108,6 @@ public final class ItemCableBlockEntity extends AbstractCableBlockEntity {
         upgrades.save(output);
         List<ItemFlight> inside = flightsHere();
         if (!inside.isEmpty()) output.store(FLIGHTS_TAG, ItemFlight.LIST_CODEC, inside);
-        if (!colors.isEmpty()) output.store(COLORS_TAG, COLORS_CODEC, Map.copyOf(colors));
-        if (!channels.isEmpty()) output.store(CHANNELS_TAG, CHANNELS_CODEC, Map.copyOf(channels));
-        if (!priorities.isEmpty()) output.store(PRIORITIES_TAG, PRIORITIES_CODEC, Map.copyOf(priorities));
     }
 
     /** The current network, rebuilt on demand after cables were added or removed nearby. */

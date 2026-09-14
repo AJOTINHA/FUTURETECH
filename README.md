@@ -105,7 +105,16 @@ I I I
 
 Os modelos são gerados a partir dos do Cabo MK1 removendo os volumes do miolo e recompondo as seis faces de cada barra, já que o gerador original descartava as faces que o miolo escondia.
 
-Os dois cabos compartilham `AbstractCableBlock` e `AbstractCableBlockEntity` (forma, conexões, modos dos conectores, menu); cada tipo só diz o que emenda e qual capability o vizinho precisa oferecer. O cabo de itens usa os modelos do Cabo MK1 como pai, trocando apenas as texturas do miolo (`item_cable_opaque.png`, `item_cable_opaque_node.png`) e o tampão do colar (`item_cable_contact.png`). A lógica fica em `transfer/ItemCableNetwork`.
+O **Cabo de Fluido** vem em duas versões, ambas verdes: o **Cabo de Fluido Opaco** (`futuretech:fluid_cable_opaque`), com miolo verde, e o **Cabo de Fluido** (`futuretech:fluid_cable`), com miolo de vidro (textura própria na paleta do vidro do jogo), que deixa ver o fluido passando. Mesma geometria e mesmos conectores dos outros cabos; cabos de fluido só se emendam entre si.
+
+- A rede funciona como a de energia: é um buffer de um tick (500 mB/t por linha) que recebe o que os vizinhos empurram, bombeia dos tanques atrás dos conectores em Extrair e reparte o que tem entre os tanques que aceitam, sem nunca devolver ao bloco que empurrou. Cheia, recusa o empurrão e o fluido fica na origem.
+- Cada conector tem **Prioridade**, **Cor** e **Canal**; cada par cor+canal é uma linha com buffer próprio, então uma mesma rede pode carregar água e lava em linhas diferentes sem misturar. Dentro da linha, prioridade maior enche primeiro e iguais dividem em rodízio. Não há filtro nem melhoria no conector de fluido.
+- O cabo de vidro desenha o fluido que a rede está carregando (textura e tinta do próprio fluido), no miolo e nos braços conectados. A rede diz a cada cabo em que sentido o fluido passou por ele (o caminho da entrada até o tanque que recebeu), e o cliente faz a textura "flowing" do fluido escorrer nesse sentido; a imagem fica por um segundo depois que o fluxo para. O opaco não desenha nada.
+- Funciona com qualquer bloco que ofereça a capability de fluidos, inclusive o caldeirão.
+
+Receitas: ferro nas linhas de cima e de baixo, corante verde-limão nas laterais e vidro no meio (opaco) ou painel de vidro (de vidro), rendendo 6.
+
+Todos os cabos compartilham `AbstractCableBlock` e `AbstractCableBlockEntity` (forma, conexões, modos, prioridade, cor e canal dos conectores, menu); cada tipo só diz o que emenda e qual capability o vizinho precisa oferecer. O cabo de itens usa os modelos do Cabo MK1 como pai, trocando apenas as texturas do miolo (`item_cable_opaque.png`, `item_cable_opaque_node.png`) e o tampão do colar (`item_cable_contact.png`). A lógica fica em `transfer/ItemCableNetwork`.
 
 A **Fornalha Elétrica** (`futuretech:electric_furnace`) é a primeira máquina que consome energia. Ela funde exatamente o que uma fornalha comum funde, sem combustível e no dobro da velocidade.
 
@@ -209,6 +218,14 @@ Como os slots de menu têm posição fixa, a aba de melhorias é a primeira da t
 A API fica em `dev.futuretech.api.redstone` (`RedstoneMode`, `RedstoneControl`, `RedstoneControllable`, `RedstoneControlMenu`, `RedstoneControlTab`) e segue o mesmo desenho da configuração de lados. As abas em si vêm de `dev.futuretech.api.gui` (`MachineTab`, `TabStrip`): uma tela cria um `TabStrip` com as abas que quiser e repassa desenho, tooltip e cliques; abas abertas empurram as de baixo.
 
 A API fica em `dev.futuretech.api.side` e é reaproveitável por qualquer máquina nova: o bloco implementa `SideConfigurableBlock` (modos permitidos, padrões por face, estado para desenhar), o block entity implementa `SideConfigurable` e guarda um `SideConfig` (salvo/carregado e exposto em slots de dados do menu), o menu implementa `SideConfigMenu` e encaminha `clickMenuButton` para `SideConfigMenu.handleButton`, a capability de energia passa por `SidedEnergy.view`, e a tela coloca um `SideConfigTab` no seu `TabStrip`. Os cliques viajam pelo pacote vanilla de botão de menu, sem rede própria.
+
+## Tanque de fluido
+
+O **Tanque de Fluido** (`futuretech:fluid_tank`) usa a mesma armação metálica da bateria, com os seis vãos fechados por vidro. Guarda **16.000 mB (16 baldes)** de um fluido por vez. O conteúdo aparece dentro do bloco com a textura e a cor do fluido; a superfície sobe e desce suavemente conforme o tanque enche ou esvazia.
+
+Clique com um balde cheio para abastecer ou com um balde vazio para retirar. Fluidos diferentes não se misturam, e um balde só transfere se couber o volume inteiro. Clique sem balde para abrir a interface: entrada à esquerda, barra de armazenamento no centro e saída à direita. Um balde vazio na entrada retira 1.000 mB e produz um balde cheio na saída; um balde cheio deposita 1.000 mB e produz um balde vazio. A troca espera se a saída estiver bloqueada, faltar fluido ou espaço no tanque, ou o fluido não for compatível. Shift + clique move os baldes entre a interface e o inventário. Os dois slots são salvos com o mundo; seus itens caem ao quebrar o bloco. A aba **Configuração de lados** define Entrada, Saída, Ambos ou Nenhum para fluidos em cada face; tanques colocados começam com todas as faces em Nenhum; abra os lados desejados na configuração. A aba **Redstone** oferece Ignorar, Sinal baixo e Sinal alto, controlando o processamento dos baldes e as transferências externas. O uso manual de baldes diretamente no bloco continua disponível. A aba **Melhorias** tem os quatro slots padrão, salvos com o mundo e soltos ao quebrar; por enquanto os upgrades não alteram a velocidade ou a capacidade do tanque. As seis faces oferecem a capability de fluidos do NeoForge para cabos e máquinas compatíveis conforme sua configuração. Um comparador mede o nível de enchimento.
+
+O conteúdo é salvo com o mundo e acompanha o item ao quebrar o tanque com picareta de pedra ou superior. A tooltip do item mostra o fluido e a quantidade; ao recolocar, o conteúdo retorna. A receita usa quatro lingotes de ferro nos cantos, quatro blocos de vidro nas laterais e um balde vazio no centro. O tanque aparece na aba criativa FUTURETECH, ao lado da bateria. O modelo pode ser recriado por `art/fluid_tank/export_tank.py`.
 
 ## Desenvolvimento no Windows
 

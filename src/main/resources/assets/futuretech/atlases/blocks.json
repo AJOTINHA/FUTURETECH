@@ -55,6 +55,10 @@
     {
       "type": "single",
       "resource": "futuretech:block/item_cable_contact"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/fluid_cable_contact"
     }
   ]
 }

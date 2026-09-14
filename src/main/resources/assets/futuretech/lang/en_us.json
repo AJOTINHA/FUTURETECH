@@ -18,6 +18,8 @@
   "block.futuretech.cable_mk1": "Cable MK1",
   "block.futuretech.item_cable_opaque": "Opaque Item Cable",
   "block.futuretech.item_cable": "Item Cable",
+  "block.futuretech.fluid_cable_opaque": "Opaque Fluid Cable",
+  "block.futuretech.fluid_cable": "Fluid Cable",
   "item.futuretech.filter.mode": "Mode: %s",
   "item.futuretech.filter.empty": "No items listed",
   "gui.futuretech.sides": "Configuration",
@@ -37,6 +39,9 @@
   "gui.futuretech.item_cable.priority": "Priority",
   "gui.futuretech.item_cable.channel": "Channel",
   "gui.futuretech.item_cable.color": "Color",
+  "gui.futuretech.fluid_cable.priority": "Priority",
+  "gui.futuretech.fluid_cable.channel": "Channel",
+  "gui.futuretech.fluid_cable.color": "Color",
   "gui.futuretech.item_cable.upgrade": "Upgrade",
   "gui.futuretech.item_cable.filter": "Filter",
   "gui.futuretech.filter.title": "Filter — %s",
@@ -74,5 +79,11 @@
   "gui.futuretech.info.amount": "%s FE",
   "gui.futuretech.info.generation": "Power generation:",
   "gui.futuretech.info.maximum_generation": "Maximum generation:",
-  "gui.futuretech.info.maximum_output": "Maximum output:"
+  "gui.futuretech.info.maximum_output": "Maximum output:",
+  "block.futuretech.fluid_tank": "Fluid Tank",
+  "gui.futuretech.tank.contents": "%s: %s / %s mB",
+  "gui.futuretech.tank.hint": "Use buckets to fill or drain.",
+  "gui.futuretech.tank.input": "Input",
+  "gui.futuretech.tank.output": "Output",
+  "gui.futuretech.tank.amount": "%s / %s mB"
 }

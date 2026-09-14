@@ -4,8 +4,10 @@ import dev.futuretech.FutureTech;
 import dev.futuretech.api.side.SidedEnergy;
 import dev.futuretech.api.side.SidedItems;
 import dev.futuretech.block.entity.BatteryBlockEntity;
+import dev.futuretech.block.entity.FluidTankBlockEntity;
 import dev.futuretech.block.entity.CableBlockEntity;
 import dev.futuretech.block.entity.ElectricFurnaceBlockEntity;
+import dev.futuretech.block.entity.FluidCableBlockEntity;
 import dev.futuretech.block.entity.ItemCableBlockEntity;
 import dev.futuretech.block.entity.CrusherBlockEntity;
 import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
@@ -35,6 +37,11 @@ public final class ModBlockEntities {
             TYPES.register("battery", () -> new BlockEntityType<>(
                     BatteryBlockEntity::new, ModBlocks.BATTERY_MK1.get()));
 
+    // A single storage tank with fluid access on every face.
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FluidTankBlockEntity>> FLUID_TANK =
+            TYPES.register("fluid_tank", () -> new BlockEntityType<>(
+                    FluidTankBlockEntity::new, ModBlocks.FLUID_TANK.get()));
+
     // One block entity type serves every cable tier; list each tier's block here.
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CableBlockEntity>> CABLE =
             TYPES.register("cable", () -> new BlockEntityType<>(
@@ -45,7 +52,13 @@ public final class ModBlockEntities {
             TYPES.register("item_cable", () -> new BlockEntityType<>(
                     ItemCableBlockEntity::new, ModBlocks.ITEM_CABLE_OPAQUE.get(), ModBlocks.ITEM_CABLE.get()));
 
+    // One block entity type serves every fluid cable tier; list each tier's block here.
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FluidCableBlockEntity>> FLUID_CABLE =
+            TYPES.register("fluid_cable", () -> new BlockEntityType<>(
+                    FluidCableBlockEntity::new, ModBlocks.FLUID_CABLE_OPAQUE.get(), ModBlocks.FLUID_CABLE.get()));
+
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(Capabilities.Fluid.BLOCK, FLUID_TANK.get(), (tank, side) -> tank.handler(side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, CRUSHER.get(), (crusher, side) ->
                 SidedEnergy.view(crusher.energy(), crusher.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Item.BLOCK, CRUSHER.get(), (crusher, side) ->
@@ -67,6 +80,8 @@ public final class ModBlockEntities {
         event.registerBlockEntity(Capabilities.Energy.BLOCK, CABLE.get(),
                 (cable, side) -> cable.handler(side));
         event.registerBlockEntity(Capabilities.Item.BLOCK, ITEM_CABLE.get(),
+                (cable, side) -> cable.handler(side));
+        event.registerBlockEntity(Capabilities.Fluid.BLOCK, FLUID_CABLE.get(),
                 (cable, side) -> cable.handler(side));
     }
 

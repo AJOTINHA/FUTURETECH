@@ -2,6 +2,7 @@ package dev.futuretech.client;
 
 import dev.futuretech.FutureTech;
 import dev.futuretech.block.BatteryBlock;
+import dev.futuretech.block.FluidTankBlock;
 import dev.futuretech.block.AbstractCableBlock;
 import dev.futuretech.block.CableKind;
 import dev.futuretech.api.side.SideConfigurableBlock;
@@ -45,11 +46,14 @@ public final class FutureTechClient {
     }
 
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerBlockEntityRenderer(ModBlockEntities.FLUID_TANK.get(), context -> new FluidTankRenderer());
         event.registerBlockEntityRenderer(ModBlockEntities.BATTERY.get(), context -> new BatterySphereRenderer());
         event.registerBlockEntityRenderer(ModBlockEntities.ITEM_CABLE.get(), ItemCableRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.FLUID_CABLE.get(), FluidCableRenderer::new);
     }
 
     private static void registerScreens(RegisterMenuScreensEvent event) {
+        event.register(ModMenus.FLUID_TANK.get(), FluidTankScreen::new);
         event.register(ModMenus.SOLID_FUEL_GENERATOR.get(), SolidFuelGeneratorScreen::new);
         event.register(ModMenus.BATTERY.get(), BatteryScreen::new);
         event.register(ModMenus.ELECTRIC_FURNACE.get(), ElectricFurnaceScreen::new);
@@ -77,6 +81,11 @@ public final class FutureTechClient {
                     FutureTech.MOD_ID, "block/battery_port" + suffix)));
         }
         Map<Direction, Map<SideMode, BlockStateModelPart>> batteryPorts = new EnumMap<>(Direction.class);
+        Map<SideMode, TextureAtlasSprite> tankPreviews = new EnumMap<>(batteryPreviews);
+        tankPreviews.put(SideMode.BOTH, batteryPreviews.get(SideMode.INPUT));
+        Map<Direction, Map<SideMode, BlockStateModelPart>> tankPorts = new EnumMap<>(Direction.class);
+        // The frame's material is a UV sheet, not a face icon. Use its assembled front for None.
+        tankPreviews.put(SideMode.NONE, batteryPreviews.get(SideMode.NONE));
         TextureAtlasSprite steel = textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "block/machine_side"));
         // One collar per connector mode: the band on its rim says what that connector does without
         // the player opening it. A closed connector keeps the plain steel, which reads as no band.
@@ -105,10 +114,17 @@ public final class FutureTechClient {
             batteryPorts.put(side, Map.of(
                     SideMode.INPUT, new BatteryPortModelPart(side, steel, batterySprites.get(SideMode.INPUT)),
                     SideMode.OUTPUT, new BatteryPortModelPart(side, steel, batterySprites.get(SideMode.OUTPUT))));
+            var input = batterySprites.get(SideMode.INPUT);
+            var output = batterySprites.get(SideMode.OUTPUT);
+            tankPorts.put(side, Map.of(
+                    SideMode.INPUT, new BatteryPortModelPart(side, steel, input, input, 14.55F),
+                    SideMode.OUTPUT, new BatteryPortModelPart(side, steel, output, output, 14.55F),
+                    SideMode.BOTH, new BatteryPortModelPart(side, steel, input, output, 14.55F)));
         }
         event.getBakingResult().blockStateModels().replaceAll((state, model) -> {
             if (state.getBlock() instanceof AbstractCableBlock cable) return new CableConnectorModel(model, connectorsByKind.get(cable.kind()));
             if (state.getBlock() instanceof BatteryBlock) return new ConfiguredSideModel(model, Map.of(), batteryPreviews, batteryPorts);
+            if (state.getBlock() instanceof FluidTankBlock) return new ConfiguredSideModel(model, Map.of(), tankPreviews, tankPorts);
             return state.getBlock() instanceof SideConfigurableBlock ? new ConfiguredSideModel(model, sprites) : model;
         });
     }

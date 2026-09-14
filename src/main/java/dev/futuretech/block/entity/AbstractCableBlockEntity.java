@@ -1,5 +1,6 @@
 package dev.futuretech.block.entity;
 
+import com.mojang.serialization.Codec;
 import dev.futuretech.api.side.SideConfig;
 import dev.futuretech.api.side.SideConfigVisuals;
 import dev.futuretech.api.side.SideMode;
@@ -20,16 +21,27 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.model.data.ModelData;
 
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
- * The part of a cable that does not care what it carries: the six connector modes, how they reach
- * the client and how the player changes them. Each kind of cable adds its own network on top.
+ * The part of a cable that does not care what it carries: the six connector modes, their
+ * priority, colour and channel, how they reach the client and how the player changes them. Each
+ * kind of cable adds its own network on top, and only reads the settings its kind exposes.
  */
 public abstract class AbstractCableBlockEntity extends BlockEntity {
+    public static final int MIN_PRIORITY = -100;
+    public static final int MAX_PRIORITY = 100;
+    public static final int MAX_CHANNEL = 100;
     /** A connector may insert, extract, do both, or nothing at all. */
     private static final Set<SideMode> ALLOWED_MODES =
             Set.of(SideMode.NONE, SideMode.INPUT, SideMode.OUTPUT, SideMode.BOTH);
+    private static final String PRIORITIES_TAG = "Priorities";
+    private static final String CHANNELS_TAG = "Channels";
+    private static final String COLORS_TAG = "Colors";
+    private static final Codec<Map<Direction, Integer>> INTS_CODEC = Codec.unboundedMap(Direction.CODEC, Codec.INT);
+    private static final Codec<Map<Direction, DyeColor>> COLORS_CODEC = Codec.unboundedMap(Direction.CODEC, DyeColor.CODEC);
 
     /**
      * What each connector does. A face starts on {@link SideMode#BOTH}, which is how cables behaved
@@ -37,6 +49,12 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
      * off is the player narrowing that connector, so existing builds keep working untouched.
      */
     private final SideConfig connectors = new SideConfig(ALLOWED_MODES, true, side -> SideMode.BOTH);
+    /** Only faces the player moved off 0 are kept, so an untouched cable saves nothing extra. */
+    private final EnumMap<Direction, Integer> priorities = new EnumMap<>(Direction.class);
+    /** Only faces moved off white are kept; a face without an entry is on the white channel. */
+    private final EnumMap<Direction, DyeColor> colors = new EnumMap<>(Direction.class);
+    /** Only faces moved off 0 are kept. */
+    private final EnumMap<Direction, Integer> channels = new EnumMap<>(Direction.class);
 
     protected AbstractCableBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -52,13 +70,18 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
 
     public SideConfig connectors() { return connectors; }
 
-    /**
-     * Where this connector stands when the network chooses whom to serve first; higher goes first.
-     * Kinds whose network does not order its connectors answer 0 and ignore changes.
-     */
-    public int connectorPriority(Direction side) { return 0; }
+    /** Where this connector stands when the network chooses whom to serve first; higher goes first. */
+    public int connectorPriority(Direction side) { return priorities.getOrDefault(side, 0); }
 
-    public void setConnectorPriority(Direction side, int priority) {}
+    /** Clamped to the allowed range; the network caches priorities, so it is rebuilt on a change. */
+    public void setConnectorPriority(Direction side, int priority) {
+        int clamped = Math.clamp(priority, MIN_PRIORITY, MAX_PRIORITY);
+        if (clamped == connectorPriority(side)) return;
+        if (clamped == 0) priorities.remove(side);
+        else priorities.put(side, clamped);
+        setChanged();
+        invalidateNetwork();
+    }
 
     /**
      * The filter cards of the six connectors, slot {@code side.ordinal()} for each side. Kinds
@@ -69,15 +92,30 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
     /** The upgrade modules of the six connectors, laid out like {@link #connectorFilters()}. */
     public Container connectorUpgrades() { return new SimpleContainer(Direction.values().length); }
 
-    /** The colour channel of a connector; white until changed. Kinds without colours stay white and ignore changes. */
-    public DyeColor connectorColor(Direction side) { return DyeColor.WHITE; }
+    /** The colour channel of a connector; white until changed. */
+    public DyeColor connectorColor(Direction side) { return colors.getOrDefault(side, DyeColor.WHITE); }
 
-    public void setConnectorColor(Direction side, DyeColor color) {}
+    /** The network caches colours, so it is rebuilt on a change. */
+    public void setConnectorColor(Direction side, DyeColor color) {
+        if (color == connectorColor(side)) return;
+        if (color == DyeColor.WHITE) colors.remove(side);
+        else colors.put(side, color);
+        setChanged();
+        invalidateNetwork();
+    }
 
     /** The numbered channel of a connector, 0 until changed; with the colour it says who talks to whom. */
-    public int connectorChannel(Direction side) { return 0; }
+    public int connectorChannel(Direction side) { return channels.getOrDefault(side, 0); }
 
-    public void setConnectorChannel(Direction side, int channel) {}
+    /** Clamped to 0..{@value #MAX_CHANNEL}; the network caches channels, so it is rebuilt on a change. */
+    public void setConnectorChannel(Direction side, int channel) {
+        int clamped = Math.clamp(channel, 0, MAX_CHANNEL);
+        if (clamped == connectorChannel(side)) return;
+        if (clamped == 0) channels.remove(side);
+        else channels.put(side, clamped);
+        setChanged();
+        invalidateNetwork();
+    }
 
     /** Applies a connector's new mode and rebuilds the network, which caches what each face allows. */
     public void setConnectorMode(Direction side, SideMode mode) {
@@ -115,12 +153,27 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
         connectors.load(input);
+        colors.clear();
+        input.read(COLORS_TAG, COLORS_CODEC).ifPresent(colors::putAll);
+        channels.clear();
+        input.read(CHANNELS_TAG, INTS_CODEC).ifPresent(saved -> saved.forEach((side, channel) -> {
+            int clamped = Math.clamp(channel, 0, MAX_CHANNEL);
+            if (clamped != 0) channels.put(side, clamped);
+        }));
+        priorities.clear();
+        input.read(PRIORITIES_TAG, INTS_CODEC).ifPresent(saved -> saved.forEach((side, priority) -> {
+            int clamped = Math.clamp(priority, MIN_PRIORITY, MAX_PRIORITY);
+            if (clamped != 0) priorities.put(side, clamped);
+        }));
     }
 
     @Override
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
         connectors.save(output);
+        if (!colors.isEmpty()) output.store(COLORS_TAG, COLORS_CODEC, Map.copyOf(colors));
+        if (!channels.isEmpty()) output.store(CHANNELS_TAG, INTS_CODEC, Map.copyOf(channels));
+        if (!priorities.isEmpty()) output.store(PRIORITIES_TAG, INTS_CODEC, Map.copyOf(priorities));
     }
 
     @Override

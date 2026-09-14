@@ -3,6 +3,7 @@ package dev.futuretech.registry;
 import dev.futuretech.FutureTech;
 import dev.futuretech.block.BatteryBlock;
 import dev.futuretech.item.BatteryBlockItem;
+import dev.futuretech.item.FluidTankBlockItem;
 import dev.futuretech.item.ItemFilterItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -31,6 +32,10 @@ public final class ModItems {
     // Custom block item so the stored charge shows in the tooltip and as a bar.
     public static final DeferredItem<BatteryBlockItem> BATTERY_MK1 = registerBattery(ModBlocks.BATTERY_MK1);
 
+    public static final DeferredItem<FluidTankBlockItem> FLUID_TANK = ITEMS.registerItem(
+            "fluid_tank", properties -> new FluidTankBlockItem(ModBlocks.FLUID_TANK.get(), properties),
+            properties -> properties.useBlockDescriptionPrefix().stacksTo(1));
+
     private static DeferredItem<BatteryBlockItem> registerBattery(DeferredBlock<BatteryBlock> block) {
         return ITEMS.registerItem(block.getId().getPath(), properties -> new BatteryBlockItem(block.get(), properties),
                 properties -> properties.useBlockDescriptionPrefix());
@@ -40,6 +45,9 @@ public final class ModItems {
 
     public static final DeferredItem<BlockItem> ITEM_CABLE_OPAQUE = ITEMS.registerSimpleBlockItem(ModBlocks.ITEM_CABLE_OPAQUE);
     public static final DeferredItem<BlockItem> ITEM_CABLE = ITEMS.registerSimpleBlockItem(ModBlocks.ITEM_CABLE);
+
+    public static final DeferredItem<BlockItem> FLUID_CABLE_OPAQUE = ITEMS.registerSimpleBlockItem(ModBlocks.FLUID_CABLE_OPAQUE);
+    public static final DeferredItem<BlockItem> FLUID_CABLE = ITEMS.registerSimpleBlockItem(ModBlocks.FLUID_CABLE);
 
     /** Filter card for item cable connectors; its list and mode live in data components. */
     public static final DeferredItem<ItemFilterItem> FILTER = ITEMS.registerItem(

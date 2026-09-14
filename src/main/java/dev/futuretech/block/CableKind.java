@@ -5,7 +5,9 @@ public enum CableKind {
     /** Energy runs in the cable's own cyan and blue. */
     ENERGY("cable", 0xFF1676C4, false, false, false, false),
     /** Items run in the item cable's brass. */
-    ITEMS("item_cable", 0xFFD9AA3C, true, true, true, true);
+    ITEMS("item_cable", 0xFFD9AA3C, true, true, true, true),
+    /** Fluids run in the fluid cable's green. */
+    FLUID("fluid_cable", 0xFF4EC878, true, false, true, false);
 
     private final String key;
     private final int accent;

@@ -88,6 +88,7 @@ public final class CableConnectorScreen extends AbstractContainerScreen<CableCon
     /** Each row a kind has adds to the panel; a filtered kind ends with the player's inventory. */
     private static int height(CableConnectorMenu menu) {
         if (menu.kind().filtered()) return CableConnectorMenu.INVENTORY_TOP + 82;
+        if (menu.kind().coloured()) return COLOR_TOP + 18 + MARGIN;
         if (menu.kind().prioritised()) return PRIORITY_TOP + STEP_SIZE + MARGIN;
         return BUTTON_TOP + BUTTON_HEIGHT + MARGIN;
     }
@@ -189,18 +190,19 @@ public final class CableConnectorScreen extends AbstractContainerScreen<CableCon
         drawCentred(graphics, EXTRACT, Component.translatable("gui.futuretech.cable.extract"), menu.extracts() ? TITLE : 0xFFC6CED6);
         if (!menu.kind().prioritised()) return;
         int baseline = PRIORITY_TOP + (STEP_SIZE - font.lineHeight) / 2;
-        graphics.text(font, Component.translatable("gui.futuretech.item_cable.priority"), MARGIN, baseline, TITLE, false);
+        String keys = menu.kind().translationKey();
+        graphics.text(font, Component.translatable(keys + ".priority"), MARGIN, baseline, TITLE, false);
         drawStepSymbol(graphics, LOWER, false);
         drawStepSymbol(graphics, RAISE, true);
         int priority = menu.priority();
         drawCentred(graphics, VALUE, Component.literal(priority > 0 ? "+" + priority : Integer.toString(priority)), TITLE);
         if (menu.kind().coloured()) {
-            graphics.text(font, Component.translatable("gui.futuretech.item_cable.channel"), MARGIN,
+            graphics.text(font, Component.translatable(keys + ".channel"), MARGIN,
                     CHANNEL_TOP + (STEP_SIZE - font.lineHeight) / 2, TITLE, false);
             drawStepSymbol(graphics, LOWER_CHANNEL, false);
             drawStepSymbol(graphics, RAISE_CHANNEL, true);
             drawCentred(graphics, CHANNEL_VALUE, Component.literal(Integer.toString(menu.channel())), TITLE);
-            graphics.text(font, Component.translatable("gui.futuretech.item_cable.color"), MARGIN,
+            graphics.text(font, Component.translatable(keys + ".color"), MARGIN,
                     COLOR.y() + (COLOR.height() - font.lineHeight) / 2, TITLE, false);
         }
         if (menu.kind().upgradable()) {
