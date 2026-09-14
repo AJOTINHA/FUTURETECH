@@ -6,7 +6,11 @@
     "futuretech:crusher",
     "futuretech:battery_mk1",
     "futuretech:cable_mk1",
-    "futuretech:fluid_tank"
+    "futuretech:fluid_tank",
+    "futuretech:assembly_table",
+    "futuretech:transport_arm",
+    "futuretech:assembly_arm",
+    "futuretech:assembler_terminal"
   ],
   "replace": false
 }

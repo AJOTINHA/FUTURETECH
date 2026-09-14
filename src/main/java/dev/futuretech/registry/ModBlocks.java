@@ -22,6 +22,16 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public final class ModBlocks {
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(FutureTech.MOD_ID);
 
+    public static final DeferredBlock<dev.futuretech.block.AssemblerBlock> ASSEMBLY_TABLE = assembler("assembly_table", dev.futuretech.block.AssemblerBlock.Kind.TABLE);
+    public static final DeferredBlock<dev.futuretech.block.AssemblerBlock> TRANSPORT_ARM = assembler("transport_arm", dev.futuretech.block.AssemblerBlock.Kind.TRANSPORT);
+    public static final DeferredBlock<dev.futuretech.block.AssemblerBlock> ASSEMBLY_ARM = assembler("assembly_arm", dev.futuretech.block.AssemblerBlock.Kind.ASSEMBLY);
+    public static final DeferredBlock<dev.futuretech.block.AssemblerBlock> ASSEMBLER_TERMINAL = assembler("assembler_terminal", dev.futuretech.block.AssemblerBlock.Kind.TERMINAL);
+
+    private static DeferredBlock<dev.futuretech.block.AssemblerBlock> assembler(String name, dev.futuretech.block.AssemblerBlock.Kind kind) {
+        return BLOCKS.registerBlock(name, properties -> new dev.futuretech.block.AssemblerBlock(kind, properties),
+                properties -> properties.mapColor(MapColor.METAL).noOcclusion().strength(3.5F, 6).sound(SoundType.METAL).requiresCorrectToolForDrops());
+    }
+
     public static final DeferredBlock<Block> MACHINE_CASING = BLOCKS.registerSimpleBlock(
             "machine_casing", properties -> properties
                     .mapColor(MapColor.METAL)

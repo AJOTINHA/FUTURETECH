@@ -229,6 +229,28 @@ O conteúdo é salvo com o mundo e acompanha o item ao quebrar o tanque com pica
 
 A **Wrench** (`futuretech:wrench`) é um item 3D com boca aberta, cabeça de aço, parafuso central e cabo escuro com detalhes ciano. Aparece na aba FUTURETECH e tem posições próprias na mão, no inventário e na moldura. A receita usa três lingotes de ferro e um de cobre. Clique direito em um bloco gira ele: blocos com `FACING` percorrem norte → leste → sul → oeste → cima → baixo (as máquinas do mod só as quatro horizontais), blocos com eixo ciclam X → Y → Z e o resto usa a rotação própria do bloco. Shift + clique direito em um bloco do FutureTech desmonta ele pelo caminho normal de drop, então o tanque cai com o fluido e a bateria com a carga. O modelo usa os materiais existentes do filtro e pode ser recriado com `art/wrench/export_model.py`.
 
+## Assembler
+
+O Assembler usa quatro blocos separados: **Mesa de montagem**, **Braço de transporte**, **Braço de montagem** e **Terminal do Assembler**. Todos aparecem na aba FUTURETECH e têm receitas de fabricação com materiais vanilla, para não depender da primeira carcaça.
+
+Monte a célula livremente, com cada braço a até **3 blocos** de distância da mesa e do inventário que ele atende. A distância é medida entre os centros dos blocos; a busca inclui diferenças de altura e escolhe o alvo compatível mais próximo. O terminal precisa estar a até 3 blocos da mesa. Um arranjo inicial, visto de cima, é:
+
+```text
+                        Terminal
+                           ·
+Baú entrada · Braço azul · Mesa · Braço laranja · Baú saída
+                           ·
+                    Braço de montagem
+```
+
+Cada `·` representa um espaço vazio. Os braços detectam os blocos automaticamente, sem precisar de ligações manuais. Clique com a **Wrench** no braço de transporte parado para alternar entre **entrada azul** e **saída laranja**. O braço de montagem usa uma ferramenta giratória própria. Shift + Wrench desmonta qualquer uma das peças; os materiais guardados na peça caem para recuperação.
+
+Abra o terminal e use as setas para selecionar **Carcaça de máquina**: **1 pedra (`minecraft:stone`) + 1 lingote de ferro → 1 carcaça (`futuretech:machine_casing`)**. Os ícones esmaecidos mostram os materiais esperados. Coloque os ingredientes no baú de entrada. O braço azul leva um item por viagem até a mesa; o braço de montagem se aproxima, trabalha por 4 segundos e recua; só então o braço laranja recolhe o resultado e o leva ao baú de saída. A interface mostra o progresso, o estado e as quatro conexões.
+
+O resultado aguarda na mesa se o baú estiver cheio. Se o destino ficar indisponível durante o transporte, o braço mantém o item e tenta novamente. Cada peça salva seus itens e o estágio do movimento; os testes cobrem retomadas antes e depois da fabricação. A troca de receita exige a mesa vazia e os braços parados. É possível retirar materiais pela interface quando a mesa está livre. Esta versão inicial funciona sem consumo de energia.
+
+As receitas próprias ficam em `data/futuretech/recipe/assembling`, com tipo `futuretech:assembling`, de 1 a 9 ingredientes (um item por entrada), resultado e duração em ticks. Modelos e dados podem ser regenerados com `python tools/generate_assembler.py`.
+
 ## Desenvolvimento no Windows
 
 Abra esta pasta como projeto Gradle na IDE, usando um JDK 25.

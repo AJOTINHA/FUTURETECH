@@ -41,6 +41,11 @@ public final class WrenchItem extends Item {
         BlockPos pos = context.getClickedPos();
         BlockState state = level.getBlockState(pos);
         if (context.isSecondaryUseActive()) return dismantle(state, level, pos, context.getPlayer());
+        if (level.getBlockEntity(pos) instanceof dev.futuretech.block.entity.AssemblerBlockEntity arm
+                && arm.kind() == dev.futuretech.block.AssemblerBlock.Kind.TRANSPORT) {
+            if (!level.isClientSide() && context.getPlayer() != null) arm.switchMode(context.getPlayer());
+            return InteractionResult.SUCCESS;
+        }
         BlockState rotated = rotated(state, level, pos);
         if (rotated == null) return InteractionResult.PASS;
         if (!level.isClientSide()) {

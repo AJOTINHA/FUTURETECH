@@ -17,6 +17,10 @@ public final class ModCreativeTabs {
                     .icon(() -> ModItems.MACHINE_CASING.get().getDefaultInstance())
                     .displayItems((parameters, output) -> {
                         output.accept(ModItems.MACHINE_CASING.get());
+                        output.accept(ModItems.ASSEMBLY_TABLE.get());
+                        output.accept(ModItems.TRANSPORT_ARM.get());
+                        output.accept(ModItems.ASSEMBLY_ARM.get());
+                        output.accept(ModItems.ASSEMBLER_TERMINAL.get());
                         output.accept(ModItems.SOLID_FUEL_GENERATOR.get());
                         output.accept(ModItems.ELECTRIC_FURNACE.get());
                         output.accept(ModItems.CRUSHER.get());

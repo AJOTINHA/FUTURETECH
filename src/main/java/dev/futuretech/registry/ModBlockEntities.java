@@ -57,6 +57,10 @@ public final class ModBlockEntities {
             TYPES.register("fluid_cable", () -> new BlockEntityType<>(
                     FluidCableBlockEntity::new, ModBlocks.FLUID_CABLE_OPAQUE.get(), ModBlocks.FLUID_CABLE.get()));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.futuretech.block.entity.AssemblerBlockEntity>> ASSEMBLER =
+            TYPES.register("assembler", () -> new BlockEntityType<>(dev.futuretech.block.entity.AssemblerBlockEntity::new,
+                    ModBlocks.ASSEMBLY_TABLE.get(), ModBlocks.TRANSPORT_ARM.get(), ModBlocks.ASSEMBLY_ARM.get(), ModBlocks.ASSEMBLER_TERMINAL.get()));
+
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
         event.registerBlockEntity(Capabilities.Fluid.BLOCK, FLUID_TANK.get(), (tank, side) -> tank.handler(side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, CRUSHER.get(), (crusher, side) ->

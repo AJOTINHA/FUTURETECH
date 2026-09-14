@@ -1,0 +1,20 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "futuretech:block/assembler_terminal",
+      "y": 0
+    },
+    "facing=east": {
+      "model": "futuretech:block/assembler_terminal",
+      "y": 90
+    },
+    "facing=south": {
+      "model": "futuretech:block/assembler_terminal",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "futuretech:block/assembler_terminal",
+      "y": 270
+    }
+  }
+}

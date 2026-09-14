@@ -21,5 +21,11 @@ public final class ModRecipes {
             SERIALIZERS.register("crushing", () -> new RecipeSerializer<>(SingleItemRecipe.simpleMapCodec(CrushingRecipe::new),
                     SingleItemRecipe.simpleStreamCodec(CrushingRecipe::new)));
     public static final DeferredHolder<RecipeBookCategory, RecipeBookCategory> CRUSHER_BOOK = BOOKS.register("crusher", RecipeBookCategory::new);
+    public static final DeferredHolder<RecipeType<?>, RecipeType<dev.futuretech.recipe.AssemblingRecipe>> ASSEMBLING = TYPES.register("assembling", () -> new RecipeType<>() {
+        @Override public String toString() { return "futuretech:assembling"; }
+    });
+    public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<dev.futuretech.recipe.AssemblingRecipe>> ASSEMBLING_SERIALIZER =
+            SERIALIZERS.register("assembling", () -> new RecipeSerializer<>(dev.futuretech.recipe.AssemblingRecipe.CODEC, dev.futuretech.recipe.AssemblingRecipe.STREAM_CODEC));
+    public static final DeferredHolder<RecipeBookCategory, RecipeBookCategory> ASSEMBLER_BOOK = BOOKS.register("assembler", RecipeBookCategory::new);
     private ModRecipes() {}
 }

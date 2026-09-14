@@ -60,5 +60,10 @@ public final class ModItems {
     public static final DeferredItem<WrenchItem> WRENCH = ITEMS.registerItem(
             "wrench", WrenchItem::new, properties -> properties.stacksTo(1));
 
+    public static final DeferredItem<BlockItem> ASSEMBLY_TABLE = ITEMS.registerSimpleBlockItem(ModBlocks.ASSEMBLY_TABLE);
+    public static final DeferredItem<BlockItem> TRANSPORT_ARM = ITEMS.registerSimpleBlockItem(ModBlocks.TRANSPORT_ARM);
+    public static final DeferredItem<BlockItem> ASSEMBLY_ARM = ITEMS.registerSimpleBlockItem(ModBlocks.ASSEMBLY_ARM);
+    public static final DeferredItem<BlockItem> ASSEMBLER_TERMINAL = ITEMS.registerSimpleBlockItem(ModBlocks.ASSEMBLER_TERMINAL);
+
     private ModItems() {}
 }

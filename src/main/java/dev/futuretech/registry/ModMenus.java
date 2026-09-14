@@ -40,5 +40,7 @@ public final class ModMenus {
     public static final DeferredHolder<MenuType<?>, MenuType<ItemFilterMenu>> ITEM_FILTER = TYPES.register(
             "item_filter", () -> IMenuTypeExtension.create(ItemFilterMenu::new));
 
+    public static final DeferredHolder<MenuType<?>, MenuType<dev.futuretech.menu.AssemblerMenu>> ASSEMBLER = TYPES.register(
+            "assembler", () -> IMenuTypeExtension.create(dev.futuretech.menu.AssemblerMenu::new));
     private ModMenus() {}
 }

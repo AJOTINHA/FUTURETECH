@@ -46,6 +46,7 @@ public final class FutureTechClient {
     }
 
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerBlockEntityRenderer(ModBlockEntities.ASSEMBLER.get(), AssemblerRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.FLUID_TANK.get(), context -> new FluidTankRenderer());
         event.registerBlockEntityRenderer(ModBlockEntities.BATTERY.get(), context -> new BatterySphereRenderer());
         event.registerBlockEntityRenderer(ModBlockEntities.ITEM_CABLE.get(), ItemCableRenderer::new);
@@ -53,6 +54,7 @@ public final class FutureTechClient {
     }
 
     private static void registerScreens(RegisterMenuScreensEvent event) {
+        event.register(ModMenus.ASSEMBLER.get(), AssemblerScreen::new);
         event.register(ModMenus.FLUID_TANK.get(), FluidTankScreen::new);
         event.register(ModMenus.SOLID_FUEL_GENERATOR.get(), SolidFuelGeneratorScreen::new);
         event.register(ModMenus.BATTERY.get(), BatteryScreen::new);
