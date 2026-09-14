@@ -5,6 +5,7 @@ import dev.futuretech.block.BatteryBlock;
 import dev.futuretech.item.BatteryBlockItem;
 import dev.futuretech.item.FluidTankBlockItem;
 import dev.futuretech.item.ItemFilterItem;
+import dev.futuretech.item.WrenchItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.registries.DeferredBlock;
@@ -54,6 +55,10 @@ public final class ModItems {
             "filter", ItemFilterItem::new, properties -> properties.stacksTo(1));
 
     public static final DeferredItem<Item> SPEED_UPGRADE = ITEMS.registerSimpleItem("speed_upgrade");
+
+    /** Right-click any block to rotate it. */
+    public static final DeferredItem<WrenchItem> WRENCH = ITEMS.registerItem(
+            "wrench", WrenchItem::new, properties -> properties.stacksTo(1));
 
     private ModItems() {}
 }

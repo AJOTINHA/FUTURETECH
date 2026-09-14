@@ -29,6 +29,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.FLUID_CABLE.get());
                         output.accept(ModItems.FILTER.get());
                         output.accept(ModItems.SPEED_UPGRADE.get());
+                        output.accept(ModItems.WRENCH.get());
                         output.accept(ModItems.IRON_POWDER.get());
                         output.accept(ModItems.GOLD_POWDER.get());
                         output.accept(ModItems.COPPER_POWDER.get());

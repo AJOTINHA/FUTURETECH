@@ -85,5 +85,6 @@
   "gui.futuretech.tank.hint": "Use baldes para encher ou esvaziar.",
   "gui.futuretech.tank.input": "Entrada",
   "gui.futuretech.tank.output": "Saída",
-  "gui.futuretech.tank.amount": "%s / %s mB"
+  "gui.futuretech.tank.amount": "%s / %s mB",
+  "item.futuretech.wrench": "Wrench"
 }

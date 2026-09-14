@@ -85,5 +85,6 @@
   "gui.futuretech.tank.hint": "Use buckets to fill or drain.",
   "gui.futuretech.tank.input": "Input",
   "gui.futuretech.tank.output": "Output",
-  "gui.futuretech.tank.amount": "%s / %s mB"
+  "gui.futuretech.tank.amount": "%s / %s mB",
+  "item.futuretech.wrench": "Wrench"
 }

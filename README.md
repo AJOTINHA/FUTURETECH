@@ -227,6 +227,8 @@ Clique com um balde cheio para abastecer ou com um balde vazio para retirar. Flu
 
 O conteúdo é salvo com o mundo e acompanha o item ao quebrar o tanque com picareta de pedra ou superior. A tooltip do item mostra o fluido e a quantidade; ao recolocar, o conteúdo retorna. A receita usa quatro lingotes de ferro nos cantos, quatro blocos de vidro nas laterais e um balde vazio no centro. O tanque aparece na aba criativa FUTURETECH, ao lado da bateria. O modelo pode ser recriado por `art/fluid_tank/export_tank.py`.
 
+A **Wrench** (`futuretech:wrench`) é um item 3D com boca aberta, cabeça de aço, parafuso central e cabo escuro com detalhes ciano. Aparece na aba FUTURETECH e tem posições próprias na mão, no inventário e na moldura. A receita usa três lingotes de ferro e um de cobre. Clique direito em um bloco gira ele: blocos com `FACING` percorrem norte → leste → sul → oeste → cima → baixo (as máquinas do mod só as quatro horizontais), blocos com eixo ciclam X → Y → Z e o resto usa a rotação própria do bloco. Shift + clique direito em um bloco do FutureTech desmonta ele pelo caminho normal de drop, então o tanque cai com o fluido e a bateria com a carga. O modelo usa os materiais existentes do filtro e pode ser recriado com `art/wrench/export_model.py`.
+
 ## Desenvolvimento no Windows
 
 Abra esta pasta como projeto Gradle na IDE, usando um JDK 25.
