@@ -190,15 +190,15 @@ public final class CableConnectorScreen extends AbstractContainerScreen<CableCon
         if (!menu.kind().prioritised()) return;
         int baseline = PRIORITY_TOP + (STEP_SIZE - font.lineHeight) / 2;
         graphics.text(font, Component.translatable("gui.futuretech.item_cable.priority"), MARGIN, baseline, TITLE, false);
-        drawCentred(graphics, LOWER, Component.literal("-"), TITLE);
-        drawCentred(graphics, RAISE, Component.literal("+"), TITLE);
+        drawStepSymbol(graphics, LOWER, false);
+        drawStepSymbol(graphics, RAISE, true);
         int priority = menu.priority();
         drawCentred(graphics, VALUE, Component.literal(priority > 0 ? "+" + priority : Integer.toString(priority)), TITLE);
         if (menu.kind().coloured()) {
             graphics.text(font, Component.translatable("gui.futuretech.item_cable.channel"), MARGIN,
                     CHANNEL_TOP + (STEP_SIZE - font.lineHeight) / 2, TITLE, false);
-            drawCentred(graphics, LOWER_CHANNEL, Component.literal("-"), TITLE);
-            drawCentred(graphics, RAISE_CHANNEL, Component.literal("+"), TITLE);
+            drawStepSymbol(graphics, LOWER_CHANNEL, false);
+            drawStepSymbol(graphics, RAISE_CHANNEL, true);
             drawCentred(graphics, CHANNEL_VALUE, Component.literal(Integer.toString(menu.channel())), TITLE);
             graphics.text(font, Component.translatable("gui.futuretech.item_cable.color"), MARGIN,
                     COLOR.y() + (COLOR.height() - font.lineHeight) / 2, TITLE, false);
@@ -211,6 +211,14 @@ public final class CableConnectorScreen extends AbstractContainerScreen<CableCon
         graphics.text(font, Component.translatable("gui.futuretech.item_cable.filter"), MARGIN,
                 FILTER.y() + (FILTER.height() - font.lineHeight) / 2, TITLE, false);
         graphics.text(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, TEXT, false);
+    }
+
+    /** Centre the visible strokes instead of the font's advance width and line height. */
+    private void drawStepSymbol(GuiGraphicsExtractor graphics, Box box, boolean plus) {
+        int x = box.x() + (box.width() - 5) / 2;
+        int y = box.y() + (box.height() - 5) / 2;
+        graphics.fill(x, y + 2, x + 5, y + 3, TITLE);
+        if (plus) graphics.fill(x + 2, y, x + 3, y + 5, TITLE);
     }
 
     /** Labels are drawn in the label pass, whose origin is already the panel's corner. */

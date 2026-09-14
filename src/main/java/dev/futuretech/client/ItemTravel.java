@@ -15,16 +15,39 @@ import java.util.Map;
 /**
  * The items currently drawn on their way through item cables. Each journey is a polyline from
  * the middle of the entry face, through the centre of every cable crossed, to the middle of the
- * exit face; the item moves along it at the server's pace and stays at the end until the server
- * says it went in. A fresh report with the same id replaces the old picture.
+ * exit face; the item moves along it at the server's pace on a clock of this class's own, counted
+ * in client ticks, so nothing the world's time does can make it jump. When the server says the
+ * item went in, the picture still finishes the trip before it goes; a fresh report with the same
+ * id replaces the old picture.
  */
 public final class ItemTravel {
-    /** How big the item is drawn; small enough to sit inside a cable. */
-    public static final float ITEM_SCALE = 0.25F;
+    /** How big the item is drawn: a block item comes out just over three units, clear of the capsule's glass. */
+    public static final float ITEM_SCALE = 0.2F;
     /** A journey the server never closed is forgotten after this long past its arrival. */
     private static final long GRACE_TICKS = 20 * 60 * 5;
 
-    public record Journey(List<BlockPos> path, Direction from, Direction to, ItemStack stack, long start, int ticksPerBlock) {
+    public static final class Journey {
+        final List<BlockPos> path;
+        final Direction from;
+        final Direction to;
+        final ItemStack stack;
+        final long start;
+        final int ticksPerBlock;
+        boolean ended;
+
+        Journey(List<BlockPos> path, Direction from, Direction to, ItemStack stack, long start, int ticksPerBlock) {
+            this.path = path;
+            this.from = from;
+            this.to = to;
+            this.stack = stack;
+            this.start = start;
+            this.ticksPerBlock = ticksPerBlock;
+        }
+
+        public ItemStack stack() { return stack; }
+
+        public long start() { return start; }
+
         /** Blocks travelled from the entry face to the exit face: half a block at each end plus the cables between. */
         double length() { return path.size(); }
 
@@ -53,28 +76,38 @@ public final class ItemTravel {
     }
 
     private static final Map<Long, Journey> journeys = new LinkedHashMap<>();
+    /** Client ticks seen so far; every journey is timed against this. */
+    private static long clock;
 
     private ItemTravel() {}
 
+    /** The current moment on the journeys' clock, part-way into the tick being drawn. */
+    public static double now(float partialTick) { return clock + partialTick; }
+
     /** A report from the server: a new journey, or the current state of one already drawn. */
     public static void add(ItemJourneyPayload payload) {
-        var level = Minecraft.getInstance().level;
-        if (level == null || payload.path().isEmpty()) return;
+        if (Minecraft.getInstance().level == null || payload.path().isEmpty()) return;
         journeys.put(payload.id(), new Journey(payload.path(), payload.from(), payload.to(), payload.stack(),
-                level.getGameTime() - payload.travelled(), Math.max(1, payload.ticksPerBlock())));
+                clock - payload.travelled(), Math.max(1, payload.ticksPerBlock())));
     }
 
-    public static void end(long id) { journeys.remove(id); }
+    /** The server delivered or dropped the item; its picture goes once it has reached the end. */
+    public static void end(long id) {
+        Journey journey = journeys.get(id);
+        if (journey != null) journey.ended = true;
+    }
 
-    /** Drops journeys the server forgot to close, and everything when there is no level to draw them in. */
+    /** Advances the clock and drops what is done, and everything when there is no level to draw in. */
     public static void tick() {
-        var level = Minecraft.getInstance().level;
-        if (level == null) {
+        if (Minecraft.getInstance().level == null) {
             journeys.clear();
             return;
         }
-        long now = level.getGameTime();
-        journeys.values().removeIf(journey -> now - journey.start() >= journey.duration() + GRACE_TICKS);
+        clock++;
+        journeys.values().removeIf(journey -> {
+            long elapsed = clock - journey.start;
+            return journey.ended ? elapsed >= journey.duration() : elapsed >= journey.duration() + GRACE_TICKS;
+        });
     }
 
     public static Collection<Journey> journeys() { return journeys.values(); }

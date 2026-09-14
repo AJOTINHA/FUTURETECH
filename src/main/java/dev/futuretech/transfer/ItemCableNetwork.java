@@ -95,15 +95,16 @@ public final class ItemCableNetwork {
     /** Speed upgrades one connector takes. */
     public static final int MAX_UPGRADES = 32;
     /** How long an item takes to cross one cable when it entered through a connector without upgrades. */
-    public static final int TRAVEL_TICKS_PER_BLOCK = 4;
+    public static final int TRAVEL_TICKS_PER_BLOCK = 20;
 
     /**
      * How long an item entering through a connector with that many speed upgrades takes to cross
-     * one cable: the full set brings it down to a cable per tick.
+     * one cable, starting from {@code base} ticks without any: the full set brings it down to a
+     * cable per tick.
      */
-    public static int ticksPerBlock(int upgrades) {
-        int bonus = Math.clamp(upgrades, 0, MAX_UPGRADES) * (TRAVEL_TICKS_PER_BLOCK - 1) / MAX_UPGRADES;
-        return TRAVEL_TICKS_PER_BLOCK - bonus;
+    public static int ticksPerBlock(int base, int upgrades) {
+        int bonus = Math.clamp(upgrades, 0, MAX_UPGRADES) * (base - 1) / MAX_UPGRADES;
+        return base - bonus;
     }
 
     private record PathKey(BlockPos from, BlockPos to) {}
@@ -111,6 +112,8 @@ public final class ItemCableNetwork {
     private final @Nullable ServerLevel level;
     private final int batch;
     private final int interval;
+    /** Ticks per cable for items that enter through a connector without upgrades. */
+    private final int travelTicks;
     private final Set<BlockPos> cables;
     /** Highest priority first; connectors of equal priority stay in discovery order. */
     private final List<Endpoint> endpoints;
@@ -154,15 +157,21 @@ public final class ItemCableNetwork {
     private int round;
     private boolean valid = true;
 
-    /** A network with no level never talks to clients; tests build these. */
-    public ItemCableNetwork(int batch, int interval, Set<BlockPos> cables, List<Endpoint> endpoints) {
-        this(null, batch, interval, cables, endpoints);
+    /** A network with no level never talks to clients; tests build these, with a travel pace of their own. */
+    public ItemCableNetwork(int batch, int interval, int travelTicks, Set<BlockPos> cables, List<Endpoint> endpoints) {
+        this(null, batch, interval, travelTicks, cables, endpoints);
     }
 
     public ItemCableNetwork(@Nullable ServerLevel level, int batch, int interval, Set<BlockPos> cables, List<Endpoint> endpoints) {
+        this(level, batch, interval, TRAVEL_TICKS_PER_BLOCK, cables, endpoints);
+    }
+
+    public ItemCableNetwork(@Nullable ServerLevel level, int batch, int interval, int travelTicks,
+                            Set<BlockPos> cables, List<Endpoint> endpoints) {
         this.level = level;
         this.batch = batch;
         this.interval = Math.max(1, interval);
+        this.travelTicks = Math.max(1, travelTicks);
         this.cables = Set.copyOf(cables);
         List<Endpoint> sorted = new ArrayList<>(endpoints);
         sorted.sort(Comparator.comparingInt(Endpoint::priority).reversed());
@@ -374,7 +383,7 @@ public final class ItemCableNetwork {
                         departing.add(new ItemFlight(ThreadLocalRandom.current().nextLong(), resource.toStack(room),
                                 path(key.cablePos(), endpoint.key().cablePos()), key.side(),
                                 endpoint.key().side(), color, channel, 0,
-                                ticksPerBlock(entry == null ? 0 : entry.upgrades()), false));
+                                ticksPerBlock(travelTicks, entry == null ? 0 : entry.upgrades()), false));
                     }
                 }
                 moved += room;

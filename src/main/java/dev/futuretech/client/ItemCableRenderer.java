@@ -49,7 +49,7 @@ public final class ItemCableRenderer implements BlockEntityRenderer<ItemCableBlo
         state.offsets.clear();
         var level = cable.getLevel();
         if (level == null || !cable.tier().showsItems()) return;
-        double now = level.getGameTime() + partialTick;
+        double now = ItemTravel.now(partialTick);
         state.spin = (float) (now * 3.0);
         BlockPos here = cable.getBlockPos();
         for (ItemTravel.Journey journey : ItemTravel.journeys()) {

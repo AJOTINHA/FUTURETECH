@@ -28,8 +28,11 @@ import static org.junit.jupiter.api.Assertions.*;
 class ItemCableNetworkTest {
     private static final int BATCH = ItemCableTier.STANDARD.batch();
     private static final int INTERVAL = ItemCableTier.STANDARD.interval();
-    /** Ticks an item needs to cross the one cable of most networks here: half a cable in, half out. */
-    private static final int TRIP = ItemCableNetwork.TRAVEL_TICKS_PER_BLOCK;
+    /**
+     * Ticks an item needs to cross the one cable of most networks here: half a cable in, half out.
+     * The tests set their own pace so a trip always fits inside one interval, whatever the game uses.
+     */
+    private static final int TRIP = 4;
     private static final BlockPos CABLE = BlockPos.ZERO;
 
     /**
@@ -146,7 +149,7 @@ class ItemCableNetworkTest {
     private static final Predicate<ItemResource> COBBLESTONE_ONLY = resource -> resource.is(Items.COBBLESTONE);
 
     private static ItemCableNetwork network(ItemCableNetwork.Endpoint... endpoints) {
-        return new ItemCableNetwork(BATCH, INTERVAL, Set.of(CABLE), List.of(endpoints));
+        return new ItemCableNetwork(BATCH, INTERVAL, TRIP, Set.of(CABLE), List.of(endpoints));
     }
 
     private static ItemStacksResourceHandler chest(int cobblestone) {
@@ -199,17 +202,18 @@ class ItemCableNetworkTest {
 
     @Test
     void itemsCrossEveryCableOnTheWayAndArriveOnlyAtTheEnd(MinecraftServer server) {
-        // A straight run of three cables: chest on the west end, machine on the east end.
+        // A straight run of three cables: chest on the west end, machine on the east end. The chest
+        // holds one batch only, so no second item sets off while the first is still on its way.
         BlockPos a = CABLE;
         BlockPos b = a.east();
         BlockPos c = b.east();
-        var chest = chest(64);
+        var chest = chest(BATCH);
         var machine = chest(0);
-        var network = new ItemCableNetwork(BATCH, INTERVAL, Set.of(a, b, c), List.of(
+        var network = new ItemCableNetwork(BATCH, INTERVAL, TRIP, Set.of(a, b, c), List.of(
                 new FakeEndpointAt(new ItemCableNetwork.EndpointKey(a, Direction.WEST), false, true, chest),
                 new FakeEndpointAt(new ItemCableNetwork.EndpointKey(c, Direction.EAST), true, false, machine)));
         network.tick(INTERVAL);
-        assertEquals(64 - BATCH, count(chest), "Pumped out at once");
+        assertEquals(0, count(chest), "Pumped out at once");
         var flight = network.flights().getFirst();
         assertEquals(List.of(a, b, c), flight.path);
         assertEquals(a, flight.current());
@@ -300,7 +304,7 @@ class ItemCableNetworkTest {
         BlockPos chestPos = CABLE.north();
         var otherFace = new ItemCableNetwork.EndpointKey(chestPos.east(), Direction.WEST);
         assertEquals(chestPos, otherFace.neighbour());
-        var network = new ItemCableNetwork(BATCH, INTERVAL, Set.of(CABLE, otherFace.cablePos()), List.of(
+        var network = new ItemCableNetwork(BATCH, INTERVAL, TRIP, Set.of(CABLE, otherFace.cablePos()), List.of(
                 new ExtractOnlyEndpoint(Direction.NORTH, chest), new FakeEndpointAt(otherFace, true, false, chest)));
         network.tick(INTERVAL);
         assertEquals(64, count(chest));
@@ -358,7 +362,7 @@ class ItemCableNetworkTest {
         var favoured = new ItemStacksResourceHandler(1);
         var first = chest(0);
         var last = chest(0);
-        var network = new ItemCableNetwork(64, INTERVAL, Set.of(CABLE), List.of(
+        var network = new ItemCableNetwork(64, INTERVAL, TRIP, Set.of(CABLE), List.of(
                 new FakeEndpoint(Direction.NORTH, first),
                 new PrioritisedEndpoint(Direction.SOUTH, 3, favoured),
                 new PrioritisedEndpoint(Direction.EAST, -2, last)));
@@ -458,7 +462,7 @@ class ItemCableNetworkTest {
         BlockPos c = b.east();
         BlockPos d = c.north();
         BlockPos stub = a.north();
-        var network = new ItemCableNetwork(BATCH, INTERVAL, Set.of(a, b, c, d, stub), List.of());
+        var network = new ItemCableNetwork(BATCH, INTERVAL, TRIP, Set.of(a, b, c, d, stub), List.of());
         assertEquals(List.of(a, b, c, d), network.path(a, d));
         assertEquals(List.of(d, c, b, a), network.path(d, a));
         assertEquals(List.of(b), network.path(b, b));
@@ -487,16 +491,17 @@ class ItemCableNetworkTest {
 
     @Test
     void speedUpgradesMakeWhatEntersThereTravelFaster(MinecraftServer server) {
-        assertEquals(ItemCableNetwork.TRAVEL_TICKS_PER_BLOCK, ItemCableNetwork.ticksPerBlock(0));
-        assertEquals(1, ItemCableNetwork.ticksPerBlock(ItemCableNetwork.MAX_UPGRADES));
-        assertTrue(ItemCableNetwork.ticksPerBlock(16) < ItemCableNetwork.TRAVEL_TICKS_PER_BLOCK);
+        assertEquals(TRIP, ItemCableNetwork.ticksPerBlock(TRIP, 0));
+        assertEquals(1, ItemCableNetwork.ticksPerBlock(TRIP, ItemCableNetwork.MAX_UPGRADES));
+        assertEquals(1, ItemCableNetwork.ticksPerBlock(ItemCableNetwork.TRAVEL_TICKS_PER_BLOCK, ItemCableNetwork.MAX_UPGRADES));
+        assertTrue(ItemCableNetwork.ticksPerBlock(ItemCableNetwork.TRAVEL_TICKS_PER_BLOCK, 16) < ItemCableNetwork.TRAVEL_TICKS_PER_BLOCK);
         // A fully upgraded pump on a three-cable run gets its item across in three ticks, not twelve.
         BlockPos a = CABLE;
         BlockPos b = a.east();
         BlockPos c = b.east();
         var chest = chest(64);
         var machine = new ItemStacksResourceHandler(9);
-        var network = new ItemCableNetwork(BATCH, INTERVAL, Set.of(a, b, c), List.of(
+        var network = new ItemCableNetwork(BATCH, INTERVAL, TRIP, Set.of(a, b, c), List.of(
                 new UpgradedPump(Direction.WEST, ItemCableNetwork.MAX_UPGRADES, chest),
                 new FakeEndpointAt(new ItemCableNetwork.EndpointKey(c, Direction.EAST), true, false, machine)));
         network.tick(INTERVAL);
@@ -511,7 +516,7 @@ class ItemCableNetworkTest {
     void aFilteredConnectorOnlyReceivesWhatItsCardAllows(MinecraftServer server) {
         var stone = chest(0);
         var anything = chest(0);
-        var network = new ItemCableNetwork(64, INTERVAL, Set.of(CABLE), List.of(
+        var network = new ItemCableNetwork(64, INTERVAL, TRIP, Set.of(CABLE), List.of(
                 new FilteredEndpoint(Direction.NORTH, true, false, COBBLESTONE_ONLY, stone),
                 new FakeEndpoint(Direction.SOUTH, anything)));
         // Dirt has one place to go; cobblestone is offered to the filtered chest first in this round.
@@ -519,7 +524,7 @@ class ItemCableNetworkTest {
         fly(network, 0);
         assertEquals(0, count(stone));
         assertEquals(4, count(anything));
-        var stoneOnly = new ItemCableNetwork(64, INTERVAL, Set.of(CABLE), List.of(
+        var stoneOnly = new ItemCableNetwork(64, INTERVAL, TRIP, Set.of(CABLE), List.of(
                 new FilteredEndpoint(Direction.NORTH, true, false, COBBLESTONE_ONLY, chest(0))));
         assertEquals(0, push(stoneOnly, Direction.UP, Items.DIRT, 4));
         assertEquals(4, push(stoneOnly, Direction.UP, Items.COBBLESTONE, 4));
@@ -528,7 +533,7 @@ class ItemCableNetworkTest {
     @Test
     void aFilteredConnectorRefusesWhatItsCardKeepsOutAtTheEntrance(MinecraftServer server) {
         var sink = chest(0);
-        var network = new ItemCableNetwork(64, INTERVAL, Set.of(CABLE), List.of(
+        var network = new ItemCableNetwork(64, INTERVAL, TRIP, Set.of(CABLE), List.of(
                 new FilteredEndpoint(Direction.WEST, true, false, COBBLESTONE_ONLY, null),
                 new FakeEndpoint(Direction.EAST, sink)));
         assertEquals(0, push(network, Direction.WEST, Items.DIRT, 4));
@@ -543,7 +548,7 @@ class ItemCableNetworkTest {
         mixed.set(0, ItemResource.of(Items.DIRT), 8);
         mixed.set(1, ItemResource.of(Items.COBBLESTONE), 8);
         var sink = chest(0);
-        var network = new ItemCableNetwork(64, INTERVAL, Set.of(CABLE), List.of(
+        var network = new ItemCableNetwork(64, INTERVAL, TRIP, Set.of(CABLE), List.of(
                 new FilteredEndpoint(Direction.NORTH, false, true, COBBLESTONE_ONLY, mixed),
                 new FakeEndpoint(Direction.SOUTH, sink)));
         network.tick(INTERVAL);
@@ -559,7 +564,7 @@ class ItemCableNetworkTest {
         var redSink = chest(0);
         var blueSink = chest(0);
         var whiteSink = chest(0);
-        var network = new ItemCableNetwork(64, INTERVAL, Set.of(CABLE), List.of(
+        var network = new ItemCableNetwork(64, INTERVAL, TRIP, Set.of(CABLE), List.of(
                 new ColouredEndpoint(Direction.NORTH, false, true, DyeColor.RED, redChest),
                 new ColouredEndpoint(Direction.EAST, true, false, DyeColor.BLUE, blueSink),
                 new FakeEndpoint(Direction.UP, whiteSink),
@@ -570,7 +575,7 @@ class ItemCableNetworkTest {
         assertEquals(0, count(blueSink));
         assertEquals(0, count(whiteSink), "Connectors left white are their own channel");
         // A push through a blue face only reaches blue; with none listening it is refused.
-        var onlyRed = new ItemCableNetwork(64, INTERVAL, Set.of(CABLE), List.of(
+        var onlyRed = new ItemCableNetwork(64, INTERVAL, TRIP, Set.of(CABLE), List.of(
                 new ColouredEndpoint(Direction.EAST, true, false, DyeColor.BLUE, null),
                 new ColouredEndpoint(Direction.SOUTH, true, false, DyeColor.RED, chest(0))));
         assertEquals(0, push(onlyRed, Direction.EAST, Items.DIRT, 4));
@@ -582,7 +587,7 @@ class ItemCableNetworkTest {
         var sameLine = chest(0);
         var otherLine = chest(0);
         var otherColour = chest(0);
-        var network = new ItemCableNetwork(64, INTERVAL, Set.of(CABLE), List.of(
+        var network = new ItemCableNetwork(64, INTERVAL, TRIP, Set.of(CABLE), List.of(
                 new ColouredEndpoint(Direction.NORTH, false, true, DyeColor.RED, 7, source),
                 new ColouredEndpoint(Direction.EAST, true, false, DyeColor.RED, 8, otherLine),
                 new ColouredEndpoint(Direction.WEST, true, false, DyeColor.BLUE, 7, otherColour),
