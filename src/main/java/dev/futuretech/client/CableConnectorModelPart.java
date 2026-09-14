@@ -42,7 +42,8 @@ public final class CableConnectorModelPart implements BlockStateModelPart {
      * open mouth at the bottom of it. Filling the bore leaves nothing to look into at all.
      */
     private static void addContact(List<BakedQuad> output, Direction side, TextureAtlasSprite contact) {
-        Point a=new Point(4,4,0), c=new Point(12,12,CableConnector.BORE_DEPTH);
+        Point a=new Point(CableConnector.BORE_MIN,CableConnector.BORE_MIN,0);
+        Point c=new Point(CableConnector.BORE_MAX,CableConnector.BORE_MAX,CableConnector.BORE_DEPTH);
         addPlate(output,side,contact,new Point(a.x(),c.y(),a.z()),new Point(a.x(),c.y(),c.z()),c,new Point(c.x(),c.y(),a.z()));
         addPlate(output,side,contact,a,new Point(c.x(),a.y(),a.z()),new Point(c.x(),a.y(),c.z()),new Point(a.x(),a.y(),c.z()));
         addPlate(output,side,contact,a,new Point(a.x(),c.y(),a.z()),new Point(c.x(),c.y(),a.z()),new Point(c.x(),a.y(),a.z()));
@@ -59,10 +60,11 @@ public final class CableConnectorModelPart implements BlockStateModelPart {
         for (int i=0;i<4;i++) {
             Point p=CableConnector.rotate(points[i],side);
             vertices[i]=new Vector3f(p.x(),p.y(),p.z()).div(16);
-            // Eight texels over the eight-unit bore keeps the contact on the pixel grid. The
+            // Eight texels stretched over the bore keep the contact on its pixel grid. The
             // plug's sides are buried in the collar and only need a sane, non-degenerate strip.
-            float u=((cap || alongX ? points[i].x() : points[i].y())-4)/16;
-            float v=cap ? (points[i].y()-4)/16 : points[i].z()/CableConnector.BORE_DEPTH*8/16;
+            float span=CableConnector.BORE_MAX-CableConnector.BORE_MIN;
+            float u=((cap || alongX ? points[i].x() : points[i].y())-CableConnector.BORE_MIN)/span*8/16;
+            float v=cap ? (points[i].y()-CableConnector.BORE_MIN)/span*8/16 : points[i].z()/CableConnector.BORE_DEPTH*8/16;
             uvs[i]=UVPair.pack(contact.getU(u),contact.getV(v));
         }
         emit(output,contact,vertices,uvs);

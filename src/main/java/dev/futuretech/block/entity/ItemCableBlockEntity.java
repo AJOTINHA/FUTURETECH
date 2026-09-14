@@ -9,6 +9,7 @@ import dev.futuretech.item.ItemFilterItem;
 import dev.futuretech.registry.ModBlockEntities;
 import dev.futuretech.transfer.ConnectorItems;
 import dev.futuretech.transfer.ItemCableNetwork;
+import dev.futuretech.transfer.ItemFlight;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -23,7 +24,9 @@ import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
@@ -33,13 +36,14 @@ public final class ItemCableBlockEntity extends AbstractCableBlockEntity {
     public static final int MAX_PRIORITY = 100;
     public static final int MAX_CHANNEL = 100;
     /** Speed upgrades one connector takes. */
-    public static final int MAX_UPGRADES = 32;
+    public static final int MAX_UPGRADES = ItemCableNetwork.MAX_UPGRADES;
     private static final String PRIORITIES_TAG = "Priorities";
     private static final Codec<Map<Direction, Integer>> PRIORITIES_CODEC =
             Codec.unboundedMap(Direction.CODEC, Codec.INT);
     private static final String CHANNELS_TAG = "Channels";
     private static final Codec<Map<Direction, Integer>> CHANNELS_CODEC =
             Codec.unboundedMap(Direction.CODEC, Codec.INT);
+    private static final String FLIGHTS_TAG = "Flights";
     private static final String COLORS_TAG = "Colors";
     private static final Codec<Map<Direction, DyeColor>> COLORS_CODEC =
             Codec.unboundedMap(Direction.CODEC, DyeColor.CODEC);
@@ -63,6 +67,11 @@ public final class ItemCableBlockEntity extends AbstractCableBlockEntity {
         invalidateNetwork();
     });
     private @Nullable ItemCableNetwork network;
+    /**
+     * Items inside this cable while it has no network: loaded from the save, or left here when the
+     * network was torn down. The next network takes them over.
+     */
+    private final List<ItemFlight> parked = new ArrayList<>();
 
     public ItemCableBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.ITEM_CABLE.get(), pos, state);
@@ -135,9 +144,14 @@ public final class ItemCableBlockEntity extends AbstractCableBlockEntity {
     @Override
     public void preRemoveSideEffects(BlockPos pos, BlockState state) {
         super.preRemoveSideEffects(pos, state);
-        if (level != null) {
-            Containers.dropContents(level, pos, filters);
-            Containers.dropContents(level, pos, upgrades);
+        if (level == null) return;
+        Containers.dropContents(level, pos, filters);
+        Containers.dropContents(level, pos, upgrades);
+        // Whatever was passing through falls out with the cable.
+        List<ItemFlight> inside = network != null && network.isValid() ? network.removeFlightsIn(pos) : List.copyOf(parked);
+        parked.clear();
+        for (ItemFlight flight : inside) {
+            Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), flight.stack);
         }
     }
 
@@ -146,6 +160,8 @@ public final class ItemCableBlockEntity extends AbstractCableBlockEntity {
         super.loadAdditional(input);
         filters.load(input);
         upgrades.load(input);
+        parked.clear();
+        input.read(FLIGHTS_TAG, ItemFlight.LIST_CODEC).ifPresent(parked::addAll);
         colors.clear();
         input.read(COLORS_TAG, COLORS_CODEC).ifPresent(colors::putAll);
         channels.clear();
@@ -165,6 +181,8 @@ public final class ItemCableBlockEntity extends AbstractCableBlockEntity {
         super.saveAdditional(output);
         filters.save(output);
         upgrades.save(output);
+        List<ItemFlight> inside = flightsHere();
+        if (!inside.isEmpty()) output.store(FLIGHTS_TAG, ItemFlight.LIST_CODEC, inside);
         if (!colors.isEmpty()) output.store(COLORS_TAG, COLORS_CODEC, Map.copyOf(colors));
         if (!channels.isEmpty()) output.store(CHANNELS_TAG, CHANNELS_CODEC, Map.copyOf(channels));
         if (!priorities.isEmpty()) output.store(PRIORITIES_TAG, PRIORITIES_CODEC, Map.copyOf(priorities));
@@ -179,6 +197,20 @@ public final class ItemCableBlockEntity extends AbstractCableBlockEntity {
     }
 
     public void setNetwork(ItemCableNetwork network) { this.network = network; }
+
+    public void park(ItemFlight flight) { parked.add(flight); }
+
+    /** Hands the parked flights to the network that is taking this cable over. */
+    public List<ItemFlight> takeParkedFlights() {
+        List<ItemFlight> taken = List.copyOf(parked);
+        parked.clear();
+        return taken;
+    }
+
+    /** The flights inside this cable right now, wherever they are kept. */
+    private List<ItemFlight> flightsHere() {
+        return network != null && network.isValid() ? network.flightsIn(worldPosition) : parked;
+    }
 
     public void clearNetwork(ItemCableNetwork stale) {
         if (network == stale) network = null;

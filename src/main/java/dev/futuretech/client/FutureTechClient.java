@@ -9,6 +9,7 @@ import dev.futuretech.api.side.SideMode;
 import dev.futuretech.api.side.client.ConfiguredSideModel;
 import dev.futuretech.registry.ModMenus;
 import dev.futuretech.registry.ModBlockEntities;
+import dev.futuretech.transfer.ItemJourneys;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.Identifier;
 import net.minecraft.core.Direction;
@@ -16,7 +17,9 @@ import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.ModelEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 
@@ -36,10 +39,14 @@ public final class FutureTechClient {
         modEventBus.addListener(FutureTechClient::registerScreens);
         modEventBus.addListener(FutureTechClient::configureSideModels);
         modEventBus.addListener(FutureTechClient::registerRenderers);
+        // Items travelling through cables are drawn from journeys the server reports.
+        ItemJourneys.setDrawer(ItemTravel::add, ItemTravel::end);
+        NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> ItemTravel.tick());
     }
 
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(ModBlockEntities.BATTERY.get(), context -> new BatterySphereRenderer());
+        event.registerBlockEntityRenderer(ModBlockEntities.ITEM_CABLE.get(), ItemCableRenderer::new);
     }
 
     private static void registerScreens(RegisterMenuScreensEvent event) {

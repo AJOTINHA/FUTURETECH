@@ -8,12 +8,15 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.ChunkPos;
 import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.ResourceHandlerUtil;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.transaction.SnapshotJournal;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 import org.jspecify.annotations.Nullable;
 
@@ -22,19 +25,25 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
 
 /**
- * A group of touching item cables. Unlike the energy network it holds nothing: an item pushed into
- * any cable of the group goes straight through to an adjacent inventory in the same transaction,
- * so nothing is ever lost in a cable and a full network simply refuses the push. Once per tick
- * the group also pumps from the inventories behind its extract-only connectors. Every connector an
- * item can enter through has its own budget, renewed every {@code interval} ticks: the tier's
- * batch plus {@value #PER_UPGRADE} per speed upgrade on that connector, up to a stack. What is not
- * used in one interval does not carry over.
+ * A group of touching item cables. An item pushed into any cable of the group, or pumped in by an
+ * extract-only connector, leaves its source at once, is given a destination among the inventories
+ * on its colour and channel, and then travels the cables to it at a fixed pace; only on arrival
+ * does it enter the destination. If the destination will not take it by then it looks for another
+ * one from where it is, and failing that waits at the end of the cable and tries again. Cables
+ * hold what is inside them: flights survive saving, and a broken cable drops its items.
+ *
+ * <p>Every connector an item can enter through has its own budget, renewed every {@code interval}
+ * ticks: the tier's batch plus {@value #PER_UPGRADE} per speed upgrade on that connector, up to a
+ * stack. What is not used in one interval does not carry over. The same upgrades also make what
+ * enters there travel faster, see {@link #ticksPerBlock(int)}.
  *
  * <p>Connectors carry a colour, white unless the player picked another, and a channel number from
  * 0 to 100. An item entering through a connector only leaves through connectors of the same colour
@@ -83,7 +92,23 @@ public final class ItemCableNetwork {
     public static final int PER_UPGRADE = 2;
     /** No connector moves more than a stack per interval, however many upgrades it carries. */
     public static final int MAX_PER_INTERVAL = 64;
+    /** Speed upgrades one connector takes. */
+    public static final int MAX_UPGRADES = 32;
+    /** How long an item takes to cross one cable when it entered through a connector without upgrades. */
+    public static final int TRAVEL_TICKS_PER_BLOCK = 4;
 
+    /**
+     * How long an item entering through a connector with that many speed upgrades takes to cross
+     * one cable: the full set brings it down to a cable per tick.
+     */
+    public static int ticksPerBlock(int upgrades) {
+        int bonus = Math.clamp(upgrades, 0, MAX_UPGRADES) * (TRAVEL_TICKS_PER_BLOCK - 1) / MAX_UPGRADES;
+        return TRAVEL_TICKS_PER_BLOCK - bonus;
+    }
+
+    private record PathKey(BlockPos from, BlockPos to) {}
+
+    private final @Nullable ServerLevel level;
     private final int batch;
     private final int interval;
     private final Set<BlockPos> cables;
@@ -105,11 +130,37 @@ public final class ItemCableNetwork {
         @Override
         protected void revertToSnapshot(int[] snapshot) { System.arraycopy(snapshot, 0, budgets, 0, budgets.length); }
     };
+    private final List<ItemFlight> flights = new ArrayList<>();
+    private final List<ItemFlight> departing = new ArrayList<>();
+    // An item only sets off once the transaction that took it from its source is final.
+    private final SnapshotJournal<Integer> departureJournal = new SnapshotJournal<>() {
+        @Override
+        protected Integer createSnapshot() { return departing.size(); }
+
+        @Override
+        protected void revertToSnapshot(Integer snapshot) { departing.subList(snapshot, departing.size()).clear(); }
+
+        @Override
+        protected void onRootCommit(Integer originalState) {
+            for (ItemFlight flight : departing) {
+                flights.add(flight);
+                announce(flight);
+            }
+            departing.clear();
+        }
+    };
+    private final Map<PathKey, List<BlockPos>> paths = new HashMap<>();
     private long lastTick = Long.MIN_VALUE;
     private int round;
     private boolean valid = true;
 
+    /** A network with no level never talks to clients; tests build these. */
     public ItemCableNetwork(int batch, int interval, Set<BlockPos> cables, List<Endpoint> endpoints) {
+        this(null, batch, interval, cables, endpoints);
+    }
+
+    public ItemCableNetwork(@Nullable ServerLevel level, int batch, int interval, Set<BlockPos> cables, List<Endpoint> endpoints) {
+        this.level = level;
         this.batch = batch;
         this.interval = Math.max(1, interval);
         this.cables = Set.copyOf(cables);
@@ -137,7 +188,10 @@ public final class ItemCableNetwork {
         for (int index = 0; index < budgets.length; index++) budgets[index] = allowance(index);
     }
 
-    /** Flood-fills the cables touching {@code start} and gives every one of them this network. */
+    /**
+     * Flood-fills the cables touching {@code start}, gives every one of them this network and takes
+     * over the flights they were keeping while there was none.
+     */
     public static ItemCableNetwork discover(ServerLevel level, BlockPos start) {
         Set<BlockPos> cables = new HashSet<>();
         List<Endpoint> endpoints = new ArrayList<>();
@@ -169,9 +223,12 @@ public final class ItemCableNetwork {
                 }
             }
         }
-        var network = slowest == null ? new ItemCableNetwork(0, 1, cables, endpoints)
-                : new ItemCableNetwork(slowest.batch(), slowest.interval(), cables, endpoints);
-        members.forEach(member -> member.setNetwork(network));
+        var network = slowest == null ? new ItemCableNetwork(level, 0, 1, cables, endpoints)
+                : new ItemCableNetwork(level, slowest.batch(), slowest.interval(), cables, endpoints);
+        for (ItemCableBlockEntity member : members) {
+            member.setNetwork(network);
+            network.absorb(member.takeParkedFlights());
+        }
         return network;
     }
 
@@ -190,9 +247,34 @@ public final class ItemCableNetwork {
         return moved;
     }
 
-    /** Drops every member's reference so the next tick rebuilds the network from what is left. */
+    /** Every item currently travelling or waiting in the network. */
+    public List<ItemFlight> flights() { return List.copyOf(flights); }
+
+    /** The flights inside the cable at {@code pos}; what that cable saves or drops. */
+    public List<ItemFlight> flightsIn(BlockPos pos) {
+        List<ItemFlight> inside = new ArrayList<>();
+        for (ItemFlight flight : flights) if (flight.current().equals(pos)) inside.add(flight);
+        return inside;
+    }
+
+    /** Takes the flights inside the cable at {@code pos} out of the network, for dropping. */
+    public List<ItemFlight> removeFlightsIn(BlockPos pos) {
+        List<ItemFlight> removed = flightsIn(pos);
+        flights.removeAll(removed);
+        for (ItemFlight flight : removed) announceEnd(flight);
+        return removed;
+    }
+
+    /**
+     * Drops every member's reference so the next tick rebuilds the network from what is left, and
+     * leaves each flight with the cable it is inside, to be picked up by the next network.
+     */
     public void invalidate(ServerLevel level) {
         valid = false;
+        for (ItemFlight flight : flights) {
+            if (level.getBlockEntity(flight.current()) instanceof ItemCableBlockEntity cable) cable.park(flight);
+        }
+        flights.clear();
         for (BlockPos pos : cables) {
             if (level.hasChunkAt(pos.getX(), pos.getZ())
                     && level.getBlockEntity(pos) instanceof ItemCableBlockEntity cable) {
@@ -202,19 +284,33 @@ public final class ItemCableNetwork {
     }
 
     /**
+     * Flights kept by a cable while it had no network. Those whose route still exists carry on;
+     * the others are given a new destination from where they are, or wait there for one.
+     */
+    public void absorb(List<ItemFlight> parked) {
+        for (ItemFlight flight : parked) {
+            boolean routeIntact = cables.containsAll(flight.path) && indexByKey.containsKey(flight.destination());
+            if (!routeIntact && !reroute(flight, flight.current())) {
+                flight.path = List.of(flight.current());
+                flight.travelled = flight.duration();
+                flight.waiting = true;
+            }
+            flights.add(flight);
+            announce(flight);
+        }
+    }
+
+    /**
      * The handler a neighbour beyond the given cable face sees: one always-empty slot whose inserts
-     * pass straight through to the other inventories on the network. Nothing can ever be extracted
-     * from it, it only takes what that face's filter card lets in, what comes in only goes out on
-     * that face's colour and channel, and it never hands an item back to the block that is pushing
-     * it in, not even through another face that block touches.
+     * set items travelling to the other inventories on the network. Nothing can ever be extracted
+     * from it, it only takes what that face's filter card lets in and what some inventory on that
+     * face's colour and channel has room for right now, and it never sends an item back to the
+     * block that is pushing it in, not even through another face that block touches.
      */
     public ResourceHandler<ItemResource> handlerFor(@Nullable EndpointKey key) {
-        BlockPos origin = key == null ? null : key.neighbour();
         Integer known = key == null ? null : indexByKey.get(key);
         int slot = known == null ? endpoints.size() : known;
         Endpoint entry = known == null ? null : endpoints.get(known);
-        DyeColor color = entry == null ? DyeColor.WHITE : entry.color();
-        int channel = entry == null ? 0 : entry.channel();
         return new ResourceHandler<>() {
             @Override
             public int size() { return 1; }
@@ -236,7 +332,7 @@ public final class ItemCableNetwork {
             @Override
             public int insert(int index, ItemResource resource, int amount, TransactionContext transaction) {
                 if (index != 0 || (entry != null && !entry.accepts(resource))) return 0;
-                return deliver(resource, amount, origin, color, channel, slot, transaction);
+                return dispatch(resource, amount, key, entry, slot, transaction);
             }
 
             @Override
@@ -247,24 +343,41 @@ public final class ItemCableNetwork {
     }
 
     /**
-     * Hands up to {@code amount} of {@code resource} to the delivering endpoints of {@code color} on
-     * {@code channel}, skipping the block at {@code origin} and spending the budget of the connector
-     * at {@code slot}. Higher priorities are offered everything first; within one priority the round
-     * starts at a different endpoint each interval so one inventory cannot hog everything that
-     * comes through.
+     * Sets up to {@code amount} of {@code resource} travelling from the face {@code key} towards the
+     * delivering endpoints on {@code entry}'s colour and channel, skipping the block beyond that
+     * face and spending the budget of the connector at {@code slot}. Each candidate is asked,
+     * without keeping anything, how much it would take right now, and the item leaves for the first
+     * ones that have room: higher priorities first, and within one priority starting somewhere else
+     * each interval so one inventory cannot hog everything that comes through. Without a face there
+     * is no cable to travel through, so the item is handed straight over.
      */
-    private int deliver(ItemResource resource, int amount, @Nullable BlockPos origin, DyeColor color, int channel,
-                        int slot, TransactionContext transaction) {
+    private int dispatch(ItemResource resource, int amount, @Nullable EndpointKey key, @Nullable Endpoint entry,
+                         int slot, TransactionContext transaction) {
         int allowed = Math.min(amount, budgets[slot]);
         if (allowed <= 0 || resource.isEmpty() || endpoints.isEmpty()) return 0;
+        BlockPos origin = key == null ? null : key.neighbour();
+        DyeColor color = entry == null ? DyeColor.WHITE : entry.color();
+        int channel = entry == null ? 0 : entry.channel();
         int moved = 0;
         for (List<Endpoint> rank : ranks) {
             int count = rank.size();
             for (int step = 0; step < count && moved < allowed; step++) {
                 Endpoint endpoint = rank.get((round + step) % count);
-                if (!endpoint.delivers() || endpoint.color() != color || endpoint.channel() != channel
-                        || endpoint.key().neighbour().equals(origin) || !endpoint.accepts(resource)) continue;
-                moved += ResourceHandlerUtil.insertStacking(endpoint.handler(), resource, allowed - moved, transaction);
+                if (!serves(endpoint, color, channel, resource) || endpoint.key().neighbour().equals(origin)) continue;
+                int room;
+                if (key == null) {
+                    room = ResourceHandlerUtil.insertStacking(endpoint.handler(), resource, allowed - moved, transaction);
+                } else {
+                    room = roomFor(endpoint, resource, allowed - moved, transaction);
+                    if (room > 0) {
+                        departureJournal.updateSnapshots(transaction);
+                        departing.add(new ItemFlight(ThreadLocalRandom.current().nextLong(), resource.toStack(room),
+                                path(key.cablePos(), endpoint.key().cablePos()), key.side(),
+                                endpoint.key().side(), color, channel, 0,
+                                ticksPerBlock(entry == null ? 0 : entry.upgrades()), false));
+                    }
+                }
+                moved += room;
             }
         }
         if (moved > 0) {
@@ -274,19 +387,47 @@ public final class ItemCableNetwork {
         return moved;
     }
 
+    private static boolean serves(Endpoint endpoint, DyeColor color, int channel, ItemResource resource) {
+        return endpoint.delivers() && endpoint.color() == color && endpoint.channel() == channel && endpoint.accepts(resource);
+    }
+
     /**
-     * Renews the budget and pumps once per interval; every member cable calls this every tick,
-     * and only the first call on the interval's first tick acts.
+     * How much of {@code resource} the endpoint would still take once everything already on its
+     * way there has arrived, without leaving anything there. Counting the flights keeps two
+     * sources from both sending to the last free slot, and keeps a lower priority from taking the
+     * room a higher one was just promised.
+     */
+    private int roomFor(Endpoint endpoint, ItemResource resource, int amount, @Nullable TransactionContext transaction) {
+        ResourceHandler<ItemResource> handler = endpoint.handler();
+        if (handler == null) return 0;
+        try (Transaction probe = Transaction.open(transaction)) {
+            for (List<ItemFlight> bound : List.of(flights, departing)) {
+                for (ItemFlight flight : bound) {
+                    if (!flight.destination().equals(endpoint.key())) continue;
+                    ResourceHandlerUtil.insertStacking(handler, ItemResource.of(flight.stack), flight.stack.getCount(), probe);
+                }
+            }
+            return ResourceHandlerUtil.insertStacking(handler, resource, amount, probe);
+        }
+    }
+
+    /**
+     * Every tick the flights move on and the ones that reached their exit are handed over; once per
+     * interval the budgets are renewed and the extract-only connectors pump. Every member cable
+     * calls this every tick, only the first call acts.
      */
     public void tick(long gameTime) {
-        if (gameTime == lastTick || Math.floorMod(gameTime, interval) != 0) return;
+        if (gameTime == lastTick) return;
         lastTick = gameTime;
+        boolean newInterval = Math.floorMod(gameTime, interval) == 0;
+        advanceFlights(newInterval);
+        if (!newInterval) return;
         renewBudgets();
         round = (int) Math.floorMod(gameTime / interval, Integer.MAX_VALUE);
         // Extract-only connectors act as pumps: a chest never pushes, so a connector on one has to
-        // do the pulling or nothing ever comes out. What they pull goes through the same pass-through
-        // as a push, so it lands in another inventory or stays where it was. Pumps take turns the
-        // same way sinks do: by priority, and round-robin within one priority.
+        // do the pulling or nothing ever comes out. What they pull goes through the same entrance
+        // as a push, so it sets off for another inventory or stays where it was. Pumps take turns
+        // the same way sinks do: by priority, and round-robin within one priority.
         for (List<Endpoint> rank : ranks) {
             int count = rank.size();
             for (int step = 0; step < count; step++) {
@@ -298,6 +439,115 @@ public final class ItemCableNetwork {
                 ResourceHandlerUtil.moveStacking(source, handlerFor(endpoint.key()), endpoint::accepts, budget, null);
             }
         }
+    }
+
+    /** Moves every flight one tick along; arrivals are delivered, and waiting ones retry each interval. */
+    private void advanceFlights(boolean retryWaiting) {
+        for (Iterator<ItemFlight> it = flights.iterator(); it.hasNext(); ) {
+            ItemFlight flight = it.next();
+            if (flight.waiting) {
+                if (retryWaiting && arrive(flight)) it.remove();
+                continue;
+            }
+            flight.travelled++;
+            if (flight.arrived() && arrive(flight)) it.remove();
+        }
+    }
+
+    /**
+     * Hands the flight to its destination. What does not fit looks for another inventory from the
+     * cable it is in; if there is none it waits at the exit face. Returns true once nothing is left.
+     */
+    private boolean arrive(ItemFlight flight) {
+        Integer index = indexByKey.get(flight.destination());
+        Endpoint destination = index == null ? null : endpoints.get(index);
+        ItemResource resource = ItemResource.of(flight.stack);
+        if (destination != null && serves(destination, flight.color, flight.channel, resource)) {
+            int inserted = ResourceHandlerUtil.insertStacking(destination.handler(), resource, flight.stack.getCount(), null);
+            flight.stack.shrink(inserted);
+            if (flight.stack.isEmpty()) {
+                announceEnd(flight);
+                return true;
+            }
+        }
+        if (reroute(flight, flight.path.getLast())) return false;
+        if (!flight.waiting) {
+            flight.waiting = true;
+            announce(flight);
+        }
+        return false;
+    }
+
+    /**
+     * Gives the flight a new destination reachable from {@code cable}, avoiding the one it was
+     * heading for; the item sets off again from that cable's centre. False when nothing on its
+     * colour and channel has room.
+     */
+    private boolean reroute(ItemFlight flight, BlockPos cable) {
+        EndpointKey previous = flight.destination();
+        ItemResource resource = ItemResource.of(flight.stack);
+        for (List<Endpoint> rank : ranks) {
+            int count = rank.size();
+            for (int step = 0; step < count; step++) {
+                Endpoint endpoint = rank.get((round + step) % count);
+                if (endpoint.key().equals(previous) || !serves(endpoint, flight.color, flight.channel, resource)) continue;
+                if (roomFor(endpoint, resource, flight.stack.getCount(), null) <= 0) continue;
+                // A flight at its exit face turns back from there; one caught mid-cable restarts
+                // from that cable's centre.
+                flight.travelled = flight.arrived() ? 0 : flight.ticksPerBlock / 2;
+                flight.path = path(cable, endpoint.key().cablePos());
+                flight.from = flight.to;
+                flight.to = endpoint.key().side();
+                flight.waiting = false;
+                announce(flight);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Tells the players watching the flight's cable where it is and where it is going. */
+    private void announce(ItemFlight flight) {
+        if (level == null) return;
+        var payload = new ItemJourneyPayload(flight.id, flight.path, flight.from, flight.to, flight.stack.copy(),
+                flight.ticksPerBlock, flight.travelled, flight.waiting);
+        PacketDistributor.sendToPlayersTrackingChunk(level, ChunkPos.containing(flight.current()), payload);
+    }
+
+    private void announceEnd(ItemFlight flight) {
+        if (level == null) return;
+        PacketDistributor.sendToPlayersTrackingChunk(level, ChunkPos.containing(flight.current()),
+                new ItemJourneyEndPayload(flight.id));
+    }
+
+    /**
+     * The shortest run of cables from one to another, both included; cached, since the network
+     * never changes once built. Falls back to the entry cable alone if the two are not joined.
+     */
+    List<BlockPos> path(BlockPos from, BlockPos to) {
+        return paths.computeIfAbsent(new PathKey(from, to), key -> {
+            if (from.equals(to)) return List.of(from);
+            Map<BlockPos, BlockPos> previous = new HashMap<>();
+            ArrayDeque<BlockPos> queue = new ArrayDeque<>();
+            previous.put(from, from);
+            queue.add(from);
+            while (!queue.isEmpty()) {
+                BlockPos pos = queue.poll();
+                for (Direction side : Direction.values()) {
+                    BlockPos next = pos.relative(side);
+                    if (!cables.contains(next) || previous.containsKey(next)) continue;
+                    previous.put(next, pos);
+                    if (next.equals(to)) {
+                        ArrayDeque<BlockPos> path = new ArrayDeque<>();
+                        for (BlockPos step = to; !step.equals(from); step = previous.get(step)) path.addFirst(step);
+                        path.addFirst(from);
+                        return List.copyOf(path);
+                    }
+                    queue.add(next);
+                }
+            }
+            return List.of(from);
+        });
     }
 
     private record CachedEndpoint(EndpointKey key, boolean delivers, boolean pulls, int priority,

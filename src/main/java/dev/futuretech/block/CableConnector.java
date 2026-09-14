@@ -18,17 +18,24 @@ public final class CableConnector {
 
     /** Depth of the collar's bore. The cable's mouth is closed at its back. */
     public static final float BORE_DEPTH = 2.5F;
+    /**
+     * Where the bore's walls sit. The cable's cage runs from 4 to 12; the bore is a tenth wider on
+     * each side so the cage's faces never share a plane with the collar's, and the plug that fills
+     * the bore swallows the cage instead of fighting it for the same pixels.
+     */
+    public static final float BORE_MIN = 3.9F;
+    public static final float BORE_MAX = 12.1F;
 
     /** North-facing collar, entirely inside the cable block, with an eight-unit opening. */
     public static final List<Box> BOXES = List.of(
-            new Box(2.5F,2.5F,0,4,13.5F,1,true),
-            new Box(12,2.5F,0,13.5F,13.5F,1,true),
-            new Box(4,2.5F,0,12,4,1,true),
-            new Box(4,12,0,12,13.5F,1,true),
-            new Box(3.25F,3.25F,1,4,12.75F,2.5F,false),
-            new Box(12,3.25F,1,12.75F,12.75F,2.5F,false),
-            new Box(4,3.25F,1,12,4,2.5F,false),
-            new Box(4,12,1,12,12.75F,2.5F,false));
+            new Box(2.5F,2.5F,0,BORE_MIN,13.5F,1,true),
+            new Box(BORE_MAX,2.5F,0,13.5F,13.5F,1,true),
+            new Box(BORE_MIN,2.5F,0,BORE_MAX,BORE_MIN,1,true),
+            new Box(BORE_MIN,BORE_MAX,0,BORE_MAX,13.5F,1,true),
+            new Box(3.25F,3.25F,1,BORE_MIN,12.75F,2.5F,false),
+            new Box(BORE_MAX,3.25F,1,12.75F,12.75F,2.5F,false),
+            new Box(BORE_MIN,3.25F,1,BORE_MAX,BORE_MIN,2.5F,false),
+            new Box(BORE_MIN,BORE_MAX,1,BORE_MAX,12.75F,2.5F,false));
 
     public static Point rotate(Point p, Direction side) {
         return switch (side) {

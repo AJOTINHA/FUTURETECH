@@ -153,15 +153,39 @@ class CableResourcesTest {
         assertEquals(energy.replace("futuretech:block/cable_mk1_", "futuretech:block/item_cable_opaque_"), items);
     }
 
+    private static final String[] FACE_NAMES = {"west", "east", "down", "up", "north", "south"};
+
+    /** Whether another box of the model touches this face over its whole area, hiding it for good. */
+    private static boolean covered(JsonObject box, int face, java.util.List<JsonObject> others) {
+        int axis = face / 2;
+        boolean atMax = face % 2 == 1;
+        double plane = (atMax ? box.getAsJsonArray("to") : box.getAsJsonArray("from")).get(axis).getAsDouble();
+        for (var other : others) {
+            double touch = (atMax ? other.getAsJsonArray("from") : other.getAsJsonArray("to")).get(axis).getAsDouble();
+            if (touch != plane) continue;
+            boolean inside = true;
+            for (int a = 0; a < 3 && inside; a++) {
+                if (a == axis) continue;
+                inside = other.getAsJsonArray("from").get(a).getAsDouble() <= box.getAsJsonArray("from").get(a).getAsDouble()
+                        && other.getAsJsonArray("to").get(a).getAsDouble() >= box.getAsJsonArray("to").get(a).getAsDouble();
+            }
+            if (inside) return true;
+        }
+        return false;
+    }
+
     /**
-     * The plain item cable is the cage with nothing inside. The MK1 models leave out the
-     * faces the core used to hide, so every box here must have all six back, or the openings
-     * would show holes.
+     * The plain item cable is the cage with nothing inside. The MK1 models leave out the faces
+     * the core used to hide, so those come back here; faces another bar still covers stay out,
+     * and the arm and the run draw nothing across the cable's axis, since the neighbour, the node
+     * or the collar's plug closes their ends and a face of their own there would fight it for the
+     * same pixels.
      */
     @Test
-    void itemCableIsTheCageAloneWithEveryBoxClosed() throws Exception {
+    void itemCableIsTheCageAloneWithOnlyTheFacesThatCanBeSeen() throws Exception {
         for (String part : List.of("block/item_cable_arm", "block/item_cable_cap",
                 "block/item_cable_line", "block/item_cable_node", "item/item_cable")) {
+            boolean openEnds = part.endsWith("_arm") || part.endsWith("_line");
             var model = model("futuretech:" + part);
             var source = model("futuretech:" + part.replace("item_cable", "cable_mk1"));
             int cage = 0;
@@ -173,10 +197,20 @@ class CableResourcesTest {
                 });
                 if (!core) cage++;
             }
-            assertEquals(cage, model.getAsJsonArray("elements").size(), "Only the cage stays: " + part);
-            for (var element : model.getAsJsonArray("elements")) {
-                var faces = element.getAsJsonObject().getAsJsonObject("faces");
-                assertEquals(6, faces.size(), "Every box is closed on all sides: " + part);
+            var boxes = new ArrayList<JsonObject>();
+            for (var element : model.getAsJsonArray("elements")) boxes.add(element.getAsJsonObject());
+            assertEquals(cage, boxes.size(), "Only the cage stays: " + part);
+            for (var box : boxes) {
+                var faces = box.getAsJsonObject("faces");
+                var others = boxes.stream().filter(other -> other != box).toList();
+                for (int face = 0; face < 6; face++) {
+                    int axis = face / 2;
+                    double plane = (face % 2 == 1 ? box.getAsJsonArray("to") : box.getAsJsonArray("from")).get(axis).getAsDouble();
+                    boolean onEnd = openEnds && axis == 2;
+                    boolean hidden = onEnd || covered(box, face, others);
+                    assertEquals(!hidden, faces.has(FACE_NAMES[face]),
+                            part + ": " + FACE_NAMES[face] + " of " + box.getAsJsonArray("from") + box.getAsJsonArray("to"));
+                }
                 for (var face : faces.entrySet()) {
                     String texture = face.getValue().getAsJsonObject().get("texture").getAsString();
                     assertTrue(texture.equals("#gray") || texture.equals("#white"), texture);
