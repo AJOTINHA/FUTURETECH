@@ -21,7 +21,8 @@ public record PerfSamplesPayload(boolean enabled, int totalMicros, int count, Li
             new Type<>(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "perf_samples"));
     private static final StreamCodec<RegistryFriendlyByteBuf, TickProfiler.Entry> ENTRY_CODEC = StreamCodec.composite(
             BlockPos.STREAM_CODEC, TickProfiler.Entry::pos,
-            ByteBufCodecs.VAR_INT, TickProfiler.Entry::micros, TickProfiler.Entry::new);
+            ByteBufCodecs.VAR_INT, TickProfiler.Entry::micros,
+            ByteBufCodecs.VAR_INT, TickProfiler.Entry::cables, TickProfiler.Entry::new);
     public static final StreamCodec<RegistryFriendlyByteBuf, PerfSamplesPayload> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.BOOL, PerfSamplesPayload::enabled,
             ByteBufCodecs.VAR_INT, PerfSamplesPayload::totalMicros,

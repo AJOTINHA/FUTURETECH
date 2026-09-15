@@ -1,5 +1,6 @@
 package dev.futuretech.transfer;
 
+import dev.futuretech.perf.TickProfiler;
 import dev.futuretech.api.side.SideMode;
 import dev.futuretech.block.FluidCableBlock;
 import dev.futuretech.block.FluidCableTier;
@@ -282,6 +283,7 @@ public final class FluidCableNetwork {
     public void tick(long gameTime) {
         if (gameTime == lastTick) return;
         lastTick = gameTime;
+        TickProfiler.networkTicked(cables.size());
         // Extract-only connectors act as pumps: a tank never pushes, so a connector on one has to
         // do the pulling or nothing ever comes out. Higher priorities pump first.
         for (Endpoint endpoint : endpoints) {

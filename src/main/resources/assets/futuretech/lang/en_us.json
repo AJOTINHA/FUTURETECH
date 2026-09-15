@@ -147,5 +147,6 @@
   "item.futuretech.steel_gear": "Steel Gear",
   "block.futuretech.smeltery": "Smeltery",
   "command.futuretech.perf.on": "Tick profiler on: costs are shown over the mod's blocks.",
-  "command.futuretech.perf.off": "Tick profiler off."
+  "command.futuretech.perf.off": "Tick profiler off.",
+  "gui.futuretech.perf.network": " · network of %s cables"
 }

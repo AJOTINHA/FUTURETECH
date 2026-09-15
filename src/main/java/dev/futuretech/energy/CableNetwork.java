@@ -1,5 +1,6 @@
 package dev.futuretech.energy;
 
+import dev.futuretech.perf.TickProfiler;
 import dev.futuretech.api.side.SideMode;
 import dev.futuretech.block.CableBlock;
 import dev.futuretech.block.entity.CableBlockEntity;
@@ -165,6 +166,7 @@ public final class CableNetwork {
     public void tick(long gameTime) {
         if (gameTime == lastTick) return;
         lastTick = gameTime;
+        TickProfiler.networkTicked(cables.size());
         buffer.beginTick();
         // Extract-only connectors act as pumps: nothing else in the mod pulls, so a block that
         // merely holds energy without pushing would otherwise never be drained.

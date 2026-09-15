@@ -1,5 +1,6 @@
 package dev.futuretech.transfer;
 
+import dev.futuretech.perf.TickProfiler;
 import dev.futuretech.api.side.SideMode;
 import dev.futuretech.block.ItemCableBlock;
 import dev.futuretech.block.ItemCableTier;
@@ -453,6 +454,7 @@ public final class ItemCableNetwork {
     public void tick(long gameTime) {
         if (gameTime == lastTick) return;
         lastTick = gameTime;
+        TickProfiler.networkTicked(cables.size());
         boolean newInterval = Math.floorMod(gameTime, interval) == 0;
         advanceFlights(newInterval);
         if (!newInterval) return;

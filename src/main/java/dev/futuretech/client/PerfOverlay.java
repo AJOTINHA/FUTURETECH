@@ -55,7 +55,11 @@ public final class PerfOverlay {
         for (TickProfiler.Entry entry : entries) {
             var pos = entry.pos();
             Component name = level.getBlockState(pos).getBlock().getName();
-            Component label = Component.empty().append(name).append(" ")
+            // The cable that ran its network's tick shows the whole network's cost, and says so.
+            Component owner = entry.cables() > 0
+                    ? Component.empty().append(name).append(Component.translatable("gui.futuretech.perf.network", entry.cables()))
+                    : name;
+            Component label = Component.empty().append(owner).append(" ")
                     .append(Component.literal(entry.micros() + " µs").withColor(colour(entry.micros()) & 0xFFFFFF));
             pose.pushPose();
             // The name tag adds half a block on its own, so this puts the text 1.3 blocks up.

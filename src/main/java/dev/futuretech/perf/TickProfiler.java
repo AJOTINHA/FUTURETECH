@@ -29,8 +29,12 @@ public final class TickProfiler {
     /** Weight of the newest tick in the running average: settles in about a second. */
     private static final double SMOOTHING = 0.1;
 
-    /** One measured block: where it is and its running average, in microseconds per tick. */
-    public record Entry(BlockPos pos, int micros) {}
+    /**
+     * One measured block: where it is and its running average, in microseconds per tick. A cable
+     * whose tick ran its whole network's tick carries the network's size in {@code cables}, so the
+     * label can say the cost is the network's; every other block has 0 there.
+     */
+    public record Entry(BlockPos pos, int micros, int cables) {}
 
     private record Key(ResourceKey<Level> dimension, BlockPos pos) {}
 
@@ -38,9 +42,12 @@ public final class TickProfiler {
         double micros;
         long lastTick;
         boolean seeded;
+        int cables;
     }
 
     private static volatile boolean enabled;
+    /** Set by a network that just did its tick's work, read by the cable being timed; server thread only. */
+    private static int pendingNetwork;
     private static final Map<Key, Sample> samples = new HashMap<>();
 
     private TickProfiler() {}
@@ -66,8 +73,15 @@ public final class TickProfiler {
         };
     }
 
+    /** A cable network ran its once-per-tick work inside the current ticker, over {@code cables} cables. */
+    public static void networkTicked(int cables) {
+        if (enabled) pendingNetwork = cables;
+    }
+
     private static void record(Level level, BlockPos pos, long nanos) {
         Sample sample = samples.computeIfAbsent(new Key(level.dimension(), pos.immutable()), key -> new Sample());
+        sample.cables = pendingNetwork;
+        pendingNetwork = 0;
         double micros = nanos / 1000.0;
         sample.micros = sample.seeded ? sample.micros + (micros - sample.micros) * SMOOTHING : micros;
         sample.seeded = true;
@@ -89,7 +103,7 @@ public final class TickProfiler {
             if (entry.getKey().dimension() != level.dimension()) continue;
             BlockPos pos = entry.getKey().pos();
             if (centre.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > radiusSq) continue;
-            entries.add(new Entry(pos, (int) Math.round(entry.getValue().micros)));
+            entries.add(new Entry(pos, (int) Math.round(entry.getValue().micros), entry.getValue().cables));
         }
         return entries;
     }
