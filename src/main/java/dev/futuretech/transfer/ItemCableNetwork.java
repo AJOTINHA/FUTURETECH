@@ -153,6 +153,15 @@ public final class ItemCableNetwork {
         }
     };
     private final Map<PathKey, List<BlockPos>> paths = new HashMap<>();
+    /**
+     * Connectors that had no room for a resource earlier this tick. Nothing the network does within
+     * a tick makes room (it only ever inserts), so once a resource is refused every later look for
+     * the same pair is answered from here: a clogged network with hundreds of waiting items asks
+     * each full chest once per tick instead of once per item. Cleared when the tick changes.
+     */
+    private final Set<NoRoomKey> noRoom = new HashSet<>();
+    private long noRoomTick = Long.MIN_VALUE;
+    private record NoRoomKey(EndpointKey key, ItemResource resource) {}
     private long lastTick = Long.MIN_VALUE;
     private int round;
     private boolean valid = true;
@@ -409,14 +418,28 @@ public final class ItemCableNetwork {
     private int roomFor(Endpoint endpoint, ItemResource resource, int amount, @Nullable TransactionContext transaction) {
         ResourceHandler<ItemResource> handler = endpoint.handler();
         if (handler == null) return 0;
+        long now = level == null ? lastTick : level.getGameTime();
+        if (now != noRoomTick) {
+            noRoomTick = now;
+            noRoom.clear();
+        }
+        NoRoomKey refused = new NoRoomKey(endpoint.key(), resource);
+        if (noRoom.contains(refused)) return 0;
+        int room;
         try (Transaction probe = Transaction.open(transaction)) {
-            for (List<ItemFlight> bound : List.of(flights, departing)) {
-                for (ItemFlight flight : bound) {
-                    if (!flight.destination().equals(endpoint.key())) continue;
-                    ResourceHandlerUtil.insertStacking(handler, ItemResource.of(flight.stack), flight.stack.getCount(), probe);
-                }
-            }
-            return ResourceHandlerUtil.insertStacking(handler, resource, amount, probe);
+            reserve(flights, endpoint.key(), handler, probe);
+            reserve(departing, endpoint.key(), handler, probe);
+            room = ResourceHandlerUtil.insertStacking(handler, resource, amount, probe);
+        }
+        if (room <= 0) noRoom.add(refused);
+        return room;
+    }
+
+    /** Inserts, within the probe, everything among {@code bound} that is heading for {@code key}. */
+    private static void reserve(List<ItemFlight> bound, EndpointKey key, ResourceHandler<ItemResource> handler, Transaction probe) {
+        for (ItemFlight flight : bound) {
+            if (flight.to != key.side() || !flight.path.getLast().equals(key.cablePos())) continue;
+            ResourceHandlerUtil.insertStacking(handler, ItemResource.of(flight.stack), flight.stack.getCount(), probe);
         }
     }
 

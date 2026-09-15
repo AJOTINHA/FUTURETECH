@@ -114,6 +114,9 @@ public final class MetalPressBlockEntity extends BaseContainerBlockEntity
     private final SideConfig sides;
     private final AutoTransfer auto = new AutoTransfer();
     private final RedstoneControl redstone = new RedstoneControl();
+    private final LitHold litHold = new LitHold();
+    private final RecipeMissMemo misses = new RecipeMissMemo(LANES);
+    private final ItemTransferUtil transfer = new ItemTransferUtil();
     private final UpgradeInventory upgrades = new UpgradeInventory(() -> MachineLevel.of(getBlockState()), this::setChanged);
     private final ContainerData data = new ContainerData() {
         @Override
@@ -266,15 +269,16 @@ public final class MetalPressBlockEntity extends BaseContainerBlockEntity
     public static void serverTick(Level level, BlockPos pos, BlockState state, MetalPressBlockEntity metal_press) {
         metal_press.beginTick();
         metal_press.redstone.update(level, pos);
-        if (metal_press.auto.isPulling()) ItemTransferUtil.pullFromNeighbours(level, pos, metal_press, metal_press.sides);
-        if (metal_press.auto.isPushing()) ItemTransferUtil.pushToNeighbours(level, pos, metal_press, metal_press.sides);
+        if (metal_press.auto.isPulling()) metal_press.transfer.pullFromNeighbours(level, pos, metal_press, metal_press.sides);
+        if (metal_press.auto.isPushing()) metal_press.transfer.pushToNeighbours(level, pos, metal_press, metal_press.sides);
         int wasWorking = metal_press.workingLanes;
         metal_press.workingLanes = 0;
         boolean working = metal_press.redstone.allowsRunning() && level instanceof ServerLevel server
                 && metal_press.press(input -> metal_press.quickCheck.getRecipeFor(input, server).orElse(null));
         // Pausing preserves the current jobs.
-        if (state.getValue(MetalPressBlock.LIT) != working) {
-            level.setBlock(pos, state.setValue(MetalPressBlock.LIT, working), 3);
+        boolean lit = metal_press.litHold.update(working);
+        if (state.getValue(MetalPressBlock.LIT) != lit) {
+            level.setBlock(pos, state.setValue(MetalPressBlock.LIT, lit), 3);
         }
         if (wasWorking != metal_press.workingLanes) metal_press.setChanged();
     }
@@ -300,9 +304,16 @@ public final class MetalPressBlockEntity extends BaseContainerBlockEntity
     private boolean pressLane(int lane, PressingLookup recipes, int perTick) {
         ItemStack ingredient = items.get(SLOT_INPUT + lane);
         if (ingredient.isEmpty()) { resetWork(lane); return false; }
+        // The mold is part of the lookup, so a miss is remembered for the mold it was found with.
+        int mold = gearMode() ? 1 : 0;
+        if (misses.known(lane, ingredient, ItemStack.EMPTY, mold, now())) { resetWork(lane); return false; }
         var input = new PressingRecipe.Input(ingredient, gearMode());
         RecipeHolder<PressingRecipe> recipe = recipes.find(input);
-        if (recipe == null || !recipe.value().matches(input, null)) { resetWork(lane); return false; }
+        if (recipe == null || !recipe.value().matches(input, null)) {
+            misses.remember(lane, ingredient, ItemStack.EMPTY, mold, now());
+            resetWork(lane);
+            return false;
+        }
         ItemStack result = recipe.value().assemble(input);
         if (!ItemStack.isSameItemSameComponents(workInput[lane], ingredient)
                 || !ItemStack.matches(workResult[lane], result) || workCount[lane] != recipe.value().count()) {
@@ -326,6 +337,10 @@ public final class MetalPressBlockEntity extends BaseContainerBlockEntity
         setChanged();
         return true;
     }
+
+
+    /** The clock the miss memo runs on; tests drive a machine with no level. */
+    private long now() { return level == null ? 0 : level.getGameTime(); }
 
     private void resetWork(int lane) {
         if (progress[lane] != 0 || !workInput[lane].isEmpty()) setChanged();

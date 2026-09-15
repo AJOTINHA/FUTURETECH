@@ -10,7 +10,7 @@ import dev.futuretech.api.side.SideConfigVisuals;
 import dev.futuretech.api.side.SideConfigurable;
 import dev.futuretech.block.BatteryBlock;
 import dev.futuretech.block.BatteryTier;
-import dev.futuretech.energy.EnergyNetworkUtil;
+import dev.futuretech.energy.EnergyExporter;
 import dev.futuretech.energy.EnergySync;
 import dev.futuretech.energy.TickLimitedEnergyHandler;
 import dev.futuretech.menu.BatteryMenu;
@@ -56,6 +56,7 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
     private final TickLimitedEnergyHandler energy;
     private final SideConfig sides;
     private final RedstoneControl redstone = new RedstoneControl();
+    private final EnergyExporter exporter = new EnergyExporter();
     private final UpgradeInventory upgrades = new UpgradeInventory(() -> tier().ordinal() + 1, this::setChanged);
     // Transfer totals of the previous tick, shown in the menu as FE/t.
     private int lastInput;
@@ -220,7 +221,7 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
 
     private void exportEnergy(Level level, BlockPos pos) {
         // Only output faces push, and never straight into another battery.
-        EnergyNetworkUtil.pushToNeighbours(level, pos, energy, side -> sides.allowsEnergyOutput(side)
+        exporter.pushToNeighbours(level, pos, energy, side -> sides.allowsEnergyOutput(side)
                 && !(level.getBlockEntity(pos.relative(side)) instanceof BatteryBlockEntity));
     }
 

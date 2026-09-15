@@ -21,12 +21,14 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.*;
+import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
 import org.jspecify.annotations.Nullable;
 import java.util.*;
+import java.util.function.Supplier;
 
 /** The table owns deposited materials; a transport arm owns its cargo until delivery commits. */
 public final class AssemblerBlockEntity extends BlockEntity implements MenuProvider {
@@ -97,6 +99,20 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         List<Entry> recipes();
     }
     private @Nullable Environment environment;
+    /**
+     * The surroundings are surveyed at most once per this many ticks: which reachable blocks are
+     * assembler parts and which faces offer an item handler. Placing or breaking an assembler part
+     * nearby resurveys at once; a chest placed next to the cell is seen at the next survey.
+     */
+    private static final int SURVEY_TICKS = 40;
+    /** The reach cube, sorted by distance; never changes for a given position. World mode only. */
+    private @Nullable List<BlockPos> reachablePositions;
+    private long surveyTick = Long.MIN_VALUE;
+    private List<BlockPos> nearbyAssemblers = List.of();
+    private List<Endpoint> nearbyEndpoints = List.of();
+    /** The assembling book, built once per recipe reload rather than on every lookup. */
+    private static @Nullable Collection<?> bookSource;
+    private static List<Entry> bookEntries = List.of();
 
     public AssemblerBlockEntity(BlockPos pos, BlockState state) { super(ModBlockEntities.ASSEMBLER.get(), pos, state); }
     AssemblerBlockEntity(BlockPos pos, BlockState state, Environment environment) { this(pos, state); this.environment = environment; }
@@ -117,10 +133,16 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
     public List<Entry> recipes() {
         if (environment != null) return environment.recipes();
         if (!(level instanceof ServerLevel server)) return List.of();
-        return server.getServer().getRecipeManager().getRecipes().stream()
-                .filter(h -> h.value() instanceof AssemblingRecipe)
-                .map(h -> new Entry(h.id().identifier().toString(), (AssemblingRecipe) h.value()))
-                .sorted(Comparator.comparing(Entry::id)).toList();
+        // The manager hands out a new collection only when the recipes are reloaded.
+        Collection<?> source = server.getServer().getRecipeManager().getRecipes();
+        if (source != bookSource) {
+            bookEntries = server.getServer().getRecipeManager().getRecipes().stream()
+                    .filter(h -> h.value() instanceof AssemblingRecipe)
+                    .map(h -> new Entry(h.id().identifier().toString(), (AssemblingRecipe) h.value()))
+                    .sorted(Comparator.comparing(Entry::id)).toList();
+            bookSource = source;
+        }
+        return bookEntries;
     }
     public String selectedId() { return selected; }
     public @Nullable AssemblingRecipe recipe() {
@@ -133,19 +155,74 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         return true;
     }
 
-    /** Loaded positions only, stable distance ordering, with a spherical three-block reach. */
+    /**
+     * Every position within the spherical three-block reach, in stable distance order. In the world
+     * this is computed once; loaded-ness is checked where a position is used.
+     */
     private List<BlockPos> reachable() {
+        if (environment == null && reachablePositions != null) return reachablePositions;
         if (level == null && environment == null) return List.of();
         List<BlockPos> positions = new ArrayList<>();
         Iterable<BlockPos> candidates = environment != null ? environment.positions() : BlockPos.betweenClosed(worldPosition.offset(-REACH, -REACH, -REACH), worldPosition.offset(REACH, REACH, REACH));
         for (BlockPos p : candidates) {
-            if (!p.equals(worldPosition) && p.distSqr(worldPosition) <= REACH * REACH && (environment != null || level.hasChunkAt(p))) positions.add(p.immutable());
+            if (!p.equals(worldPosition) && p.distSqr(worldPosition) <= REACH * REACH) positions.add(p.immutable());
         }
         positions.sort(Comparator.<BlockPos>comparingDouble(p -> p.distSqr(worldPosition)).thenComparingLong(BlockPos::asLong));
+        if (environment == null) reachablePositions = List.copyOf(positions);
         return positions;
     }
+    /**
+     * Refreshes the cached survey of the surroundings when it is due. A test environment is never
+     * cached, since tests rearrange the cell between calls.
+     */
+    private void survey() {
+        if (environment != null || level == null) return;
+        long now = level.getGameTime();
+        if (surveyTick <= now && now - surveyTick < SURVEY_TICKS) return;
+        surveyTick = now;
+        List<BlockPos> assemblers = new ArrayList<>();
+        List<Endpoint> endpoints = new ArrayList<>();
+        for (BlockPos p : reachable()) {
+            if (!level.hasChunkAt(p)) continue;
+            if (level.getBlockEntity(p) instanceof AssemblerBlockEntity) { assemblers.add(p); continue; }
+            // Only a block can offer an item handler; the cube is mostly air.
+            if (level.getBlockState(p).isAir()) continue;
+            for (Direction side : Direction.values()) {
+                if (level.getCapability(Capabilities.Item.BLOCK, p, side) == null) continue;
+                if (level instanceof ServerLevel server) {
+                    var cache = BlockCapabilityCache.create(Capabilities.Item.BLOCK, server, p, side);
+                    endpoints.add(new Endpoint(p, side, cache::getCapability));
+                } else {
+                    endpoints.add(new Endpoint(p, side, () -> level.getCapability(Capabilities.Item.BLOCK, p, side)));
+                }
+            }
+        }
+        nearbyAssemblers = List.copyOf(assemblers);
+        nearbyEndpoints = List.copyOf(endpoints);
+    }
+    /** Positions that held assembler parts at the last survey, nearest first. */
+    private List<BlockPos> assemblerPositions() {
+        if (environment != null) return reachable();
+        survey();
+        return nearbyAssemblers;
+    }
+    /** An assembler part appeared or disappeared nearby: every part within reach surveys again. */
+    private void resurveyNeighbours() {
+        if (level == null || level.isClientSide()) return;
+        for (BlockPos p : reachable()) {
+            if (level.hasChunkAt(p) && level.getBlockEntity(p) instanceof AssemblerBlockEntity a) a.surveyTick = Long.MIN_VALUE;
+        }
+    }
+    @Override public void onLoad() {
+        super.onLoad();
+        resurveyNeighbours();
+    }
+    @Override public void setRemoved() {
+        super.setRemoved();
+        resurveyNeighbours();
+    }
     public @Nullable AssemblerBlockEntity nearest(Kind wanted) {
-        for (BlockPos p : reachable()) { var a = assemblerAt(p); if (a != null && a.kind() == wanted) return a; }
+        for (BlockPos p : assemblerPositions()) { var a = assemblerAt(p); if (a != null && a.kind() == wanted) return a; }
         return null;
     }
     private @Nullable AssemblerBlockEntity assemblerAt(BlockPos pos) {
@@ -157,7 +234,7 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         return a != null && a.kind() == Kind.TABLE ? a : null;
     }
     public boolean locked() {
-        for (BlockPos p : reachable()) { var a = assemblerAt(p); if (a != null && a.phase != 0 && a.tablePos.equals(worldPosition)) return true; }
+        for (BlockPos p : assemblerPositions()) { var a = assemblerAt(p); if (a != null && a.phase != 0 && a.tablePos.equals(worldPosition)) return true; }
         return false;
     }
     public int status() {
@@ -165,7 +242,7 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         if (nearest(Kind.TERMINAL) == null) return 1;
         if (recipe() == null) return 2;
         if (controllerEnergy() < ENERGY_PER_TICK) return 9;
-        for (BlockPos p : reachable()) { var a = assemblerAt(p); if (a != null && a.phase != 0 && a.tablePos.equals(worldPosition)) {
+        for (BlockPos p : assemblerPositions()) { var a = assemblerAt(p); if (a != null && a.phase != 0 && a.tablePos.equals(worldPosition)) {
             if (!a.moving && a.animationTick > 0) return 11;
             if (a.phase == 2) return a.crafted ? 5 : 4;
             return a.outputMode() ? 6 : 3;
@@ -217,7 +294,9 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         } else if (outputMode()) {
             ItemStack result = table.inventory.getItem(RESULT);
             if (result.isEmpty()) return;
-            for (Endpoint endpoint : endpoints()) if (canInsert(endpoint.handler, result)) {
+            for (Endpoint endpoint : endpoints()) {
+                var handler = endpoint.handler();
+                if (handler == null || !canInsert(handler, result)) continue;
                 chestPos = endpoint.pos; chestSide = endpoint.side;
                 // Reserve the table through the active arm; leave the visible result there
                 // until the gripper actually reaches it at tick 20.
@@ -229,7 +308,9 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
             int slot = table.nextIngredient(recipe);
             if (slot < 0) return;
             for (Endpoint endpoint : endpoints()) {
-                ItemStack extracted = extractIngredient(endpoint.handler, recipe.ingredients().get(slot));
+                var handler = endpoint.handler();
+                if (handler == null) continue;
+                ItemStack extracted = extractIngredient(handler, recipe.ingredients().get(slot));
                 if (extracted.isEmpty()) continue;
                 chestPos = endpoint.pos; chestSide = endpoint.side; targetSlot = slot;
                 selected = table.selected;
@@ -343,14 +424,21 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         return true;
     }
 
-    private record Endpoint(BlockPos pos, Direction side, ResourceHandler<ItemResource> handler) {}
+    /** A face within reach that offered an item handler when surveyed; the handler is resolved on use. */
+    private record Endpoint(BlockPos pos, Direction side, Supplier<@Nullable ResourceHandler<ItemResource>> source) {
+        @Nullable ResourceHandler<ItemResource> handler() { return source.get(); }
+    }
     private List<Endpoint> endpoints() {
+        if (environment == null) {
+            survey();
+            return nearbyEndpoints;
+        }
         List<Endpoint> result = new ArrayList<>();
         for (BlockPos p : reachable()) {
             if (assemblerAt(p) != null) continue;
             for (Direction side : Direction.values()) {
                 var handler = endpoint(p, side);
-                if (handler != null) result.add(new Endpoint(p, side, handler));
+                if (handler != null) result.add(new Endpoint(p, side, () -> handler));
             }
         }
         return result;

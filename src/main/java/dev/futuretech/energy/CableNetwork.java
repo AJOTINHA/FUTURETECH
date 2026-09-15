@@ -54,6 +54,10 @@ public final class CableNetwork {
     private final Set<BlockPos> cables;
     private final List<Endpoint> endpoints;
     private final Set<BlockPos> fedSinceLastDistribution = new HashSet<>();
+    /** Whether any connector pumps; a network without pumps and without energy has nothing to do in a tick. */
+    private final boolean pumps;
+    /** Reused every tick so an idle network allocates nothing. */
+    private final List<EnergyHandler> sinks = new ArrayList<>();
     private long lastTick = Long.MIN_VALUE;
     private int lastMoved;
     private boolean valid = true;
@@ -65,6 +69,7 @@ public final class CableNetwork {
         this.buffer = new TickLimitedEnergyHandler(throughput, throughput, throughput, () -> {});
         this.cables = Set.copyOf(cables);
         this.endpoints = List.copyOf(endpoints);
+        this.pumps = this.endpoints.stream().anyMatch(Endpoint::pulls);
     }
 
     /** Flood-fills the cables touching {@code start} and gives every one of them this network. */
@@ -157,12 +162,20 @@ public final class CableNetwork {
         buffer.beginTick();
         // Extract-only connectors act as pumps: nothing else in the mod pulls, so a block that
         // merely holds energy without pushing would otherwise never be drained.
-        for (Endpoint endpoint : endpoints) {
-            if (!endpoint.pulls() || buffer.inputRemaining() <= 0) continue;
-            EnergyHandler source = endpoint.handler();
-            if (source != null) EnergyHandlerUtil.move(source, buffer, buffer.inputRemaining(), null);
+        if (pumps) {
+            for (Endpoint endpoint : endpoints) {
+                if (!endpoint.pulls() || buffer.inputRemaining() <= 0) continue;
+                EnergyHandler source = endpoint.handler();
+                if (source != null) EnergyHandlerUtil.move(source, buffer, buffer.inputRemaining(), null);
+            }
         }
-        List<EnergyHandler> sinks = new ArrayList<>();
+        // Nothing arrived and nothing was pumped: no sinks to look up this tick.
+        if (buffer.getAmountAsInt() <= 0) {
+            fedSinceLastDistribution.clear();
+            lastMoved = 0;
+            return;
+        }
+        sinks.clear();
         for (Endpoint endpoint : endpoints) {
             if (!endpoint.delivers()) continue;
             if (fedSinceLastDistribution.contains(endpoint.key().neighbour())) continue;

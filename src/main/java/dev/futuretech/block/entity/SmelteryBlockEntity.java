@@ -112,6 +112,9 @@ public final class SmelteryBlockEntity extends BaseContainerBlockEntity
     private final SideConfig sides;
     private final AutoTransfer auto = new AutoTransfer();
     private final RedstoneControl redstone = new RedstoneControl();
+    private final LitHold litHold = new LitHold();
+    private final RecipeMissMemo misses = new RecipeMissMemo(LANES);
+    private final ItemTransferUtil transfer = new ItemTransferUtil();
     private final UpgradeInventory upgrades = new UpgradeInventory(() -> MachineLevel.of(getBlockState()), this::setChanged);
     private final ContainerData data = new ContainerData() {
         @Override
@@ -226,14 +229,15 @@ public final class SmelteryBlockEntity extends BaseContainerBlockEntity
     public static void serverTick(Level level, BlockPos pos, BlockState state, SmelteryBlockEntity smeltery) {
         smeltery.beginTick();
         smeltery.redstone.update(level, pos);
-        if (smeltery.auto.isPulling()) ItemTransferUtil.pullFromNeighbours(level, pos, smeltery, smeltery.sides);
-        if (smeltery.auto.isPushing()) ItemTransferUtil.pushToNeighbours(level, pos, smeltery, smeltery.sides);
+        if (smeltery.auto.isPulling()) smeltery.transfer.pullFromNeighbours(level, pos, smeltery, smeltery.sides);
+        if (smeltery.auto.isPushing()) smeltery.transfer.pushToNeighbours(level, pos, smeltery, smeltery.sides);
         int wasWorking = smeltery.workingLanes;
         boolean working = smeltery.redstone.allowsRunning() && level instanceof ServerLevel server
                 && smeltery.melt(input -> smeltery.quickCheck.getRecipeFor(input, server).orElse(null));
         // Pausing preserves the current jobs.
-        if (state.getValue(SmelteryBlock.LIT) != working) {
-            level.setBlock(pos, state.setValue(SmelteryBlock.LIT, working), 3);
+        boolean lit = smeltery.litHold.update(working);
+        if (state.getValue(SmelteryBlock.LIT) != lit) {
+            level.setBlock(pos, state.setValue(SmelteryBlock.LIT, lit), 3);
         }
         if (wasWorking != smeltery.workingLanes) smeltery.setChanged();
     }
@@ -256,9 +260,14 @@ public final class SmelteryBlockEntity extends BaseContainerBlockEntity
         ItemStack a = items.get(SLOT_INPUT_A + lane);
         ItemStack b = items.get(SLOT_INPUT_B + lane);
         if (a.isEmpty() || b.isEmpty()) { resetWork(lane); return false; }
+        if (misses.known(lane, a, b, 0, now())) { resetWork(lane); return false; }
         var input = new AlloyingRecipe.Input(a, b);
         RecipeHolder<AlloyingRecipe> recipe = recipes.find(input);
-        if (recipe == null || !recipe.value().matches(input, null)) { resetWork(lane); return false; }
+        if (recipe == null || !recipe.value().matches(input, null)) {
+            misses.remember(lane, a, b, 0, now());
+            resetWork(lane);
+            return false;
+        }
         ItemStack result = recipe.value().assemble(input);
         // A different pair or a different alloy starts over; more of the same keeps the progress.
         if (!ItemStack.isSameItemSameComponents(workInputA[lane], a)
@@ -287,6 +296,10 @@ public final class SmelteryBlockEntity extends BaseContainerBlockEntity
         setChanged();
         return true;
     }
+
+
+    /** The clock the miss memo runs on; tests drive a machine with no level. */
+    private long now() { return level == null ? 0 : level.getGameTime(); }
 
     private void resetWork(int lane) {
         if (progress[lane] != 0 || !workInputA[lane].isEmpty()) setChanged();

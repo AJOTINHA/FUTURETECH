@@ -108,6 +108,9 @@ public final class ElectricFurnaceBlockEntity extends BaseContainerBlockEntity
     private final SideConfig sides;
     private final AutoTransfer auto = new AutoTransfer();
     private final RedstoneControl redstone = new RedstoneControl();
+    private final LitHold litHold = new LitHold();
+    private final RecipeMissMemo misses = new RecipeMissMemo(LANES);
+    private final ItemTransferUtil transfer = new ItemTransferUtil();
     private final UpgradeInventory upgrades = new UpgradeInventory(() -> MachineLevel.of(getBlockState()), this::setChanged);
     private final ContainerData data = new ContainerData() {
         @Override
@@ -219,8 +222,8 @@ public final class ElectricFurnaceBlockEntity extends BaseContainerBlockEntity
     public static void serverTick(Level level, BlockPos pos, BlockState state, ElectricFurnaceBlockEntity furnace) {
         furnace.beginTick();
         furnace.redstone.update(level, pos);
-        if (furnace.auto.isPulling()) ItemTransferUtil.pullFromNeighbours(level, pos, furnace, furnace.sides);
-        if (furnace.auto.isPushing()) ItemTransferUtil.pushToNeighbours(level, pos, furnace, furnace.sides);
+        if (furnace.auto.isPulling()) furnace.transfer.pullFromNeighbours(level, pos, furnace, furnace.sides);
+        if (furnace.auto.isPushing()) furnace.transfer.pushToNeighbours(level, pos, furnace, furnace.sides);
         int wasWorking = furnace.workingLanes;
         boolean working = furnace.redstone.allowsRunning() && level instanceof ServerLevel server
                 && furnace.smelt(input -> furnace.quickCheck.getRecipeFor(input, server).orElse(null));
@@ -230,8 +233,9 @@ public final class ElectricFurnaceBlockEntity extends BaseContainerBlockEntity
                 furnace.progress[lane] = Mth.clamp(furnace.progress[lane] - 2, 0, furnace.progressTotal[lane]);
             }
         }
-        if (state.getValue(ElectricFurnaceBlock.LIT) != working) {
-            level.setBlock(pos, state.setValue(ElectricFurnaceBlock.LIT, working), 3);
+        boolean lit = furnace.litHold.update(working);
+        if (state.getValue(ElectricFurnaceBlock.LIT) != lit) {
+            level.setBlock(pos, state.setValue(ElectricFurnaceBlock.LIT, lit), 3);
         }
         if (wasWorking != furnace.workingLanes) furnace.setChanged();
     }
@@ -250,12 +254,17 @@ public final class ElectricFurnaceBlockEntity extends BaseContainerBlockEntity
         return workingLanes != 0;
     }
 
+
+    /** The clock the miss memo runs on; tests drive a machine with no level. */
+    private long now() { return level == null ? 0 : level.getGameTime(); }
+
     private boolean smeltLane(int lane, SmeltingLookup recipes, int perTick, int mk) {
         ItemStack ingredient = items.get(SLOT_INPUT + lane);
         if (ingredient.isEmpty()) return false;
+        if (misses.known(lane, ingredient, ItemStack.EMPTY, 0, now())) return false;
         var input = new SingleRecipeInput(ingredient);
         RecipeHolder<SmeltingRecipe> recipe = recipes.find(input);
-        if (recipe == null) return false;
+        if (recipe == null) { misses.remember(lane, ingredient, ItemStack.EMPTY, 0, now()); return false; }
         ItemStack result = recipe.value().assemble(input);
         if (result.isEmpty() || !canAccept(lane, result)) return false;
         if (energy.getAmountAsInt() < perTick) return false;

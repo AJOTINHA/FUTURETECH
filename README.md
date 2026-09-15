@@ -167,6 +167,17 @@ Ferro     Redstone  Ferro
 
 A arte e seus exportadores ficam em `art/crusher/`; a textura estática é `assets/futuretech/textures/block/crusher/crusher_front.png`. Durante o processamento, `crusher_front_on.png` mostra os rolos girando em sentidos opostos e o visor ciano pulsante, em dez quadros com ciclo de um segundo. A carcaça permanece idêntica e parada. Veja `art/crusher/active-preview.html` para comparar as duas versões.
 
+## Desempenho
+
+Regras que valem para todas as máquinas e redes, pensadas para o custo por tick no servidor não crescer com o tamanho da fábrica:
+
+- **Luz com histerese.** `LIT` só apaga 20 ticks depois do último tick de trabalho (`LitHold`). Uma máquina que recebe menos energia do que gasta trabalha um tick a cada poucos; sem a espera ela ligaria e desligaria o bloco (remesh do chunk e, na Fornalha e na Fundidora, recálculo de luz) a cada poucos ticks.
+- **Vizinhos em cache.** O envio de energia do gerador e da bateria (`EnergyExporter`) e a entrada/saída automática de itens (`ItemTransferUtil`) guardam um `BlockCapabilityCache` por face; nada é consultado quando não há energia para enviar.
+- **Receita sem resultado é lembrada.** Um item sem receita parado numa faixa não é procurado no livro todo tick: a faixa lembra a falha por 100 ticks (`RecipeMissMemo`), o que na Fornalha Elétrica evita varrer todas as receitas de smelting do jogo. Uma pilha maior do mesmo item é procurada de novo, porque a receita pode pedir mais de um.
+- **Assembler faz um levantamento a cada 40 ticks.** As peças e os inventários ao alcance são listados uma vez por levantamento, com cache de capability por face; colocar ou quebrar uma peça do Assembler por perto refaz o levantamento na hora, e um baú novo entra no próximo. O livro de receitas de montagem é montado uma vez por recarga de receitas, não a cada consulta.
+- **Rede de itens não pergunta duas vezes.** Um conector que recusou um recurso num tick não é consultado de novo por outros itens do mesmo recurso nesse tick; com centenas de itens esperando em baús cheios, cada baú é sondado uma vez por tick em vez de uma vez por item.
+- **Tanque manda o nível a cada 5 ticks** enquanto enche, e avisa comparadores só quando o sinal muda; trocar de fluido, esvaziar ou encher é enviado na hora. Rede de energia sem carga e sem bomba não aloca nada no tick.
+
 ## Configuração de lados
 
 Toda máquina tem, na lateral direita da interface, a aba **Configuração** (ícone de cubo desdobrado). Ela mostra as seis faces do bloco com as texturas reais, a frente no meio, e os lados nomeados como quem olha de frente para a máquina.
@@ -204,7 +215,7 @@ Máquinas com inventário ganham dois botões na lateral esquerda da aba, desenh
 - **Seta azul para baixo — Puxar itens.** A máquina tira itens por conta própria de qualquer baú, máquina ou tubo encostado numa face configurada como **Entrada**.
 - **Seta laranja para cima — Empurrar itens.** A máquina entrega o resultado a qualquer baú, máquina ou tubo encostado numa face configurada como **Saída**.
 
-Os dois começam **desligados**, então uma máquina recém-colocada nunca mexe num vizinho sem você mandar. Cada um move até **4 itens por tick**, no total, com a primeira face sorteada a cada tick para uma vizinha ocupada não travar as outras — o mesmo rodízio que o envio de energia usa.
+Os dois começam **desligados**, então uma máquina recém-colocada nunca mexe num vizinho sem você mandar. Cada um move até **16 itens a cada 4 ticks**, no total (o mesmo ritmo de 4 por tick, em rodadas), com a primeira face sorteada a cada rodada para uma vizinha ocupada não travar as outras — o mesmo rodízio que o envio de energia usa. Entre rodadas a máquina nem olha os vizinhos, e os handlers das seis faces ficam em cache (`BlockCapabilityCache`), então o transporte automático não custa consultas de capability por tick.
 
 O transporte respeita as mesmas regras de face do funil: uma face em Entrada só recebe, uma em Saída só entrega, e uma em Nenhum não faz nem uma coisa nem outra. Ligar o botão sem configurar face nenhuma não faz nada.
 

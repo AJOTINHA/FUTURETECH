@@ -298,7 +298,10 @@ public final class FluidCableNetwork {
             Line line = entry.getKey();
             FluidStacksResourceHandler buffer = entry.getValue();
             if (buffer.getAmountAsInt(0) > 0) {
-                lastFluid = buffer.getResource(0).toStack(buffer.getAmountAsInt(0));
+                // Only the kind of fluid is shown, so the stack is rebuilt only when that changes.
+                if (lastFluid.isEmpty() || !buffer.getResource(0).matches(lastFluid)) {
+                    lastFluid = buffer.getResource(0).toStack(1);
+                }
                 lastFlowTick = gameTime;
             }
             Set<BlockPos> fed = fedSinceLastDistribution.getOrDefault(line, Set.of());

@@ -95,6 +95,15 @@ public final class FluidTankBlockEntity extends BlockEntity implements MenuProvi
         }
     };
     private boolean needsSync;
+    /**
+     * A filling tank changes every tick; the clients get a fresh level every {@value} ticks and the
+     * comparators only when the signal moves, with a change of fluid, an empty or a full tank sent
+     * at once. The client eases the drawn level over the same span, so the picture stays smooth.
+     */
+    public static final int SYNC_TICKS = 5;
+    private long lastSyncTick = Long.MIN_VALUE;
+    private int lastSyncSignal = -1;
+    private FluidResource lastSyncFluid = FluidResource.EMPTY;
     private FluidStack visualFluid = FluidStack.EMPTY;
     private float visualFrom;
     private float visualTarget;
@@ -218,9 +227,20 @@ public final class FluidTankBlockEntity extends BlockEntity implements MenuProvi
         tank.redstone.update(level, pos);
         tank.processContainer();
         if (!tank.needsSync) return;
+        int amount = tank.fluids.getAmountAsInt(0);
+        FluidResource fluid = tank.fluids.getResource(0);
+        long now = level.getGameTime();
+        boolean urgent = !fluid.equals(tank.lastSyncFluid) || amount == 0 || amount == CAPACITY;
+        if (!urgent && now - tank.lastSyncTick < SYNC_TICKS) return;
         tank.needsSync = false;
+        tank.lastSyncTick = now;
+        tank.lastSyncFluid = fluid;
         level.sendBlockUpdated(pos, state, state, Block.UPDATE_CLIENTS);
-        level.updateNeighbourForOutputSignal(pos, state.getBlock());
+        int signal = tank.comparatorSignal();
+        if (signal != tank.lastSyncSignal) {
+            tank.lastSyncSignal = signal;
+            level.updateNeighbourForOutputSignal(pos, state.getBlock());
+        }
     }
 
     private void restore(FluidStack stack) {
@@ -288,7 +308,7 @@ public final class FluidTankBlockEntity extends BlockEntity implements MenuProvi
 
     public float visualFill(float partialTick) {
         if (level == null) return visualTarget;
-        float progress = Math.clamp((level.getGameTime() - visualTime + partialTick) / 4.0F, 0, 1);
+        float progress = Math.clamp((level.getGameTime() - visualTime + partialTick) / (float) SYNC_TICKS, 0, 1);
         return visualFrom + (visualTarget - visualFrom) * progress;
     }
 

@@ -12,7 +12,7 @@ import dev.futuretech.api.side.SideConfig;
 import dev.futuretech.api.side.SideConfigurable;
 import dev.futuretech.api.side.SideConfigurableBlock;
 import dev.futuretech.block.SolidFuelGeneratorBlock;
-import dev.futuretech.energy.EnergyNetworkUtil;
+import dev.futuretech.energy.EnergyExporter;
 import dev.futuretech.energy.EnergySync;
 import dev.futuretech.energy.TickLimitedEnergyHandler;
 import dev.futuretech.menu.SolidFuelGeneratorMenu;
@@ -85,6 +85,9 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
     private final SideConfig sides;
     private final AutoTransfer auto = new AutoTransfer();
     private final RedstoneControl redstone = new RedstoneControl();
+    private final EnergyExporter exporter = new EnergyExporter();
+    private final LitHold litHold = new LitHold();
+    private final ItemTransferUtil transfer = new ItemTransferUtil();
     private final UpgradeInventory upgrades = new UpgradeInventory(() -> MachineLevel.of(getBlockState()), this::setChanged);
     private final ContainerData data = new ContainerData() {
         @Override
@@ -210,13 +213,14 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
         int previousSignal = EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(generator.energy);
         generator.beginTick();
         generator.exportEnergy(level, pos);
-        if (generator.auto.isPulling()) ItemTransferUtil.pullFromNeighbours(level, pos, generator, generator.sides);
+        if (generator.auto.isPulling()) generator.transfer.pullFromNeighbours(level, pos, generator, generator.sides);
         // Redstone only gates generation; stored energy still leaves through the output faces.
         generator.redstone.update(level, pos);
         if (generator.redstone.allowsRunning()) generator.generateEnergy(level.fuelValues());
         else generator.generating = false;
-        if (state.getValue(SolidFuelGeneratorBlock.LIT) != generator.generating) {
-            level.setBlock(pos, state.setValue(SolidFuelGeneratorBlock.LIT, generator.generating), 3);
+        boolean lit = generator.litHold.update(generator.generating);
+        if (state.getValue(SolidFuelGeneratorBlock.LIT) != lit) {
+            level.setBlock(pos, state.setValue(SolidFuelGeneratorBlock.LIT, lit), 3);
         }
         if (previousSignal != EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(generator.energy)) {
             level.updateNeighbourForOutputSignal(pos, state.getBlock());
@@ -227,7 +231,7 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
     void beginTick() { energy.beginTick(); }
 
     private void exportEnergy(Level level, BlockPos pos) {
-        EnergyNetworkUtil.pushToNeighbours(level, pos, energy, sides::allowsEnergyOutput);
+        exporter.pushToNeighbours(level, pos, energy, sides::allowsEnergyOutput);
     }
 
     void generateEnergy(FuelValues fuelValues) {

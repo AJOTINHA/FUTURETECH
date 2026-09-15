@@ -108,6 +108,9 @@ public final class CrusherBlockEntity extends BaseContainerBlockEntity
     private final SideConfig sides;
     private final AutoTransfer auto = new AutoTransfer();
     private final RedstoneControl redstone = new RedstoneControl();
+    private final LitHold litHold = new LitHold();
+    private final RecipeMissMemo misses = new RecipeMissMemo(LANES);
+    private final ItemTransferUtil transfer = new ItemTransferUtil();
     private final UpgradeInventory upgrades = new UpgradeInventory(() -> MachineLevel.of(getBlockState()), this::setChanged);
     private final ContainerData data = new ContainerData() {
         @Override
@@ -221,14 +224,15 @@ public final class CrusherBlockEntity extends BaseContainerBlockEntity
     public static void serverTick(Level level, BlockPos pos, BlockState state, CrusherBlockEntity crusher) {
         crusher.beginTick();
         crusher.redstone.update(level, pos);
-        if (crusher.auto.isPulling()) ItemTransferUtil.pullFromNeighbours(level, pos, crusher, crusher.sides);
-        if (crusher.auto.isPushing()) ItemTransferUtil.pushToNeighbours(level, pos, crusher, crusher.sides);
+        if (crusher.auto.isPulling()) crusher.transfer.pullFromNeighbours(level, pos, crusher, crusher.sides);
+        if (crusher.auto.isPushing()) crusher.transfer.pushToNeighbours(level, pos, crusher, crusher.sides);
         int wasWorking = crusher.workingLanes;
         boolean working = crusher.redstone.allowsRunning() && level instanceof ServerLevel server
                 && crusher.crush(input -> crusher.quickCheck.getRecipeFor(input, server).orElse(null));
         // Pausing preserves the current jobs.
-        if (state.getValue(CrusherBlock.LIT) != working) {
-            level.setBlock(pos, state.setValue(CrusherBlock.LIT, working), 3);
+        boolean lit = crusher.litHold.update(working);
+        if (state.getValue(CrusherBlock.LIT) != lit) {
+            level.setBlock(pos, state.setValue(CrusherBlock.LIT, lit), 3);
         }
         if (wasWorking != crusher.workingLanes) crusher.setChanged();
     }
@@ -251,9 +255,10 @@ public final class CrusherBlockEntity extends BaseContainerBlockEntity
     private boolean crushLane(int lane, CrushingLookup recipes, int perTick, int total) {
         ItemStack ingredient = items.get(SLOT_INPUT + lane);
         if (ingredient.isEmpty()) { resetWork(lane); return false; }
+        if (misses.known(lane, ingredient, ItemStack.EMPTY, 0, now())) { resetWork(lane); return false; }
         var input = new SingleRecipeInput(ingredient);
         RecipeHolder<CrushingRecipe> recipe = recipes.find(input);
-        if (recipe == null) { resetWork(lane); return false; }
+        if (recipe == null) { misses.remember(lane, ingredient, ItemStack.EMPTY, 0, now()); resetWork(lane); return false; }
         ItemStack result = recipe.value().assemble(input);
         if (!ItemStack.isSameItemSameComponents(workInput[lane], ingredient)
                 || !ItemStack.matches(workResult[lane], result)) {
@@ -276,6 +281,10 @@ public final class CrusherBlockEntity extends BaseContainerBlockEntity
         setChanged();
         return true;
     }
+
+
+    /** The clock the miss memo runs on; tests drive a machine with no level. */
+    private long now() { return level == null ? 0 : level.getGameTime(); }
 
     private void resetWork(int lane) {
         if (progress[lane] != 0 || !workInput[lane].isEmpty()) setChanged();
