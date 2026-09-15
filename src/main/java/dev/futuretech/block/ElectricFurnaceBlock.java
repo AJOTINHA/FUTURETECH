@@ -1,5 +1,6 @@
 package dev.futuretech.block;
 
+import dev.futuretech.perf.TickProfiler;
 import com.mojang.serialization.MapCodec;
 import dev.futuretech.api.upgrade.MachineLevel;
 import net.minecraft.world.level.block.Block;
@@ -74,7 +75,7 @@ public final class ElectricFurnaceBlock extends AbstractFurnaceBlock implements 
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         return level.isClientSide() ? null : createTickerHelper(
-                type, ModBlockEntities.ELECTRIC_FURNACE.get(), ElectricFurnaceBlockEntity::serverTick);
+                type, ModBlockEntities.ELECTRIC_FURNACE.get(), TickProfiler.wrap(ElectricFurnaceBlockEntity::serverTick));
     }
 
     @Override

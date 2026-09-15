@@ -11,6 +11,7 @@ import dev.futuretech.api.upgrade.MachineLevel;
 import dev.futuretech.api.side.client.ConfiguredSideModel;
 import dev.futuretech.registry.ModMenus;
 import dev.futuretech.registry.ModBlockEntities;
+import dev.futuretech.perf.PerfProfiling;
 import dev.futuretech.transfer.ItemJourneys;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.resources.Identifier;
@@ -44,6 +45,10 @@ public final class FutureTechClient {
         // Items travelling through cables are drawn from journeys the server reports.
         ItemJourneys.setDrawer(ItemTravel::add, ItemTravel::end);
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> ItemTravel.tick());
+        // /futuretech perf: the server's tick measurements drawn over the blocks and on the HUD.
+        PerfProfiling.setViewer(PerfOverlay::accept);
+        NeoForge.EVENT_BUS.addListener(PerfOverlay::submitLabels);
+        NeoForge.EVENT_BUS.addListener(PerfOverlay::drawTotal);
     }
 
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {

@@ -1,5 +1,6 @@
 package dev.futuretech.block;
 
+import dev.futuretech.perf.TickProfiler;
 import dev.futuretech.block.entity.AbstractCableBlockEntity;
 import dev.futuretech.menu.CableConnectorMenu;
 import net.minecraft.core.BlockPos;
@@ -150,7 +151,7 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
     @SuppressWarnings("unchecked")
     public <T extends BlockEntity> @Nullable BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         if (level.isClientSide() || type != blockEntityType()) return null;
-        return (BlockEntityTicker<T>) (BlockEntityTicker<AbstractCableBlockEntity>)
-                (tickLevel, pos, tickState, cable) -> cable.serverTick();
+        return (BlockEntityTicker<T>) TickProfiler.<AbstractCableBlockEntity>wrap(
+                (tickLevel, pos, tickState, cable) -> cable.serverTick());
     }
 }

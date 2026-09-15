@@ -178,6 +178,10 @@ Regras que valem para todas as máquinas e redes, pensadas para o custo por tick
 - **Rede de itens não pergunta duas vezes.** Um conector que recusou um recurso num tick não é consultado de novo por outros itens do mesmo recurso nesse tick; com centenas de itens esperando em baús cheios, cada baú é sondado uma vez por tick em vez de uma vez por item.
 - **Tanque manda o nível a cada 5 ticks** enquanto enche, e avisa comparadores só quando o sinal muda; trocar de fluido, esvaziar ou encher é enviado na hora. Rede de energia sem carga e sem bomba não aloca nada no tick.
 
+### Medir dentro do mundo
+
+`/futuretech perf` (nível de operador) liga e desliga o medidor de tick do mod. Ligado, cada bloco do FUTURETECH num raio de 32 blocos ganha um rótulo flutuante com o nome e o custo médio do seu tick em microssegundos — verde abaixo de 50 µs, amarelo até 200 µs, vermelho acima — e o canto superior direito mostra o total da dimensão, quantos blocos estão sendo medidos e a fração do tick de 50 ms que isso representa. O servidor embrulha o ticker de cada block entity (`TickProfiler.wrap`) e manda aos jogadores, a cada 10 ticks, o que mediu perto deles; desligado, o embrulho custa uma leitura de boolean. O que um bloco mede é o que ele faz no próprio tick: uma máquina que empurra energia ou itens paga pelo empurrão, e o tick de uma rede de cabos cai no primeiro cabo da rede que ticar.
+
 ## Configuração de lados
 
 Toda máquina tem, na lateral direita da interface, a aba **Configuração** (ícone de cubo desdobrado). Ela mostra as seis faces do bloco com as texturas reais, a frente no meio, e os lados nomeados como quem olha de frente para a máquina.

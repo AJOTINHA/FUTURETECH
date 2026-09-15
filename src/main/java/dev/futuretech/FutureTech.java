@@ -7,7 +7,9 @@ import dev.futuretech.registry.ModItems;
 import dev.futuretech.registry.ModBlockEntities;
 import dev.futuretech.registry.ModMenus;
 import dev.futuretech.registry.ModRecipes;
+import dev.futuretech.perf.PerfProfiling;
 import dev.futuretech.transfer.ItemJourneys;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 
@@ -26,6 +28,9 @@ public final class FutureTech {
         ModRecipes.BOOKS.register(modEventBus);
         modEventBus.addListener(ModBlockEntities::registerCapabilities);
         modEventBus.addListener(ItemJourneys::register);
+        modEventBus.addListener(PerfProfiling::registerPayloads);
+        NeoForge.EVENT_BUS.addListener(PerfProfiling::registerCommands);
+        NeoForge.EVENT_BUS.addListener(PerfProfiling::onServerTick);
         ModCreativeTabs.TABS.register(modEventBus);
     }
 }

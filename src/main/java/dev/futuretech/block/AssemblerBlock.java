@@ -1,5 +1,6 @@
 package dev.futuretech.block;
 
+import dev.futuretech.perf.TickProfiler;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -43,7 +44,7 @@ public final class AssemblerBlock extends BaseEntityBlock {
     }
     @Override public BlockEntity newBlockEntity(BlockPos pos, BlockState state) { return new AssemblerBlockEntity(pos, state); }
     @Override public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return level.isClientSide() ? null : createTickerHelper(type, ModBlockEntities.ASSEMBLER.get(), AssemblerBlockEntity::serverTick);
+        return level.isClientSide() ? null : createTickerHelper(type, ModBlockEntities.ASSEMBLER.get(), TickProfiler.wrap(AssemblerBlockEntity::serverTick));
     }
     @Override protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (!level.isClientSide() && level.getBlockEntity(pos) instanceof AssemblerBlockEntity assembler) assembler.open(player);

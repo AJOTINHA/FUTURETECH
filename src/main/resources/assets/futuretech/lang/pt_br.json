@@ -145,5 +145,7 @@
   "item.futuretech.steel_ingot": "Lingote de Aço",
   "item.futuretech.steel_plate": "Chapa de Aço",
   "item.futuretech.steel_gear": "Engrenagem de Aço",
-  "block.futuretech.smeltery": "Fundidora"
+  "block.futuretech.smeltery": "Fundidora",
+  "command.futuretech.perf.on": "Medição de tick ligada: o custo aparece em cima dos blocos do mod.",
+  "command.futuretech.perf.off": "Medição de tick desligada."
 }

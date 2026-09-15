@@ -1,5 +1,6 @@
 package dev.futuretech.block;
 
+import dev.futuretech.perf.TickProfiler;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.futuretech.api.side.SideConfig;
@@ -129,7 +130,7 @@ public final class BatteryBlock extends BaseEntityBlock implements SideConfigura
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         return level.isClientSide() ? null : createTickerHelper(
-                type, ModBlockEntities.BATTERY.get(), BatteryBlockEntity::serverTick);
+                type, ModBlockEntities.BATTERY.get(), TickProfiler.wrap(BatteryBlockEntity::serverTick));
     }
 
     @Override

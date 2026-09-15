@@ -1,5 +1,6 @@
 package dev.futuretech.block;
 
+import dev.futuretech.perf.TickProfiler;
 import com.mojang.serialization.MapCodec;
 import dev.futuretech.block.entity.FluidTankBlockEntity;
 import dev.futuretech.api.side.SideConfig;
@@ -77,7 +78,7 @@ public final class FluidTankBlock extends BaseEntityBlock implements SideConfigu
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         return level.isClientSide() ? null : createTickerHelper(type, ModBlockEntities.FLUID_TANK.get(),
-                FluidTankBlockEntity::serverTick);
+                TickProfiler.wrap(FluidTankBlockEntity::serverTick));
     }
 
     @Override

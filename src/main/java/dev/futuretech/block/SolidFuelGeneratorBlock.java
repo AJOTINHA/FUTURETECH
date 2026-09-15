@@ -1,5 +1,6 @@
 package dev.futuretech.block;
 
+import dev.futuretech.perf.TickProfiler;
 import com.mojang.serialization.MapCodec;
 import dev.futuretech.api.upgrade.MachineLevel;
 import net.minecraft.world.level.block.Block;
@@ -71,7 +72,7 @@ public final class SolidFuelGeneratorBlock extends AbstractFurnaceBlock implemen
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         return level.isClientSide() ? null : createTickerHelper(
-                type, ModBlockEntities.SOLID_FUEL_GENERATOR.get(), SolidFuelGeneratorBlockEntity::serverTick);
+                type, ModBlockEntities.SOLID_FUEL_GENERATOR.get(), TickProfiler.wrap(SolidFuelGeneratorBlockEntity::serverTick));
     }
 
     @Override

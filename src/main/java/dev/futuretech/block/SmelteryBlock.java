@@ -1,5 +1,6 @@
 package dev.futuretech.block;
 
+import dev.futuretech.perf.TickProfiler;
 import com.mojang.serialization.MapCodec;
 import dev.futuretech.api.side.SideConfig;
 import dev.futuretech.api.side.SideConfigurableBlock;
@@ -75,7 +76,7 @@ public final class SmelteryBlock extends AbstractFurnaceBlock implements SideCon
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         return level.isClientSide() ? null : createTickerHelper(
-                type, ModBlockEntities.SMELTERY.get(), SmelteryBlockEntity::serverTick);
+                type, ModBlockEntities.SMELTERY.get(), TickProfiler.wrap(SmelteryBlockEntity::serverTick));
     }
 
     @Override
