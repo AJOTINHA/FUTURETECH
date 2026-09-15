@@ -430,19 +430,25 @@ public final class ItemCableNetwork {
         if (noRoom.contains(refused)) return 0;
         int room;
         try (Transaction probe = Transaction.open(transaction)) {
-            reserve(flights, endpoint.key(), handler, probe);
-            reserve(departing, endpoint.key(), handler, probe);
+            // What is already bound there is reserved once per kind of item, not once per flight:
+            // a dozen identical items in the air are one simulated insert, not twelve.
+            Map<ItemResource, Integer> bound = new HashMap<>();
+            reserve(flights, endpoint.key(), bound);
+            reserve(departing, endpoint.key(), bound);
+            for (Map.Entry<ItemResource, Integer> entry : bound.entrySet()) {
+                ResourceHandlerUtil.insertStacking(handler, entry.getKey(), entry.getValue(), probe);
+            }
             room = ResourceHandlerUtil.insertStacking(handler, resource, amount, probe);
         }
         if (room <= 0) noRoom.add(refused);
         return room;
     }
 
-    /** Inserts, within the probe, everything among {@code bound} that is heading for {@code key}. */
-    private static void reserve(List<ItemFlight> bound, EndpointKey key, ResourceHandler<ItemResource> handler, Transaction probe) {
+    /** Adds up, by kind of item, everything among {@code bound} that is heading for {@code key}. */
+    private static void reserve(List<ItemFlight> bound, EndpointKey key, Map<ItemResource, Integer> totals) {
         for (ItemFlight flight : bound) {
             if (flight.to != key.side() || !flight.path.getLast().equals(key.cablePos())) continue;
-            ResourceHandlerUtil.insertStacking(handler, ItemResource.of(flight.stack), flight.stack.getCount(), probe);
+            totals.merge(ItemResource.of(flight.stack), flight.stack.getCount(), Integer::sum);
         }
     }
 
