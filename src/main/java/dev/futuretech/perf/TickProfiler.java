@@ -26,8 +26,12 @@ import java.util.Map;
 public final class TickProfiler {
     /** Ticks a block may go unmeasured before its sample is dropped; a broken block stops ticking. */
     private static final int STALE_TICKS = 40;
-    /** Weight of the newest tick in the running average: settles in about a second. */
-    private static final double SMOOTHING = 0.1;
+    /**
+     * Weight of the newest tick in the running average: settles in a couple of seconds. Slow on
+     * purpose, so a JVM pause (garbage collection, JIT, a safepoint) landing on one tick of one
+     * block does not show up as that block costing a hundred microseconds.
+     */
+    private static final double SMOOTHING = 0.05;
 
     /**
      * One measured block: where it is and its running average, in microseconds per tick. A cable
