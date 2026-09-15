@@ -84,6 +84,25 @@ public final class ConfiguredSideModel extends DelegateBlockStateModel {
         }
     }
 
+    /**
+     * What this model's geometry depends on: the delegate's own key and the face modes that came
+     * in as model data. {@link DelegateBlockStateModel} does not forward this one, and its default
+     * answer of {@code null} tells the chunk mesher the geometry cannot be cached at all: every
+     * machine in a section would rebuild its quads from scratch on every rebuild of that section,
+     * which is every time any block in it is placed or broken.
+     */
+    @Override
+    public @Nullable Object createGeometryKey(BlockAndTintGetter level, BlockPos pos, BlockState state,
+                                              RandomSource random) {
+        Object delegateKey = delegate.createGeometryKey(level, pos, state, random);
+        if (delegateKey == null) return null;
+        Integer stored = level.getModelData(pos).get(SideConfigVisuals.FACE_MODES);
+        return new GeometryKey(this, delegateKey, stored == null ? 0 : stored);
+    }
+
+    /** The wrapper's identity separates two machines that share a delegate but not their sprites. */
+    private record GeometryKey(ConfiguredSideModel model, Object delegate, int modes) {}
+
     /** False when no face carries a mode this model has a sprite for, so the delegate can be used untouched. */
     private boolean retextures(int modes) {
         for (Direction side : Direction.values()) {

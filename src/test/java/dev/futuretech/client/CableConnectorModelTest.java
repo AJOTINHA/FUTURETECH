@@ -17,6 +17,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.neoforged.neoforge.model.data.ModelData;
 import net.neoforged.testframework.junit.EphemeralTestServerProvider;
@@ -104,7 +105,9 @@ class CableConnectorModelTest {
             var collar=CableConnector.shape(1 << side.ordinal());
             assertFalse(Shapes.joinIsNotEmpty(collar,connected.getShape(level,BlockPos.ZERO),BooleanOp.ONLY_FIRST),
                     "The full collar must be selectable");
-            assertFalse(Shapes.joinIsNotEmpty(collar,connected.getCollisionShape(level,BlockPos.ZERO),BooleanOp.ONLY_FIRST),
+            // Entities collide through the context overload; the one without context is the
+            // per-state cache, built without neighbours, so it never knows about collars.
+            assertFalse(Shapes.joinIsNotEmpty(collar,connected.getCollisionShape(level,BlockPos.ZERO,CollisionContext.empty()),BooleanOp.ONLY_FIRST),
                     "The visible collar must be solid");
             output.clear();
             model.collectParts(level,BlockPos.ZERO,cable,RandomSource.create(),output);

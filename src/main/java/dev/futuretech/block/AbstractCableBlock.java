@@ -38,6 +38,15 @@ import org.jspecify.annotations.Nullable;
  */
 public abstract class AbstractCableBlock extends PipeBlock implements EntityBlock {
     private static final float SIZE = 8.0F;
+    /**
+     * One shape per pair of run connections and collars, built on first use and handed out by the
+     * same instance from then on. The chunk mesher asks whether a block is a full cube once per
+     * quad, and vanilla answers that from a cache keyed by shape identity: a fresh {@code Shapes.or}
+     * per call misses it every time and redoes the 3D join, which was ~100 µs per quad of cable.
+     * That is also why the block does not declare {@code dynamicShape()}: the state cache then
+     * holds the full-cube answer, and the mesher never asks for the shape at all.
+     */
+    private final VoxelShape[] shapesWithConnectors = new VoxelShape[64 * 64];
 
     protected AbstractCableBlock(Properties properties) {
         super(SIZE, properties);
@@ -60,7 +69,21 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         VoxelShape cable = super.getShape(state, level, pos, context);
         int connectors = CableConnector.mask(level, pos, state);
-        return connectors == 0 ? cable : Shapes.or(cable, CableConnector.shape(connectors));
+        if (connectors == 0) return cable;
+        int slot = connectionMask(state) << 6 | connectors;
+        VoxelShape shape = shapesWithConnectors[slot];
+        // Two threads may build the same slot at once; both results are equal, so nothing is lost.
+        if (shape == null) shapesWithConnectors[slot] = shape = Shapes.or(cable, CableConnector.shape(connectors));
+        return shape;
+    }
+
+    /** The six run connections as bits, {@code Direction.ordinal()} order, like the collar mask. */
+    private static int connectionMask(BlockState state) {
+        int mask = 0;
+        for (Direction side : Direction.values()) {
+            if (state.getValue(PROPERTY_BY_DIRECTION.get(side))) mask |= 1 << side.ordinal();
+        }
+        return mask;
     }
 
     @Override

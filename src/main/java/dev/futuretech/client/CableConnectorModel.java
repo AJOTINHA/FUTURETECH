@@ -11,6 +11,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.model.DelegateBlockStateModel;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -50,6 +51,26 @@ public final class CableConnectorModel extends DelegateBlockStateModel {
             if (part != null) output.add(part);
         }
     }
+
+    /**
+     * What this model's geometry depends on: the delegate's own key, which collars are drawn, and
+     * their modes. {@link DelegateBlockStateModel} does not forward this one, and its default answer
+     * of {@code null} tells the chunk mesher the geometry cannot be cached at all: every cable in a
+     * section would rebuild its quads from scratch on every rebuild of that section, which is every
+     * time any block in it is placed or broken.
+     */
+    @Override
+    public @Nullable Object createGeometryKey(BlockAndTintGetter level, BlockPos pos, BlockState state,
+                                              RandomSource random) {
+        Object delegateKey=delegate.createGeometryKey(level,pos,state,random);
+        if (delegateKey == null) return null;
+        Integer stored=level.getModelData(pos).get(SideConfigVisuals.FACE_MODES);
+        return new GeometryKey(this,delegateKey,CableConnector.mask(level,pos,state),
+                stored==null ? DEFAULT_MODES : stored);
+    }
+
+    /** The wrapper's identity separates the kinds, which draw different contacts on the same collars. */
+    private record GeometryKey(CableConnectorModel model, Object delegate, int mask, int modes) {}
 
     @Override
     public int materialFlags(BlockAndTintGetter level, BlockPos pos, BlockState state) {
