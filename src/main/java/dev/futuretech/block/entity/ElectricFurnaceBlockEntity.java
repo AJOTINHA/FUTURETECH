@@ -48,6 +48,7 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.model.data.ModelData;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
+import net.neoforged.neoforge.transfer.energy.EnergyHandlerUtil;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
@@ -108,6 +109,7 @@ public final class ElectricFurnaceBlockEntity extends BaseContainerBlockEntity
     private final SideConfig sides;
     private final AutoTransfer auto = new AutoTransfer();
     private final RedstoneControl redstone = new RedstoneControl();
+    private final ComparatorNotifier comparator = new ComparatorNotifier();
     private final LitHold litHold = new LitHold();
     private final RecipeMissMemo misses = new RecipeMissMemo(LANES);
     private final ItemTransferUtil transfer = new ItemTransferUtil();
@@ -226,6 +228,10 @@ public final class ElectricFurnaceBlockEntity extends BaseContainerBlockEntity
         if (level != null) RedstoneControl.sample(level, worldPosition);
     }
 
+    /** Marks the chunk only; comparators hear about the signal from the tick, not from every change. */
+    @Override
+    public void setChanged() { ComparatorNotifier.markChanged(this); }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, ElectricFurnaceBlockEntity furnace) {
         furnace.beginTick();
         if (furnace.auto.isPulling()) furnace.transfer.pullFromNeighbours(level, pos, furnace, furnace.sides);
@@ -244,6 +250,7 @@ public final class ElectricFurnaceBlockEntity extends BaseContainerBlockEntity
             level.setBlock(pos, state.setValue(ElectricFurnaceBlock.LIT, lit), 3);
         }
         if (wasWorking != furnace.workingLanes) furnace.setChanged();
+        furnace.comparator.update(level, pos, state, EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(furnace.energy));
     }
 
     /** Opens a new tick's input budget so neighbours can push their rated amount in. */

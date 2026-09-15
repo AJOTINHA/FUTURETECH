@@ -56,6 +56,7 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
     private final TickLimitedEnergyHandler energy;
     private final SideConfig sides;
     private final RedstoneControl redstone = new RedstoneControl();
+    private final ComparatorNotifier comparator = new ComparatorNotifier();
     private final EnergyExporter exporter = new EnergyExporter();
     private final UpgradeInventory upgrades = new UpgradeInventory(() -> tier().ordinal() + 1, this::setChanged);
     // Transfer totals of the previous tick, shown in the menu as FE/t.
@@ -200,15 +201,16 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
         if (level != null) RedstoneControl.sample(level, worldPosition);
     }
 
+    /** Marks the chunk only; comparators hear about the signal from the tick, not from every change. */
+    @Override
+    public void setChanged() { ComparatorNotifier.markChanged(this); }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, BatteryBlockEntity battery) {
-        int previousSignal = EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(battery.energy);
         battery.beginTick();
         // Redstone gates the output; charging through input faces is never blocked.
         if (battery.redstone.allowsRunning()) battery.exportEnergy(level, pos);
         battery.syncVisualCharge(level, pos, state);
-        if (previousSignal != EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(battery.energy)) {
-            level.updateNeighbourForOutputSignal(pos, state.getBlock());
-        }
+        battery.comparator.update(level, pos, state, EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(battery.energy));
     }
 
     /** Records the previous tick's transfers and opens fresh budgets for this one. */

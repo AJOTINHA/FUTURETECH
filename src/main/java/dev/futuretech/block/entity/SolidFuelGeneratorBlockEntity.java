@@ -85,6 +85,7 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
     private final SideConfig sides;
     private final AutoTransfer auto = new AutoTransfer();
     private final RedstoneControl redstone = new RedstoneControl();
+    private final ComparatorNotifier comparator = new ComparatorNotifier();
     private final EnergyExporter exporter = new EnergyExporter();
     private final LitHold litHold = new LitHold();
     private final ItemTransferUtil transfer = new ItemTransferUtil();
@@ -216,8 +217,11 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
         if (level != null) RedstoneControl.sample(level, worldPosition);
     }
 
+    /** Marks the chunk only; comparators hear about the signal from the tick, not from every change. */
+    @Override
+    public void setChanged() { ComparatorNotifier.markChanged(this); }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, SolidFuelGeneratorBlockEntity generator) {
-        int previousSignal = EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(generator.energy);
         generator.beginTick();
         generator.exportEnergy(level, pos);
         if (generator.auto.isPulling()) generator.transfer.pullFromNeighbours(level, pos, generator, generator.sides);
@@ -228,9 +232,7 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
         if (state.getValue(SolidFuelGeneratorBlock.LIT) != lit) {
             level.setBlock(pos, state.setValue(SolidFuelGeneratorBlock.LIT, lit), 3);
         }
-        if (previousSignal != EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(generator.energy)) {
-            level.updateNeighbourForOutputSignal(pos, state.getBlock());
-        }
+        generator.comparator.update(level, pos, state, EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(generator.energy));
     }
 
     /** Opens a new tick's output budget; neighbours pulling energy share it with {@link #exportEnergy}. */

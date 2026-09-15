@@ -230,6 +230,10 @@ public final class FluidTankBlockEntity extends BlockEntity implements MenuProvi
         if (level != null) RedstoneControl.sample(level, worldPosition);
     }
 
+    /** Marks the chunk only; comparators hear about the signal with the sync, not from every change. */
+    @Override
+    public void setChanged() { ComparatorNotifier.markChanged(this); }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, FluidTankBlockEntity tank) {
         tank.processContainer();
         if (!tank.needsSync) return;
