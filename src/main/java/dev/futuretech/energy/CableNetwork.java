@@ -59,6 +59,11 @@ public final class CableNetwork {
     private final boolean pumps;
     /** The connectors that hand energy out, so a tick does not walk the ones that never do. */
     private final List<Endpoint> deliverers;
+    /** The connectors that pump, walked only on ticks the pumps are awake. */
+    private final List<Endpoint> pumpers;
+    /** Pumps that found nothing look again only every this many ticks; one that finds energy wakes every tick. */
+    static final int PUMP_IDLE_TICKS = 5;
+    private boolean pumpsAsleep;
     /** Reused every tick so an idle network allocates nothing. */
     private final List<EnergyHandler> sinks = new ArrayList<>();
     private long lastTick = Long.MIN_VALUE;
@@ -74,6 +79,7 @@ public final class CableNetwork {
         this.endpoints = List.copyOf(endpoints);
         this.pumps = this.endpoints.stream().anyMatch(Endpoint::pulls);
         this.deliverers = this.endpoints.stream().filter(Endpoint::delivers).toList();
+        this.pumpers = this.endpoints.stream().filter(Endpoint::pulls).toList();
     }
 
     /** Flood-fills the cables touching {@code start} and gives every one of them this network. */
@@ -172,12 +178,18 @@ public final class CableNetwork {
         // merely holds energy without pushing would otherwise never be drained.
         // A pump with nothing to pull, or nowhere to send it, opens no transaction: a move of zero
         // still costs the transaction machinery, every tick, for every pump.
-        if (pumps && !deliverers.isEmpty() && buffer.getAmountAsInt() < buffer.getCapacityAsInt()) {
-            for (Endpoint endpoint : endpoints) {
-                if (!endpoint.pulls() || buffer.inputRemaining() <= 0) continue;
+        // Pumps that found nothing doze: they look again every few ticks, and wake for good on a find.
+        if (pumps && !deliverers.isEmpty() && buffer.getAmountAsInt() < buffer.getCapacityAsInt()
+                && (!pumpsAsleep || gameTime % PUMP_IDLE_TICKS == 0)) {
+            boolean found = false;
+            for (Endpoint endpoint : pumpers) {
+                if (buffer.inputRemaining() <= 0) break;
                 EnergyHandler source = endpoint.handler();
-                if (source != null && source.getAmountAsLong() > 0) EnergyHandlerUtil.move(source, buffer, buffer.inputRemaining(), null);
+                if (source == null || source.getAmountAsLong() <= 0) continue;
+                found = true;
+                EnergyHandlerUtil.move(source, buffer, buffer.inputRemaining(), null);
             }
+            pumpsAsleep = !found;
         }
         // Nothing arrived and nothing was pumped: no sinks to look up this tick.
         if (buffer.getAmountAsInt() <= 0) {
