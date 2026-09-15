@@ -7,10 +7,14 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
+import org.jspecify.annotations.Nullable;
 
 /**
  * The items currently drawn on their way through item cables. Each journey is a polyline from
@@ -34,6 +38,8 @@ public final class ItemTravel {
         final long start;
         final int ticksPerBlock;
         boolean ended;
+        /** The item's resolved model, built by the first cable that draws it and kept for the trip. */
+        @Nullable ItemStackRenderState render;
 
         Journey(List<BlockPos> path, Direction from, Direction to, ItemStack stack, long start, int ticksPerBlock) {
             this.path = path;
@@ -76,6 +82,12 @@ public final class ItemTravel {
     }
 
     private static final Map<Long, Journey> journeys = new LinkedHashMap<>();
+    /** Where every journey is this frame, grouped by the cable it is in; built once per frame, see {@link #inside}. */
+    private static final Map<BlockPos, List<Placed>> placed = new HashMap<>();
+    private static double placedAt = Double.NaN;
+
+    /** A journey and the point it is drawn at this frame. */
+    public record Placed(Journey journey, Vec3 position) {}
     /** Client ticks seen so far; every journey is timed against this. */
     private static long clock;
 
@@ -111,4 +123,21 @@ public final class ItemTravel {
     }
 
     public static Collection<Journey> journeys() { return journeys.values(); }
+
+    /**
+     * The journeys inside the cable at {@code pos} at {@code now}. Every cable drawn in a frame
+     * asks with the same {@code now}, so the positions are worked out once per frame for all
+     * journeys and grouped by cable; before, every visible cable walked every journey itself.
+     */
+    public static List<Placed> inside(BlockPos pos, double now) {
+        if (now != placedAt) {
+            placedAt = now;
+            placed.clear();
+            for (Journey journey : journeys.values()) {
+                Vec3 position = journey.position(now - journey.start);
+                placed.computeIfAbsent(BlockPos.containing(position), key -> new ArrayList<>(2)).add(new Placed(journey, position));
+            }
+        }
+        return placed.getOrDefault(pos, List.of());
+    }
 }

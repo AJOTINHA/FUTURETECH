@@ -52,13 +52,15 @@ public final class ItemCableRenderer implements BlockEntityRenderer<ItemCableBlo
         double now = ItemTravel.now(partialTick);
         state.spin = (float) (now * 3.0);
         BlockPos here = cable.getBlockPos();
-        for (ItemTravel.Journey journey : ItemTravel.journeys()) {
-            Vec3 position = journey.position(now - journey.start());
-            if (!BlockPos.containing(position).equals(here)) continue;
-            var item = new ItemStackRenderState();
-            itemModelResolver.updateForTopItem(item, journey.stack(), ItemDisplayContext.FIXED, level, null, (int) journey.start());
-            state.items.add(item);
-            state.offsets.add(position.subtract(here.getX(), here.getY(), here.getZ()));
+        for (ItemTravel.Placed placed : ItemTravel.inside(here, now)) {
+            var journey = placed.journey();
+            // The item's model is resolved once per journey, not once per cable per frame.
+            if (journey.render == null) {
+                journey.render = new ItemStackRenderState();
+                itemModelResolver.updateForTopItem(journey.render, journey.stack(), ItemDisplayContext.FIXED, level, null, (int) journey.start());
+            }
+            state.items.add(journey.render);
+            state.offsets.add(placed.position().subtract(here.getX(), here.getY(), here.getZ()));
         }
     }
 
