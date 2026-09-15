@@ -246,25 +246,28 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
     }
     public int status() {
         if (kind() != Kind.TABLE) return phase == 0 ? 0 : 3;
-        if (nearest(Kind.TERMINAL) == null) return 1;
-        if (recipe() == null) return 2;
-        if (controllerEnergy() < ENERGY_PER_TICK) return 9;
+        var controller = nearest(Kind.TERMINAL);
+        if (controller == null) return 1;
+        var recipe = recipe();
+        if (recipe == null) return 2;
+        if (controller.energy.getAmountAsInt() < ENERGY_PER_TICK) return 9;
         for (BlockPos p : assemblerPositions()) { var a = assemblerAt(p); if (a != null && a.phase != 0 && a.tablePos.equals(worldPosition)) {
             if (!a.moving && a.animationTick > 0) return 11;
             if (a.phase == 2) return a.crafted ? 5 : 4;
             return a.outputMode() ? 6 : 3;
         } }
         if (!inventory.getItem(RESULT).isEmpty()) return 7;
-        if (!ready(recipe()) && (connections() & 1) == 0) return 12;
-        return ready(recipe()) ? 8 : 0;
+        boolean ready = ready(recipe);
+        if (!ready && (connections() & 1) == 0) return 12;
+        return ready ? 8 : 0;
     }
     public int progress() {
-        for (BlockPos p : reachable()) { var a = assemblerAt(p); if (a != null && a.phase == 2 && a.tablePos.equals(worldPosition)) return Math.clamp((a.animationTick - 20) * 100 / a.duration, 0, 100); }
+        for (BlockPos p : assemblerPositions()) { var a = assemblerAt(p); if (a != null && a.phase == 2 && a.tablePos.equals(worldPosition)) return Math.clamp((a.animationTick - 20) * 100 / a.duration, 0, 100); }
         return inventory.getItem(RESULT).isEmpty() ? 0 : 100;
     }
     public int connections() {
         int flags = 0;
-        for (BlockPos p : reachable()) { var a = assemblerAt(p); if (a != null) {
+        for (BlockPos p : assemblerPositions()) { var a = assemblerAt(p); if (a != null) {
             if (a.kind() == Kind.TERMINAL) flags |= 8;
             if (a.kind() == Kind.ASSEMBLY && a.nearest(Kind.TABLE) == this) flags |= 2;
             if (a.kind() == Kind.TRANSPORT && a.nearest(Kind.TABLE) == this) flags |= a.outputMode() ? 4 : 1;
