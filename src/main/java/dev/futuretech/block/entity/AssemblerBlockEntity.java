@@ -114,6 +114,9 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
     private static final org.slf4j.Logger LOG = com.mojang.logging.LogUtils.getLogger();
     private long nsRefresh, nsChanged;
     private int refreshes, changes;
+    /** Terminal: whether a nearby part changed since the monitor was last rebuilt; starts dirty so a fresh terminal draws. */
+    private boolean monitorDirty = true;
+    private boolean monitorStarved;
     /** The assembling book, built once per recipe reload rather than on every lookup. */
     private static @Nullable Collection<?> bookSource;
     private static List<Entry> bookEntries = List.of();
@@ -262,7 +265,10 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
     private void resurveyNeighbours() {
         if (level == null || level.isClientSide()) return;
         for (BlockPos p : reachable()) {
-            if (level.hasChunkAt(p) && level.getBlockEntity(p) instanceof AssemblerBlockEntity a) a.surveyTick = Long.MIN_VALUE;
+            if (level.hasChunkAt(p) && level.getBlockEntity(p) instanceof AssemblerBlockEntity a) {
+                a.surveyTick = Long.MIN_VALUE;
+                a.monitorDirty = true;
+            }
         }
     }
     @Override public void onLoad() {
@@ -323,20 +329,28 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
     public static void serverTick(Level level, BlockPos pos, BlockState state, AssemblerBlockEntity a) {
         if (a.kind() == Kind.TERMINAL) {
             a.energy.beginTick();
-            if (level.getGameTime() % 5 == 0) {
-                boolean profiling = dev.futuretech.perf.TickProfiler.enabled();
-                long t0 = profiling ? System.nanoTime() : 0;
-                boolean different = a.refreshMonitor();
-                long t1 = profiling ? System.nanoTime() : 0;
-                if (different) a.changed();
-                if (profiling) {
-                    a.nsRefresh += t1 - t0;
-                    if (different) { a.nsChanged += System.nanoTime() - t1; a.changes++; }
-                    if (++a.refreshes >= 20) {
-                        LOG.info("[perf] assembler terminal {}: {} refreshes, {} sent to clients | us: refresh={} send={} | status={} progress={}",
-                                pos, a.refreshes, a.changes, a.nsRefresh / 1000, a.nsChanged / 1000, a.monitorStatus, a.monitorProgress);
-                        a.nsRefresh = a.nsChanged = 0; a.refreshes = a.changes = 0;
-                    }
+            long now = level.getGameTime();
+            if (now % 5 != 0) return;
+            // The monitor is rebuilt only when a part reported a change, when the energy crossed
+            // the working minimum, or every 100 ticks as a safety net. Rebuilding it four times a
+            // second regardless kept a code path that runs too rarely for the JIT to compile at
+            // ~60 µs a time; an idle terminal now does nothing in between.
+            boolean starved = a.energy.getAmountAsInt() < ENERGY_PER_TICK;
+            if (starved != a.monitorStarved) { a.monitorStarved = starved; a.monitorDirty = true; }
+            if (!a.monitorDirty && now % 100 != 0) return;
+            a.monitorDirty = false;
+            boolean profiling = dev.futuretech.perf.TickProfiler.enabled();
+            long t0 = profiling ? System.nanoTime() : 0;
+            boolean different = a.refreshMonitor();
+            long t1 = profiling ? System.nanoTime() : 0;
+            if (different) a.changed();
+            if (profiling) {
+                a.nsRefresh += t1 - t0;
+                if (different) { a.nsChanged += System.nanoTime() - t1; a.changes++; }
+                if (++a.refreshes >= 20) {
+                    LOG.info("[perf] assembler terminal {}: {} refreshes, {} sent to clients | us: refresh={} send={} | status={} progress={}",
+                            pos, a.refreshes, a.changes, a.nsRefresh / 1000, a.nsChanged / 1000, a.monitorStatus, a.monitorProgress);
+                    a.nsRefresh = a.nsChanged = 0; a.refreshes = a.changes = 0;
                 }
             }
             return;
@@ -567,7 +581,14 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
     private void changed() {
         if (loading) return;
         setChanged();
-        if (level != null && !level.isClientSide()) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        if (level != null && !level.isClientSide()) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+            // A part's state change is what the terminals' monitors show; a terminal's own change
+            // (its monitor being sent) must not mark itself, or it would rebuild forever.
+            if (kind() != Kind.TERMINAL) {
+                for (var a : nearbyAssemblers()) if (!a.isRemoved() && a.kind() == Kind.TERMINAL) a.monitorDirty = true;
+            }
+        }
     }
     @Override protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
