@@ -110,6 +110,10 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
     private long surveyTick = Long.MIN_VALUE;
     private List<BlockPos> nearbyAssemblers = List.of();
     private List<Endpoint> nearbyEndpoints = List.of();
+    /** While {@code /futuretech perf} is on, what the terminal's monitor refresh costs is logged every 100 ticks. */
+    private static final org.slf4j.Logger LOG = com.mojang.logging.LogUtils.getLogger();
+    private long nsRefresh, nsChanged;
+    private int refreshes, changes;
     /** The assembling book, built once per recipe reload rather than on every lookup. */
     private static @Nullable Collection<?> bookSource;
     private static List<Entry> bookEntries = List.of();
@@ -182,11 +186,16 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         surveyTick = now;
         List<BlockPos> assemblers = new ArrayList<>();
         List<Endpoint> endpoints = new ArrayList<>();
+        // Only transport arms reach into inventories; the table, the tool arm and the terminal skip
+        // the capability probing, which over the solid ground under a cell is most of the work.
+        boolean wantsEndpoints = kind() == Kind.TRANSPORT;
         for (BlockPos p : reachable()) {
             if (!level.hasChunkAt(p)) continue;
-            if (level.getBlockEntity(p) instanceof AssemblerBlockEntity) { assemblers.add(p); continue; }
-            // Only a block can offer an item handler; the cube is mostly air.
-            if (level.getBlockState(p).isAir()) continue;
+            BlockState blockState = level.getBlockState(p);
+            if (blockState.hasBlockEntity() && level.getBlockEntity(p) instanceof AssemblerBlockEntity) { assemblers.add(p); continue; }
+            // An inventory is a block entity, or a block that holds a container of its own (the
+            // composter); plain ground is skipped without asking anything.
+            if (!wantsEndpoints || !(blockState.hasBlockEntity() || blockState.getBlock() instanceof net.minecraft.world.WorldlyContainerHolder)) continue;
             for (Direction side : Direction.values()) {
                 if (level.getCapability(Capabilities.Item.BLOCK, p, side) == null) continue;
                 if (level instanceof ServerLevel server) {
@@ -278,7 +287,22 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
     public static void serverTick(Level level, BlockPos pos, BlockState state, AssemblerBlockEntity a) {
         if (a.kind() == Kind.TERMINAL) {
             a.energy.beginTick();
-            if (level.getGameTime() % 5 == 0 && a.refreshMonitor()) a.changed();
+            if (level.getGameTime() % 5 == 0) {
+                boolean profiling = dev.futuretech.perf.TickProfiler.enabled();
+                long t0 = profiling ? System.nanoTime() : 0;
+                boolean different = a.refreshMonitor();
+                long t1 = profiling ? System.nanoTime() : 0;
+                if (different) a.changed();
+                if (profiling) {
+                    a.nsRefresh += t1 - t0;
+                    if (different) { a.nsChanged += System.nanoTime() - t1; a.changes++; }
+                    if (++a.refreshes >= 20) {
+                        LOG.info("[perf] assembler terminal {}: {} refreshes, {} sent to clients | us: refresh={} send={} | status={} progress={}",
+                                pos, a.refreshes, a.changes, a.nsRefresh / 1000, a.nsChanged / 1000, a.monitorStatus, a.monitorProgress);
+                        a.nsRefresh = a.nsChanged = 0; a.refreshes = a.changes = 0;
+                    }
+                }
+            }
             return;
         }
         if (a.kind() == Kind.TABLE || a.kind() == Kind.TERMINAL) return;
