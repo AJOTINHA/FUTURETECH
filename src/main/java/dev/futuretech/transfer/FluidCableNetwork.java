@@ -152,6 +152,8 @@ public final class FluidCableNetwork {
                     // Captured here rather than read per tick: changing a connector invalidates the
                     // network, so a rebuilt one always carries current modes.
                     SideMode mode = cable.connectors().mode(side);
+                    // A face on "none" never moves anything; most faces border air or the ground.
+                    if (mode == SideMode.NONE) continue;
                     endpoints.add(new CachedEndpoint(new EndpointKey(pos, side),
                             mode.allowsOutput(), mode.allowsInput() && !mode.allowsOutput(),
                             cable.connectorPriority(side), cable.connectorColor(side), cable.connectorChannel(side),

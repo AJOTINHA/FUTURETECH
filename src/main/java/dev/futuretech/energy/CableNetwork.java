@@ -56,6 +56,8 @@ public final class CableNetwork {
     private final Set<BlockPos> fedSinceLastDistribution = new HashSet<>();
     /** Whether any connector pumps; a network without pumps and without energy has nothing to do in a tick. */
     private final boolean pumps;
+    /** The connectors that hand energy out, so a tick does not walk the ones that never do. */
+    private final List<Endpoint> deliverers;
     /** Reused every tick so an idle network allocates nothing. */
     private final List<EnergyHandler> sinks = new ArrayList<>();
     private long lastTick = Long.MIN_VALUE;
@@ -70,6 +72,7 @@ public final class CableNetwork {
         this.cables = Set.copyOf(cables);
         this.endpoints = List.copyOf(endpoints);
         this.pumps = this.endpoints.stream().anyMatch(Endpoint::pulls);
+        this.deliverers = this.endpoints.stream().filter(Endpoint::delivers).toList();
     }
 
     /** Flood-fills the cables touching {@code start} and gives every one of them this network. */
@@ -95,6 +98,9 @@ public final class CableNetwork {
                     // Captured here rather than read per tick: changing a connector invalidates the
                     // network, so a rebuilt one always carries current modes.
                     SideMode mode = cable.connectors().mode(side);
+                    // A face on "none" neither delivers nor pulls: most faces border air or the
+                    // ground, and keeping them would have every tick walk a list of nothing.
+                    if (mode == SideMode.NONE) continue;
                     endpoints.add(new CachedEndpoint(new EndpointKey(pos, side),
                             mode.allowsOutput(), mode.allowsInput() && !mode.allowsOutput(),
                             BlockCapabilityCache.create(
@@ -176,8 +182,7 @@ public final class CableNetwork {
             return;
         }
         sinks.clear();
-        for (Endpoint endpoint : endpoints) {
-            if (!endpoint.delivers()) continue;
+        for (Endpoint endpoint : deliverers) {
             if (fedSinceLastDistribution.contains(endpoint.key().neighbour())) continue;
             EnergyHandler handler = endpoint.handler();
             // A full machine is skipped here, before a transaction is opened for it.
