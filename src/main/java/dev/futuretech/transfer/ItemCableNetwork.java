@@ -376,6 +376,16 @@ public final class ItemCableNetwork {
      */
     private int dispatch(ItemResource resource, int amount, @Nullable EndpointKey key, @Nullable Endpoint entry,
                          int slot, TransactionContext transaction) {
+        long t = System.nanoTime();
+        try {
+            return route(resource, amount, key, entry, slot, transaction);
+        } finally {
+            nsDispatch += System.nanoTime() - t;
+        }
+    }
+
+    private int route(ItemResource resource, int amount, @Nullable EndpointKey key, @Nullable Endpoint entry,
+                      int slot, TransactionContext transaction) {
         int allowed = Math.min(amount, budgets[slot]);
         if (allowed <= 0 || resource.isEmpty() || endpoints.isEmpty()) return 0;
         BlockPos origin = key == null ? null : key.neighbour();
@@ -472,13 +482,42 @@ public final class ItemCableNetwork {
      * interval the budgets are renewed and the extract-only connectors pump. Every member cable
      * calls this every tick, only the first call acts.
      */
+    /**
+     * While {@code /futuretech perf} is on, where this network's tick goes is logged every 100
+     * ticks: moving flights, pumping, deciding destinations, inserting on arrival, and the packets
+     * that tell clients about departures and arrivals. Off, none of this runs.
+     */
+    private static final org.slf4j.Logger LOG = com.mojang.logging.LogUtils.getLogger();
+    private long nsAdvance, nsPump, nsDispatch, nsInsert, nsAnnounce, nsEnd;
+    private int logTicks, inserts, announces, ends, containerInserts;
+
     public void tick(long gameTime) {
         if (gameTime == lastTick) return;
         lastTick = gameTime;
         TickProfiler.networkTicked(cables.size());
         boolean newInterval = Math.floorMod(gameTime, interval) == 0;
+        boolean profiling = TickProfiler.enabled();
+        long t0 = profiling ? System.nanoTime() : 0;
         advanceFlights(newInterval);
+        if (profiling) {
+            nsAdvance += System.nanoTime() - t0;
+            if (++logTicks >= 100) {
+                int waiting = 0;
+                for (ItemFlight flight : flights) if (flight.waiting) waiting++;
+                LOG.info("[perf] item network {} cables: flights={} waiting={} | us per 100 ticks: advance={} pump={} dispatch={} insert={} ({} direct of {}) announce={} ({}) end={} ({})",
+                        cables.size(), flights.size(), waiting, nsAdvance / 1000, nsPump / 1000, nsDispatch / 1000, nsInsert / 1000,
+                        containerInserts, inserts, nsAnnounce / 1000, announces, nsEnd / 1000, ends);
+                nsAdvance = nsPump = nsDispatch = nsInsert = nsAnnounce = nsEnd = 0;
+                logTicks = inserts = announces = ends = containerInserts = 0;
+            }
+        }
         if (!newInterval) return;
+        long t1 = profiling ? System.nanoTime() : 0;
+        pump(gameTime);
+        if (profiling) nsPump += System.nanoTime() - t1;
+    }
+
+    private void pump(long gameTime) {
         renewBudgets();
         round = (int) Math.floorMod(gameTime / interval, Integer.MAX_VALUE);
         // Extract-only connectors act as pumps: a chest never pushes, so a connector on one has to
@@ -521,9 +560,13 @@ public final class ItemCableNetwork {
         ItemResource resource = ItemResource.of(flight.stack);
         if (destination != null && serves(destination, flight.color, flight.channel, resource)) {
             Container container = level == null ? null : ContainerDelivery.blockContainer(level, destination.key().neighbour());
+            long t = System.nanoTime();
             int inserted = container != null
                     ? ContainerDelivery.insert(container, flight.stack, destination.key().side().getOpposite())
                     : ResourceHandlerUtil.insertStacking(destination.handler(), resource, flight.stack.getCount(), null);
+            nsInsert += System.nanoTime() - t;
+            inserts++;
+            if (container != null) containerInserts++;
             flight.stack.shrink(inserted);
             if (flight.stack.isEmpty()) {
                 announceEnd(flight);
@@ -569,15 +612,21 @@ public final class ItemCableNetwork {
     /** Tells the players watching the flight's cable where it is and where it is going. */
     private void announce(ItemFlight flight) {
         if (level == null) return;
+        long t = System.nanoTime();
         var payload = new ItemJourneyPayload(flight.id, flight.path, flight.from, flight.to, flight.stack.copy(),
                 flight.ticksPerBlock, flight.travelled, flight.waiting);
         PacketDistributor.sendToPlayersTrackingChunk(level, ChunkPos.containing(flight.current()), payload);
+        nsAnnounce += System.nanoTime() - t;
+        announces++;
     }
 
     private void announceEnd(ItemFlight flight) {
         if (level == null) return;
+        long t = System.nanoTime();
         PacketDistributor.sendToPlayersTrackingChunk(level, ChunkPos.containing(flight.current()),
                 new ItemJourneyEndPayload(flight.id));
+        nsEnd += System.nanoTime() - t;
+        ends++;
     }
 
     /**

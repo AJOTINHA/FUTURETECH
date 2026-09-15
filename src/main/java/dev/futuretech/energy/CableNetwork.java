@@ -67,6 +67,9 @@ public final class CableNetwork {
     /** Reused every tick so an idle network allocates nothing. */
     private final List<EnergyHandler> sinks = new ArrayList<>();
     private long lastTick = Long.MIN_VALUE;
+    /** How much the delivering connectors could take, added up once per tick; see {@link #sinkRoom}. */
+    private long sinkRoom;
+    private long sinkRoomTick = Long.MAX_VALUE;
     private int lastMoved;
     private boolean valid = true;
 
@@ -152,13 +155,16 @@ public final class CableNetwork {
             @Override
             public long getAmountAsLong() { return buffer.getAmountAsLong(); }
 
+            /** Room is what the machines behind the delivering connectors can still take, capped at one tick of throughput. */
             @Override
-            public long getCapacityAsLong() { return buffer.getCapacityAsLong(); }
+            public long getCapacityAsLong() { return Math.min(buffer.getCapacityAsLong(), sinkRoom()); }
 
             @Override
             public int insert(int amount, TransactionContext transaction) {
+                // The attempt alone keeps the pusher out of the distribution, accepted or not.
                 if (amount > 0 && key != null) fedSinceLastDistribution.add(key.neighbour());
-                return buffer.insert(amount, transaction);
+                int accepted = (int) Math.clamp(getCapacityAsLong() - buffer.getAmountAsLong(), 0, amount);
+                return accepted <= 0 ? 0 : buffer.insert(accepted, transaction);
             }
 
             @Override
@@ -166,6 +172,25 @@ public final class CableNetwork {
                 return buffer.extract(amount, transaction);
             }
         };
+    }
+
+    /**
+     * The network never holds energy that has nowhere to go: a tick's worth at most, and only as
+     * much as the machines behind the delivering connectors can still take. Nothing is swallowed
+     * into a buffer that is not saved, so a generator does not burn to refill it on every load.
+     * Added up once per tick from cheap reads; no transaction is opened.
+     */
+    private long sinkRoom() {
+        if (sinkRoomTick == lastTick) return sinkRoom;
+        sinkRoomTick = lastTick;
+        long room = 0;
+        for (Endpoint endpoint : deliverers) {
+            EnergyHandler handler = endpoint.handler();
+            if (handler == null) continue;
+            room += Math.max(0, handler.getCapacityAsLong() - handler.getAmountAsLong());
+            if (room >= throughput) break;
+        }
+        return sinkRoom = Math.min(room, throughput);
     }
 
     /** Runs the once-per-tick distribution; every member cable calls this, only the first one acts. */

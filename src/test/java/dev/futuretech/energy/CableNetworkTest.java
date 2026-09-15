@@ -122,14 +122,28 @@ class CableNetworkTest {
 
     @Test
     void networkAcceptsOneTickOfThroughputAndRejectsTheRest(MinecraftServer server) {
-        var network = network();
+        // A sink with room for far more than a tick: the buffer still takes only a tick's worth.
+        var sink = new SimpleEnergyHandler(1_000_000);
+        var network = network(new FakeEndpoint(Direction.SOUTH, sink));
         assertEquals(THROUGHPUT, insert(network, Direction.NORTH, 10_000));
-        assertEquals(0, insert(network, Direction.SOUTH, 1));
-        assertEquals(THROUGHPUT, network.stored());
-        // With nowhere to send it, the buffer stays full and keeps refusing inserts on later ticks.
-        network.tick(1);
         assertEquals(0, insert(network, Direction.NORTH, 1));
         assertEquals(THROUGHPUT, network.stored());
+    }
+
+    @Test
+    void networkRefusesWhatNoConnectedMachineCouldTake(MinecraftServer server) {
+        // Nowhere to send: nothing is accepted, so the pushing block keeps its energy instead of
+        // feeding a buffer that is never saved.
+        var network = network();
+        assertEquals(0, insert(network, Direction.NORTH, 10_000));
+        assertEquals(0, network.stored());
+        // A sink with room for 100 lets exactly 100 in.
+        var small = new SimpleEnergyHandler(100);
+        var withSink = network(new FakeEndpoint(Direction.SOUTH, small));
+        assertEquals(100, insert(withSink, Direction.NORTH, 10_000));
+        withSink.tick(1);
+        assertEquals(100, small.getAmountAsInt());
+        assertEquals(0, withSink.stored());
     }
 
     @Test
@@ -207,13 +221,14 @@ class CableNetworkTest {
     void tickRunsOnceEvenWhenEveryCableCallsIt(MinecraftServer server) {
         var consumer = new SimpleEnergyHandler(50, 50, 0);
         var network = network(new FakeEndpoint(Direction.DOWN, consumer));
-        insert(network, Direction.NORTH, 300);
+        // Only what the consumer can take is let in; the rest stays with the pusher.
+        assertEquals(50, insert(network, Direction.NORTH, 300));
         network.tick(7);
         network.tick(7);
         network.tick(7);
         assertEquals(50, consumer.getAmountAsInt());
         assertEquals(50, network.lastMoved());
-        assertEquals(250, network.stored());
+        assertEquals(0, network.stored());
         // Output is capped per tick too: a second tick delivers at most the throughput.
         var hungry = new SimpleEnergyHandler(10_000);
         var wide = network(new FakeEndpoint(Direction.DOWN, hungry));
