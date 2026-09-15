@@ -221,9 +221,15 @@ public final class CrusherBlockEntity extends BaseContainerBlockEntity
 
     public ContainerData menuData() { return data; }
 
+    /** The redstone signal is sampled here and on neighbour changes, not every tick. */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null) RedstoneControl.sample(level, worldPosition);
+    }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, CrusherBlockEntity crusher) {
         crusher.beginTick();
-        crusher.redstone.update(level, pos);
         if (crusher.auto.isPulling()) crusher.transfer.pullFromNeighbours(level, pos, crusher, crusher.sides);
         if (crusher.auto.isPushing()) crusher.transfer.pushToNeighbours(level, pos, crusher, crusher.sides);
         int wasWorking = crusher.workingLanes;

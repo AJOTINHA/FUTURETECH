@@ -223,8 +223,14 @@ public final class FluidTankBlockEntity extends BlockEntity implements MenuProvi
         return amount == 0 ? 0 : 1 + (int)(14L * amount / CAPACITY);
     }
 
+    /** The redstone signal is sampled here and on neighbour changes, not every tick. */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null) RedstoneControl.sample(level, worldPosition);
+    }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, FluidTankBlockEntity tank) {
-        tank.redstone.update(level, pos);
         tank.processContainer();
         if (!tank.needsSync) return;
         int amount = tank.fluids.getAmountAsInt(0);

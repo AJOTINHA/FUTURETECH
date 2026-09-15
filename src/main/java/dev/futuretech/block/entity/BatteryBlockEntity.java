@@ -193,11 +193,17 @@ public final class BatteryBlockEntity extends BlockEntity implements MenuProvide
 
     public ContainerData menuData() { return data; }
 
+    /** The redstone signal is sampled here and on neighbour changes, not every tick. */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null) RedstoneControl.sample(level, worldPosition);
+    }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, BatteryBlockEntity battery) {
         int previousSignal = EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(battery.energy);
         battery.beginTick();
         // Redstone gates the output; charging through input faces is never blocked.
-        battery.redstone.update(level, pos);
         if (battery.redstone.allowsRunning()) battery.exportEnergy(level, pos);
         battery.syncVisualCharge(level, pos, state);
         if (previousSignal != EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(battery.energy)) {

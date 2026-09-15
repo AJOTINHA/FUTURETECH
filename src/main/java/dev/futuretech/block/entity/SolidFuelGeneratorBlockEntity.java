@@ -209,13 +209,19 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
         return 300;
     }
 
+    /** The redstone signal is sampled here and on neighbour changes, not every tick. */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null) RedstoneControl.sample(level, worldPosition);
+    }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, SolidFuelGeneratorBlockEntity generator) {
         int previousSignal = EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(generator.energy);
         generator.beginTick();
         generator.exportEnergy(level, pos);
         if (generator.auto.isPulling()) generator.transfer.pullFromNeighbours(level, pos, generator, generator.sides);
         // Redstone only gates generation; stored energy still leaves through the output faces.
-        generator.redstone.update(level, pos);
         if (generator.redstone.allowsRunning()) generator.generateEnergy(level.fuelValues());
         else generator.generating = false;
         boolean lit = generator.litHold.update(generator.generating);

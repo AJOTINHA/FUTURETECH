@@ -1,5 +1,9 @@
 package dev.futuretech.block;
 
+import org.jspecify.annotations.Nullable;
+import net.minecraft.world.level.redstone.Orientation;
+import net.minecraft.world.level.block.Block;
+import dev.futuretech.api.redstone.RedstoneControl;
 import dev.futuretech.perf.TickProfiler;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -120,6 +124,13 @@ public final class BatteryBlock extends BaseEntityBlock implements SideConfigura
     @Override
     protected MapCodec<BatteryBlock> codec() {
         return CODEC;
+    }
+
+    /** Redstone is sampled on change rather than polled every tick. */
+    @Override
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, @Nullable Orientation orientation, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, block, orientation, movedByPiston);
+        RedstoneControl.sample(level, pos);
     }
 
     @Override

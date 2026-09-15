@@ -20,9 +20,20 @@ public final class RedstoneControl {
 
     public boolean isPowered() { return powered; }
 
-    /** Samples the signal at {@code pos}; call once per server tick before {@link #allowsRunning}. */
+    /**
+     * Samples the signal at {@code pos}. Reading the six neighbours (and, behind each solid one,
+     * six more) is too much to do every tick, so this runs when the block entity loads and when a
+     * neighbour changes, the way the vanilla furnace's redstone does; see {@link #sample}.
+     */
     public void update(Level level, BlockPos pos) {
         powered = level.hasNeighborSignal(pos);
+    }
+
+    /** For a block's {@code neighborChanged}: resamples the signal of the controllable block entity at {@code pos}, if any. */
+    public static void sample(Level level, BlockPos pos) {
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof RedstoneControllable target) {
+            target.redstoneControl().update(level, pos);
+        }
     }
 
     public boolean allowsRunning() { return mode.allows(powered); }

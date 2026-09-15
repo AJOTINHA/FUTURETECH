@@ -266,9 +266,15 @@ public final class MetalPressBlockEntity extends BaseContainerBlockEntity
 
     public ContainerData menuData() { return data; }
 
+    /** The redstone signal is sampled here and on neighbour changes, not every tick. */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null) RedstoneControl.sample(level, worldPosition);
+    }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, MetalPressBlockEntity metal_press) {
         metal_press.beginTick();
-        metal_press.redstone.update(level, pos);
         if (metal_press.auto.isPulling()) metal_press.transfer.pullFromNeighbours(level, pos, metal_press, metal_press.sides);
         if (metal_press.auto.isPushing()) metal_press.transfer.pushToNeighbours(level, pos, metal_press, metal_press.sides);
         int wasWorking = metal_press.workingLanes;

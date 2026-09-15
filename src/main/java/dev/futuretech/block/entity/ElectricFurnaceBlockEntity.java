@@ -219,9 +219,15 @@ public final class ElectricFurnaceBlockEntity extends BaseContainerBlockEntity
 
     public ContainerData menuData() { return data; }
 
+    /** The redstone signal is sampled here and on neighbour changes, not every tick. */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null) RedstoneControl.sample(level, worldPosition);
+    }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, ElectricFurnaceBlockEntity furnace) {
         furnace.beginTick();
-        furnace.redstone.update(level, pos);
         if (furnace.auto.isPulling()) furnace.transfer.pullFromNeighbours(level, pos, furnace, furnace.sides);
         if (furnace.auto.isPushing()) furnace.transfer.pushToNeighbours(level, pos, furnace, furnace.sides);
         int wasWorking = furnace.workingLanes;

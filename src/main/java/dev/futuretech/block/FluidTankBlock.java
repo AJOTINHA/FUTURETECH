@@ -1,5 +1,8 @@
 package dev.futuretech.block;
 
+import org.jspecify.annotations.Nullable;
+import net.minecraft.world.level.redstone.Orientation;
+import dev.futuretech.api.redstone.RedstoneControl;
 import dev.futuretech.perf.TickProfiler;
 import com.mojang.serialization.MapCodec;
 import dev.futuretech.block.entity.FluidTankBlockEntity;
@@ -69,6 +72,13 @@ public final class FluidTankBlock extends BaseEntityBlock implements SideConfigu
 
     @Override
     protected MapCodec<FluidTankBlock> codec() { return CODEC; }
+
+    /** Redstone is sampled on change rather than polled every tick. */
+    @Override
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, @Nullable Orientation orientation, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, block, orientation, movedByPiston);
+        RedstoneControl.sample(level, pos);
+    }
 
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {

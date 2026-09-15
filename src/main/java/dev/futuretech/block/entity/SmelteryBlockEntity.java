@@ -226,9 +226,15 @@ public final class SmelteryBlockEntity extends BaseContainerBlockEntity
 
     public ContainerData menuData() { return data; }
 
+    /** The redstone signal is sampled here and on neighbour changes, not every tick. */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null) RedstoneControl.sample(level, worldPosition);
+    }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, SmelteryBlockEntity smeltery) {
         smeltery.beginTick();
-        smeltery.redstone.update(level, pos);
         if (smeltery.auto.isPulling()) smeltery.transfer.pullFromNeighbours(level, pos, smeltery, smeltery.sides);
         if (smeltery.auto.isPushing()) smeltery.transfer.pushToNeighbours(level, pos, smeltery, smeltery.sides);
         int wasWorking = smeltery.workingLanes;
