@@ -8,7 +8,9 @@ import dev.futuretech.block.entity.ItemCableBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Container;
 import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ChunkPos;
 import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -428,17 +430,30 @@ public final class ItemCableNetwork {
         }
         NoRoomKey refused = new NoRoomKey(endpoint.key(), resource);
         if (noRoom.contains(refused)) return 0;
+        // What is already bound there is reserved once per kind of item, not once per flight:
+        // a dozen identical items in the air are one simulated insert, not twelve.
+        Map<ItemResource, Integer> bound = new HashMap<>();
+        reserve(flights, endpoint.key(), bound);
+        reserve(departing, endpoint.key(), bound);
         int room;
-        try (Transaction probe = Transaction.open(transaction)) {
-            // What is already bound there is reserved once per kind of item, not once per flight:
-            // a dozen identical items in the air are one simulated insert, not twelve.
-            Map<ItemResource, Integer> bound = new HashMap<>();
-            reserve(flights, endpoint.key(), bound);
-            reserve(departing, endpoint.key(), bound);
+        Container container = level == null ? null : ContainerDelivery.blockContainer(level, endpoint.key().neighbour());
+        if (container != null) {
+            // A vanilla inventory is read directly. Other kinds of items on their way there are
+            // counted as taking whole empty slots, which errs on the side of waiting a moment.
+            ItemStack stack = resource.toStack(1);
+            int maxStack = container.getMaxStackSize(stack);
+            int taken = 0;
             for (Map.Entry<ItemResource, Integer> entry : bound.entrySet()) {
-                ResourceHandlerUtil.insertStacking(handler, entry.getKey(), entry.getValue(), probe);
+                taken += entry.getKey().equals(resource) ? entry.getValue() : Math.ceilDiv(entry.getValue(), maxStack) * maxStack;
             }
-            room = ResourceHandlerUtil.insertStacking(handler, resource, amount, probe);
+            room = Math.max(0, ContainerDelivery.room(container, stack, endpoint.key().side().getOpposite(), amount + taken) - taken);
+        } else {
+            try (Transaction probe = Transaction.open(transaction)) {
+                for (Map.Entry<ItemResource, Integer> entry : bound.entrySet()) {
+                    ResourceHandlerUtil.insertStacking(handler, entry.getKey(), entry.getValue(), probe);
+                }
+                room = ResourceHandlerUtil.insertStacking(handler, resource, amount, probe);
+            }
         }
         if (room <= 0) noRoom.add(refused);
         return room;
@@ -505,7 +520,10 @@ public final class ItemCableNetwork {
         Endpoint destination = index == null ? null : endpoints.get(index);
         ItemResource resource = ItemResource.of(flight.stack);
         if (destination != null && serves(destination, flight.color, flight.channel, resource)) {
-            int inserted = ResourceHandlerUtil.insertStacking(destination.handler(), resource, flight.stack.getCount(), null);
+            Container container = level == null ? null : ContainerDelivery.blockContainer(level, destination.key().neighbour());
+            int inserted = container != null
+                    ? ContainerDelivery.insert(container, flight.stack, destination.key().side().getOpposite())
+                    : ResourceHandlerUtil.insertStacking(destination.handler(), resource, flight.stack.getCount(), null);
             flight.stack.shrink(inserted);
             if (flight.stack.isEmpty()) {
                 announceEnd(flight);
