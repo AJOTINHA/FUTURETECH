@@ -105,6 +105,9 @@ public final class MetalPressBlockEntity extends BaseContainerBlockEntity
     private final int[] progressTotal = new int[LANES];
     private final ItemStack[] workInput = new ItemStack[LANES];
     private final ItemStack[] workResult = new ItemStack[LANES];
+    /** The recipe behind {@link #workResult}; not saved, so a reloaded lane looks it up once more. */
+    @SuppressWarnings("unchecked")
+    private final @Nullable RecipeHolder<PressingRecipe>[] workRecipe = new RecipeHolder[LANES];
     /** Bit {@code n} set while lane {@code n} advanced this tick. */
     private int workingLanes;
     private final int[] workCount = new int[LANES];
@@ -317,27 +320,35 @@ public final class MetalPressBlockEntity extends BaseContainerBlockEntity
     private boolean pressLane(int lane, PressingLookup recipes, int perTick) {
         ItemStack ingredient = items.get(SLOT_INPUT + lane);
         if (ingredient.isEmpty()) { resetWork(lane); return false; }
-        // The mold is part of the lookup, so a miss is remembered for the mold it was found with.
-        int mold = gearMode() ? 1 : 0;
-        if (misses.known(lane, ingredient, ItemStack.EMPTY, mold, now())) { resetWork(lane); return false; }
-        var input = new PressingRecipe.Input(ingredient, gearMode());
-        RecipeHolder<PressingRecipe> recipe = recipes.find(input);
-        if (recipe == null || !recipe.value().matches(input, null)) {
-            misses.remember(lane, ingredient, ItemStack.EMPTY, mold, now());
-            resetWork(lane);
-            return false;
-        }
-        ItemStack result = recipe.value().assemble(input);
-        if (!ItemStack.isSameItemSameComponents(workInput[lane], ingredient)
-                || !ItemStack.matches(workResult[lane], result) || workCount[lane] != recipe.value().count()) {
-            resetWork(lane);
-            workInput[lane] = ingredient.copyWithCount(1);
-            workResult[lane] = result.copy();
-            workCount[lane] = recipe.value().count();
-        }
-        if (result.isEmpty() || !canAccept(lane, result)) return false;
+        // Without energy nothing below matters; pausing keeps the job, so the recipe is not touched.
         if (energy.getAmountAsInt() < perTick) return false;
-        progressTotal[lane] = MachineLevel.duration(recipe.value().duration(), MachineLevel.of(getBlockState()));
+        // The mold change resets the job, so a kept job always belongs to the current mold.
+        boolean sameJob = workRecipe[lane] != null && ItemStack.isSameItemSameComponents(workInput[lane], ingredient)
+                && ingredient.getCount() >= workCount[lane] && (now() + lane) % REVALIDATE_TICKS != 0;
+        if (!sameJob) {
+            // The mold is part of the lookup, so a miss is remembered for the mold it was found with.
+            int mold = gearMode() ? 1 : 0;
+            if (misses.known(lane, ingredient, ItemStack.EMPTY, mold, now())) { resetWork(lane); return false; }
+            var input = new PressingRecipe.Input(ingredient, gearMode());
+            RecipeHolder<PressingRecipe> recipe = recipes.find(input);
+            if (recipe == null || !recipe.value().matches(input, null)) {
+                misses.remember(lane, ingredient, ItemStack.EMPTY, mold, now());
+                resetWork(lane);
+                return false;
+            }
+            ItemStack result = recipe.value().assemble(input);
+            if (!ItemStack.isSameItemSameComponents(workInput[lane], ingredient)
+                    || !ItemStack.matches(workResult[lane], result) || workCount[lane] != recipe.value().count()) {
+                resetWork(lane);
+                workInput[lane] = ingredient.copyWithCount(1);
+                workResult[lane] = result.copy();
+                workCount[lane] = recipe.value().count();
+            }
+            workRecipe[lane] = recipe;
+        }
+        ItemStack result = workResult[lane];
+        if (result.isEmpty() || !canAccept(lane, result)) return false;
+        progressTotal[lane] = MachineLevel.duration(workRecipe[lane].value().duration(), MachineLevel.of(getBlockState()));
         energy.set(energy.getAmountAsInt() - perTick);
         progress[lane]++;
         if (progress[lane] >= progressTotal[lane]) {
@@ -345,12 +356,15 @@ public final class MetalPressBlockEntity extends BaseContainerBlockEntity
             ItemStack output = items.get(SLOT_OUTPUT + lane);
             if (output.isEmpty()) items.set(SLOT_OUTPUT + lane, result.copy());
             else output.grow(result.getCount());
-            ingredient.shrink(recipe.value().count());
+            ingredient.shrink(workCount[lane]);
         }
         setChanged();
         return true;
     }
 
+
+    /** A lane's resolved recipe is trusted while the same item sits there, and looked up again this often to catch a recipe reload. */
+    private static final int REVALIDATE_TICKS = 100;
 
     /** The clock the miss memo runs on; tests drive a machine with no level. */
     private long now() { return level == null ? 0 : level.getGameTime(); }
@@ -360,6 +374,7 @@ public final class MetalPressBlockEntity extends BaseContainerBlockEntity
         progress[lane] = 0;
         workInput[lane] = ItemStack.EMPTY;
         workResult[lane] = ItemStack.EMPTY;
+        workRecipe[lane] = null;
     }
 
     /** Whether the lane's output slot has room for one more result. */

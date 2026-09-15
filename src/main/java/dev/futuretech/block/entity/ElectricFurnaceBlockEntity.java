@@ -112,6 +112,12 @@ public final class ElectricFurnaceBlockEntity extends BaseContainerBlockEntity
     private final ComparatorNotifier comparator = new ComparatorNotifier();
     private final LitHold litHold = new LitHold();
     private final RecipeMissMemo misses = new RecipeMissMemo(LANES);
+    /** The recipe each lane resolved for the item in it, kept while that item stays; not saved. */
+    @SuppressWarnings("unchecked")
+    private final @Nullable RecipeHolder<SmeltingRecipe>[] jobRecipe = new RecipeHolder[LANES];
+    private final ItemStack[] jobInput = new ItemStack[LANES];
+    private final ItemStack[] jobResult = new ItemStack[LANES];
+    { java.util.Arrays.fill(jobInput, ItemStack.EMPTY); java.util.Arrays.fill(jobResult, ItemStack.EMPTY); }
     private final ItemTransferUtil transfer = new ItemTransferUtil();
     private final UpgradeInventory upgrades = new UpgradeInventory(() -> MachineLevel.of(getBlockState()), this::setChanged);
     private final ContainerData data = new ContainerData() {
@@ -268,19 +274,31 @@ public final class ElectricFurnaceBlockEntity extends BaseContainerBlockEntity
     }
 
 
+    /** A lane's resolved recipe is trusted while the same item sits there, and looked up again this often to catch a recipe reload. */
+    private static final int REVALIDATE_TICKS = 100;
+
     /** The clock the miss memo runs on; tests drive a machine with no level. */
     private long now() { return level == null ? 0 : level.getGameTime(); }
 
     private boolean smeltLane(int lane, SmeltingLookup recipes, int perTick, int mk) {
         ItemStack ingredient = items.get(SLOT_INPUT + lane);
         if (ingredient.isEmpty()) return false;
-        if (misses.known(lane, ingredient, ItemStack.EMPTY, 0, now())) return false;
-        var input = new SingleRecipeInput(ingredient);
-        RecipeHolder<SmeltingRecipe> recipe = recipes.find(input);
-        if (recipe == null) { misses.remember(lane, ingredient, ItemStack.EMPTY, 0, now()); return false; }
-        ItemStack result = recipe.value().assemble(input);
-        if (result.isEmpty() || !canAccept(lane, result)) return false;
+        // Without energy nothing below matters, so the recipe book is not touched.
         if (energy.getAmountAsInt() < perTick) return false;
+        boolean sameJob = jobRecipe[lane] != null && ItemStack.isSameItemSameComponents(jobInput[lane], ingredient)
+                && (now() + lane) % REVALIDATE_TICKS != 0;
+        if (!sameJob) {
+            if (misses.known(lane, ingredient, ItemStack.EMPTY, 0, now())) return false;
+            var input = new SingleRecipeInput(ingredient);
+            RecipeHolder<SmeltingRecipe> found = recipes.find(input);
+            if (found == null) { misses.remember(lane, ingredient, ItemStack.EMPTY, 0, now()); return false; }
+            jobRecipe[lane] = found;
+            jobInput[lane] = ingredient.copyWithCount(1);
+            jobResult[lane] = found.value().assemble(input);
+        }
+        RecipeHolder<SmeltingRecipe> recipe = jobRecipe[lane];
+        ItemStack result = jobResult[lane];
+        if (result.isEmpty() || !canAccept(lane, result)) return false;
         progressTotal[lane] = MachineLevel.duration(Math.max(1, recipe.value().cookingTime() / 2), mk);
         energy.set(energy.getAmountAsInt() - perTick);
         progress[lane]++;

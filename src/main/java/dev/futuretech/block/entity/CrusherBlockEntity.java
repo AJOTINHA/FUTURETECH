@@ -100,6 +100,9 @@ public final class CrusherBlockEntity extends BaseContainerBlockEntity
     private final int[] progressTotal = new int[LANES];
     private final ItemStack[] workInput = new ItemStack[LANES];
     private final ItemStack[] workResult = new ItemStack[LANES];
+    /** The recipe behind {@link #workResult}; not saved, so a reloaded lane looks it up once more. */
+    @SuppressWarnings("unchecked")
+    private final @Nullable RecipeHolder<CrushingRecipe>[] workRecipe = new RecipeHolder[LANES];
     /** Bit {@code n} set while lane {@code n} advanced this tick. */
     private int workingLanes;
     private final RecipeManager.CachedCheck<SingleRecipeInput, CrushingRecipe> quickCheck =
@@ -268,19 +271,26 @@ public final class CrusherBlockEntity extends BaseContainerBlockEntity
     private boolean crushLane(int lane, CrushingLookup recipes, int perTick, int total) {
         ItemStack ingredient = items.get(SLOT_INPUT + lane);
         if (ingredient.isEmpty()) { resetWork(lane); return false; }
-        if (misses.known(lane, ingredient, ItemStack.EMPTY, 0, now())) { resetWork(lane); return false; }
-        var input = new SingleRecipeInput(ingredient);
-        RecipeHolder<CrushingRecipe> recipe = recipes.find(input);
-        if (recipe == null) { misses.remember(lane, ingredient, ItemStack.EMPTY, 0, now()); resetWork(lane); return false; }
-        ItemStack result = recipe.value().assemble(input);
-        if (!ItemStack.isSameItemSameComponents(workInput[lane], ingredient)
-                || !ItemStack.matches(workResult[lane], result)) {
-            resetWork(lane);
-            workInput[lane] = ingredient.copyWithCount(1);
-            workResult[lane] = result.copy();
-        }
-        if (result.isEmpty() || !canAccept(lane, result)) return false;
+        // Without energy nothing below matters; pausing keeps the job, so the recipe is not touched.
         if (energy.getAmountAsInt() < perTick) return false;
+        boolean sameJob = workRecipe[lane] != null && ItemStack.isSameItemSameComponents(workInput[lane], ingredient)
+                && (now() + lane) % REVALIDATE_TICKS != 0;
+        if (!sameJob) {
+            if (misses.known(lane, ingredient, ItemStack.EMPTY, 0, now())) { resetWork(lane); return false; }
+            var input = new SingleRecipeInput(ingredient);
+            RecipeHolder<CrushingRecipe> recipe = recipes.find(input);
+            if (recipe == null) { misses.remember(lane, ingredient, ItemStack.EMPTY, 0, now()); resetWork(lane); return false; }
+            ItemStack result = recipe.value().assemble(input);
+            if (!ItemStack.isSameItemSameComponents(workInput[lane], ingredient)
+                    || !ItemStack.matches(workResult[lane], result)) {
+                resetWork(lane);
+                workInput[lane] = ingredient.copyWithCount(1);
+                workResult[lane] = result.copy();
+            }
+            workRecipe[lane] = recipe;
+        }
+        ItemStack result = workResult[lane];
+        if (result.isEmpty() || !canAccept(lane, result)) return false;
         progressTotal[lane] = total;
         energy.set(energy.getAmountAsInt() - perTick);
         progress[lane]++;
@@ -296,6 +306,9 @@ public final class CrusherBlockEntity extends BaseContainerBlockEntity
     }
 
 
+    /** A lane's resolved recipe is trusted while the same item sits there, and looked up again this often to catch a recipe reload. */
+    private static final int REVALIDATE_TICKS = 100;
+
     /** The clock the miss memo runs on; tests drive a machine with no level. */
     private long now() { return level == null ? 0 : level.getGameTime(); }
 
@@ -304,6 +317,7 @@ public final class CrusherBlockEntity extends BaseContainerBlockEntity
         progress[lane] = 0;
         workInput[lane] = ItemStack.EMPTY;
         workResult[lane] = ItemStack.EMPTY;
+        workRecipe[lane] = null;
     }
 
     /** Whether the lane's output slot has room for one more result. */

@@ -104,6 +104,9 @@ public final class SmelteryBlockEntity extends BaseContainerBlockEntity
     private final ItemStack[] workInputA = new ItemStack[LANES];
     private final ItemStack[] workInputB = new ItemStack[LANES];
     private final ItemStack[] workResult = new ItemStack[LANES];
+    /** The recipe behind {@link #workResult}; not saved, so a reloaded lane looks it up once more. */
+    @SuppressWarnings("unchecked")
+    private final @Nullable RecipeHolder<AlloyingRecipe>[] workRecipe = new RecipeHolder[LANES];
     /** Bit {@code n} set while lane {@code n} advanced this tick. */
     private int workingLanes;
     private final RecipeManager.CachedCheck<AlloyingRecipe.Input, AlloyingRecipe> quickCheck =
@@ -273,26 +276,36 @@ public final class SmelteryBlockEntity extends BaseContainerBlockEntity
         ItemStack a = items.get(SLOT_INPUT_A + lane);
         ItemStack b = items.get(SLOT_INPUT_B + lane);
         if (a.isEmpty() || b.isEmpty()) { resetWork(lane); return false; }
-        if (misses.known(lane, a, b, 0, now())) { resetWork(lane); return false; }
-        var input = new AlloyingRecipe.Input(a, b);
-        RecipeHolder<AlloyingRecipe> recipe = recipes.find(input);
-        if (recipe == null || !recipe.value().matches(input, null)) {
-            misses.remember(lane, a, b, 0, now());
-            resetWork(lane);
-            return false;
-        }
-        ItemStack result = recipe.value().assemble(input);
-        // A different pair or a different alloy starts over; more of the same keeps the progress.
-        if (!ItemStack.isSameItemSameComponents(workInputA[lane], a)
-                || !ItemStack.isSameItemSameComponents(workInputB[lane], b)
-                || !ItemStack.matches(workResult[lane], result)) {
-            resetWork(lane);
-            workInputA[lane] = a.copyWithCount(1);
-            workInputB[lane] = b.copyWithCount(1);
-            workResult[lane] = result.copy();
-        }
-        if (result.isEmpty() || !canAccept(lane, result)) return false;
+        // Without energy nothing below matters; pausing keeps the job, so the recipe is not touched.
         if (energy.getAmountAsInt() < perTick) return false;
+        RecipeHolder<AlloyingRecipe> recipe = workRecipe[lane];
+        boolean sameJob = recipe != null && ItemStack.isSameItemSameComponents(workInputA[lane], a)
+                && ItemStack.isSameItemSameComponents(workInputB[lane], b)
+                && recipe.value().matches(new AlloyingRecipe.Input(a, b), null)
+                && (now() + lane) % REVALIDATE_TICKS != 0;
+        if (!sameJob) {
+            if (misses.known(lane, a, b, 0, now())) { resetWork(lane); return false; }
+            var input = new AlloyingRecipe.Input(a, b);
+            recipe = recipes.find(input);
+            if (recipe == null || !recipe.value().matches(input, null)) {
+                misses.remember(lane, a, b, 0, now());
+                resetWork(lane);
+                return false;
+            }
+            ItemStack result = recipe.value().assemble(input);
+            // A different pair or a different alloy starts over; more of the same keeps the progress.
+            if (!ItemStack.isSameItemSameComponents(workInputA[lane], a)
+                    || !ItemStack.isSameItemSameComponents(workInputB[lane], b)
+                    || !ItemStack.matches(workResult[lane], result)) {
+                resetWork(lane);
+                workInputA[lane] = a.copyWithCount(1);
+                workInputB[lane] = b.copyWithCount(1);
+                workResult[lane] = result.copy();
+            }
+            workRecipe[lane] = recipe;
+        }
+        ItemStack result = workResult[lane];
+        if (result.isEmpty() || !canAccept(lane, result)) return false;
         progressTotal[lane] = MachineLevel.duration(recipe.value().duration(), MachineLevel.of(getBlockState()));
         energy.set(energy.getAmountAsInt() - perTick);
         progress[lane]++;
@@ -311,6 +324,9 @@ public final class SmelteryBlockEntity extends BaseContainerBlockEntity
     }
 
 
+    /** A lane's resolved recipe is trusted while the same item sits there, and looked up again this often to catch a recipe reload. */
+    private static final int REVALIDATE_TICKS = 100;
+
     /** The clock the miss memo runs on; tests drive a machine with no level. */
     private long now() { return level == null ? 0 : level.getGameTime(); }
 
@@ -320,6 +336,7 @@ public final class SmelteryBlockEntity extends BaseContainerBlockEntity
         workInputA[lane] = ItemStack.EMPTY;
         workInputB[lane] = ItemStack.EMPTY;
         workResult[lane] = ItemStack.EMPTY;
+        workRecipe[lane] = null;
     }
 
     /** Whether the lane's output slot has room for one more result. */
