@@ -289,7 +289,8 @@ public final class FluidCableNetwork {
         for (Endpoint endpoint : endpoints) {
             if (!endpoint.pulls()) continue;
             ResourceHandler<FluidResource> source = endpoint.handler();
-            if (source == null) continue;
+            // An empty tank is skipped before any transaction is opened for it.
+            if (source == null || !holdsAnything(source)) continue;
             FluidStacksResourceHandler buffer = buffer(endpoint.line());
             int room = buffer.getCapacityAsInt(0, buffer.getResource(0)) - buffer.getAmountAsInt(0);
             if (room > 0 && ResourceHandlerUtil.move(source, buffer, ANY, room, null) > 0) {
@@ -329,6 +330,11 @@ public final class FluidCableNetwork {
         fedSinceLastDistribution.clear();
         entriesSinceLastDistribution.clear();
         updateShown(gameTime, routesChanged);
+    }
+
+    private static boolean holdsAnything(ResourceHandler<FluidResource> handler) {
+        for (int index = 0; index < handler.size(); index++) if (handler.getAmountAsLong(index) > 0) return true;
+        return false;
     }
 
     /**

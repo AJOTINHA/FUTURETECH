@@ -170,11 +170,13 @@ public final class CableNetwork {
         buffer.beginTick();
         // Extract-only connectors act as pumps: nothing else in the mod pulls, so a block that
         // merely holds energy without pushing would otherwise never be drained.
-        if (pumps) {
+        // A pump with nothing to pull, or nowhere to send it, opens no transaction: a move of zero
+        // still costs the transaction machinery, every tick, for every pump.
+        if (pumps && !deliverers.isEmpty()) {
             for (Endpoint endpoint : endpoints) {
                 if (!endpoint.pulls() || buffer.inputRemaining() <= 0) continue;
                 EnergyHandler source = endpoint.handler();
-                if (source != null) EnergyHandlerUtil.move(source, buffer, buffer.inputRemaining(), null);
+                if (source != null && source.getAmountAsLong() > 0) EnergyHandlerUtil.move(source, buffer, buffer.inputRemaining(), null);
             }
         }
         // Nothing arrived and nothing was pumped: no sinks to look up this tick.

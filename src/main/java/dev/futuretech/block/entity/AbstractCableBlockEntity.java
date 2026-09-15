@@ -176,6 +176,24 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
         if (!priorities.isEmpty()) output.store(PRIORITIES_TAG, INTS_CODEC, Map.copyOf(priorities));
     }
 
+    /**
+     * A cable that just loaded may border cables whose network was discovered while this chunk was
+     * still unloaded, and so stops at the chunk edge. Those networks are rebuilt on their next
+     * tick, the way placing a cable rebuilds them, so a network never stays cut at a chunk border.
+     */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level == null || level.isClientSide()) return;
+        for (Direction side : Direction.values()) {
+            BlockPos neighbour = worldPosition.relative(side);
+            if (level.hasChunkAt(neighbour) && level.getBlockEntity(neighbour) instanceof AbstractCableBlockEntity cable
+                    && cable.kind() == kind()) {
+                cable.invalidateNetwork();
+            }
+        }
+    }
+
     @Override
     public void setRemoved() {
         super.setRemoved();
