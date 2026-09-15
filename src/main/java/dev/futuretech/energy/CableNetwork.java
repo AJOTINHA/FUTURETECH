@@ -172,7 +172,7 @@ public final class CableNetwork {
         // merely holds energy without pushing would otherwise never be drained.
         // A pump with nothing to pull, or nowhere to send it, opens no transaction: a move of zero
         // still costs the transaction machinery, every tick, for every pump.
-        if (pumps && !deliverers.isEmpty()) {
+        if (pumps && !deliverers.isEmpty() && buffer.getAmountAsInt() < buffer.getCapacityAsInt()) {
             for (Endpoint endpoint : endpoints) {
                 if (!endpoint.pulls() || buffer.inputRemaining() <= 0) continue;
                 EnergyHandler source = endpoint.handler();
