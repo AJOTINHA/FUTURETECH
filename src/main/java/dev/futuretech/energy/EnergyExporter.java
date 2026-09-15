@@ -52,7 +52,10 @@ public final class EnergyExporter {
                 neighbours[side.ordinal()] = cache;
             }
             EnergyHandler receiver = cache.getCapability();
-            if (receiver != null) EnergyHandlerUtil.move(source, receiver, source.outputRemaining(), null);
+            // A neighbour with no room (full, or a face that reports no capacity because it is
+            // closed to input) is skipped before a transaction is opened for a move of zero.
+            if (receiver == null || receiver.getAmountAsLong() >= receiver.getCapacityAsLong()) continue;
+            EnergyHandlerUtil.move(source, receiver, source.outputRemaining(), null);
         }
     }
 }

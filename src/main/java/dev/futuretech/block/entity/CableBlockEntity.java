@@ -62,8 +62,9 @@ public final class CableBlockEntity extends AbstractCableBlockEntity {
             @Override
             public long getAmountAsLong() { return current().getAmountAsLong(); }
 
+            /** A face closed to input has no room, so pushers can tell without opening a transaction. */
             @Override
-            public long getCapacityAsLong() { return current().getCapacityAsLong(); }
+            public long getCapacityAsLong() { return accepts ? current().getCapacityAsLong() : 0; }
 
             @Override
             public int insert(int amount, TransactionContext transaction) {
