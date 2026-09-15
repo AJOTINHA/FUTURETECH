@@ -88,6 +88,16 @@ public final class FluidCableNetwork {
 
     private final @Nullable ServerLevel level;
     private final int throughput;
+    /**
+     * Ticks between rounds of pumping and delivering. Fluid moves in batches: one round every
+     * {@code interval} ticks moves {@code interval} ticks' worth, which is the same pace with a
+     * fraction of the transactions (each move through the transfer API costs microseconds, and a
+     * pump plus a delivery every tick was most of a busy network's tick). Tests use 1.
+     */
+    private final int interval;
+    /** World networks batch this many ticks per round. */
+    public static final int BATCH_TICKS = 4;
+    private long lastRound = Long.MIN_VALUE;
     private final Set<BlockPos> cables;
     /** Highest priority first; connectors of equal priority stay in discovery order. */
     private final List<Endpoint> endpoints;
@@ -116,12 +126,17 @@ public final class FluidCableNetwork {
 
     /** A network with no level never updates cables; tests build these. */
     public FluidCableNetwork(int throughput, Set<BlockPos> cables, List<Endpoint> endpoints) {
-        this(null, throughput, cables, endpoints);
+        this(null, throughput, 1, cables, endpoints);
     }
 
     public FluidCableNetwork(@Nullable ServerLevel level, int throughput, Set<BlockPos> cables, List<Endpoint> endpoints) {
+        this(level, throughput, BATCH_TICKS, cables, endpoints);
+    }
+
+    public FluidCableNetwork(@Nullable ServerLevel level, int throughput, int interval, Set<BlockPos> cables, List<Endpoint> endpoints) {
         this.level = level;
         this.throughput = throughput;
+        this.interval = Math.max(1, interval);
         this.cables = Set.copyOf(cables);
         List<Endpoint> sorted = new ArrayList<>(endpoints);
         sorted.sort(Comparator.comparingInt(Endpoint::priority).reversed());
@@ -199,7 +214,8 @@ public final class FluidCableNetwork {
 
     /** The buffer of a line, made on first use. */
     public FluidStacksResourceHandler buffer(Line line) {
-        return buffers.computeIfAbsent(line, l -> new FluidStacksResourceHandler(1, Math.max(1, throughput)));
+        // A round's worth: the per-tick throughput over the batch interval.
+        return buffers.computeIfAbsent(line, l -> new FluidStacksResourceHandler(1, Math.max(1, throughput) * interval));
     }
 
     /**
@@ -285,10 +301,42 @@ public final class FluidCableNetwork {
     }
 
     /** Runs the once-per-tick pumping and distribution; every member cable calls this, only the first one acts. */
+    /** While {@code /futuretech perf} is on, where the tick goes is logged every 100 ticks. */
+    private static final org.slf4j.Logger LOG = com.mojang.logging.LogUtils.getLogger();
+    private long nsPump, nsDistribute, nsShown, mbPumped, mbMoved;
+    private int logTicks, pumpMoves, sinkMoves;
+
     public void tick(long gameTime) {
         if (gameTime == lastTick) return;
         lastTick = gameTime;
         TickProfiler.networkTicked(cables.size());
+        // Between rounds the buffers fill from pushes and wait; the picture is kept up to date.
+        if (lastRound != Long.MIN_VALUE && gameTime - lastRound < interval) {
+            updateShown(gameTime, false);
+            return;
+        }
+        lastRound = gameTime;
+        boolean profiling = TickProfiler.enabled();
+        long t0 = profiling ? System.nanoTime() : 0;
+        pump();
+        long t1 = profiling ? System.nanoTime() : 0;
+        boolean routesChanged = distributeAll(gameTime);
+        long t2 = profiling ? System.nanoTime() : 0;
+        fedSinceLastDistribution.clear();
+        entriesSinceLastDistribution.clear();
+        updateShown(gameTime, routesChanged);
+        if (profiling) {
+            long t3 = System.nanoTime();
+            nsPump += t1 - t0; nsDistribute += t2 - t1; nsShown += t3 - t2;
+            if (++logTicks >= 100) {
+                LOG.info("[perf] fluid network {} cables, {} endpoints, {} lines, stuck={}: us per 100 ticks: pump={} ({} moves, {} mB) distribute={} ({} moves, {} mB) shown={}",
+                        cables.size(), endpoints.size(), buffers.size(), stuck.size(), nsPump / 1000, pumpMoves, mbPumped, nsDistribute / 1000, sinkMoves, mbMoved, nsShown / 1000);
+                nsPump = nsDistribute = nsShown = mbPumped = mbMoved = 0; logTicks = pumpMoves = sinkMoves = 0;
+            }
+        }
+    }
+
+    private void pump() {
         // Extract-only connectors act as pumps: a tank never pushes, so a connector on one has to
         // do the pulling or nothing ever comes out. Higher priorities pump first.
         for (Endpoint endpoint : endpoints) {
@@ -298,10 +346,21 @@ public final class FluidCableNetwork {
             if (source == null || !holdsAnything(source)) continue;
             FluidStacksResourceHandler buffer = buffer(endpoint.line());
             int room = buffer.getCapacityAsInt(0, buffer.getResource(0)) - buffer.getAmountAsInt(0);
-            if (room > 0 && ResourceHandlerUtil.move(source, buffer, ANY, room, null) > 0) {
-                entriesSinceLastDistribution.computeIfAbsent(endpoint.line(), l -> new HashSet<>()).add(endpoint.key());
+            if (room <= 0) continue;
+            long tp = System.nanoTime();
+            int pumped = ResourceHandlerUtil.move(source, buffer, ANY, room, null);
+            pumpMoves++;
+            mbPumped += pumped;
+            if (TickProfiler.enabled() && level != null && pumpMoves == 1) {
+                LOG.info("[perf] fluid pump from {} ({}) took {} us", level.getBlockState(endpoint.key().neighbour()).getBlock().getName().getString(),
+                        source.getClass().getSimpleName(), (System.nanoTime() - tp) / 1000);
             }
+            if (pumped > 0) entriesSinceLastDistribution.computeIfAbsent(endpoint.line(), l -> new HashSet<>()).add(endpoint.key());
         }
+    }
+
+    /** Hands every line's buffer to its sinks; true if any cable's flow direction changed. */
+    private boolean distributeAll(long gameTime) {
         lastMoved = 0;
         boolean routesChanged = false;
         for (Map.Entry<Line, FluidStacksResourceHandler> entry : buffers.entrySet()) {
@@ -334,6 +393,8 @@ public final class FluidCableNetwork {
                 movedOnLine += distribute(buffer, sinks, accepted);
             }
             lastMoved += movedOnLine;
+            mbMoved += movedOnLine;
+            sinkMoves += accepted.size();
             if (movedOnLine > 0) stuck.remove(line); else stuck.add(line);
             // Every route fluid took this tick, from where it came in to where it went out,
             // leaves its direction on the cables along the way.
@@ -341,9 +402,7 @@ public final class FluidCableNetwork {
                 for (Endpoint to : accepted) routesChanged |= markRoute(from, to.key());
             }
         }
-        fedSinceLastDistribution.clear();
-        entriesSinceLastDistribution.clear();
-        updateShown(gameTime, routesChanged);
+        return routesChanged;
     }
 
     /** Whether {@code handler} could take any of {@code resource}: an empty valid slot, or a matching one with room. */
