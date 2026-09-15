@@ -23,6 +23,9 @@ public final class EnergyExporter {
     private final BlockCapabilityCache<EnergyHandler, @Nullable Direction>[] neighbours = new BlockCapabilityCache[Direction.values().length];
     private @Nullable ServerLevel cachedLevel;
     private @Nullable BlockPos cachedPos;
+    /** After a tick in which nobody took anything, the neighbours are only asked again every this many ticks. */
+    public static final int IDLE_TICKS = 4;
+    private boolean dozing;
 
     /**
      * Pushes the source's remaining output budget for this tick into adjacent energy receivers.
@@ -35,6 +38,9 @@ public final class EnergyExporter {
     public void pushToNeighbours(Level level, BlockPos pos, TickLimitedEnergyHandler source,
                                  Predicate<Direction> throughSide) {
         if (source.getAmountAsInt() <= 0 || source.outputRemaining() <= 0 || !(level instanceof ServerLevel server)) return;
+        // Six neighbour checks a tick add up across a base; a pusher nobody is taking from dozes,
+        // looks again every few ticks, and wakes for good as soon as someone takes energy.
+        if (dozing && level.getGameTime() % IDLE_TICKS != 0) return;
         if (server != cachedLevel || !pos.equals(cachedPos)) {
             java.util.Arrays.fill(neighbours, null);
             cachedLevel = server;
@@ -42,6 +48,7 @@ public final class EnergyExporter {
         }
         Direction[] sides = Direction.values();
         int first = (int) (level.getGameTime() % sides.length);
+        int before = source.outputRemaining();
         for (int i = 0; i < sides.length && source.outputRemaining() > 0 && source.getAmountAsInt() > 0; i++) {
             Direction side = sides[(first + i) % sides.length];
             if (!throughSide.test(side)) continue;
@@ -57,5 +64,6 @@ public final class EnergyExporter {
             if (receiver == null || receiver.getAmountAsLong() >= receiver.getCapacityAsLong()) continue;
             EnergyHandlerUtil.move(source, receiver, source.outputRemaining(), null);
         }
+        dozing = source.outputRemaining() == before;
     }
 }
