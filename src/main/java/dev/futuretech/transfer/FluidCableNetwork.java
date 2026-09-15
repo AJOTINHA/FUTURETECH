@@ -102,6 +102,11 @@ public final class FluidCableNetwork {
     private final Map<PathKey, List<BlockPos>> paths = new HashMap<>();
     /** Which way fluid last went through each cable; a cable off every route is not listed. */
     private final Map<BlockPos, Direction> flow = new HashMap<>();
+    /** Lines whose buffer held fluid nobody took last time; they try again only every {@value #STUCK_RETRY_TICKS} ticks. */
+    private final Set<Line> stuck = new HashSet<>();
+    static final int STUCK_RETRY_TICKS = 5;
+    /** Below this a share is not split further; a trickle goes to one tank at a time. */
+    static final int MIN_SHARE = 50;
     private long lastTick = Long.MIN_VALUE;
     private int lastMoved;
     private FluidStack lastFluid = FluidStack.EMPTY;
@@ -309,18 +314,27 @@ public final class FluidCableNetwork {
                 }
                 lastFlowTick = gameTime;
             }
+            // A line whose fluid nobody took dozes: with every tank full, opening a transaction per
+            // tank per tick moved nothing at a real cost. It looks again every few ticks.
+            if (buffer.getAmountAsInt(0) <= 0 || (stuck.contains(line) && gameTime % STUCK_RETRY_TICKS != 0)) continue;
+            FluidResource carried = buffer.getResource(0);
             Set<BlockPos> fed = fedSinceLastDistribution.getOrDefault(line, Set.of());
             List<Endpoint> accepted = new ArrayList<>();
+            int movedOnLine = 0;
             for (List<Endpoint> rank : ranks) {
                 if (buffer.getAmountAsInt(0) <= 0) break;
                 List<Endpoint> sinks = new ArrayList<>();
                 for (Endpoint endpoint : rank) {
                     if (!endpoint.delivers() || !endpoint.line().equals(line)) continue;
                     if (fed.contains(endpoint.key().neighbour())) continue;
-                    if (endpoint.handler() != null) sinks.add(endpoint);
+                    ResourceHandler<FluidResource> handler = endpoint.handler();
+                    // A tank with no room for this fluid is skipped before any transaction is opened.
+                    if (handler != null && hasRoom(handler, carried)) sinks.add(endpoint);
                 }
-                lastMoved += distribute(buffer, sinks, accepted);
+                movedOnLine += distribute(buffer, sinks, accepted);
             }
+            lastMoved += movedOnLine;
+            if (movedOnLine > 0) stuck.remove(line); else stuck.add(line);
             // Every route fluid took this tick, from where it came in to where it went out,
             // leaves its direction on the cables along the way.
             for (EndpointKey from : entriesSinceLastDistribution.getOrDefault(line, Set.of())) {
@@ -330,6 +344,19 @@ public final class FluidCableNetwork {
         fedSinceLastDistribution.clear();
         entriesSinceLastDistribution.clear();
         updateShown(gameTime, routesChanged);
+    }
+
+    /** Whether {@code handler} could take any of {@code resource}: an empty valid slot, or a matching one with room. */
+    private static boolean hasRoom(ResourceHandler<FluidResource> handler, FluidResource resource) {
+        for (int index = 0; index < handler.size(); index++) {
+            long amount = handler.getAmountAsLong(index);
+            if (amount == 0) {
+                if (handler.isValid(index, resource)) return true;
+            } else if (handler.getResource(index).equals(resource) && amount < handler.getCapacityAsLong(index, resource)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean holdsAnything(ResourceHandler<FluidResource> handler) {
@@ -347,7 +374,7 @@ public final class FluidCableNetwork {
         boolean progress = true;
         while (progress && source.getAmountAsInt(0) > 0 && !open.isEmpty()) {
             progress = false;
-            int share = Math.max(1, source.getAmountAsInt(0) / open.size());
+            int share = Math.max(MIN_SHARE, source.getAmountAsInt(0) / open.size());
             for (Iterator<Endpoint> it = open.iterator(); it.hasNext() && source.getAmountAsInt(0) > 0; ) {
                 Endpoint sink = it.next();
                 int taken = ResourceHandlerUtil.move(source, sink.handler(), ANY, share, null);

@@ -81,6 +81,7 @@ public final class FluidTankBlockEntity extends BlockEntity implements MenuProvi
         @Override
         public void setChanged() {
             super.setChanged();
+            containerDirty = true;
             FluidTankBlockEntity.this.setChanged();
         }
 
@@ -92,9 +93,18 @@ public final class FluidTankBlockEntity extends BlockEntity implements MenuProvi
         protected void onContentsChanged(int index, FluidStack previousContents) {
             setChanged();
             needsSync = true;
+            containerDirty = true;
         }
     };
     private boolean needsSync;
+    /**
+     * Whether the bucket slot or the fluid changed since the bucket was last tried. Trying a
+     * bucket that cannot be filled or emptied yet (output slot full, wrong fluid) builds an item
+     * handler and opens a transaction; doing that every tick for a stuck bucket cost tens of
+     * microseconds, so it is retried on change and every {@value #CONTAINER_RETRY_TICKS} ticks.
+     */
+    private boolean containerDirty = true;
+    public static final int CONTAINER_RETRY_TICKS = 20;
     /**
      * A filling tank changes every tick; the clients get a fresh level every {@value} ticks and the
      * comparators only when the signal moves, with a change of fluid, an empty or a full tank sent
@@ -235,7 +245,10 @@ public final class FluidTankBlockEntity extends BlockEntity implements MenuProvi
     public void setChanged() { ComparatorNotifier.markChanged(this); }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, FluidTankBlockEntity tank) {
-        tank.processContainer();
+        if (tank.containerDirty || level.getGameTime() % CONTAINER_RETRY_TICKS == 0) {
+            tank.containerDirty = false;
+            tank.processContainer();
+        }
         if (!tank.needsSync) return;
         int amount = tank.fluids.getAmountAsInt(0);
         FluidResource fluid = tank.fluids.getResource(0);
