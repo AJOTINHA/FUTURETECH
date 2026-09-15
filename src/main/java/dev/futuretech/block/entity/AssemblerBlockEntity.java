@@ -54,13 +54,13 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         ItemStack result = ItemStack.EMPTY;
         int progress = 0, present = 0;
         if (recipe != null) {
+            List<ItemStack> placeholders = table.placeholders(recipe);
             for (int slot = 0; slot < recipe.ingredients().size(); slot++) {
                 ItemStack actual = table.inventory.getItem(slot);
                 if (!actual.isEmpty()) present |= 1 << slot;
-                ingredients.add(actual.isEmpty() ? recipe.ingredients().get(slot).items().findFirst()
-                        .map(item -> new ItemStack(item)).orElse(ItemStack.EMPTY) : actual.copyWithCount(1));
+                ingredients.add(actual.isEmpty() ? placeholders.get(slot) : actual.copyWithCount(1));
             }
-            result = recipe.result().create();
+            result = placeholders.getLast();
             progress = table.progress();
         }
         int status = table == null ? 10 : table.status();
@@ -108,7 +108,7 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
     /** The reach cube, sorted by distance; never changes for a given position. World mode only. */
     private @Nullable List<BlockPos> reachablePositions;
     private long surveyTick = Long.MIN_VALUE;
-    private List<BlockPos> nearbyAssemblers = List.of();
+    private List<AssemblerBlockEntity> nearbyAssemblers = List.of();
     private List<Endpoint> nearbyEndpoints = List.of();
     /** While {@code /futuretech perf} is on, what the terminal's monitor refresh costs is logged every 100 ticks. */
     private static final org.slf4j.Logger LOG = com.mojang.logging.LogUtils.getLogger();
@@ -149,8 +149,37 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         return bookEntries;
     }
     public String selectedId() { return selected; }
+    private @Nullable AssemblingRecipe cachedRecipe;
+    private @Nullable List<Entry> cachedRecipeBook;
+    private String cachedRecipeId = "";
+    /** The selected recipe, looked up again only when the selection or the book changes. */
     public @Nullable AssemblingRecipe recipe() {
-        return recipes().stream().filter(e -> e.id.equals(selected)).map(Entry::recipe).findFirst().orElse(null);
+        List<Entry> book = recipes();
+        if (book != cachedRecipeBook || !cachedRecipeId.equals(selected)) {
+            cachedRecipe = book.stream().filter(e -> e.id.equals(selected)).map(Entry::recipe).findFirst().orElse(null);
+            cachedRecipeBook = book;
+            cachedRecipeId = selected;
+        }
+        return cachedRecipe;
+    }
+    private @Nullable AssemblingRecipe placeholderRecipe;
+    private List<ItemStack> placeholderStacks = List.of();
+    /**
+     * One example item per ingredient of {@code recipe}, then the result: what the monitor shows
+     * for empty slots. Streaming each ingredient's items cost the terminal ~30 µs per refresh, so
+     * the list is built once per recipe and kept.
+     */
+    List<ItemStack> placeholders(AssemblingRecipe recipe) {
+        if (placeholderRecipe != recipe) {
+            List<ItemStack> stacks = new ArrayList<>();
+            for (var ingredient : recipe.ingredients()) {
+                stacks.add(ingredient.items().findFirst().map(item -> new ItemStack(item)).orElse(ItemStack.EMPTY));
+            }
+            stacks.add(recipe.result().create());
+            placeholderStacks = List.copyOf(stacks);
+            placeholderRecipe = recipe;
+        }
+        return placeholderStacks;
     }
     public boolean select(String id) {
         if (!inventory.isEmpty() || locked() || recipes().stream().noneMatch(e -> e.id.equals(id))) return false;
@@ -184,7 +213,7 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         long now = level.getGameTime();
         if (!surveyDue(surveyTick, now)) return;
         surveyTick = now;
-        List<BlockPos> assemblers = new ArrayList<>();
+        List<AssemblerBlockEntity> assemblers = new ArrayList<>();
         List<Endpoint> endpoints = new ArrayList<>();
         // Only transport arms reach into inventories; the table, the tool arm and the terminal skip
         // the capability probing, which over the solid ground under a cell is most of the work.
@@ -192,7 +221,7 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         for (BlockPos p : reachable()) {
             if (!level.hasChunkAt(p)) continue;
             BlockState blockState = level.getBlockState(p);
-            if (blockState.hasBlockEntity() && level.getBlockEntity(p) instanceof AssemblerBlockEntity) { assemblers.add(p); continue; }
+            if (blockState.hasBlockEntity() && level.getBlockEntity(p) instanceof AssemblerBlockEntity a) { assemblers.add(a); continue; }
             // An inventory is a block entity, or a block that holds a container of its own (the
             // composter); plain ground is skipped without asking anything.
             if (!wantsEndpoints || !(blockState.hasBlockEntity() || blockState.getBlock() instanceof net.minecraft.world.WorldlyContainerHolder)) continue;
@@ -216,9 +245,16 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
     static boolean surveyDue(long last, long now) {
         return last == Long.MIN_VALUE || last > now || now - last >= SURVEY_TICKS;
     }
-    /** Positions that held assembler parts at the last survey, nearest first. */
-    private List<BlockPos> assemblerPositions() {
-        if (environment != null) return reachable();
+    /**
+     * The assembler parts within reach, nearest first: the survey's references in the world (a
+     * part broken since is skipped until the next survey), looked up afresh in a test environment.
+     */
+    private List<AssemblerBlockEntity> nearbyAssemblers() {
+        if (environment != null) {
+            List<AssemblerBlockEntity> found = new ArrayList<>();
+            for (BlockPos p : reachable()) { var a = assemblerAt(p); if (a != null) found.add(a); }
+            return found;
+        }
         survey();
         return nearbyAssemblers;
     }
@@ -238,7 +274,7 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         resurveyNeighbours();
     }
     public @Nullable AssemblerBlockEntity nearest(Kind wanted) {
-        for (BlockPos p : assemblerPositions()) { var a = assemblerAt(p); if (a != null && a.kind() == wanted) return a; }
+        for (var a : nearbyAssemblers()) if (!a.isRemoved() && a.kind() == wanted) return a;
         return null;
     }
     private @Nullable AssemblerBlockEntity assemblerAt(BlockPos pos) {
@@ -250,7 +286,7 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         return a != null && a.kind() == Kind.TABLE ? a : null;
     }
     public boolean locked() {
-        for (BlockPos p : assemblerPositions()) { var a = assemblerAt(p); if (a != null && a.phase != 0 && a.tablePos.equals(worldPosition)) return true; }
+        for (var a : nearbyAssemblers()) if (!a.isRemoved() && a.phase != 0 && a.tablePos.equals(worldPosition)) return true;
         return false;
     }
     public int status() {
@@ -260,7 +296,7 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         var recipe = recipe();
         if (recipe == null) return 2;
         if (controller.energy.getAmountAsInt() < ENERGY_PER_TICK) return 9;
-        for (BlockPos p : assemblerPositions()) { var a = assemblerAt(p); if (a != null && a.phase != 0 && a.tablePos.equals(worldPosition)) {
+        for (var a : nearbyAssemblers()) { if (!a.isRemoved() && a.phase != 0 && a.tablePos.equals(worldPosition)) {
             if (!a.moving && a.animationTick > 0) return 11;
             if (a.phase == 2) return a.crafted ? 5 : 4;
             return a.outputMode() ? 6 : 3;
@@ -271,12 +307,12 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         return ready ? 8 : 0;
     }
     public int progress() {
-        for (BlockPos p : assemblerPositions()) { var a = assemblerAt(p); if (a != null && a.phase == 2 && a.tablePos.equals(worldPosition)) return Math.clamp((a.animationTick - 20) * 100 / a.duration, 0, 100); }
+        for (var a : nearbyAssemblers()) if (!a.isRemoved() && a.phase == 2 && a.tablePos.equals(worldPosition)) return Math.clamp((a.animationTick - 20) * 100 / a.duration, 0, 100);
         return inventory.getItem(RESULT).isEmpty() ? 0 : 100;
     }
     public int connections() {
         int flags = 0;
-        for (BlockPos p : assemblerPositions()) { var a = assemblerAt(p); if (a != null) {
+        for (var a : nearbyAssemblers()) { if (!a.isRemoved()) {
             if (a.kind() == Kind.TERMINAL) flags |= 8;
             if (a.kind() == Kind.ASSEMBLY && a.nearest(Kind.TABLE) == this) flags |= 2;
             if (a.kind() == Kind.TRANSPORT && a.nearest(Kind.TABLE) == this) flags |= a.outputMode() ? 4 : 1;
