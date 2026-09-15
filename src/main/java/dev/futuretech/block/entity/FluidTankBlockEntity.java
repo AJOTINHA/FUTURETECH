@@ -231,7 +231,7 @@ public final class FluidTankBlockEntity extends BlockEntity implements MenuProvi
         FluidResource fluid = tank.fluids.getResource(0);
         long now = level.getGameTime();
         boolean urgent = !fluid.equals(tank.lastSyncFluid) || amount == 0 || amount == CAPACITY;
-        if (!urgent && now - tank.lastSyncTick < SYNC_TICKS) return;
+        if (!urgent && tank.lastSyncTick != Long.MIN_VALUE && now - tank.lastSyncTick < SYNC_TICKS) return;
         tank.needsSync = false;
         tank.lastSyncTick = now;
         tank.lastSyncFluid = fluid;

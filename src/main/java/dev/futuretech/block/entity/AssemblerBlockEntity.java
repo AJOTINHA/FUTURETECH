@@ -178,7 +178,7 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
     private void survey() {
         if (environment != null || level == null) return;
         long now = level.getGameTime();
-        if (surveyTick <= now && now - surveyTick < SURVEY_TICKS) return;
+        if (!surveyDue(surveyTick, now)) return;
         surveyTick = now;
         List<BlockPos> assemblers = new ArrayList<>();
         List<Endpoint> endpoints = new ArrayList<>();
@@ -199,6 +199,13 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         }
         nearbyAssemblers = List.copyOf(assemblers);
         nearbyEndpoints = List.copyOf(endpoints);
+    }
+    /**
+     * Whether a survey taken at {@code last} has expired by {@code now}. {@code Long.MIN_VALUE}
+     * means never surveyed and is tested by itself: subtracting it would overflow and read as fresh.
+     */
+    static boolean surveyDue(long last, long now) {
+        return last == Long.MIN_VALUE || last > now || now - last >= SURVEY_TICKS;
     }
     /** Positions that held assembler parts at the last survey, nearest first. */
     private List<BlockPos> assemblerPositions() {

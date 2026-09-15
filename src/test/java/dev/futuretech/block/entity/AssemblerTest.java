@@ -271,4 +271,14 @@ class AssemblerTest {
         assertTrue(AssemblerBlockEntity.canInsert(destination,new ItemStack(Items.IRON_INGOT)));
         assertEquals(63,destination.getAmountAsInt(0));
     }
+
+    /** The survey clock starts at "never", which must count as due rather than overflow into "fresh". */
+    @Test void surveyIsDueWhenNeverTakenAndAfterTheInterval() {
+        assertTrue(AssemblerBlockEntity.surveyDue(Long.MIN_VALUE, 0));
+        assertTrue(AssemblerBlockEntity.surveyDue(Long.MIN_VALUE, 123456));
+        assertFalse(AssemblerBlockEntity.surveyDue(100, 100));
+        assertFalse(AssemblerBlockEntity.surveyDue(100, 139));
+        assertTrue(AssemblerBlockEntity.surveyDue(100, 140));
+        assertTrue(AssemblerBlockEntity.surveyDue(200, 100), "a clock that went backwards resurveys");
+    }
 }
