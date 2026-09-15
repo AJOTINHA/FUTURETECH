@@ -20,83 +20,16 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * A rotating tier-colored lattice with spiral energy trails following configured input and output faces.
- *
- * <p>The sphere is some six thousand quads. Everything that never changes shape — the shell, the
- * lattice, its halo and the two rings — is baked once into flat float arrays of positions and
- * normals, so a frame copies numbers into the vertex buffer and allocates nothing; the earlier
- * per-vertex {@code Point} maths cost a square root and an object for each of the ~25 000
- * vertices of every battery on screen, every frame. Only the energy trails, which move, are still
- * built per frame, and beyond {@link #DETAIL_DISTANCE} blocks the halo and the trails are left
- * out, since they are invisible from there anyway.
- */
+/** A rotating tier-colored lattice with spiral energy trails following configured input and output faces. */
 public final class BatterySphereRenderer implements BlockEntityRenderer<BatteryBlockEntity, BatterySphereRenderer.State> {
     private static final Identifier WHITE = Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "textures/entity/battery_sphere_white.png");
     private static final BatterySphereMesh.Mesh MESH = BatterySphereMesh.create();
-    private static final int FULL_BRIGHT = 15728880;
-    /** Past this many blocks the halo and the energy trails are skipped. */
-    private static final double DETAIL_DISTANCE = 24;
-    private static final int SHELL_COLOR = 0xFF0A293A;
-    private static final int HALO_ALPHA = 0x40;
-    private static final int LINES_ALPHA = 0xFF;
-
-    private static final Baked SHELL = Baked.radial(shell());
-    private static final Baked HALO = Baked.radial(lattice(0.006, 0.267, 0.008));
-    private static final Baked LINES = Baked.radial(lattice(0.0018, 0.269, 0.0036));
-    private static final Baked INNER_RING = Baked.flat(ring(BatteryStabilizerMesh.INNER_RADIUS));
-    private static final Baked OUTER_RING = Baked.flat(ring(BatteryStabilizerMesh.OUTER_RADIUS));
-
+    private static final List<Quad> SHELL = shell();
+    private static final List<Quad> HALO = lattice(0.006, 0.267, 0x40FFFFFF, 0.008);
+    private static final List<Quad> LINES = lattice(0.0018, 0.269, 0xFFFFFFFF, 0.0036);
+    private static final List<Quad> INNER_RING = ring(BatteryStabilizerMesh.INNER_RADIUS);
+    private static final List<Quad> OUTER_RING = ring(BatteryStabilizerMesh.OUTER_RADIUS);
     private record Quad(Point a, Point b, Point c, Point d, int color) {}
-
-    /**
-     * Quads flattened to {@code x y z nx ny nz} per vertex, four vertices per quad, plus one colour
-     * per quad. Radial normals point out from the sphere's centre; flat ones follow the quad.
-     */
-    private record Baked(float[] vertices, int[] colors) {
-        private static final int FLOATS_PER_VERTEX = 6;
-
-        static Baked radial(List<Quad> quads) {
-            return bake(quads, (quad, corner) -> corner.unit());
-        }
-
-        static Baked flat(List<Quad> quads) {
-            return bake(quads, (quad, corner) -> quad.b.subtract(quad.a).cross(quad.d.subtract(quad.a)).unit());
-        }
-
-        private interface NormalOf { Point at(Quad quad, Point corner); }
-
-        private static Baked bake(List<Quad> quads, NormalOf normalOf) {
-            float[] vertices = new float[quads.size() * 4 * FLOATS_PER_VERTEX];
-            int[] colors = new int[quads.size()];
-            int at = 0;
-            for (int i = 0; i < quads.size(); i++) {
-                Quad quad = quads.get(i);
-                colors[i] = quad.color;
-                for (Point corner : new Point[]{quad.a, quad.b, quad.c, quad.d}) {
-                    Point normal = normalOf.at(quad, corner);
-                    vertices[at++] = (float) corner.x(); vertices[at++] = (float) corner.y(); vertices[at++] = (float) corner.z();
-                    vertices[at++] = (float) normal.x(); vertices[at++] = (float) normal.y(); vertices[at++] = (float) normal.z();
-                }
-            }
-            return new Baked(vertices, colors);
-        }
-
-        /** Draws every quad in {@code color}, or in its own colour when {@code color} is 0. */
-        void draw(PoseStack.Pose pose, VertexConsumer buffer, int color, int light) {
-            float[] v = vertices;
-            int at = 0;
-            for (int quad = 0; quad < colors.length; quad++) {
-                int tint = color != 0 ? color : colors[quad];
-                for (int corner = 0; corner < 4; corner++) {
-                    buffer.addVertex(pose, v[at], v[at + 1], v[at + 2]).setColor(tint).setUv(0.5F, 0.5F)
-                            .setOverlay(OverlayTexture.NO_OVERLAY).setLight(light)
-                            .setNormal(pose, v[at + 3], v[at + 4], v[at + 5]);
-                    at += FLOATS_PER_VERTEX;
-                }
-            }
-        }
-    }
 
     public static final class State extends BlockEntityRenderState {
         float rotation;
@@ -104,7 +37,6 @@ public final class BatterySphereRenderer implements BlockEntityRenderer<BatteryB
         float ringRotation;
         float pulse;
         int lineColor;
-        boolean detailed;
         List<BatteryEnergyFlow.Segment> energyFlow = List.of();
     }
 
@@ -117,18 +49,15 @@ public final class BatterySphereRenderer implements BlockEntityRenderer<BatteryB
         BlockEntityRenderer.super.extractRenderState(battery, state, partialTick, camera, breakProgress);
         state.lineColor = battery.tier().lineColor();
         state.scale = 0.12F + 0.88F * battery.visualCharge(partialTick);
-        long time = battery.getLevel() == null ? 0 : battery.getLevel().getGameTime();
-        state.rotation = (Math.floorMod(time, 400) + partialTick) * 0.9F;
-        state.ringRotation = state.rotation;
-        double pulseTime = Math.floorMod(time, 60) + partialTick;
-        state.pulse = (float) (0.5 - 0.5 * Math.cos(pulseTime * Math.PI * 2 / 60));
-        var pos = battery.getBlockPos();
-        state.detailed = camera.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) < DETAIL_DISTANCE * DETAIL_DISTANCE;
-        if (!state.detailed) {
-            state.energyFlow = List.of();
-            return;
-        }
-        double flowTime = Math.floorMod(time, (long) BatteryEnergyFlow.PERIOD) + partialTick;
+        state.rotation = battery.getLevel() == null ? 0 :
+                (Math.floorMod(battery.getLevel().getGameTime(), 400) + partialTick) * 0.9F;
+        state.ringRotation = battery.getLevel() == null ? 0 :
+                (Math.floorMod(battery.getLevel().getGameTime(), 400) + partialTick) * 0.9F;
+        double pulseTime = battery.getLevel() == null ? 0 :
+                Math.floorMod(battery.getLevel().getGameTime(), 60) + partialTick;
+        state.pulse = (float)(0.5 - 0.5 * Math.cos(pulseTime * Math.PI * 2 / 60));
+        double flowTime = battery.getLevel() == null ? 0 :
+                Math.floorMod(battery.getLevel().getGameTime(), (long)BatteryEnergyFlow.PERIOD) + partialTick;
         state.energyFlow = BatteryEnergyFlow.create(flowTime, state.scale,
                 BatteryEnergyFlow.inputMask(battery.sideConfig()), BatteryEnergyFlow.outputMask(battery.sideConfig()));
     }
@@ -142,15 +71,14 @@ public final class BatterySphereRenderer implements BlockEntityRenderer<BatteryB
         pose.pushPose();
         pose.mulPose(Axis.ZP.rotationDegrees(12));
         pose.mulPose(Axis.YP.rotationDegrees(state.rotation));
-        collector.submitCustomGeometry(pose, RenderTypes.entitySolid(WHITE), (p, b) -> SHELL.draw(p, b, SHELL_COLOR, FULL_BRIGHT));
-        // The pulse only varies the light: one colour for the whole lattice, one for the halo.
+        collector.submitCustomGeometry(pose, RenderTypes.entitySolid(WHITE), (p, b) -> draw(SHELL, p, b));
         float brightness = 0.55F + 0.45F * state.pulse;
-        int lines = pulsing(state.lineColor, brightness, LINES_ALPHA);
-        if (state.detailed) {
-            int halo = pulsing(state.lineColor, brightness, Math.round(HALO_ALPHA * (0.3F + 0.7F * state.pulse)));
-            collector.submitCustomGeometry(pose, RenderTypes.entityTranslucentEmissive(WHITE), (p, b) -> HALO.draw(p, b, halo, FULL_BRIGHT));
-        }
-        collector.submitCustomGeometry(pose, RenderTypes.entityTranslucentEmissive(WHITE), (p, b) -> LINES.draw(p, b, lines, FULL_BRIGHT));
+        float haloAlpha = 0.3F + 0.7F * state.pulse;
+        int lineColor = state.lineColor;
+        collector.submitCustomGeometry(pose, RenderTypes.entityTranslucentEmissive(WHITE),
+                (p, b) -> drawPulsing(HALO, p, b, brightness, haloAlpha, lineColor));
+        collector.submitCustomGeometry(pose, RenderTypes.entityTranslucentEmissive(WHITE),
+                (p, b) -> drawPulsing(LINES, p, b, brightness, 1, lineColor));
         pose.popPose();
         // Distinct speeds prevent the inner ring from appearing locked to the rotating core.
         submitRing(pose, collector, state.ringRotation * 4, 52, INNER_RING, state.lightCoords);
@@ -162,23 +90,6 @@ public final class BatterySphereRenderer implements BlockEntityRenderer<BatteryB
             collector.submitCustomGeometry(pose, RenderTypes.entityTranslucentEmissive(WHITE),
                     (p, b) -> drawFlow(flow, p, b));
         }
-        pose.popPose();
-    }
-
-    private static int pulsing(int tint, float brightness, int alpha) {
-        int red = Math.round((tint >> 16 & 255) * brightness);
-        int green = Math.round((tint >> 8 & 255) * brightness);
-        int blue = Math.round((tint & 255) * brightness);
-        return alpha << 24 | red << 16 | green << 8 | blue;
-    }
-
-    private static void submitRing(PoseStack pose, SubmitNodeCollector collector, float angle, float tilt,
-                                   Baked ring, int light) {
-        pose.pushPose();
-        pose.mulPose(Axis.YP.rotationDegrees(angle));
-        pose.mulPose(Axis.ZP.rotationDegrees(tilt));
-        pose.mulPose(Axis.YP.rotationDegrees(angle * 4));
-        collector.submitCustomGeometry(pose, RenderTypes.entitySolid(WHITE), (p, b) -> ring.draw(p, b, 0, light));
         pose.popPose();
     }
 
@@ -207,16 +118,35 @@ public final class BatterySphereRenderer implements BlockEntityRenderer<BatteryB
         vertex(pose, buffer, b, color); vertex(pose, buffer, a, color);
     }
 
-    private static void vertex(PoseStack.Pose pose, VertexConsumer buffer, Point p, int color) {
-        Point n = p.unit();
-        buffer.addVertex(pose, (float) p.x(), (float) p.y(), (float) p.z()).setColor(color).setUv(0.5F, 0.5F)
-                .setOverlay(OverlayTexture.NO_OVERLAY).setLight(FULL_BRIGHT)
-                .setNormal(pose, (float) n.x(), (float) n.y(), (float) n.z());
-    }
-
     private static List<Quad> ring(double radius) {
         return BatteryStabilizerMesh.create(radius).stream()
                 .map(q -> new Quad(q.a(), q.b(), q.c(), q.d(), q.color())).toList();
+    }
+
+    private static void submitRing(PoseStack pose, SubmitNodeCollector collector, float angle, float tilt,
+                                   List<Quad> ring, int light) {
+        pose.pushPose();
+        pose.mulPose(Axis.YP.rotationDegrees(angle));
+        pose.mulPose(Axis.ZP.rotationDegrees(tilt));
+        pose.mulPose(Axis.YP.rotationDegrees(angle * 4));
+        collector.submitCustomGeometry(pose, RenderTypes.entitySolid(WHITE), (p, b) -> drawMetal(ring, p, b, light));
+        pose.popPose();
+    }
+
+    private static void drawMetal(List<Quad> quads, PoseStack.Pose pose, VertexConsumer buffer, int light) {
+        for (Quad q : quads) {
+            Point normal = q.b.subtract(q.a).cross(q.d.subtract(q.a)).unit();
+            metalVertex(pose, buffer, q.a, normal, q.color, light);
+            metalVertex(pose, buffer, q.b, normal, q.color, light);
+            metalVertex(pose, buffer, q.c, normal, q.color, light);
+            metalVertex(pose, buffer, q.d, normal, q.color, light);
+        }
+    }
+
+    private static void metalVertex(PoseStack.Pose pose, VertexConsumer buffer, Point p, Point n, int color, int light) {
+        buffer.addVertex(pose, (float)p.x(), (float)p.y(), (float)p.z()).setColor(color).setUv(0.5F, 0.5F)
+                .setOverlay(OverlayTexture.NO_OVERLAY).setLight(light)
+                .setNormal(pose, (float)n.x(), (float)n.y(), (float)n.z());
     }
 
     private static List<Quad> shell() {
@@ -226,34 +156,62 @@ public final class BatterySphereRenderer implements BlockEntityRenderer<BatteryB
             for (int i = 0; i < cell.corners().size(); i++) {
                 Point a = MESH.nodes().get(cell.corners().get(i)).scale(BatterySphereMesh.RADIUS);
                 Point b = MESH.nodes().get(cell.corners().get((i + 1) % cell.corners().size())).scale(BatterySphereMesh.RADIUS);
-                quads.add(new Quad(centre, a, b, b, SHELL_COLOR));
+                quads.add(new Quad(centre, a, b, b, 0xFF0A293A));
             }
         }
         return List.copyOf(quads);
     }
 
-    /** Ribbons along every edge and a small square on every node; the colour is applied when drawn. */
-    private static List<Quad> lattice(double width, double radius, double nodeSize) {
+    private static List<Quad> lattice(double width, double radius, int color, double nodeSize) {
         List<Quad> quads = new ArrayList<>();
         for (var edge : MESH.edges()) {
             Point a = MESH.nodes().get(edge.a()), b = MESH.nodes().get(edge.b());
             Point middle = a.add(b).unit();
-            ribbon(quads, a.scale(radius), middle.scale(radius), width);
-            ribbon(quads, middle.scale(radius), b.scale(radius), width);
+            ribbon(quads, a.scale(radius), middle.scale(radius), width, color);
+            ribbon(quads, middle.scale(radius), b.scale(radius), width, color);
         }
         for (Point node : MESH.nodes()) {
-            Point ref = Math.abs(node.y()) < 0.9 ? new Point(0, 1, 0) : new Point(1, 0, 0);
+            Point ref = Math.abs(node.y()) < 0.9 ? new Point(0,1,0) : new Point(1,0,0);
             Point u = ref.cross(node).unit().scale(nodeSize);
             Point v = node.cross(u).unit().scale(nodeSize);
             Point c = node.scale(radius + 0.001);
-            quads.add(new Quad(c.subtract(u).subtract(v), c.add(u).subtract(v), c.add(u).add(v), c.subtract(u).add(v), 0xFFFFFFFF));
+            int nodeColor = (color & 0xFF000000) | 0xFFFFFF;
+            quads.add(new Quad(c.subtract(u).subtract(v), c.add(u).subtract(v), c.add(u).add(v), c.subtract(u).add(v), nodeColor));
         }
         return List.copyOf(quads);
     }
 
-    private static void ribbon(List<Quad> quads, Point a, Point b, double width) {
+    private static void ribbon(List<Quad> quads, Point a, Point b, double width, int color) {
         Point normal = a.add(b).unit();
         Point offset = normal.cross(b.subtract(a)).unit().scale(width);
-        quads.add(new Quad(a.subtract(offset), b.subtract(offset), b.add(offset), a.add(offset), 0xFFFFFFFF));
+        quads.add(new Quad(a.subtract(offset), b.subtract(offset), b.add(offset), a.add(offset), color));
+    }
+
+    private static void draw(List<Quad> quads, PoseStack.Pose pose, VertexConsumer buffer) {
+        for (Quad q : quads) {
+            vertex(pose, buffer, q.a, q.color); vertex(pose, buffer, q.b, q.color);
+            vertex(pose, buffer, q.c, q.color); vertex(pose, buffer, q.d, q.color);
+        }
+    }
+
+    /** Varies light intensity only; geometry, stored charge and metal rings stay independent. */
+    private static void drawPulsing(List<Quad> quads, PoseStack.Pose pose, VertexConsumer buffer,
+                                    float brightness, float opacity, int tint) {
+        for (Quad q : quads) {
+            int alpha = Math.round((q.color >>> 24) * opacity);
+            int red = Math.round((tint >> 16 & 255) * brightness);
+            int green = Math.round((tint >> 8 & 255) * brightness);
+            int blue = Math.round((tint & 255) * brightness);
+            int color = alpha << 24 | red << 16 | green << 8 | blue;
+            vertex(pose, buffer, q.a, color); vertex(pose, buffer, q.b, color);
+            vertex(pose, buffer, q.c, color); vertex(pose, buffer, q.d, color);
+        }
+    }
+
+    private static void vertex(PoseStack.Pose pose, VertexConsumer buffer, Point p, int color) {
+        Point n = p.unit();
+        buffer.addVertex(pose, (float)p.x(), (float)p.y(), (float)p.z()).setColor(color).setUv(0.5F, 0.5F)
+                .setOverlay(OverlayTexture.NO_OVERLAY).setLight(15728880)
+                .setNormal(pose, (float)n.x(), (float)n.y(), (float)n.z());
     }
 }
