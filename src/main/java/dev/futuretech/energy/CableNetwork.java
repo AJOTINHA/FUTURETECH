@@ -180,20 +180,36 @@ public final class CableNetwork {
             if (!endpoint.delivers()) continue;
             if (fedSinceLastDistribution.contains(endpoint.key().neighbour())) continue;
             EnergyHandler handler = endpoint.handler();
-            if (handler != null) sinks.add(handler);
+            // A full machine is skipped here, before a transaction is opened for it.
+            if (handler != null && handler.getAmountAsLong() < handler.getCapacityAsLong()) sinks.add(handler);
         }
         fedSinceLastDistribution.clear();
-        lastMoved = distribute(buffer, sinks);
+        lastMoved = distribute(buffer, sinks, (int) Math.floorMod(gameTime, Integer.MAX_VALUE));
     }
 
-    /** Spreads the source over the sinks in rounds so early sinks cannot starve later ones. */
-    static int distribute(EnergyHandler source, List<EnergyHandler> sinks) {
-        List<EnergyHandler> open = new ArrayList<>(sinks);
+    /**
+     * Below this a share is not split further: a trickle goes to one sink at a time, in turn, instead
+     * of opening a transaction per sink to hand each a few FE. One generator's tick is 20 FE.
+     */
+    static final int MIN_SHARE = 20;
+
+    static int distribute(EnergyHandler source, List<EnergyHandler> sinks) { return distribute(source, sinks, 0); }
+
+    /**
+     * Spreads the source over the sinks in rounds so early sinks cannot starve later ones. The
+     * first sink served rotates with {@code round}, so when the whole buffer fits one share the
+     * sinks take turns across ticks.
+     */
+    static int distribute(EnergyHandler source, List<EnergyHandler> sinks, int round) {
+        if (sinks.isEmpty() || source.getAmountAsInt() <= 0) return 0;
+        List<EnergyHandler> open = new ArrayList<>(sinks.size());
+        int first = round % sinks.size();
+        for (int i = 0; i < sinks.size(); i++) open.add(sinks.get((first + i) % sinks.size()));
         int moved = 0;
         boolean progress = true;
         while (progress && source.getAmountAsInt() > 0 && !open.isEmpty()) {
             progress = false;
-            int share = Math.max(1, source.getAmountAsInt() / open.size());
+            int share = Math.max(MIN_SHARE, source.getAmountAsInt() / open.size());
             for (Iterator<EnergyHandler> it = open.iterator(); it.hasNext() && source.getAmountAsInt() > 0; ) {
                 int accepted = EnergyHandlerUtil.move(source, it.next(), share, null);
                 if (accepted == 0) it.remove();
