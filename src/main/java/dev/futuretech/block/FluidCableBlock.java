@@ -7,6 +7,7 @@ import dev.futuretech.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -46,6 +47,15 @@ public final class FluidCableBlock extends AbstractCableBlock {
     @Override
     protected boolean offers(Level level, BlockPos neighbour, Direction face) {
         return level.getCapability(Capabilities.Fluid.BLOCK, neighbour, face) != null;
+    }
+
+    /**
+     * A new cable beside one with fluid in it starts cut off: joining a run that is carrying
+     * something is a choice made with the wrench, never a side effect of placing a block.
+     */
+    @Override
+    protected boolean placesCut(LevelReader level, BlockPos neighbour) {
+        return level.getBlockEntity(neighbour) instanceof FluidCableBlockEntity cable && !cable.shown().isEmpty();
     }
 
     @Override

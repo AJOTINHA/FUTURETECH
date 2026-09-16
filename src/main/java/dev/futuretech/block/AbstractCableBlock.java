@@ -12,7 +12,9 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -92,6 +94,13 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
     protected abstract boolean offers(Level level, BlockPos neighbour, Direction face);
 
     protected abstract BlockEntityType<? extends AbstractCableBlockEntity> blockEntityType();
+
+    /**
+     * Whether a cable placed beside the cable at {@code neighbour} starts cut off from it, to be
+     * joined by the wrench on purpose. Nothing does by default; a kind whose runs carry something
+     * that must not mix says otherwise.
+     */
+    protected boolean placesCut(LevelReader level, BlockPos neighbour) { return false; }
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
@@ -226,9 +235,39 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
         BlockState state = defaultBlockState();
         for (Direction side : Direction.values()) {
             state = state.setValue(PROPERTY_BY_DIRECTION.get(side),
-                    connectsTo(context.getLevel(), context.getClickedPos(), side));
+                    connectsTo(context.getLevel(), context.getClickedPos(), side)
+                            && !startsCut(context.getLevel(), context.getClickedPos(), side));
         }
         return state;
+    }
+
+    /** Whether the run on {@code side} of a cable placed at {@code pos} begins cut, per {@link #placesCut}. */
+    private boolean startsCut(LevelReader level, BlockPos pos, Direction side) {
+        BlockPos neighbour = pos.relative(side);
+        return joins(level.getBlockState(neighbour)) && placesCut(level, neighbour);
+    }
+
+    /**
+     * The cut a placement began is written down here, once the block entity exists to carry it:
+     * both cables take the cut, so either end restores it, and the neighbour's link back, which
+     * its shape update made before it could know, is taken off.
+     */
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity by, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, by, stack);
+        if (level.isClientSide() || !(level.getBlockEntity(pos) instanceof AbstractCableBlockEntity cable)) return;
+        for (Direction side : Direction.values()) {
+            if (!startsCut(level, pos, side)) continue;
+            BlockPos neighbourPos = pos.relative(side);
+            cable.setCut(side, true);
+            if (level.getBlockEntity(neighbourPos) instanceof AbstractCableBlockEntity beyond && beyond.kind() == kind()) {
+                beyond.setCut(side.getOpposite(), true);
+                beyond.invalidateNetwork();
+            }
+            BlockState beyondState = level.getBlockState(neighbourPos);
+            var back = PROPERTY_BY_DIRECTION.get(side.getOpposite());
+            if (beyondState.getValue(back)) level.setBlock(neighbourPos, beyondState.setValue(back, false), UPDATE_ALL);
+        }
     }
 
     @Override
