@@ -121,8 +121,15 @@ public final class ModItems {
     public static final DeferredItem<Item> GEAR_MOLD = ITEMS.registerSimpleItem("gear_mold", properties -> properties.stacksTo(1));
 
     // Custom block item so the stored charge shows in the tooltip and as a bar.
-    public static final DeferredItem<PortableBatteryItem> PORTABLE_BATTERY = ITEMS.registerItem(
-            "portable_battery", PortableBatteryItem::new, properties -> properties.stacksTo(1));
+    public static final DeferredItem<PortableBatteryItem> PORTABLE_BATTERY = registerPortableBattery(PortableBatteryItem.Tier.MK1);
+    public static final DeferredItem<PortableBatteryItem> PORTABLE_BATTERY_MK2 = registerPortableBattery(PortableBatteryItem.Tier.MK2);
+    public static final DeferredItem<PortableBatteryItem> PORTABLE_BATTERY_MK3 = registerPortableBattery(PortableBatteryItem.Tier.MK3);
+    public static final DeferredItem<PortableBatteryItem> PORTABLE_BATTERY_MK4 = registerPortableBattery(PortableBatteryItem.Tier.MK4);
+
+    private static DeferredItem<PortableBatteryItem> registerPortableBattery(PortableBatteryItem.Tier tier) {
+        return ITEMS.registerItem(tier.itemName(), properties -> new PortableBatteryItem(tier, properties),
+                properties -> properties.stacksTo(1));
+    }
 
     public static final DeferredItem<BatteryBlockItem> BATTERY_MK1 = registerBattery(ModBlocks.BATTERY_MK1);
 

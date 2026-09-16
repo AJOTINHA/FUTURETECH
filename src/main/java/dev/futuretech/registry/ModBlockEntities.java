@@ -86,7 +86,9 @@ public final class ModBlockEntities {
 
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
         // Energy items: the portable battery, and the battery blocks it can fill while they sit in a pocket.
-        event.registerItem(Capabilities.Energy.ITEM, (stack, access) -> PortableBatteryItem.handler(access), ModItems.PORTABLE_BATTERY.get());
+        for (var battery : List.of(ModItems.PORTABLE_BATTERY, ModItems.PORTABLE_BATTERY_MK2, ModItems.PORTABLE_BATTERY_MK3, ModItems.PORTABLE_BATTERY_MK4)) {
+            event.registerItem(Capabilities.Energy.ITEM, (stack, access) -> battery.get().handler(access), battery.get());
+        }
         event.registerItem(Capabilities.Energy.ITEM, (stack, access) -> new ItemAccessEnergyHandler(access,
                 ModDataComponents.ENERGY.get(), ModItems.BATTERY_MK1.get().tier(stack).capacity()), ModItems.BATTERY_MK1.get());
         event.registerBlockEntity(Capabilities.Energy.BLOCK, METAL_PRESS.get(), (press, side) ->

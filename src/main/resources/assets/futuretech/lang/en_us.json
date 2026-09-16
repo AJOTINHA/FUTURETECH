@@ -180,5 +180,8 @@
   "item.futuretech.portable_battery": "Portable Battery",
   "item.futuretech.portable_battery.on": "Portable Battery on",
   "item.futuretech.portable_battery.off": "Portable Battery off",
-  "item.futuretech.portable_battery.pulled": "+%s FE"
+  "item.futuretech.portable_battery.pulled": "+%s FE",
+  "item.futuretech.portable_battery_mk2": "Portable Battery MK2",
+  "item.futuretech.portable_battery_mk3": "Portable Battery MK3",
+  "item.futuretech.portable_battery_mk4": "Portable Battery MK4"
 }

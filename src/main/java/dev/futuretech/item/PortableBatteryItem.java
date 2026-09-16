@@ -32,26 +32,47 @@ import java.util.function.Consumer;
 /**
  * A battery carried in the inventory. Switched on with Shift + right click, it feeds every other
  * item in the player's inventory that stores energy, a little each tick, and glints while it does.
- * Right-clicking a block that holds energy fills the battery from it.
+ * Right-clicking a block that holds energy fills the battery from it. Each MK doubles the
+ * capacity and the charge rate; an upgrade kit in the crafting grid moves a battery up a level.
  */
 public final class PortableBatteryItem extends Item {
-    public static final int CAPACITY = 200_000;
-    /** Per tick, shared by everything being charged; a full MK1 battery block takes ten seconds. */
-    public static final int CHARGE_PER_TICK = 500;
-    /** Per right click on a machine or battery block; the click fills the battery in one go if the block has it. */
-    public static final int PULL_PER_USE = CAPACITY;
+    /** Capacity and per-tick charge rate of each level; MK1 fills an MK1 battery block in ten seconds. */
+    public enum Tier {
+        MK1(200_000, 500), MK2(400_000, 1_000), MK3(800_000, 2_000), MK4(1_600_000, 4_000);
 
-    public PortableBatteryItem(Properties properties) {
+        public final int capacity;
+        public final int chargePerTick;
+
+        Tier(int capacity, int chargePerTick) {
+            this.capacity = capacity;
+            this.chargePerTick = chargePerTick;
+        }
+
+        public int mk() { return ordinal() + 1; }
+
+        /** Registry name: the MK1 keeps the plain name. */
+        public String itemName() { return this == MK1 ? "portable_battery" : "portable_battery_mk" + mk(); }
+    }
+
+    public final Tier tier;
+
+    public PortableBatteryItem(Tier tier, Properties properties) {
         super(properties);
+        this.tier = tier;
+    }
+
+    /** The tier of any stack; MK1 for anything that is not a portable battery. */
+    public static Tier tier(ItemStack stack) {
+        return stack.getItem() instanceof PortableBatteryItem battery ? battery.tier : Tier.MK1;
     }
 
     /** The item's own store, backed by the energy component of the stack the access points at. */
-    public static EnergyHandler handler(ItemAccess access) {
-        return new ItemAccessEnergyHandler(access, ModDataComponents.ENERGY.get(), CAPACITY);
+    public EnergyHandler handler(ItemAccess access) {
+        return new ItemAccessEnergyHandler(access, ModDataComponents.ENERGY.get(), tier.capacity);
     }
 
     public static int storedEnergy(ItemStack stack) {
-        return Math.clamp(stack.getOrDefault(ModDataComponents.ENERGY.get(), 0), 0, CAPACITY);
+        return Math.clamp(stack.getOrDefault(ModDataComponents.ENERGY.get(), 0), 0, tier(stack).capacity);
     }
 
     public static boolean isActive(ItemStack stack) {
@@ -85,7 +106,7 @@ public final class PortableBatteryItem extends Item {
         if (context.getLevel().isClientSide()) return InteractionResult.SUCCESS;
         int moved;
         try (var transaction = Transaction.openRoot()) {
-            moved = EnergyHandlerUtil.move(source, handler(ItemAccess.forPlayerInteraction(player, context.getHand())), PULL_PER_USE, transaction);
+            moved = EnergyHandlerUtil.move(source, handler(ItemAccess.forPlayerInteraction(player, context.getHand())), tier.capacity, transaction);
             transaction.commit();
         }
         if (moved > 0) {
@@ -126,8 +147,9 @@ public final class PortableBatteryItem extends Item {
      */
     static int charge(Player player, int batterySlot) {
         var inventory = player.getInventory();
-        EnergyHandler battery = handler(ItemAccess.forPlayerSlot(player, batterySlot));
-        int budget = CHARGE_PER_TICK;
+        PortableBatteryItem item = (PortableBatteryItem) inventory.getItem(batterySlot).getItem();
+        EnergyHandler battery = item.handler(ItemAccess.forPlayerSlot(player, batterySlot));
+        int budget = item.tier.chargePerTick;
         int moved = 0;
         for (int slot = 0; slot < inventory.getContainerSize() && budget > 0; slot++) {
             ItemStack target = inventory.getItem(slot);
@@ -148,7 +170,7 @@ public final class PortableBatteryItem extends Item {
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display,
                                 Consumer<Component> lines, TooltipFlag flag) {
         super.appendHoverText(stack, context, display, lines, flag);
-        lines.accept(Component.translatable("gui.futuretech.stored", String.format("%,d", storedEnergy(stack)), String.format("%,d", CAPACITY)));
+        lines.accept(Component.translatable("gui.futuretech.stored", String.format("%,d", storedEnergy(stack)), String.format("%,d", tier.capacity)));
         lines.accept(isActive(stack)
                 ? Component.translatable("item.futuretech.portable_battery.on").withStyle(ChatFormatting.AQUA)
                 : Component.translatable("item.futuretech.portable_battery.off").withStyle(ChatFormatting.GRAY));
@@ -159,7 +181,7 @@ public final class PortableBatteryItem extends Item {
 
     @Override
     public int getBarWidth(ItemStack stack) {
-        return Mth.clamp(Math.round(13.0F * storedEnergy(stack) / CAPACITY), 0, 13);
+        return Mth.clamp(Math.round(13.0F * storedEnergy(stack) / tier.capacity), 0, 13);
     }
 
     @Override

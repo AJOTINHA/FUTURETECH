@@ -180,5 +180,8 @@
   "item.futuretech.portable_battery": "Bateria Portátil",
   "item.futuretech.portable_battery.on": "Bateria Portátil ligada",
   "item.futuretech.portable_battery.off": "Bateria Portátil desligada",
-  "item.futuretech.portable_battery.pulled": "+%s FE"
+  "item.futuretech.portable_battery.pulled": "+%s FE",
+  "item.futuretech.portable_battery_mk2": "Bateria Portátil MK2",
+  "item.futuretech.portable_battery_mk3": "Bateria Portátil MK3",
+  "item.futuretech.portable_battery_mk4": "Bateria Portátil MK4"
 }

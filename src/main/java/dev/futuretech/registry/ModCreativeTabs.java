@@ -32,6 +32,9 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.SMELTERY.get());
                         output.accept(ModItems.BATTERY_MK1.get());
                         output.accept(ModItems.PORTABLE_BATTERY.get());
+                        output.accept(ModItems.PORTABLE_BATTERY_MK2.get());
+                        output.accept(ModItems.PORTABLE_BATTERY_MK3.get());
+                        output.accept(ModItems.PORTABLE_BATTERY_MK4.get());
                         output.accept(ModItems.FLUID_TANK.get());
                         output.accept(ModItems.CABLE_MK1.get());
                         output.accept(ModItems.ITEM_CABLE_OPAQUE.get());
