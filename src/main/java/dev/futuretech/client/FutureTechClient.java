@@ -54,6 +54,8 @@ public final class FutureTechClient {
         NeoForge.EVENT_BUS.addListener(PerfOverlay::drawTotal);
         NeoForge.EVENT_BUS.addListener(AreaMiningPreview::extractOutline);
         NeoForge.EVENT_BUS.addListener(AreaMiningPreview::extractBreaking);
+        // A cable or facade in hand shows where it would go and what it would look like there.
+        NeoForge.EVENT_BUS.addListener(CablePlacementPreview::submit);
         NeoForge.EVENT_BUS.addListener(SyncedRecipes::onReceived);
     }
 
