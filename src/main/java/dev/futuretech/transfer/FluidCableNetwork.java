@@ -397,12 +397,40 @@ public final class FluidCableNetwork {
             sinkMoves += accepted.size();
             if (movedOnLine > 0) stuck.remove(line); else stuck.add(line);
             // Every route fluid took this tick, from where it came in to where it went out,
-            // leaves its direction on the cables along the way.
+            // leaves its direction on the cables along the way. Cables no route reached, because
+            // nothing took the fluid yet, still point away from where it came in: the clients draw
+            // the fluid spreading from there and never learn a direction otherwise.
             for (EndpointKey from : entriesSinceLastDistribution.getOrDefault(line, Set.of())) {
                 for (Endpoint to : accepted) routesChanged |= markRoute(from, to.key());
+                if (flow.size() < cables.size()) routesChanged |= spreadFrom(from);
             }
         }
         return routesChanged;
+    }
+
+    /**
+     * Gives every cable that still has no direction the way fluid would reach it from
+     * {@code from}, outward through the nearest cables first; true if any cable changed.
+     */
+    private boolean spreadFrom(EndpointKey from) {
+        boolean changed = false;
+        Map<BlockPos, BlockPos> previous = new HashMap<>();
+        ArrayDeque<BlockPos> queue = new ArrayDeque<>();
+        previous.put(from.cablePos(), from.cablePos());
+        queue.add(from.cablePos());
+        while (!queue.isEmpty()) {
+            BlockPos pos = queue.poll();
+            for (Direction side : Direction.values()) {
+                BlockPos next = pos.relative(side);
+                if (!cables.contains(next) || previous.containsKey(next)) continue;
+                previous.put(next, pos);
+                queue.add(next);
+                // The entry cable points at the first cable beyond it, as a cable on a route does.
+                if (!flow.containsKey(pos)) { flow.put(pos, side); changed = true; }
+                if (!flow.containsKey(next)) { flow.put(next, side); changed = true; }
+            }
+        }
+        return changed;
     }
 
     /** Whether {@code handler} could take any of {@code resource}: an empty valid slot, or a matching one with room. */

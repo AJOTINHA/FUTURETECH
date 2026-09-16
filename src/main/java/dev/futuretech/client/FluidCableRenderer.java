@@ -17,6 +17,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
 import net.minecraft.util.ARGB;
+import net.minecraft.util.LightCoordsUtil;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.fluids.FluidStack;
 import org.joml.Vector3f;
@@ -27,25 +28,30 @@ import java.util.Set;
 
 /**
  * Draws the fluid inside a see-through fluid cable: a column down the middle of the glass core and
- * an arm towards every connected face, in the fluid's own texture and tint. While the network
- * reports which way the fluid runs through this cable, the fluid's flowing texture slides along
- * that axis; otherwise the still texture stands. Only tiers that show their fluid draw anything,
- * and only while the network is carrying something.
+ * an arm towards every connected face, in the fluid's own still texture and tint. Only tiers that
+ * show their fluid draw anything, and only while the network is carrying something.
+ *
+ * <p>The fluid arrives as a front: it comes in by one face, crosses the core and goes out by the
+ * other arms, so a line of cables fills from its entry outward, one cable after the other, and a
+ * connector's arm fills last, as a plug pushed into the collar. When the flow stops the tail runs
+ * out the same way.
  */
 public final class FluidCableRenderer implements BlockEntityRenderer<FluidCableBlockEntity, FluidCableRenderer.State> {
     /** The glass core runs from 5 to 11; the fluid keeps half a unit inside it on every side. */
     private static final float INNER = 5.5F / 16F;
     private static final float OUTER = 10.5F / 16F;
-    /** Texture lengths the stream slides per tick. */
-    private static final float SPEED = 0.04F;
 
     public static final class State extends BlockEntityRenderState {
         @Nullable TextureAtlasSprite sprite;
         int color = -1;
-        @Nullable Direction flow;
-        float offset;
-        /** Height of the fluid's surface in the block, from the body's bottom to its top. */
-        float surface;
+        /** The block's light lifted by the fluid's own glow, so lava in a dark room shines like a source. */
+        int fluidLight;
+        /** The way the fluid comes into the cable; up when unknown, so it rises like a level. */
+        Direction travel = Direction.UP;
+        /** How far the front has come along {@link #travel}, from 0 at the way in to 1 at the far face. */
+        float distance;
+        /** Whether the fluid lies behind the front (filling) or beyond it (its tail running out). */
+        boolean filling;
         final Set<Direction> arms = EnumSet.noneOf(Direction.class);
     }
 
@@ -62,34 +68,35 @@ public final class FluidCableRenderer implements BlockEntityRenderer<FluidCableB
         state.arms.clear();
         if (!cable.tier().showsFluid() || cable.getLevel() == null) return;
         double time = cable.getLevel().getGameTime() + partialTick;
-        float level = cable.drawnLevel(time);
+        FluidCableBlockEntity.Front front = cable.front(time);
         FluidStack fluid = cable.drawnFluid();
-        if (fluid.isEmpty() || level <= 0) return;
+        if (front == null || fluid.isEmpty()) return;
         FluidModel model = Minecraft.getInstance().getModelManager().getFluidStateModelSet().get(fluid.getFluid().defaultFluidState());
-        state.flow = cable.shown().isEmpty() ? null : cable.flow();
-        state.sprite = (state.flow == null ? model.stillMaterial() : model.flowingMaterial()).sprite();
+        state.sprite = model.stillMaterial().sprite();
         state.color = model.fluidTintSource() == null ? -1 : model.fluidTintSource().colorAsStack(fluid);
-        state.offset = (float) ((time * SPEED) % 1.0);
+        state.fluidLight = LightCoordsUtil.lightCoordsWithEmission(state.lightCoords,
+                Math.clamp(fluid.getFluidType().getLightLevel(fluid), 0, 15));
+        state.travel = front.travel() == null ? Direction.UP : front.travel();
+        state.distance = front.distance();
+        state.filling = front.filling();
         for (Direction side : Direction.values()) {
             if (cable.getBlockState().getValue(AbstractCableBlock.PROPERTY_BY_DIRECTION.get(side))) state.arms.add(side);
         }
-        // The surface runs from the lowest point of the body to its highest, so a cable with no
-        // arm below starts draining at once and one with an arm above empties that first.
-        float bottom = state.arms.contains(Direction.DOWN) ? 0 : INNER;
-        float top = state.arms.contains(Direction.UP) ? 1 : OUTER;
-        state.surface = bottom + level * (top - bottom);
     }
 
     @Override
     public void submit(State state, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
         TextureAtlasSprite sprite = state.sprite;
         if (sprite == null) return;
-        var stream = new Stream(sprite, ARGB.opaque(state.color), state.lightCoords, state.flow, state.offset, state.surface);
+        var stream = new Stream(sprite, ARGB.opaque(state.color), state.fluidLight, state.distance, state.filling);
         Set<Direction> arms = EnumSet.copyOf(state.arms);
+        Direction travel = state.travel;
         collector.submitCustomGeometry(pose, RenderTypes.entityTranslucent(sprite.atlasLocation()), (p, buffer) -> {
             // The core and its arms are one body: neither draws the face where it meets the other,
             // so no two translucent faces share a plane and the seams stay invisible.
-            stream.box(p, buffer, INNER, INNER, INNER, OUTER, OUTER, OUTER, arms);
+            // The core and the arm the fluid comes in by are cut along the way in; every other arm
+            // is cut along its own way out, so the front leaves the core through all of them at once.
+            stream.box(p, buffer, INNER, INNER, INNER, OUTER, OUTER, OUTER, arms, travel);
             for (Direction side : arms) {
                 float x0 = INNER, y0 = INNER, z0 = INNER, x1 = OUTER, y1 = OUTER, z1 = OUTER;
                 switch (side) {
@@ -100,25 +107,44 @@ public final class FluidCableRenderer implements BlockEntityRenderer<FluidCableB
                     case NORTH -> { z0 = 0; z1 = INNER; }
                     case SOUTH -> { z0 = OUTER; z1 = 1; }
                 }
-                stream.box(p, buffer, x0, y0, z0, x1, y1, z1, EnumSet.of(side.getOpposite()));
+                Direction along = side == travel.getOpposite() ? travel : side;
+                stream.box(p, buffer, x0, y0, z0, x1, y1, z1, EnumSet.of(side.getOpposite()), along);
             }
         });
     }
 
-    /** The fluid's look for one frame: its sprite, tint, light, how far the stream has slid and how high it stands. */
-    private record Stream(TextureAtlasSprite sprite, int color, int light, @Nullable Direction flow, float offset, float surface) {
+    /** The fluid's look for one frame: its sprite, tint, light, and where its front stands along whatever way a box is cut. */
+    private record Stream(TextureAtlasSprite sprite, int color, int light, float distance, boolean filling) {
         /**
-         * A box with the faces in {@code skip} left out, cut off at the surface: whatever lies above
-         * it is not drawn, and a box the surface cuts through gets a top face there.
+         * A box with the faces in {@code skip} left out, cut by the front along {@code along}:
+         * {@code distance} is measured from the face the front sets out from, the one behind
+         * {@code along}. While filling, what lies past the front is not drawn; while the tail runs
+         * out, what lies before it is not. A box the front cuts through gets a face there.
          */
         void box(PoseStack.Pose pose, VertexConsumer buffer, float x0, float y0, float z0, float x1, float y1, float z1,
-                 Set<Direction> skip) {
-            if (y0 >= surface) return;
-            boolean cut = y1 > surface;
-            if (cut) {
-                y1 = surface;
+                 Set<Direction> skip, Direction along) {
+            boolean positive = along.getAxisDirection() == Direction.AxisDirection.POSITIVE;
+            // In block coordinates the front sits here; the kept side is the one the front set out from.
+            float cut = positive ? distance : 1 - distance;
+            boolean keepLow = filling == positive;
+            float lo = switch (along.getAxis()) { case X -> x0; case Y -> y0; case Z -> z0; };
+            float hi = switch (along.getAxis()) { case X -> x1; case Y -> y1; case Z -> z1; };
+            Direction cap = null;
+            if (keepLow) {
+                if (lo >= cut) return;
+                if (hi > cut) { hi = cut; cap = Direction.fromAxisAndDirection(along.getAxis(), Direction.AxisDirection.POSITIVE); }
+            } else {
+                if (hi <= cut) return;
+                if (lo < cut) { lo = cut; cap = Direction.fromAxisAndDirection(along.getAxis(), Direction.AxisDirection.NEGATIVE); }
+            }
+            switch (along.getAxis()) {
+                case X -> { x0 = lo; x1 = hi; }
+                case Y -> { y0 = lo; y1 = hi; }
+                case Z -> { z0 = lo; z1 = hi; }
+            }
+            if (cap != null && skip.contains(cap)) {
                 skip = EnumSet.copyOf(skip);
-                skip.remove(Direction.UP);
+                skip.remove(cap);
             }
             if (!skip.contains(Direction.NORTH)) face(pose, buffer, 0, 0, -1, v(x0, y1, z0), v(x1, y1, z0), v(x1, y0, z0), v(x0, y0, z0));
             if (!skip.contains(Direction.SOUTH)) face(pose, buffer, 0, 0, 1, v(x0, y0, z1), v(x1, y0, z1), v(x1, y1, z1), v(x0, y1, z1));
@@ -130,52 +156,10 @@ public final class FluidCableRenderer implements BlockEntityRenderer<FluidCableB
 
         private static Vector3f v(float x, float y, float z) { return new Vector3f(x, y, z); }
 
-        /**
-         * One face, corners in order with texture corners (0,0) (1,0) (1,1) (0,1). When the stream
-         * runs along one of the face's edges the texture slides that way, split where it wraps.
-         */
+        /** One face, corners in order with texture corners (0,0) (1,0) (1,1) (0,1). */
         private void face(PoseStack.Pose pose, VertexConsumer buffer, float nx, float ny, float nz,
                           Vector3f p0, Vector3f p1, Vector3f p2, Vector3f p3) {
-            float alongU = flow == null ? 0 : along(p0, p1);
-            float alongV = flow == null ? 0 : along(p0, p3);
-            if (alongU != 0) {
-                slide(alongU, (a, b, ta, tb) -> quad(pose, buffer, nx, ny, nz,
-                        lerp(p0, p1, a), lerp(p0, p1, b), lerp(p3, p2, b), lerp(p3, p2, a), ta, 0, tb, 0, tb, 1, ta, 1));
-            } else if (alongV != 0) {
-                slide(alongV, (a, b, ta, tb) -> quad(pose, buffer, nx, ny, nz,
-                        lerp(p0, p3, a), lerp(p1, p2, a), lerp(p1, p2, b), lerp(p0, p3, b), 0, ta, 1, ta, 1, tb, 0, tb));
-            } else {
-                quad(pose, buffer, nx, ny, nz, p0, p1, p2, p3, 0, 0, 1, 0, 1, 1, 0, 1);
-            }
-        }
-
-        /** +1 or -1 when the edge from {@code a} to {@code b} runs with or against the stream, else 0. */
-        private float along(Vector3f a, Vector3f b) {
-            Vector3f edge = new Vector3f(b).sub(a);
-            var step = flow.getUnitVec3i();
-            float dot = edge.x * step.getX() + edge.y * step.getY() + edge.z * step.getZ();
-            return dot > 1e-6 ? 1 : dot < -1e-6 ? -1 : 0;
-        }
-
-        private interface Segment {
-            void emit(float from, float to, float textureFrom, float textureTo);
-        }
-
-        /**
-         * Walks the edge from 0 to 1 with the texture coordinate {@code dir * x - offset}, wrapped
-         * into [0, 1]: as the offset grows the pattern moves the way the stream flows. The one
-         * place the coordinate wraps splits the face in two.
-         */
-        private void slide(float dir, Segment segment) {
-            float start = -offset;
-            float fractional = start - (float) Math.floor(start);
-            float wrap = dir > 0 ? 1 - fractional : fractional;
-            if (wrap > 1e-4) segment.emit(0, wrap, fractional, dir > 0 ? 1 : 0);
-            if (wrap < 1 - 1e-4) segment.emit(wrap, 1, dir > 0 ? 0 : 1, fractional);
-        }
-
-        private static Vector3f lerp(Vector3f a, Vector3f b, float t) {
-            return new Vector3f(a).lerp(b, t);
+            quad(pose, buffer, nx, ny, nz, p0, p1, p2, p3, 0, 0, 1, 0, 1, 1, 0, 1);
         }
 
         private void quad(PoseStack.Pose pose, VertexConsumer buffer, float nx, float ny, float nz,
