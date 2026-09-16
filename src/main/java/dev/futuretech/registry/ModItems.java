@@ -111,6 +111,9 @@ public final class ModItems {
     public static final DeferredItem<TieredMachineBlockItem> PAINT_MACHINE = ITEMS.registerItem(
             "paint_machine", properties -> new TieredMachineBlockItem(ModBlocks.PAINT_MACHINE.get(), properties),
             properties -> properties.useBlockDescriptionPrefix());
+    public static final DeferredItem<TieredMachineBlockItem> WATER_PUMP = ITEMS.registerItem(
+            "water_pump", properties -> new TieredMachineBlockItem(ModBlocks.WATER_PUMP.get(), properties),
+            properties -> properties.useBlockDescriptionPrefix());
     public static final DeferredItem<Item> GOLD_POWDER = ITEMS.registerSimpleItem("gold_powder");
     public static final DeferredItem<Item> COPPER_POWDER = ITEMS.registerSimpleItem("copper_powder");
     public static final DeferredItem<Item> STEEL_INGOT = ITEMS.registerSimpleItem("steel_ingot");

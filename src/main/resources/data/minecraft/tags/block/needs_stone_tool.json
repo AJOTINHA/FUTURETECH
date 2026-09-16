@@ -12,7 +12,8 @@
     "futuretech:assembly_arm",
     "futuretech:assembler_terminal",
     "futuretech:metal_press",
-    "futuretech:paint_machine"
+    "futuretech:paint_machine",
+    "futuretech:water_pump"
   ],
   "replace": false
 }

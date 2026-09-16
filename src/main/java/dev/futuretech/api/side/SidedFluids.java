@@ -35,5 +35,31 @@ public final class SidedFluids {
         };
     }
 
+    /**
+     * The tap neighbours get through a face of a machine that makes fluid: it leaves through faces
+     * in an output mode and nothing goes in. {@code null} on a closed face; a null side is the
+     * machine's own unrestricted access.
+     */
+    public static @Nullable ResourceHandler<FluidResource> outflow(
+            ResourceHandler<FluidResource> full, SideConfig sides, @Nullable Direction side) {
+        if (side == null) return full;
+        if (sides.mode(side) == SideMode.NONE) return null;
+        return new ResourceHandler<>() {
+            @Override public int size() { return full.size(); }
+            @Override public FluidResource getResource(int index) { return full.getResource(index); }
+            @Override public long getAmountAsLong(int index) { return full.getAmountAsLong(index); }
+            @Override public long getCapacityAsLong(int index, FluidResource fluid) { return full.getCapacityAsLong(index, fluid); }
+            @Override public boolean isValid(int index, FluidResource fluid) { return full.isValid(index, fluid); }
+
+            @Override
+            public int insert(int index, FluidResource fluid, int amount, TransactionContext transaction) { return 0; }
+
+            @Override
+            public int extract(int index, FluidResource fluid, int amount, TransactionContext transaction) {
+                return sides.mode(side).allowsOutput() ? full.extract(index, fluid, amount, transaction) : 0;
+            }
+        };
+    }
+
     private SidedFluids() {}
 }

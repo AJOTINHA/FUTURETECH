@@ -19,6 +19,7 @@ import dev.futuretech.block.MetalPressBlock;
 import dev.futuretech.block.MachineCasingBlock;
 import dev.futuretech.block.PaintMachineBlock;
 import dev.futuretech.block.SmelteryBlock;
+import dev.futuretech.block.WaterPumpBlock;
 import dev.futuretech.block.SolidFuelGeneratorBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
@@ -101,6 +102,11 @@ public final class ModBlocks {
 
     public static final DeferredBlock<PaintMachineBlock> PAINT_MACHINE = BLOCKS.registerBlock(
             "paint_machine", PaintMachineBlock::new, properties -> properties
+                    .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops());
+
+    public static final DeferredBlock<WaterPumpBlock> WATER_PUMP = BLOCKS.registerBlock(
+            "water_pump", WaterPumpBlock::new, properties -> properties
                     .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
                     .requiresCorrectToolForDrops());
 

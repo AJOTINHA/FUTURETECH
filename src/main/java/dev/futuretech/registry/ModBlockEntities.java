@@ -17,6 +17,7 @@ import dev.futuretech.block.entity.LaneMachineBlockEntity;
 import dev.futuretech.block.entity.MetalPressBlockEntity;
 import dev.futuretech.block.entity.PaintMachineBlockEntity;
 import dev.futuretech.block.entity.SmelteryBlockEntity;
+import dev.futuretech.block.entity.WaterPumpBlockEntity;
 import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -61,6 +62,8 @@ public final class ModBlockEntities {
             TYPES.register("smeltery", () -> new BlockEntityType<>(SmelteryBlockEntity::new, ModBlocks.SMELTERY.get()));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PaintMachineBlockEntity>> PAINT_MACHINE =
             TYPES.register("paint_machine", () -> new BlockEntityType<>(PaintMachineBlockEntity::new, ModBlocks.PAINT_MACHINE.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<WaterPumpBlockEntity>> WATER_PUMP =
+            TYPES.register("water_pump", () -> new BlockEntityType<>(WaterPumpBlockEntity::new, ModBlocks.WATER_PUMP.get()));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BatteryBlockEntity>> BATTERY =
             TYPES.register("battery", () -> new BlockEntityType<>(
@@ -109,6 +112,13 @@ public final class ModBlockEntities {
                 SidedEnergy.view(painter.energy(), painter.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Item.BLOCK, PAINT_MACHINE.get(), (painter, side) ->
                 SidedItems.view(painter, painter.sideConfig(), side));
+        // Water only comes out, through the faces in an output mode; buckets follow the same faces.
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, WATER_PUMP.get(), (pump, side) ->
+                SidedEnergy.view(pump.energy(), pump.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Item.BLOCK, WATER_PUMP.get(), (pump, side) ->
+                SidedItems.view(pump, pump.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Fluid.BLOCK, WATER_PUMP.get(), (pump, side) ->
+                SidedFluids.outflow(pump.water(), pump.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, ASSEMBLER.get(), (assembler, side) -> assembler.energyHandler());
         event.registerBlockEntity(Capabilities.Fluid.BLOCK, FLUID_TANK.get(), (tank, side) -> tank.handler(side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, CHARGER.get(), (charger, side) ->
