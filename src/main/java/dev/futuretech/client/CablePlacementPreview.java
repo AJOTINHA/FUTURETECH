@@ -32,16 +32,12 @@ import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Set;
 
 /**
- * A ghost of what a click would put down. With a cable in hand it is the cable where it would
- * land, with the links and collars it would come with, and the arm each neighbouring cable would
- * grow to meet it; with a facade it is the panel on the face the click would cover. Both are the
- * real models drawn see-through, so what the player sees is what they get.
+ * A ghost of where a click would land. With a cable in hand it is the cable's bare core at the
+ * spot it would take; with a facade it is the panel on the face the click would cover. Both are
+ * the real models drawn see-through, so the ghost looks like the block it stands for.
  *
  * <p>Nothing here changes the world: the state is worked out the way placing does, on the client's
  * copy, and thrown away with the frame.
@@ -92,31 +88,13 @@ public final class CablePlacementPreview {
         BlockState state = cable.getStateForPlacement(context);
         if (state == null || !state.canSurvive(level, pos)
                 || !level.isUnobstructed(state, pos, CollisionContext.placementContext(player))) return;
-        var models = Minecraft.getInstance().getModelManager().getBlockStateModelSet();
-        var random = RandomSource.create(42);
+        // Only the core: where the cable lands is the question the ghost answers. The links it
+        // would make are drawn the moment it is placed, and a bare knot is easier to read.
+        BlockState core = cable.defaultBlockState();
         List<BlockStateModelPart> parts = new ArrayList<>();
-        // Asked at the real position, so the collars the neighbouring machines would earn show too.
-        models.get(state).collectParts(level, pos, state, random, parts);
+        Minecraft.getInstance().getModelManager().getBlockStateModelSet().get(core)
+                .collectParts(level, pos, core, RandomSource.create(42), parts);
         submitParts(event, level, pos, parts, camera);
-        // A cable of the same kind beside the spot grows an arm to meet the new one. Only the arm
-        // is drawn: the parts the neighbour would show that it does not show already.
-        for (Direction side : Direction.values()) {
-            if (!state.getValue(AbstractCableBlock.PROPERTY_BY_DIRECTION.get(side))) continue;
-            BlockPos neighbourPos = pos.relative(side);
-            BlockState neighbour = level.getBlockState(neighbourPos);
-            if (!cable.joins(neighbour)) continue;
-            var property = AbstractCableBlock.PROPERTY_BY_DIRECTION.get(side.getOpposite());
-            if (neighbour.getValue(property)) continue;
-            BlockState joined = neighbour.setValue(property, true);
-            List<BlockStateModelPart> before = new ArrayList<>();
-            List<BlockStateModelPart> after = new ArrayList<>();
-            models.get(neighbour).collectParts(level, neighbourPos, neighbour, random, before);
-            models.get(joined).collectParts(level, neighbourPos, joined, random, after);
-            Set<BlockStateModelPart> shown = Collections.newSetFromMap(new IdentityHashMap<>());
-            shown.addAll(before);
-            after.removeIf(shown::contains);
-            submitParts(event, level, neighbourPos, after, camera);
-        }
     }
 
     private static void submitFacade(SubmitCustomGeometryEvent event, ClientLevel level, ItemStack stack,
