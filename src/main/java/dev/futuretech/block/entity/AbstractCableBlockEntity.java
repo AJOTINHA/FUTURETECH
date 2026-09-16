@@ -38,6 +38,7 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
     private static final Set<SideMode> ALLOWED_MODES =
             Set.of(SideMode.NONE, SideMode.INPUT, SideMode.OUTPUT, SideMode.BOTH);
     private static final String PRIORITIES_TAG = "Priorities";
+    private static final String CUT_TAG = "Cut";
     private static final String CHANNELS_TAG = "Channels";
     private static final String COLORS_TAG = "Colors";
     private static final Codec<Map<Direction, Integer>> INTS_CODEC = Codec.unboundedMap(Direction.CODEC, Codec.INT);
@@ -51,6 +52,12 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
     private final SideConfig connectors = new SideConfig(ALLOWED_MODES, true, side -> SideMode.NONE);
     /** Only faces the player moved off 0 are kept, so an untouched cable saves nothing extra. */
     private final EnumMap<Direction, Integer> priorities = new EnumMap<>(Direction.class);
+    /**
+     * Sides the player cut with the wrench, one bit per {@code Direction.ordinal()}. A cut side
+     * joins nothing: not the cable beyond it, not a machine. Both cables of a cut run carry the
+     * bit, so either end restores it. Reaches the client, whose shape updates must agree.
+     */
+    private int cutSides;
     /** Only faces moved off white are kept; a face without an entry is on the white channel. */
     private final EnumMap<Direction, DyeColor> colors = new EnumMap<>(Direction.class);
     /** Only faces moved off 0 are kept. */
@@ -67,6 +74,17 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
 
     /** One server tick of this cable's network. */
     public abstract void serverTick();
+    /** Whether the wrench cut the link on {@code side}. */
+    public boolean isCut(Direction side) { return (cutSides & (1 << side.ordinal())) != 0; }
+
+    public void setCut(Direction side, boolean cut) {
+        int bit = 1 << side.ordinal();
+        int updated = cut ? cutSides | bit : cutSides & ~bit;
+        if (updated == cutSides) return;
+        cutSides = updated;
+        setChanged();
+    }
+
 
     public SideConfig connectors() { return connectors; }
 
@@ -133,13 +151,16 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-        return SideConfigVisuals.updateTag(connectors);
+        CompoundTag tag = SideConfigVisuals.updateTag(connectors);
+        if (cutSides != 0) tag.putInt(CUT_TAG, cutSides);
+        return tag;
     }
 
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket() { return ClientboundBlockEntityDataPacket.create(this); }
 
     @Override
+        cutSides = input.getIntOr(CUT_TAG, 0);
     public void handleUpdateTag(ValueInput input) {
         int previous = SideConfigVisuals.faceModes(connectors);
         connectors.load(input);
@@ -150,6 +171,7 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
     public void onDataPacket(Connection connection, ValueInput input) { handleUpdateTag(input); }
 
     @Override
+        cutSides = input.getIntOr(CUT_TAG, 0);
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
         connectors.load(input);
@@ -168,6 +190,7 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
     }
 
     @Override
+        if (cutSides != 0) output.putInt(CUT_TAG, cutSides);
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
         connectors.save(output);

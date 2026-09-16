@@ -6,6 +6,8 @@ import dev.futuretech.menu.CableConnectorMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
@@ -91,11 +93,63 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
         builder.add(NORTH, EAST, SOUTH, WEST, UP, DOWN);
     }
 
-    /** Cables join others of their kind and any block that offers their resource on the touching face. */
+    /**
+     * Cables join others of their kind and any block that offers their resource on the touching
+     * face, unless the wrench cut that side, on this cable or on the cable beyond.
+     */
     private boolean connectsTo(LevelReader level, BlockPos pos, Direction side) {
         BlockPos neighbour = pos.relative(side);
+        if (isCut(level, pos, side) || isCut(level, neighbour, side.getOpposite())) return false;
         if (joins(level.getBlockState(neighbour))) return true;
         return level instanceof Level realLevel && offers(realLevel, neighbour, side.getOpposite());
+    }
+
+    private static boolean isCut(LevelReader level, BlockPos pos, Direction side) {
+        return level.getBlockEntity(pos) instanceof AbstractCableBlockEntity cable && cable.isCut(side);
+    }
+
+    /**
+     * The wrench on a cable: cuts the link on the side the player hit, or restores a cut one. A
+     * side that is neither linked nor cut is left alone, so the click falls through to the block.
+     * Both cables of a run carry the cut, so either end restores it; both rebuild their networks.
+     */
+    public InteractionResult toggleLink(Level level, BlockPos pos, BlockState state, Vec3 hitLocation, Direction clickedFace) {
+        Direction side = hitSide(pos, hitLocation, clickedFace);
+        boolean linked = state.getValue(PROPERTY_BY_DIRECTION.get(side));
+        BlockPos neighbourPos = pos.relative(side);
+        AbstractCableBlockEntity cable = level.getBlockEntity(pos) instanceof AbstractCableBlockEntity own ? own : null;
+        AbstractCableBlockEntity beyond = level.getBlockEntity(neighbourPos) instanceof AbstractCableBlockEntity other
+                && other.kind() == kind() ? other : null;
+        if (cable == null) return InteractionResult.PASS;
+        boolean cut = cable.isCut(side) || (beyond != null && beyond.isCut(side.getOpposite()));
+        if (!linked && !cut) return InteractionResult.PASS;
+        if (level.isClientSide()) return InteractionResult.SUCCESS;
+        cable.setCut(side, linked);
+        if (beyond != null) beyond.setCut(side.getOpposite(), linked);
+        level.setBlock(pos, state.setValue(PROPERTY_BY_DIRECTION.get(side), !linked), UPDATE_ALL);
+        BlockState beyondState = level.getBlockState(neighbourPos);
+        if (beyondState.getBlock() instanceof AbstractCableBlock block && block.kind() == kind()) {
+            level.setBlock(neighbourPos, beyondState.setValue(PROPERTY_BY_DIRECTION.get(side.getOpposite()), !linked), UPDATE_ALL);
+        }
+        cable.invalidateNetwork();
+        if (beyond != null) beyond.invalidateNetwork();
+        level.playSound(null, pos, linked ? SoundEvents.CHAIN_BREAK : SoundEvents.CHAIN_PLACE, SoundSource.BLOCKS, 0.6F, 1.4F);
+        return InteractionResult.SUCCESS;
+    }
+
+    /**
+     * The side a click on the cable means: the arm or collar it landed on, told by the axis the
+     * hit point is farthest from the centre along; a hit on the core itself means the face hit.
+     */
+    static Direction hitSide(BlockPos pos, Vec3 hitLocation, Direction clickedFace) {
+        Vec3 local = hitLocation.subtract(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
+        double x = Math.abs(local.x), y = Math.abs(local.y), z = Math.abs(local.z);
+        double farthest = Math.max(x, Math.max(y, z));
+        // The core spans a quarter block each way from the centre; only the arms reach past it.
+        if (farthest <= 0.25 + 1.0E-4) return clickedFace;
+        if (farthest == x) return local.x > 0 ? Direction.EAST : Direction.WEST;
+        if (farthest == y) return local.y > 0 ? Direction.UP : Direction.DOWN;
+        return local.z > 0 ? Direction.SOUTH : Direction.NORTH;
     }
 
     @Override

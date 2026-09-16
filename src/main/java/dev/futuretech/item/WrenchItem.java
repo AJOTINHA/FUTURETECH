@@ -23,8 +23,9 @@ import java.util.List;
 /**
  * Right-clicking any block with the wrench turns it: a facing walks the compass and then up and
  * down, an axis cycles, and blocks with neither fall back to their own rotation logic. Runs
- * before the block itself is used, so machines with a GUI rotate instead of opening. Sneaking
- * instead picks the block up, contents included.
+ * before the block itself is used, so machines with a GUI rotate instead of opening. On a cable
+ * it cuts the link on the side clicked, or restores a cut one. Sneaking instead picks the block
+ * up, contents included.
  */
 public final class WrenchItem extends Item {
     /** Around the compass first, then up and down. */
@@ -41,6 +42,10 @@ public final class WrenchItem extends Item {
         BlockPos pos = context.getClickedPos();
         BlockState state = level.getBlockState(pos);
         if (context.isSecondaryUseActive()) return dismantle(state, level, pos, context.getPlayer());
+        // A cable has nothing to turn; the wrench cuts and restores its links instead.
+        if (state.getBlock() instanceof dev.futuretech.block.AbstractCableBlock cable) {
+            return cable.toggleLink(level, pos, state, context.getClickLocation(), context.getClickedFace());
+        }
         if (level.getBlockEntity(pos) instanceof dev.futuretech.block.entity.AssemblerBlockEntity arm
                 && arm.kind() == dev.futuretech.block.AssemblerBlock.Kind.TRANSPORT) {
             if (!level.isClientSide() && context.getPlayer() != null) arm.switchMode(context.getPlayer());

@@ -7,6 +7,7 @@ import dev.futuretech.block.entity.CableBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.PipeBlock;
 import net.neoforged.neoforge.capabilities.BlockCapabilityCache;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.transfer.energy.EnergyHandler;
@@ -100,6 +101,8 @@ public final class CableNetwork {
             members.add(cable);
             throughput = Math.min(throughput, cable.tier().throughput());
             for (Direction side : Direction.values()) {
+                // A side with no link, cut by the wrench or bare, joins no cable and reaches no machine.
+                if (!cable.getBlockState().getValue(PipeBlock.PROPERTY_BY_DIRECTION.get(side))) continue;
                 BlockPos neighbour = pos.relative(side);
                 if (!level.hasChunkAt(neighbour.getX(), neighbour.getZ())) continue;
                 if (level.getBlockState(neighbour).getBlock() instanceof CableBlock) {
