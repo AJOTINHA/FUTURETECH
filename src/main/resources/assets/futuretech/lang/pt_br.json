@@ -176,5 +176,9 @@
   "tooltip.futuretech.area_tool.plane": "Minera uma área 3×3 na face atingida.",
   "tooltip.futuretech.area_tool.tree": "Derruba a árvore inteira a partir de qualquer tronco.",
   "jei.futuretech.stats": "%s s · %s FE",
-  "block.futuretech.sawmill": "Serraria"
+  "block.futuretech.sawmill": "Serraria",
+  "item.futuretech.portable_battery": "Bateria Portátil",
+  "item.futuretech.portable_battery.on": "Bateria Portátil ligada",
+  "item.futuretech.portable_battery.off": "Bateria Portátil desligada",
+  "item.futuretech.portable_battery.pulled": "+%s FE"
 }

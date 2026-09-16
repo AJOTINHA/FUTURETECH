@@ -176,5 +176,9 @@
   "tooltip.futuretech.area_tool.plane": "Mines a 3×3 area on the struck face.",
   "tooltip.futuretech.area_tool.tree": "Fells the whole tree from any of its logs.",
   "jei.futuretech.stats": "%s s · %s FE",
-  "block.futuretech.sawmill": "Sawmill"
+  "block.futuretech.sawmill": "Sawmill",
+  "item.futuretech.portable_battery": "Portable Battery",
+  "item.futuretech.portable_battery.on": "Portable Battery on",
+  "item.futuretech.portable_battery.off": "Portable Battery off",
+  "item.futuretech.portable_battery.pulled": "+%s FE"
 }

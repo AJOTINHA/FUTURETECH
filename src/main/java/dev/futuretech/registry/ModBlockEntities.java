@@ -19,7 +19,9 @@ import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import dev.futuretech.item.PortableBatteryItem;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.transfer.energy.ItemAccessEnergyHandler;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -83,6 +85,10 @@ public final class ModBlockEntities {
                     ModBlocks.ASSEMBLY_TABLE.get(), ModBlocks.TRANSPORT_ARM.get(), ModBlocks.ASSEMBLY_ARM.get(), ModBlocks.ASSEMBLER_TERMINAL.get()));
 
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
+        // Energy items: the portable battery, and the battery blocks it can fill while they sit in a pocket.
+        event.registerItem(Capabilities.Energy.ITEM, (stack, access) -> PortableBatteryItem.handler(access), ModItems.PORTABLE_BATTERY.get());
+        event.registerItem(Capabilities.Energy.ITEM, (stack, access) -> new ItemAccessEnergyHandler(access,
+                ModDataComponents.ENERGY.get(), ModItems.BATTERY_MK1.get().tier(stack).capacity()), ModItems.BATTERY_MK1.get());
         event.registerBlockEntity(Capabilities.Energy.BLOCK, METAL_PRESS.get(), (press, side) ->
                 SidedEnergy.view(press.energy(), press.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Item.BLOCK, METAL_PRESS.get(), (press, side) ->

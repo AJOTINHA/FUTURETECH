@@ -274,6 +274,10 @@ O Triturador, a Serraria e a Fornalha Elétrica têm até quatro **faixas**, cad
 
 No inventário do bloco as entradas são os slots 0–3 e as saídas 4–7 (`SLOT_INPUT + faixa`, `SLOT_OUTPUT + faixa`); só as faixas abertas aparecem para funis, cabos e configuração de lados. Um funil ou cabo que empurra um mesmo item é distribuído entre as faixas abertas: cada item vai para a faixa que tem menos daquele item (vazias incluídas), então uma pilha se espalha e as faixas trabalham em paralelo em vez de encher a primeira. Um item diferente só entra numa faixa vazia. O progresso de cada faixa é salvo com o bloco (`Progress`, `Progress1`…) e o da faixa 0 usa as chaves antigas, então mundos anteriores continuam de onde estavam.
 
+## Bateria Portátil
+
+A **Bateria Portátil** (`futuretech:portable_battery`, 200.000 FE, não empilha) fica no inventário e carrega os outros itens que guardam energia — qualquer item com a capability de energia do NeoForge, inclusive as baterias-bloco do mod guardadas no bolso — a 500 FE por tick, do primeiro slot ao último. **Shift + clique direito** com ela na mão liga e desliga; ligada, ela brilha como um item encantado (é o `ENCHANTMENT_GLINT_OVERRIDE` vanilla, sem renderer próprio) e mostra "ligada" na tooltip. **Clique direito num bloco com energia** (bateria, máquina) enche a bateria a partir dele, de uma vez. A carga fica no componente `futuretech:energy`, o interruptor em `futuretech:active`. Receita: cobre em cima, chapas de ferro dos lados e dois blocos de redstone no meio. `python tools/generate_portable_battery.py` desenha o ícone.
+
 ## Tanque de fluido
 
 O **Tanque de Fluido** (`futuretech:fluid_tank`) usa a mesma armação metálica da bateria, com os seis vãos fechados por vidro. Guarda **16.000 mB (16 baldes)** de um fluido por vez. O conteúdo aparece dentro do bloco com a textura e a cor do fluido; a superfície sobe e desce suavemente conforme o tanque enche ou esvazia.

@@ -22,6 +22,13 @@ public final class ModDataComponents {
                     .networkSynchronized(ByteBufCodecs.VAR_INT)
                     .build());
 
+    /** Whether a portable battery is switched on. Absent means off. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>> ACTIVE = TYPES.register(
+            "active", () -> DataComponentType.<Boolean>builder()
+                    .persistent(com.mojang.serialization.Codec.BOOL)
+                    .networkSynchronized(ByteBufCodecs.BOOL)
+                    .build());
+
     /** Stored fluid and its components travel with the tank item. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<StoredTankFluid>> TANK_FLUID = TYPES.register(
             "tank_fluid", () -> DataComponentType.<StoredTankFluid>builder()
