@@ -61,10 +61,16 @@ public final class CableConnectorModel extends DelegateBlockStateModel {
         }
     }
 
-    /** The blocks covering this cable's faces; empty until the block entity's data arrives. */
+    /**
+     * The blocks covering this cable's faces; empty until the block entity's data arrives, and
+     * empty for as long as the player holds the wrench and sneaks, which is the see-through mode.
+     */
     private static Map<Direction,BlockState> facades(BlockAndTintGetter level, BlockPos pos) {
         var stored=level.getModelData(pos).get(CableFacades.FACADES);
-        return stored == null ? Map.of() : stored;
+        if (stored == null || stored.isEmpty()) return Map.of();
+        // Noted even while hidden: this is the cable that has to be drawn again when the mode flips.
+        FacadeVisibility.note(pos);
+        return FacadeVisibility.hidden() ? Map.of() : stored;
     }
 
     /**

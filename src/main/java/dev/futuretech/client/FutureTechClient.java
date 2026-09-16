@@ -45,6 +45,7 @@ public final class FutureTechClient {
         // Items travelling through cables are drawn from journeys the server reports.
         ItemJourneys.setDrawer(ItemTravel::add, ItemTravel::end);
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> ItemTravel.tick());
+        NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> FacadeVisibility.tick());
         // /futuretech perf: the server's tick measurements drawn over the blocks and on the HUD.
         PerfProfiling.setViewer(PerfOverlay::accept);
         NeoForge.EVENT_BUS.addListener(PerfOverlay::submitLabels);
