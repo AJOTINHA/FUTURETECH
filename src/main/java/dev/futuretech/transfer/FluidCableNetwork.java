@@ -190,6 +190,15 @@ public final class FluidCableNetwork {
         // it first empties that network's buffers instead of orphaning them.
         members.forEach(FluidCableBlockEntity::invalidateNetwork);
         members.forEach(member -> member.setNetwork(network));
+        // The cables keep showing what their old network showed. This one starts from that
+        // picture: a line still fed sees nothing change, and one that lost its flow sees the
+        // picture go once the grace runs out, instead of keeping it forever.
+        for (FluidCableBlockEntity member : members) {
+            if (!member.shown().isEmpty()) {
+                network.inherit(member.shown(), level.getGameTime());
+                break;
+            }
+        }
         return network;
     }
 
@@ -528,6 +537,17 @@ public final class FluidCableNetwork {
             }
             return List.of(from);
         });
+    }
+
+    /**
+     * Takes over a picture the cables were left showing, as if the fluid had just flowed: the
+     * first distribution tells them the new routes, and a line that never flows again tells
+     * them the picture went once the grace runs out.
+     */
+    void inherit(FluidStack fluid, long gameTime) {
+        shown = fluid.copy();
+        lastFluid = fluid.copy();
+        lastFlowTick = gameTime;
     }
 
     /**

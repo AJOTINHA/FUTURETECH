@@ -36,18 +36,49 @@ public final class FluidCableBlockEntity extends AbstractCableBlockEntity {
     private @Nullable Direction flow;
     /** Client only: the fluid being drawn, kept while its tail runs out after the network stops. */
     private FluidStack drawn = FluidStack.EMPTY;
-    /** Client: when the network last started or stopped showing fluid here; the wave leaves the entry then. */
-    private long waveTime = Long.MIN_VALUE / 2;
-    /** Client: cables between this one and the entry the fluid comes in by; -1 until traced. */
-    private int hops = -1;
-    /** Client: the way the fluid comes into this cable, found while tracing; null when unknown. */
+    /** A time so far back that any wave set off then has long passed. */
+    private static final long LONG_AGO = Long.MIN_VALUE / 2;
+    /** No time at all: a wave without a tail, or a start not yet worked out. */
+    private static final long NEVER = Long.MIN_VALUE;
+    /**
+     * Client: one passage of fluid through this cable: a front that came in when the fluid
+     * appeared, and a tail that came in when it stopped. Each sets off through this cable once
+     * it has passed the cable the fluid comes in by, so a wave runs cable by cable from wherever
+     * it began: the entry of the line, or the first empty cable after a cut. Neither ever stops:
+     * what is in the line keeps going to its end and out, and fluid coming back is a fresh wave
+     * behind it, which joins the one ahead if it ever catches it up.
+     */
+    private static final class Wave {
+        /** When the network showed the fluid, and stopped showing it, here. */
+        final long frontTime;
+        long tailTime = NEVER;
+        /** When the front and the tail actually came into this cable; {@link #NEVER} until worked out. */
+        long frontStart = NEVER;
+        long tailStart = NEVER;
+        /** Guards against a loop of stale directions while a start is worked out. */
+        boolean settling;
+
+        Wave(long frontTime) { this.frontTime = frontTime; }
+
+        Wave(long frontTime, long frontStart) {
+            this.frontTime = frontTime;
+            this.frontStart = frontStart;
+        }
+    }
+
+    /** Client: the wave the fluid is on now, and the one before it while its tail still runs out. */
+    private @Nullable Wave current;
+    private @Nullable Wave previous;
+    /** Client: the last way the network said the fluid runs through here; kept once the picture goes, so the tail can be traced. */
+    private @Nullable Direction lastFlow;
+    /** Client: the cable the fluid comes in by, and the way it comes; null when unknown or not yet traced. */
+    private @Nullable BlockPos upstream;
     private @Nullable Direction travel;
+    private boolean traced;
     /** Client: whether the first picture from the server has arrived; that one is not animated. */
     private boolean synced;
     /** Ticks the front takes to cross one cable; the wave runs the whole line at this pace. */
     public static final int TICKS_PER_CABLE = 10;
-    /** Longest line the trace follows back; past this the cable simply starts with its neighbour. */
-    private static final int MAX_TRACE = 256;
 
     public FluidCableBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.FLUID_CABLE.get(), pos, state, CableKind.FLUID);
@@ -68,84 +99,134 @@ public final class FluidCableBlockEntity extends AbstractCableBlockEntity {
     /** Client: the fluid to draw right now; the last one shown stays until its tail has run out. */
     public FluidStack drawnFluid() { return drawn; }
 
-    /**
-     * Where the fluid's front stands in this cable: {@code distance} from 0 to 1 along the way the
-     * fluid travels, measured from the face it comes in by. While {@code filling} the fluid
-     * occupies everything up to the front; afterwards the front is the tail and the fluid is what
-     * lies beyond it. A null {@code travel} means the way in is unknown and the fluid rises.
-     */
-    public record Front(@Nullable Direction travel, float distance, boolean filling) {}
+    /** A stretch of the cable the fluid occupies, 0 at the face it comes in by to 1 at the far face. */
+    public record Run(float from, float to) {
+        public boolean isEmpty() { return from >= to; }
+    }
 
     /**
-     * Client: the front to draw at {@code now}, or null while there is nothing to draw. The wave
-     * starts at the cable the fluid enters the line by and crosses one cable per
-     * {@value #TICKS_PER_CABLE} ticks, so a line fills, and later empties, from its entry outward
-     * instead of every cable filling on its own at once.
+     * What the fluid occupies in this cable along the way it travels: the run of the wave it is
+     * on, and, while the tail of the wave before still runs out, that one's run too. A null
+     * {@code travel} means the way in is unknown and the fluid rises.
+     */
+    public record Front(@Nullable Direction travel, Run first, @Nullable Run second) {}
+
+    /**
+     * Client: what to draw at {@code now}, or null while there is nothing to draw. A front or a
+     * tail crosses one cable per {@value #TICKS_PER_CABLE} ticks and moves on to the next once
+     * through, so a line fills, and later empties, cable by cable from wherever the change began.
+     * A cut lets what is already in the line run on to its end, the tail behind it; fluid coming
+     * back is a fresh wave behind that, joining it if it catches it up.
      */
     public @Nullable Front front(double now) {
         if (!shown.isEmpty()) drawn = shown;
-        if (drawn.isEmpty()) return null;
-        if (hops < 0) trace();
-        double start = waveTime + (double) hops * TICKS_PER_CABLE;
-        float distance = (float) Math.clamp((now - start) / TICKS_PER_CABLE, 0, 1);
-        boolean filling = !shown.isEmpty();
-        if (filling ? distance <= 0 : distance >= 1) {
-            if (!filling) drawn = FluidStack.EMPTY;
+        if (drawn.isEmpty() || current == null) return null;
+        Run first = run(current, now);
+        Run second = previous == null ? null : run(previous, now);
+        // The fresh wave, once in this cable, reaching what the tail left: from here on they are
+        // one. Before either has come in, both stand at 0 and nothing has met anything yet.
+        if (second != null && first.to() > 0 && first.to() >= second.from()) {
+            current.frontStart = previous.frontStart;
+            previous = null;
+            first = run(current, now);
+            second = null;
+        }
+        // A wave is over once its tail has passed; one whose front has not yet arrived is only waiting.
+        if (second != null && second.isEmpty() && passed(previous, now)) {
+            previous = null;
+            second = null;
+        }
+        if (first.isEmpty() && passed(current, now)) current = null;
+        if (first.isEmpty() && (second == null || second.isEmpty())) {
+            if (current == null && previous == null && shown.isEmpty()) drawn = FluidStack.EMPTY;
             return null;
         }
-        return new Front(travel, distance, filling);
+        return first.isEmpty() ? new Front(travel, second, null) : new Front(travel, first, second);
+    }
+
+    /** The stretch of this cable a wave occupies at {@code now}: from its tail, if any, to its front. */
+    private Run run(Wave wave, double now) {
+        float to = progress(now, frontStart(wave));
+        float from = wave.tailTime == NEVER ? 0 : progress(now, tailStart(wave));
+        return new Run(from, to);
+    }
+
+    /** Whether a wave's tail has run all the way through this cable. */
+    private boolean passed(Wave wave, double now) {
+        return wave.tailTime != NEVER && progress(now, tailStart(wave)) >= 1;
+    }
+
+    /** How far something that came into this cable at {@code since} has got through it, 0 to 1. */
+    private static float progress(double now, long since) {
+        return (float) Math.clamp((now - since) / TICKS_PER_CABLE, 0, 1);
     }
 
     /**
-     * Walks the line back to the cable the fluid enters by, counting cables and noting which way
-     * the fluid comes into this one. Traced once per change: the neighbours' routes are all in by
-     * the time anything is drawn.
+     * When a wave's front came into this cable: when the network showed the fluid here, unless
+     * the cable it comes in by was still filling then, in which case once that one was full. A
+     * cable with nothing before it, or nothing known, is where the wave begins.
      */
-    private void trace() {
-        hops = 0;
-        travel = flow;
-        if (level == null) return;
-        var seen = new java.util.HashSet<BlockPos>();
-        seen.add(worldPosition);
-        BlockPos at = worldPosition;
-        Direction route = flow;
-        while (hops < MAX_TRACE) {
-            BlockPos behind = upstreamOf(at, route, seen);
-            if (behind == null) break;
-            Direction into = Direction.getApproximateNearest(
-                    at.getX() - behind.getX(), at.getY() - behind.getY(), at.getZ() - behind.getZ());
-            if (hops == 0) travel = into;
-            seen.add(behind);
-            hops++;
-            at = behind;
-            FluidCableBlockEntity cable = showingCable(behind);
-            route = cable == null ? null : cable.flow();
+    private long frontStart(Wave wave) {
+        if (wave.frontStart == NEVER && !wave.settling) {
+            wave.settling = true;
+            long start = wave.frontTime;
+            FluidCableBlockEntity behind = behind();
+            if (behind != null && behind.current != null) start = Math.max(start, behind.frontStart(behind.current) + TICKS_PER_CABLE);
+            wave.frontStart = start;
+            wave.settling = false;
         }
+        return wave.frontStart == NEVER ? wave.frontTime : wave.frontStart;
+    }
+
+    /** When a wave's tail came into this cable, by the same rule as its front. */
+    private long tailStart(Wave wave) {
+        if (wave.tailStart == NEVER && !wave.settling) {
+            wave.settling = true;
+            long start = wave.tailTime;
+            FluidCableBlockEntity behind = behind();
+            Wave ahead = behind == null ? null : behind.current != null && behind.current.tailTime != NEVER ? behind.current : behind.previous;
+            if (ahead != null && ahead.tailTime != NEVER) start = Math.max(start, behind.tailStart(ahead) + TICKS_PER_CABLE);
+            wave.tailStart = start;
+            wave.settling = false;
+        }
+        return wave.tailStart == NEVER ? wave.tailTime : wave.tailStart;
+    }
+
+    /** The cable the fluid comes in by, traced once per change of picture; null at the start of the line. */
+    private @Nullable FluidCableBlockEntity behind() {
+        if (!traced) {
+            traced = true;
+            upstream = upstreamOf();
+            travel = upstream == null ? lastFlow : Direction.getApproximateNearest(
+                    worldPosition.getX() - upstream.getX(), worldPosition.getY() - upstream.getY(), worldPosition.getZ() - upstream.getZ());
+        }
+        return upstream == null || level == null || !(level.getBlockEntity(upstream) instanceof FluidCableBlockEntity cable) ? null : cable;
     }
 
     /**
-     * The cable the fluid reaches {@code at} from: a neighbour whose direction runs into this
+     * The cable the fluid reaches this one from: a neighbour whose direction runs into this
      * cable, else the cable behind this one's own direction. The network gives every cable a
-     * direction once fluid is in, on a route or spreading from the entry, so the walk ends only
-     * at the cable the fluid comes in by.
+     * direction once fluid is in, on a route or spreading from the entry, so only the cable the
+     * fluid comes in by has none. Goes by what the cables still draw and the last direction each
+     * was given, so it works after the picture has gone too, when the tail needs it.
      */
-    private @Nullable BlockPos upstreamOf(BlockPos at, @Nullable Direction route, java.util.Set<BlockPos> seen) {
+    private @Nullable BlockPos upstreamOf() {
         for (Direction side : Direction.values()) {
-            BlockPos next = at.relative(side);
-            FluidCableBlockEntity cable = showingCable(next);
-            if (cable != null && !seen.contains(next) && cable.flow() == side.getOpposite()) return next;
+            BlockPos next = worldPosition.relative(side);
+            FluidCableBlockEntity cable = drawingCable(next);
+            if (cable != null && cable.lastFlow == side.getOpposite()) return next;
         }
-        if (route != null) {
-            BlockPos behind = at.relative(route.getOpposite());
-            if (showingCable(behind) != null && !seen.contains(behind)) return behind;
+        if (lastFlow != null) {
+            BlockPos behind = worldPosition.relative(lastFlow.getOpposite());
+            if (drawingCable(behind) != null) return behind;
         }
         return null;
     }
 
-    /** The fluid cable at {@code pos} if it is showing the same fluid this one is, else null. */
-    private @Nullable FluidCableBlockEntity showingCable(BlockPos pos) {
+    /** The fluid cable at {@code pos} if it is drawing the same fluid this one is, else null. */
+    private @Nullable FluidCableBlockEntity drawingCable(BlockPos pos) {
         if (level == null || !(level.getBlockEntity(pos) instanceof FluidCableBlockEntity cable)) return null;
-        return !cable.shown().isEmpty() && FluidStack.isSameFluidSameComponents(cable.shown(), drawn) ? cable : null;
+        return !cable.drawn.isEmpty() && FluidStack.isSameFluidSameComponents(cable.drawn, drawn) ? cable : null;
     }
 
     /** Server: the network changed what it carries or which way; the clients get told with the next update tag. */
@@ -173,12 +254,28 @@ public final class FluidCableBlockEntity extends AbstractCableBlockEntity {
         shown = input.read(SHOWN_TAG, FluidStack.CODEC).orElse(FluidStack.EMPTY);
         flow = input.read(FLOW_TAG, Direction.CODEC).orElse(null);
         if (level == null || !level.isClientSide()) return;
-        // The wave sets off when fluid appears or goes; a cable that loads mid-flow shows it at once.
-        if (shown.isEmpty() != before.isEmpty() && synced) waveTime = level.getGameTime();
+        // Kept here, not where the cable is drawn: a neighbour traces its way in through this
+        // cable's fluid and direction whether or not this cable has been drawn yet, or ever is,
+        // and still once the picture has gone.
+        if (!shown.isEmpty()) drawn = shown;
+        if (flow != null) lastFlow = flow;
+        // Fluid appearing sends a front off; fluid going sends a tail. A cable that loads mid-flow
+        // shows it at once.
+        if (shown.isEmpty() != before.isEmpty()) {
+            long now = level.getGameTime();
+            if (!synced) {
+                current = shown.isEmpty() ? null : new Wave(LONG_AGO, LONG_AGO);
+            } else if (shown.isEmpty()) {
+                if (current != null) current.tailTime = now;
+            } else {
+                if (current != null && current.tailTime != Long.MIN_VALUE) previous = current;
+                current = new Wave(now);
+            }
+        }
         synced = true;
         // The way in is traced again while fluid shows; once it stops, the routes are gone from the
         // update and the trace from the flowing picture is what the tail follows out.
-        if (!shown.isEmpty() && (flow != routeBefore || !FluidStack.isSameFluidSameComponents(shown, before))) hops = -1;
+        if (!shown.isEmpty() && (flow != routeBefore || !FluidStack.isSameFluidSameComponents(shown, before))) traced = false;
     }
 
     /** The current network, rebuilt on demand after cables were added or removed nearby. */

@@ -48,10 +48,9 @@ public final class FluidCableRenderer implements BlockEntityRenderer<FluidCableB
         int fluidLight;
         /** The way the fluid comes into the cable; up when unknown, so it rises like a level. */
         Direction travel = Direction.UP;
-        /** How far the front has come along {@link #travel}, from 0 at the way in to 1 at the far face. */
-        float distance;
-        /** Whether the fluid lies behind the front (filling) or beyond it (its tail running out). */
-        boolean filling;
+        /** The stretches the fluid occupies along {@link #travel}, 0 at the way in to 1 at the far face. */
+        FluidCableBlockEntity.Run first = new FluidCableBlockEntity.Run(0, 1);
+        FluidCableBlockEntity.@Nullable Run second;
         final Set<Direction> arms = EnumSet.noneOf(Direction.class);
     }
 
@@ -77,8 +76,8 @@ public final class FluidCableRenderer implements BlockEntityRenderer<FluidCableB
         state.fluidLight = LightCoordsUtil.lightCoordsWithEmission(state.lightCoords,
                 Math.clamp(fluid.getFluidType().getLightLevel(fluid), 0, 15));
         state.travel = front.travel() == null ? Direction.UP : front.travel();
-        state.distance = front.distance();
-        state.filling = front.filling();
+        state.first = front.first();
+        state.second = front.second();
         for (Direction side : Direction.values()) {
             if (cable.getBlockState().getValue(AbstractCableBlock.PROPERTY_BY_DIRECTION.get(side))) state.arms.add(side);
         }
@@ -88,15 +87,29 @@ public final class FluidCableRenderer implements BlockEntityRenderer<FluidCableB
     public void submit(State state, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
         TextureAtlasSprite sprite = state.sprite;
         if (sprite == null) return;
-        var stream = new Stream(sprite, ARGB.opaque(state.color), state.fluidLight, state.distance, state.filling);
+        var stream = new Stream(sprite, ARGB.opaque(state.color), state.fluidLight);
         Set<Direction> arms = EnumSet.copyOf(state.arms);
         Direction travel = state.travel;
+        var first = state.first;
+        var second = state.second;
         collector.submitCustomGeometry(pose, RenderTypes.entityTranslucent(sprite.atlasLocation()), (p, buffer) -> {
-            // The core and its arms are one body: neither draws the face where it meets the other,
-            // so no two translucent faces share a plane and the seams stay invisible.
-            // The core and the arm the fluid comes in by are cut along the way in; every other arm
-            // is cut along its own way out, so the front leaves the core through all of them at once.
-            stream.box(p, buffer, INNER, INNER, INNER, OUTER, OUTER, OUTER, arms, travel);
+            stream.body(p, buffer, arms, travel, first.from(), first.to());
+            if (second != null) stream.body(p, buffer, arms, travel, second.from(), second.to());
+        });
+    }
+
+    /** The fluid's look for one frame: its sprite, tint and light. */
+    private record Stream(TextureAtlasSprite sprite, int color, int light) {
+        /**
+         * The core and its arms, kept only between {@code from} and {@code to} along the way the
+         * fluid travels, 0 at the face it comes in by. They are one body: neither draws the face
+         * where it meets the other, so no two translucent faces share a plane and the seams stay
+         * invisible. The core and the arm the fluid comes in by are measured along the way in;
+         * every other arm along its own way out, so the front leaves the core through all of them
+         * at once.
+         */
+        void body(PoseStack.Pose pose, VertexConsumer buffer, Set<Direction> arms, Direction travel, float from, float to) {
+            box(pose, buffer, INNER, INNER, INNER, OUTER, OUTER, OUTER, arms, travel, from, to);
             for (Direction side : arms) {
                 float x0 = INNER, y0 = INNER, z0 = INNER, x1 = OUTER, y1 = OUTER, z1 = OUTER;
                 switch (side) {
@@ -108,43 +121,36 @@ public final class FluidCableRenderer implements BlockEntityRenderer<FluidCableB
                     case SOUTH -> { z0 = OUTER; z1 = 1; }
                 }
                 Direction along = side == travel.getOpposite() ? travel : side;
-                stream.box(p, buffer, x0, y0, z0, x1, y1, z1, EnumSet.of(side.getOpposite()), along);
+                box(pose, buffer, x0, y0, z0, x1, y1, z1, EnumSet.of(side.getOpposite()), along, from, to);
             }
-        });
-    }
+        }
 
-    /** The fluid's look for one frame: its sprite, tint, light, and where its front stands along whatever way a box is cut. */
-    private record Stream(TextureAtlasSprite sprite, int color, int light, float distance, boolean filling) {
         /**
-         * A box with the faces in {@code skip} left out, cut by the front along {@code along}:
-         * {@code distance} is measured from the face the front sets out from, the one behind
-         * {@code along}. While filling, what lies past the front is not drawn; while the tail runs
-         * out, what lies before it is not. A box the front cuts through gets a face there.
+         * A box with the faces in {@code skip} left out, kept only between {@code from} and
+         * {@code to} along {@code along}, both measured from the face behind {@code along}. A box
+         * cut through at either end gets a face there.
          */
         void box(PoseStack.Pose pose, VertexConsumer buffer, float x0, float y0, float z0, float x1, float y1, float z1,
-                 Set<Direction> skip, Direction along) {
+                 Set<Direction> skip, Direction along, float from, float to) {
             boolean positive = along.getAxisDirection() == Direction.AxisDirection.POSITIVE;
-            // In block coordinates the front sits here; the kept side is the one the front set out from.
-            float cut = positive ? distance : 1 - distance;
-            boolean keepLow = filling == positive;
+            // In block coordinates the kept run lies here.
+            float keepLo = positive ? from : 1 - to;
+            float keepHi = positive ? to : 1 - from;
             float lo = switch (along.getAxis()) { case X -> x0; case Y -> y0; case Z -> z0; };
             float hi = switch (along.getAxis()) { case X -> x1; case Y -> y1; case Z -> z1; };
-            Direction cap = null;
-            if (keepLow) {
-                if (lo >= cut) return;
-                if (hi > cut) { hi = cut; cap = Direction.fromAxisAndDirection(along.getAxis(), Direction.AxisDirection.POSITIVE); }
-            } else {
-                if (hi <= cut) return;
-                if (lo < cut) { lo = cut; cap = Direction.fromAxisAndDirection(along.getAxis(), Direction.AxisDirection.NEGATIVE); }
-            }
+            if (lo >= keepHi || hi <= keepLo) return;
+            Direction capLo = null, capHi = null;
+            if (lo < keepLo) { lo = keepLo; capLo = Direction.fromAxisAndDirection(along.getAxis(), Direction.AxisDirection.NEGATIVE); }
+            if (hi > keepHi) { hi = keepHi; capHi = Direction.fromAxisAndDirection(along.getAxis(), Direction.AxisDirection.POSITIVE); }
             switch (along.getAxis()) {
                 case X -> { x0 = lo; x1 = hi; }
                 case Y -> { y0 = lo; y1 = hi; }
                 case Z -> { z0 = lo; z1 = hi; }
             }
-            if (cap != null && skip.contains(cap)) {
+            if ((capLo != null && skip.contains(capLo)) || (capHi != null && skip.contains(capHi))) {
                 skip = EnumSet.copyOf(skip);
-                skip.remove(cap);
+                if (capLo != null) skip.remove(capLo);
+                if (capHi != null) skip.remove(capHi);
             }
             if (!skip.contains(Direction.NORTH)) face(pose, buffer, 0, 0, -1, v(x0, y1, z0), v(x1, y1, z0), v(x1, y0, z0), v(x0, y0, z0));
             if (!skip.contains(Direction.SOUTH)) face(pose, buffer, 0, 0, 1, v(x0, y0, z1), v(x1, y0, z1), v(x1, y1, z1), v(x0, y1, z1));
