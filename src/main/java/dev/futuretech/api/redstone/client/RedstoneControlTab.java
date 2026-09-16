@@ -7,19 +7,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.RenderPipelines;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.core.BlockPos;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.RedstoneTorchBlock;
-import net.minecraft.world.level.block.state.BlockState;
-import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -36,35 +27,14 @@ public final class RedstoneControlTab<M extends AbstractContainerMenu & Redstone
     private static final int UNSELECTED = 0xFF56616D;
 
     private final M menu;
-    private @Nullable TextureAtlasSprite unlitTorch;
 
     public RedstoneControlTab(M menu, Font font) {
         super(font);
         this.menu = menu;
     }
 
-    /** Draws the 16 px icon of a mode: gunpowder that turns into redstone dust once chosen, an unlit torch or a lit torch. */
-    private void drawModeIcon(GuiGraphicsExtractor graphics, RedstoneMode mode, boolean selected, int x, int y) {
-        switch (mode) {
-            case IGNORED -> graphics.item(new ItemStack(selected ? Items.REDSTONE : Items.GUNPOWDER), x, y);
-            case HIGH -> graphics.item(new ItemStack(Items.REDSTONE_TORCH), x, y);
-            case LOW -> {
-                TextureAtlasSprite sprite = unlitTorchSprite();
-                if (sprite != null) graphics.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, x, y, TILE, TILE);
-                else graphics.item(new ItemStack(Items.REDSTONE_TORCH), x, y);
-            }
-        }
-    }
-
-    /** There is no unlit torch item, so the icon comes from the unlit block state's texture. */
-    private @Nullable TextureAtlasSprite unlitTorchSprite() {
-        if (unlitTorch != null) return unlitTorch;
-        var level = Minecraft.getInstance().level;
-        if (level == null) return null;
-        BlockState state = Blocks.REDSTONE_TORCH.defaultBlockState().setValue(RedstoneTorchBlock.LIT, false);
-        var model = Minecraft.getInstance().getModelManager().getBlockStateModelSet().get(state);
-        unlitTorch = model.particleMaterial(level, BlockPos.ZERO, state).sprite();
-        return unlitTorch;
+    private static void drawModeIcon(GuiGraphicsExtractor graphics, RedstoneMode mode, boolean selected, int x, int y) {
+        RedstoneModeIcons.draw(graphics, mode, selected, x, y);
     }
 
     @Override

@@ -20,6 +20,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ScheduledTickAccess;
+import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.PipeBlock;
@@ -299,6 +300,16 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
                     && level.getBlockEntity(neighbour) instanceof AbstractCableBlockEntity cable) {
                 cable.invalidateNetwork();
             }
+        }
+    }
+
+    /** The connectors follow the cable's own signal, sampled here, the way the machines sample theirs. */
+    @Override
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block,
+                                   @Nullable Orientation orientation, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, block, orientation, movedByPiston);
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof AbstractCableBlockEntity cable) {
+            cable.samplePower(level);
         }
     }
 

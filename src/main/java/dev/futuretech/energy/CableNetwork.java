@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 /**
  * A group of touching cables that behaves as one energy buffer. Neighbours push energy into any
@@ -47,6 +48,12 @@ public final class CableNetwork {
          * ordinary junction, and pulling there would drain every machine a cable happens to touch.
          */
         boolean pulls();
+
+        /** Whether this connector is set to deliver, whatever redstone says right now. */
+        default boolean mayDeliver() { return delivers(); }
+
+        /** Whether this connector is set to pull, whatever redstone says right now. */
+        default boolean mayPull() { return pulls(); }
 
         @Nullable EnergyHandler handler();
     }
@@ -81,9 +88,10 @@ public final class CableNetwork {
         this.buffer = new TickLimitedEnergyHandler(throughput, throughput, throughput, () -> {});
         this.cables = Set.copyOf(cables);
         this.endpoints = List.copyOf(endpoints);
-        this.pumps = this.endpoints.stream().anyMatch(Endpoint::pulls);
-        this.deliverers = this.endpoints.stream().filter(Endpoint::delivers).toList();
-        this.pumpers = this.endpoints.stream().filter(Endpoint::pulls).toList();
+        // Sorted by what the connectors are set to; whether redstone lets each work is asked per tick.
+        this.pumps = this.endpoints.stream().anyMatch(Endpoint::mayPull);
+        this.deliverers = this.endpoints.stream().filter(Endpoint::mayDeliver).toList();
+        this.pumpers = this.endpoints.stream().filter(Endpoint::mayPull).toList();
     }
 
     /** Flood-fills the cables touching {@code start} and gives every one of them this network. */
@@ -114,8 +122,10 @@ public final class CableNetwork {
                     // A face on "none" neither delivers nor pulls: most faces border air or the
                     // ground, and keeping them would have every tick walk a list of nothing.
                     if (mode == SideMode.NONE) continue;
+                    // Redstone is the one thing read live: a signal flips too often to rebuild for.
                     endpoints.add(new CachedEndpoint(new EndpointKey(pos, side),
                             mode.allowsOutput(), mode.allowsInput() && !mode.allowsOutput(),
+                            () -> cable.connectorActive(side),
                             BlockCapabilityCache.create(
                                     Capabilities.Energy.BLOCK, level, neighbour, side.getOpposite())));
                 }
@@ -188,6 +198,7 @@ public final class CableNetwork {
         sinkRoomTick = lastTick;
         long room = 0;
         for (Endpoint endpoint : deliverers) {
+            if (!endpoint.delivers()) continue;
             EnergyHandler handler = endpoint.handler();
             if (handler == null) continue;
             room += Math.max(0, handler.getCapacityAsLong() - handler.getAmountAsLong());
@@ -212,6 +223,7 @@ public final class CableNetwork {
             boolean found = false;
             for (Endpoint endpoint : pumpers) {
                 if (buffer.inputRemaining() <= 0) break;
+                if (!endpoint.pulls()) continue;
                 EnergyHandler source = endpoint.handler();
                 if (source == null || source.getAmountAsLong() <= 0) continue;
                 found = true;
@@ -227,7 +239,7 @@ public final class CableNetwork {
         }
         sinks.clear();
         for (Endpoint endpoint : deliverers) {
-            if (fedSinceLastDistribution.contains(endpoint.key().neighbour())) continue;
+            if (!endpoint.delivers() || fedSinceLastDistribution.contains(endpoint.key().neighbour())) continue;
             EnergyHandler handler = endpoint.handler();
             // A full machine is skipped here, before a transaction is opened for it.
             if (handler != null && handler.getAmountAsLong() < handler.getCapacityAsLong()) sinks.add(handler);
@@ -271,8 +283,15 @@ public final class CableNetwork {
         return moved;
     }
 
-    private record CachedEndpoint(EndpointKey key, boolean delivers, boolean pulls,
+    /** {@code mayDeliver} and {@code mayPull} are the connector's settings; {@code active} is whether redstone lets it work now. */
+    private record CachedEndpoint(EndpointKey key, boolean mayDeliver, boolean mayPull, BooleanSupplier active,
                                  BlockCapabilityCache<EnergyHandler, Direction> cache) implements Endpoint {
+        @Override
+        public boolean delivers() { return mayDeliver && active.getAsBoolean(); }
+
+        @Override
+        public boolean pulls() { return mayPull && active.getAsBoolean(); }
+
         @Override
         public @Nullable EnergyHandler handler() { return cache.getCapability(); }
     }

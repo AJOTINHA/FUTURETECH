@@ -96,6 +96,53 @@ class CableNetworkTest {
         assertEquals(THROUGHPUT, network.lastMoved());
     }
 
+    /** A delivering connector whose redstone switch the test flips between ticks. */
+    private static final class SwitchedEndpoint implements CableNetwork.Endpoint {
+        private final Direction side;
+        private final EnergyHandler handler;
+        boolean active = true;
+
+        SwitchedEndpoint(Direction side, EnergyHandler handler) {
+            this.side = side;
+            this.handler = handler;
+        }
+
+        @Override
+        public CableNetwork.EndpointKey key() { return new CableNetwork.EndpointKey(CABLE, side); }
+
+        @Override
+        public boolean delivers() { return active; }
+
+        @Override
+        public boolean mayDeliver() { return true; }
+
+        @Override
+        public boolean pulls() { return false; }
+
+        @Override
+        public EnergyHandler handler() { return handler; }
+    }
+
+    @Test
+    void redstoneSwitchesAConnectorOffAndOnWithoutRebuildingTheNetwork(MinecraftServer server) {
+        var machine = new SimpleEnergyHandler(10_000);
+        var other = new SimpleEnergyHandler(10_000);
+        var switched = new SwitchedEndpoint(Direction.NORTH, machine);
+        var network = network(switched, new FakeEndpoint(Direction.SOUTH, other));
+        switched.active = false;
+        assertEquals(THROUGHPUT, insert(network, Direction.UP, THROUGHPUT));
+        network.tick(1);
+        // Off: the whole tick went to the other connector; the switched one saw nothing.
+        assertEquals(0, machine.getAmountAsInt());
+        assertEquals(THROUGHPUT, other.getAmountAsInt());
+        switched.active = true;
+        assertEquals(THROUGHPUT, insert(network, Direction.UP, THROUGHPUT));
+        network.tick(2);
+        // On again, on the same network: it takes its share of the next tick.
+        assertEquals(THROUGHPUT / 2, machine.getAmountAsInt());
+        assertEquals(THROUGHPUT + THROUGHPUT / 2, other.getAmountAsInt());
+    }
+
     @Test
     void aConnectorSetToExtractOnlyPullsFromABlockThatNeverPushes(MinecraftServer server) {
         // A battery only pushes through its own output faces. Set to input, it just sits on its

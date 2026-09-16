@@ -3,6 +3,8 @@ package dev.futuretech.client;
 import static dev.futuretech.client.MachineScreenStyle.*;
 
 import dev.futuretech.FutureTech;
+import dev.futuretech.api.redstone.RedstoneMode;
+import dev.futuretech.api.redstone.client.RedstoneModeIcons;
 import dev.futuretech.menu.CableConnectorMenu;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -17,13 +19,16 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.DyeColor;
 import org.jspecify.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * One connector's two directions, on the same grey panel and dark blue header the machines use.
  * The buttons borrow the side configuration's toggle look, in the palette the mod already uses
  * for energy: blue on one direction, orange on the other. Cables whose connectors carry a
  * priority get a third row under them, with the value between a minus and a plus; cables whose
  * connectors carry a colour get a row with a swatch of it that unfolds a picker of the sixteen
- * dyes below; cables
+ * dyes below. Every kind gets a redstone row, under the channel where there is one, with the
+ * mode's icon unfolding a picker of the three modes the same way. Cables
  * whose connectors take a filter card get a row with the card's slot, a gear that opens the card
  * once one is in, and the player's inventory below to take the card from.
  */
@@ -46,7 +51,16 @@ public final class CableConnectorScreen extends AbstractContainerScreen<CableCon
     private static final int VALUE_WIDTH = 26;
     private static final int STEP_GAP = 4;
     private static final int CHANNEL_TOP = PRIORITY_TOP + STEP_SIZE + GAP;
-    private static final int COLOR_TOP = CHANNEL_TOP + STEP_SIZE + GAP;
+    /** The redstone row sits under the channel on kinds that have one, else where the priority would be. */
+    private static final int REDSTONE_TOP = CHANNEL_TOP + STEP_SIZE + GAP;
+    private static final int COLOR_TOP = REDSTONE_TOP + 18 + GAP;
+    private static final int REDSTONE_TILE = RedstoneModeIcons.SIZE;
+    private static final int REDSTONE_PITCH = REDSTONE_TILE + 4;
+    private static final int REDSTONE_PADDING = 3;
+    private static final int REDSTONE_PICKER_WIDTH = REDSTONE_PADDING * 2 + RedstoneMode.values().length * REDSTONE_PITCH - 4;
+    private static final int REDSTONE_PICKER_HEIGHT = REDSTONE_PADDING * 2 + REDSTONE_TILE;
+    private static final int REDSTONE_SELECTED = 0xFFEC761C;
+    private static final int REDSTONE_UNSELECTED = 0xFF56616D;
     private static final int PICKER_COLUMNS = 4;
     private static final int PICKER_SWATCH = 12;
     private static final int PICKER_PITCH = PICKER_SWATCH + 2;
@@ -76,11 +90,18 @@ public final class CableConnectorScreen extends AbstractContainerScreen<CableCon
     private static final Box PICKER = new Box(COLOR.x(), COLOR.y() + COLOR.height() + 1, PICKER_SIZE, PICKER_SIZE);
 
     private boolean pickerOpen;
+    private boolean redstonePickerOpen;
+    /** The redstone swatch, in the colour's column; where it sits depends on the kind's rows. */
+    private final Box redstone;
+    /** The redstone picker hangs off its swatch's bottom edge, like the colour's. */
+    private final Box redstonePicker;
     private static final Box GEAR_BOX = new Box(FILTER.x() + FILTER.width() + GAP, CableConnectorMenu.FILTER_SLOT_Y, GEAR_SIZE, GEAR_SIZE);
 
     public CableConnectorScreen(CableConnectorMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, WIDTH, height(menu));
         titleLabelX = MARGIN;
+        redstone = new Box(COLOR.x(), menu.kind().coloured() ? REDSTONE_TOP : PRIORITY_TOP, 18, 18);
+        redstonePicker = new Box(redstone.x(), redstone.y() + redstone.height() + 1, REDSTONE_PICKER_WIDTH, REDSTONE_PICKER_HEIGHT);
         // Without a filter row there are no slots and no player inventory, so no inventory label either.
         inventoryLabelY = menu.kind().filtered() ? CableConnectorMenu.INVENTORY_TOP - 12 : Integer.MIN_VALUE;
     }
@@ -89,8 +110,8 @@ public final class CableConnectorScreen extends AbstractContainerScreen<CableCon
     private static int height(CableConnectorMenu menu) {
         if (menu.kind().filtered()) return CableConnectorMenu.INVENTORY_TOP + 82;
         if (menu.kind().coloured()) return COLOR_TOP + 18 + MARGIN;
-        if (menu.kind().prioritised()) return PRIORITY_TOP + STEP_SIZE + MARGIN;
-        return BUTTON_TOP + BUTTON_HEIGHT + MARGIN;
+        // Every kind ends with the redstone row; without a priority it takes that row's place.
+        return PRIORITY_TOP + 18 + MARGIN;
     }
 
     private boolean isOver(Box box, int mouseX, int mouseY) {
@@ -111,10 +132,42 @@ public final class CableConnectorScreen extends AbstractContainerScreen<CableCon
         return null;
     }
 
+    private Box redstoneTile(RedstoneMode mode) {
+        return new Box(redstonePicker.x() + REDSTONE_PADDING + mode.ordinal() * REDSTONE_PITCH,
+                redstonePicker.y() + REDSTONE_PADDING, REDSTONE_TILE, REDSTONE_TILE);
+    }
+
+    /** The redstone mode under the pointer while its picker is open, if any. */
+    private @Nullable RedstoneMode redstoneAt(int mouseX, int mouseY) {
+        if (!redstonePickerOpen) return null;
+        for (RedstoneMode mode : RedstoneMode.values()) {
+            if (isOver(redstoneTile(mode), mouseX, mouseY)) return mode;
+        }
+        return null;
+    }
+
     /** The picker is drawn after the slots, on its own stratum, so it sits over the rows beneath it. */
     @Override
     public void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         super.extractContents(graphics, mouseX, mouseY, partialTick);
+        if (redstonePickerOpen) {
+            graphics.nextStratum();
+            int x = leftPos + redstonePicker.x();
+            int y = topPos + redstonePicker.y();
+            graphics.fill(x - 1, y - 1, x + redstonePicker.width() + 1, y + redstonePicker.height() + 1, 0xFF111820);
+            graphics.fill(x, y, x + redstonePicker.width(), y + redstonePicker.height(), 0xFF65717D);
+            for (RedstoneMode mode : RedstoneMode.values()) {
+                Box tile = redstoneTile(mode);
+                int tx = leftPos + tile.x();
+                int ty = topPos + tile.y();
+                boolean selected = mode == menu.redstone();
+                graphics.fill(tx - 1, ty - 1, tx + REDSTONE_TILE + 1, ty + REDSTONE_TILE + 1, selected ? REDSTONE_SELECTED : REDSTONE_UNSELECTED);
+                graphics.fill(tx, ty, tx + REDSTONE_TILE, ty + REDSTONE_TILE, 0xFF8B959F);
+                RedstoneModeIcons.draw(graphics, mode, selected, tx, ty);
+                if (isOver(tile, mouseX, mouseY)) graphics.fill(tx, ty, tx + REDSTONE_TILE, ty + REDSTONE_TILE, 0x40FFFFFF);
+            }
+            return;
+        }
         if (!pickerOpen) return;
         graphics.nextStratum();
         int x = leftPos + PICKER.x();
@@ -138,6 +191,12 @@ public final class CableConnectorScreen extends AbstractContainerScreen<CableCon
         drawPanel(graphics, leftPos, topPos, imageWidth, imageHeight);
         drawButton(graphics, INSERT, menu.inserts() ? INSERT_COLOR : OFF_COLOR, mouseX, mouseY);
         drawButton(graphics, EXTRACT, menu.extracts() ? EXTRACT_COLOR : OFF_COLOR, mouseX, mouseY);
+        // A slot frame holding the mode's icon, like the colour swatch, so it reads as one more setting.
+        int rx = leftPos + redstone.x() + 1;
+        int ry = topPos + redstone.y() + 1;
+        drawSlot(graphics, rx, ry);
+        RedstoneModeIcons.draw(graphics, menu.redstone(), true, rx, ry);
+        if (isOver(redstone, mouseX, mouseY)) graphics.fill(rx, ry, rx + 16, ry + 16, 0x40FFFFFF);
         if (!menu.kind().prioritised()) return;
         drawStepper(graphics, LOWER, VALUE, RAISE, mouseX, mouseY);
         if (menu.kind().coloured()) {
@@ -188,6 +247,8 @@ public final class CableConnectorScreen extends AbstractContainerScreen<CableCon
         graphics.text(font, title, titleLabelX, titleLabelY, TITLE, false);
         drawCentred(graphics, INSERT, Component.translatable("gui.futuretech.cable.insert"), menu.inserts() ? TITLE : 0xFFC6CED6);
         drawCentred(graphics, EXTRACT, Component.translatable("gui.futuretech.cable.extract"), menu.extracts() ? TITLE : 0xFFC6CED6);
+        graphics.text(font, Component.translatable("gui.futuretech.redstone"), MARGIN,
+                redstone.y() + (redstone.height() - font.lineHeight) / 2, TITLE, false);
         if (!menu.kind().prioritised()) return;
         int baseline = PRIORITY_TOP + (STEP_SIZE - font.lineHeight) / 2;
         String keys = menu.kind().translationKey();
@@ -232,13 +293,27 @@ public final class CableConnectorScreen extends AbstractContainerScreen<CableCon
 
     @Override
     protected void extractTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        // While the picker is open only its dyes answer, by name; nothing under it does.
+        // While a picker is open only its tiles answer; nothing under it does.
+        if (redstonePickerOpen) {
+            RedstoneMode mode = redstoneAt(mouseX, mouseY);
+            if (mode != null) graphics.setTooltipForNextFrame(List.of(
+                    Component.translatable(mode.translationKey()).getVisualOrderText(),
+                    Component.translatable(mode.descriptionKey()).getVisualOrderText()), mouseX, mouseY);
+            return;
+        }
         if (pickerOpen) {
             DyeColor color = pickerAt(mouseX, mouseY);
             if (color != null) graphics.setTooltipForNextFrame(colorName(color), mouseX, mouseY);
             return;
         }
         super.extractTooltip(graphics, mouseX, mouseY);
+        if (isOver(redstone, mouseX, mouseY)) {
+            graphics.setTooltipForNextFrame(List.of(
+                    Component.translatable(menu.redstone().translationKey()).getVisualOrderText(),
+                    Component.translatable(menu.isPowered() ? "gui.futuretech.redstone.powered" : "gui.futuretech.redstone.unpowered").getVisualOrderText()),
+                    mouseX, mouseY);
+            return;
+        }
         if (menu.kind().coloured() && isOver(COLOR, mouseX, mouseY)) {
             graphics.setTooltipForNextFrame(colorName(menu.color()), mouseX, mouseY);
         }
@@ -260,6 +335,13 @@ public final class CableConnectorScreen extends AbstractContainerScreen<CableCon
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         int mouseX = (int) event.x();
         int mouseY = (int) event.y();
+        if (redstonePickerOpen) {
+            // A tile picks and closes; anything else just closes, without reaching what is underneath.
+            RedstoneMode mode = redstoneAt(mouseX, mouseY);
+            redstonePickerOpen = false;
+            if (mode != null) send(CableConnectorMenu.SET_REDSTONE + mode.ordinal());
+            return true;
+        }
         if (pickerOpen) {
             // A dye picks and closes; anything else just closes, without reaching what is underneath.
             DyeColor color = pickerAt(mouseX, mouseY);
@@ -270,7 +352,11 @@ public final class CableConnectorScreen extends AbstractContainerScreen<CableCon
         int button = -1;
         if (isOver(INSERT, mouseX, mouseY)) button = CableConnectorMenu.TOGGLE_INSERT;
         else if (isOver(EXTRACT, mouseX, mouseY)) button = CableConnectorMenu.TOGGLE_EXTRACT;
-        else if (menu.kind().prioritised()) {
+        else if (isOver(redstone, mouseX, mouseY)) {
+            redstonePickerOpen = true;
+            Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
+            return true;
+        } else if (menu.kind().prioritised()) {
             // Shift takes the bigger step, so reaching the ends of the range is a few clicks.
             boolean fast = event.hasShiftDown();
             if (isOver(RAISE, mouseX, mouseY)) {

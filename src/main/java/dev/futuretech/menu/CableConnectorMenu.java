@@ -1,5 +1,6 @@
 package dev.futuretech.menu;
 
+import dev.futuretech.api.redstone.RedstoneMode;
 import dev.futuretech.api.side.SideMode;
 import dev.futuretech.api.upgrade.UpgradeInventory;
 import dev.futuretech.block.CableKind;
@@ -25,8 +26,8 @@ import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 
 /**
- * One cable connector's two directions and, on cables that have them, its priority and filter
- * card. The face being configured and the cable's kind ride in the opening packet, so both sides
+ * One cable connector's two directions, how it answers to redstone and, on cables that have
+ * them, its priority and filter card. The face being configured and the cable's kind ride in the opening packet, so both sides
  * build the same slots from the start; the mode and priority travel as data slots and the button
  * clicks ride vanilla's own channel. Only a filtered kind has slots at all: the card's own, the
  * upgrade module's, and the player's inventory to take them from.
@@ -36,7 +37,7 @@ import org.jspecify.annotations.Nullable;
  * resource enters the cable there, which is the face allowing input.
  */
 public final class CableConnectorMenu extends AbstractContainerMenu {
-    public static final int DATA_COUNT = 4;
+    public static final int DATA_COUNT = 6;
     public static final int TOGGLE_INSERT = 0;
     public static final int TOGGLE_EXTRACT = 1;
     public static final int RAISE_PRIORITY = 2;
@@ -53,16 +54,20 @@ public final class CableConnectorMenu extends AbstractContainerMenu {
     public static final int RAISE_CHANNEL_FAST = 32;
     public static final int LOWER_CHANNEL_FAST = 33;
     public static final int FAST_STEP = 10;
+    /** {@code SET_REDSTONE + mode.ordinal()} picks how the connector answers to redstone. */
+    public static final int SET_REDSTONE = 40;
     /** Where the module's and the card's slots sit on the panel, in line with the minus buttons above; the screen draws the rows around them. */
     public static final int UPGRADE_SLOT_X = 97;
-    public static final int UPGRADE_SLOT_Y = 142;
+    public static final int UPGRADE_SLOT_Y = 168;
     public static final int FILTER_SLOT_X = 97;
-    public static final int FILTER_SLOT_Y = 168;
-    public static final int INVENTORY_TOP = 198;
+    public static final int FILTER_SLOT_Y = 194;
+    public static final int INVENTORY_TOP = 224;
     private static final int MODE = 0;
     private static final int PRIORITY = 1;
     private static final int COLOR = 2;
     private static final int CHANNEL = 3;
+    private static final int REDSTONE = 4;
+    private static final int POWERED = 5;
     private static final int FILTER_SLOT = 0;
     private static final int UPGRADE_SLOT = 1;
     private static final int INVENTORY_START = 2;
@@ -133,7 +138,9 @@ public final class CableConnectorMenu extends AbstractContainerMenu {
                     case MODE -> cable.connectors().mode(side).ordinal();
                     case PRIORITY -> cable.connectorPriority(side);
                     case COLOR -> cable.connectorColor(side).ordinal();
-                    default -> cable.connectorChannel(side);
+                    case CHANNEL -> cable.connectorChannel(side);
+                    case REDSTONE -> cable.connectorRedstone(side).ordinal();
+                    default -> cable.isPowered() ? 1 : 0;
                 };
             }
 
@@ -157,6 +164,12 @@ public final class CableConnectorMenu extends AbstractContainerMenu {
     public DyeColor color() { return DyeColor.byId(Math.clamp(data.get(COLOR), 0, DyeColor.values().length - 1)); }
 
     public int channel() { return data.get(CHANNEL); }
+
+    /** How this connector answers to redstone. */
+    public RedstoneMode redstone() { return RedstoneMode.byOrdinal(data.get(REDSTONE)); }
+
+    /** Whether the cable has a signal right now; every connector on it reads the same one. */
+    public boolean isPowered() { return data.get(POWERED) != 0; }
 
     /** Whether a filter card sits in the connector's slot; the screen shows the gear only then. */
     public boolean hasFilter() { return filterSlot != null && filterSlot.hasItem(); }
@@ -194,6 +207,10 @@ public final class CableConnectorMenu extends AbstractContainerMenu {
                 return true;
             }
             default -> {
+                if (id >= SET_REDSTONE && id < SET_REDSTONE + RedstoneMode.values().length) {
+                    cable.setConnectorRedstone(side, RedstoneMode.values()[id - SET_REDSTONE]);
+                    return true;
+                }
                 if (!kind.coloured() || id < SET_COLOR || id >= SET_COLOR + DyeColor.values().length) return false;
                 cable.setConnectorColor(side, DyeColor.byId(id - SET_COLOR));
                 return true;

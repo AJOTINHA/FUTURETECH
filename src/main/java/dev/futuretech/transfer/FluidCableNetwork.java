@@ -29,6 +29,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 
 /**
@@ -178,8 +179,10 @@ public final class FluidCableNetwork {
                     SideMode mode = cable.connectors().mode(side);
                     // A face on "none" never moves anything; most faces border air or the ground.
                     if (mode == SideMode.NONE) continue;
+                    // Redstone is the one thing read live: a signal flips too often to rebuild for.
                     endpoints.add(new CachedEndpoint(new EndpointKey(pos, side),
                             mode.allowsOutput(), mode.allowsInput() && !mode.allowsOutput(),
+                            () -> cable.connectorActive(side),
                             cable.connectorPriority(side), cable.connectorColor(side), cable.connectorChannel(side),
                             BlockCapabilityCache.create(Capabilities.Fluid.BLOCK, level, neighbour, side.getOpposite())));
                 }
@@ -571,9 +574,16 @@ public final class FluidCableNetwork {
 
     private record PathKey(BlockPos from, BlockPos to) {}
 
-    private record CachedEndpoint(EndpointKey key, boolean delivers, boolean pulls, int priority,
+    /** {@code mayDeliver} and {@code mayPull} are the connector's settings; {@code active} is whether redstone lets it work now. */
+    private record CachedEndpoint(EndpointKey key, boolean mayDeliver, boolean mayPull, BooleanSupplier active, int priority,
                                  DyeColor color, int channel,
                                  BlockCapabilityCache<ResourceHandler<FluidResource>, Direction> cache) implements Endpoint {
+        @Override
+        public boolean delivers() { return mayDeliver && active.getAsBoolean(); }
+
+        @Override
+        public boolean pulls() { return mayPull && active.getAsBoolean(); }
+
         @Override
         public @Nullable ResourceHandler<FluidResource> handler() { return cache.getCapability(); }
     }

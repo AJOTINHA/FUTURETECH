@@ -51,8 +51,10 @@ public final class CableBlockEntity extends AbstractCableBlockEntity {
     /** Energy handler seen by the neighbour beyond {@code side}; resolves the network on every call. */
     public @Nullable EnergyHandler handler(@Nullable Direction side) {
         if (!(level instanceof ServerLevel)) return null;
-        // A connector the player closed to incoming energy refuses what the neighbour pushes.
-        boolean accepts = connectors().allowsEnergyInput(side);
+        // A connector the player closed to incoming energy refuses what the neighbour pushes,
+        // and so does one redstone has switched off; that one is asked as it goes, so it needs no
+        // new handler when the signal changes.
+        boolean open = connectors().allowsEnergyInput(side);
         return new EnergyHandler() {
             private EnergyHandler current() {
                 return side == null ? network().handlerFor(null)
@@ -64,11 +66,11 @@ public final class CableBlockEntity extends AbstractCableBlockEntity {
 
             /** A face closed to input has no room, so pushers can tell without opening a transaction. */
             @Override
-            public long getCapacityAsLong() { return accepts ? current().getCapacityAsLong() : 0; }
+            public long getCapacityAsLong() { return (open && connectorActive(side)) ? current().getCapacityAsLong() : 0; }
 
             @Override
             public int insert(int amount, TransactionContext transaction) {
-                return accepts ? current().insert(amount, transaction) : 0;
+                return (open && connectorActive(side)) ? current().insert(amount, transaction) : 0;
             }
 
             @Override
