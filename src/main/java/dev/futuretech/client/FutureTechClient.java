@@ -42,6 +42,8 @@ public final class FutureTechClient {
         modEventBus.addListener(FutureTechClient::registerScreens);
         modEventBus.addListener(FutureTechClient::configureSideModels);
         modEventBus.addListener(FutureTechClient::registerRenderers);
+        modEventBus.addListener((net.neoforged.neoforge.client.event.RegisterItemModelsEvent event) ->
+                event.register(FacadeItemModel.ID, FacadeItemModel.Unbaked.MAP_CODEC));
         // Items travelling through cables are drawn from journeys the server reports.
         ItemJourneys.setDrawer(ItemTravel::add, ItemTravel::end);
         NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> ItemTravel.tick());

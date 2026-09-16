@@ -60,10 +60,18 @@ public final class FacadeModelPart implements BlockStateModelPart {
 
     /** The panel for this block on this face, built once and handed out from then on. */
     public static @Nullable FacadeModelPart of(BlockState facade, Direction side) {
-        long key = (long) Block.BLOCK_STATE_REGISTRY.getId(facade) << 3 | side.ordinal();
+        return of(facade, side, true);
+    }
+
+    /**
+     * The same, with a say over the peg. The item in the hand is a panel on its own, with no cable
+     * to be bolted to, so its icon leaves the peg out.
+     */
+    public static @Nullable FacadeModelPart of(BlockState facade, Direction side, boolean pin) {
+        long key = ((long) Block.BLOCK_STATE_REGISTRY.getId(facade) << 4) | (long) side.ordinal() << 1 | (pin ? 1 : 0);
         FacadeModelPart cached = CACHE.get(key);
         if (cached != null) return cached;
-        FacadeModelPart built = build(facade, side);
+        FacadeModelPart built = build(facade, side, pin);
         if (built != null) CACHE.put(key, built);
         return built;
     }
@@ -74,7 +82,7 @@ public final class FacadeModelPart implements BlockStateModelPart {
     /** The steel the peg is made of, taken from the freshly baked atlas. */
     public static void setPinSprite(TextureAtlasSprite sprite) { pinSprite = sprite; }
 
-    private static @Nullable FacadeModelPart build(BlockState facade, Direction side) {
+    private static @Nullable FacadeModelPart build(BlockState facade, Direction side, boolean pin) {
         var source = Minecraft.getInstance().getModelManager().getBlockStateModelSet().get(facade);
         List<BlockStateModelPart> parts = new ArrayList<>();
         // The covered blocks are plain cubes, so the model answers the same for every position.
@@ -95,7 +103,7 @@ public final class FacadeModelPart implements BlockStateModelPart {
             }
         }
         if (outer.isEmpty() && unculled.isEmpty()) return null;
-        addPin(unculled, side);
+        if (pin) addPin(unculled, side);
         return new FacadeModelPart(side, outer, unculled, parts.getFirst().particleMaterial(), flags);
     }
 
