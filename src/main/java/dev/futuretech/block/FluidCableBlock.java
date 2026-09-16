@@ -39,9 +39,10 @@ public final class FluidCableBlock extends AbstractCableBlock {
     @Override
     public CableKind kind() { return CableKind.FLUID; }
 
+    /** Only its own tier: an opaque cable and a see-through one are separate lines, not one run. */
     @Override
     public boolean joins(BlockState neighbour) {
-        return neighbour.getBlock() instanceof FluidCableBlock;
+        return neighbour.getBlock() instanceof FluidCableBlock other && other.tier == tier;
     }
 
     @Override

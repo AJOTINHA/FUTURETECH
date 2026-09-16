@@ -24,6 +24,11 @@ import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.PipeBlock;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -44,8 +49,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * Shape, connections and connector menu shared by every kind of cable. The six connection
  * properties only drive the model and shape; what flows is handled by each kind's network.
  * Cables of different kinds never join: an item cable beside an energy cable is just a neighbour.
+ * A cable placed in water keeps the water around it, like a chain or a fence does.
  */
-public abstract class AbstractCableBlock extends PipeBlock implements EntityBlock {
+public abstract class AbstractCableBlock extends PipeBlock implements EntityBlock, SimpleWaterloggedBlock {
+    public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
     private static final float SIZE = 8.0F;
     /**
      * One shape per pair of run connections and collars, built on first use and handed out by the
@@ -81,7 +88,7 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
 
     protected AbstractCableBlock(Properties properties) {
         super(SIZE, properties);
-        BlockState state = stateDefinition.any();
+        BlockState state = stateDefinition.any().setValue(WATERLOGGED, false);
         for (var property : PROPERTY_BY_DIRECTION.values()) state = state.setValue(property, false);
         registerDefaultState(state);
     }
@@ -146,17 +153,26 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(NORTH, EAST, SOUTH, WEST, UP, DOWN);
+        builder.add(NORTH, EAST, SOUTH, WEST, UP, DOWN, WATERLOGGED);
+    }
+
+    @Override
+    protected FluidState getFluidState(BlockState state) {
+        return state.getValue(WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
     }
 
     /**
      * Cables join others of their kind and any block that offers their resource on the touching
-     * face, unless the wrench cut that side, on this cable or on the cable beyond.
+     * face, unless the wrench cut that side, on this cable or on the cable beyond. Another tier of
+     * the same kind is neither: it would offer the resource like a machine, but two lines of item
+     * cable that happen to touch are meant to stay two lines.
      */
     private boolean connectsTo(LevelReader level, BlockPos pos, Direction side) {
         BlockPos neighbour = pos.relative(side);
         if (isCut(level, pos, side) || isCut(level, neighbour, side.getOpposite())) return false;
-        if (joins(level.getBlockState(neighbour))) return true;
+        BlockState beyond = level.getBlockState(neighbour);
+        if (joins(beyond)) return true;
+        if (beyond.getBlock() instanceof AbstractCableBlock other && other.kind() == kind()) return false;
         return level instanceof Level realLevel && offers(realLevel, neighbour, side.getOpposite());
     }
 
@@ -233,7 +249,9 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        BlockState state = defaultBlockState();
+        // Placed into water, the cable takes the water with it instead of pushing it out.
+        BlockState state = defaultBlockState().setValue(WATERLOGGED,
+                context.getLevel().getFluidState(context.getClickedPos()).is(Fluids.WATER));
         for (Direction side : Direction.values()) {
             state = state.setValue(PROPERTY_BY_DIRECTION.get(side),
                     connectsTo(context.getLevel(), context.getClickedPos(), side)
@@ -275,6 +293,8 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
     protected BlockState updateShape(BlockState state, LevelReader level, ScheduledTickAccess ticks, BlockPos pos,
                                      Direction directionToNeighbour, BlockPos neighbourPos,
                                      BlockState neighbourState, RandomSource random) {
+        // The water in the cable flows on like any water: it gets its tick when a neighbour changes.
+        if (state.getValue(WATERLOGGED)) ticks.scheduleTick(pos, Fluids.WATER, Fluids.WATER.getTickDelay(level));
         return state.setValue(PROPERTY_BY_DIRECTION.get(directionToNeighbour),
                 connectsTo(level, pos, directionToNeighbour));
     }

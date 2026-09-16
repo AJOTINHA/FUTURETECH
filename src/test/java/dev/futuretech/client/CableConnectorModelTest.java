@@ -124,7 +124,8 @@ class CableConnectorModelTest {
             model.collectParts(level,BlockPos.ZERO,connected,RandomSource.create(),output);
             assertTrue(output.isEmpty(),"Removed machines leave no collar");
         }
-        assertEquals(64,cable.getBlock().getStateDefinition().getPossibleStates().size());
+        // Six connections and waterlogging; the collars add no states of their own.
+        assertEquals(64 * 2,cable.getBlock().getStateDefinition().getPossibleStates().size());
     }
 
     @Test

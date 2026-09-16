@@ -38,9 +38,10 @@ public final class ItemCableBlock extends AbstractCableBlock {
     @Override
     public CableKind kind() { return CableKind.ITEMS; }
 
+    /** Only its own tier: an opaque cable and a see-through one are separate lines, not one run. */
     @Override
     public boolean joins(BlockState neighbour) {
-        return neighbour.getBlock() instanceof ItemCableBlock;
+        return neighbour.getBlock() instanceof ItemCableBlock other && other.tier == tier;
     }
 
     @Override

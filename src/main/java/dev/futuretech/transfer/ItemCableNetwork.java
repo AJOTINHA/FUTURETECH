@@ -233,7 +233,8 @@ public final class ItemCableNetwork {
                 if (!cable.getBlockState().getValue(PipeBlock.PROPERTY_BY_DIRECTION.get(side))) continue;
                 BlockPos neighbour = pos.relative(side);
                 if (!level.hasChunkAt(neighbour.getX(), neighbour.getZ())) continue;
-                if (level.getBlockState(neighbour).getBlock() instanceof ItemCableBlock) {
+                // Its own tier only: a link left over from before the tiers were kept apart still ends here.
+                if (cable.getBlockState().getBlock() instanceof ItemCableBlock own && own.joins(level.getBlockState(neighbour))) {
                     if (cables.add(neighbour)) queue.add(neighbour);
                 } else {
                     // Captured here rather than read per tick: changing a connector invalidates the
