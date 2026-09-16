@@ -173,7 +173,17 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
     @Override
     protected void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean movedByPiston) {
         super.onPlace(state, level, pos, oldState, movedByPiston);
-        if (level.isClientSide() || oldState.is(this)) return;
+        if (level.isClientSide()) return;
+        if (oldState.is(this)) {
+            // Same cable, new links: a machine was placed beside it, or taken away. The network
+            // captured its endpoints when it was discovered, so one that is not rebuilt keeps
+            // ignoring the machine that just appeared on this face.
+            if (connectionMask(state) != connectionMask(oldState)
+                    && level.getBlockEntity(pos) instanceof AbstractCableBlockEntity cable) {
+                cable.invalidateNetwork();
+            }
+            return;
+        }
         // Neighbouring networks must absorb the new cable, so they rebuild on their next tick.
         for (Direction side : Direction.values()) {
             BlockPos neighbour = pos.relative(side);
