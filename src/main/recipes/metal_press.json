@@ -2,7 +2,7 @@
   "type": "futuretech:pressing",
   "recipes": {
     "iron_plate": {
-      "ingredient": "minecraft:iron_ingot",
+      "ingredient": "#c:ingots/iron",
       "count": 1,
       "result": {
         "count": 1,
@@ -12,7 +12,7 @@
       "gear": false
     },
     "iron_gear": {
-      "ingredient": "minecraft:iron_ingot",
+      "ingredient": "#c:ingots/iron",
       "count": 2,
       "result": {
         "count": 1,
@@ -22,7 +22,7 @@
       "gear": true
     },
     "gold_plate": {
-      "ingredient": "minecraft:gold_ingot",
+      "ingredient": "#c:ingots/gold",
       "count": 1,
       "result": {
         "count": 1,
@@ -32,7 +32,7 @@
       "gear": false
     },
     "gold_gear": {
-      "ingredient": "minecraft:gold_ingot",
+      "ingredient": "#c:ingots/gold",
       "count": 2,
       "result": {
         "count": 1,
@@ -42,7 +42,7 @@
       "gear": true
     },
     "copper_plate": {
-      "ingredient": "minecraft:copper_ingot",
+      "ingredient": "#c:ingots/copper",
       "count": 1,
       "result": {
         "count": 1,
@@ -52,7 +52,7 @@
       "gear": false
     },
     "copper_gear": {
-      "ingredient": "minecraft:copper_ingot",
+      "ingredient": "#c:ingots/copper",
       "count": 2,
       "result": {
         "count": 1,
@@ -62,7 +62,7 @@
       "gear": true
     },
     "netherite_plate": {
-      "ingredient": "minecraft:netherite_ingot",
+      "ingredient": "#c:ingots/netherite",
       "count": 1,
       "result": {
         "count": 1,
@@ -72,7 +72,7 @@
       "gear": false
     },
     "netherite_gear": {
-      "ingredient": "minecraft:netherite_ingot",
+      "ingredient": "#c:ingots/netherite",
       "count": 2,
       "result": {
         "count": 1,
@@ -82,7 +82,7 @@
       "gear": true
     },
     "steel_plate": {
-      "ingredient": "futuretech:steel_ingot",
+      "ingredient": "#c:ingots/steel",
       "result": {
         "count": 1,
         "id": "futuretech:steel_plate"
@@ -92,7 +92,7 @@
       "gear": false
     },
     "steel_gear": {
-      "ingredient": "futuretech:steel_ingot",
+      "ingredient": "#c:ingots/steel",
       "result": {
         "count": 1,
         "id": "futuretech:steel_gear"

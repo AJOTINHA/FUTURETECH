@@ -274,38 +274,47 @@ public class AreaMiningGameTests {
     private static void assertEquals(long expected, long actual) { assertTrue(expected == actual, expected + " != " + actual); }
     private static void assertEquals(Object expected, Object actual) { assertTrue(java.util.Objects.equals(expected, actual), expected + " != " + actual); }
 
+    private static final java.util.Map<String, java.util.function.BiConsumer<AreaMiningGameTests, MinecraftServer>> CASES = java.util.Map.ofEntries(
+            java.util.Map.entry("planes", AreaMiningGameTests::minesExactlyOneThreeByThreePlaneInAllOrientationsAndPaysPerBlock),
+            java.util.Map.entry("sneaking", AreaMiningGameTests::sneakingMinesOnlyTheCenter),
+            java.util.Map.entry("creative", AreaMiningGameTests::creativeAlsoMinesTheAreaWithoutWear),
+            java.util.Map.entry("durability", AreaMiningGameTests::stopsWhenToolBreaks),
+            java.util.Map.entry("materials", AreaMiningGameTests::rejectsWrongMaterialsUnbreakableAndMuchHarderNeighbors),
+            java.util.Map.entry("canceled_center", AreaMiningGameTests::canceledCenterNeverBreaksNeighborsEvenWhenCanceledAfterOurListener),
+            java.util.Map.entry("protected_neighbor", AreaMiningGameTests::neighborProtectionIsRespected),
+            java.util.Map.entry("preview_selection", AreaMiningGameTests::previewSelectsOnlyTheBlocksThatTheHammerActuallyMines),
+            java.util.Map.entry("excavator", AreaMiningGameTests::excavatorMinesShovelBlocksOnlyAndLeavesStoneAlone),
+            java.util.Map.entry("lumber_axe", AreaMiningGameTests::lumberAxeFellsTheConnectedTreeOfOneKindAndNothingElse),
+            java.util.Map.entry("tree_limit", AreaMiningGameTests::lumberAxeStopsAtTheTreeLimit),
+            java.util.Map.entry("right_click", AreaMiningGameTests::rightClickStripsLogsAndFlattensGrassLikeTheVanillaTools),
+            java.util.Map.entry("swapped_tool", AreaMiningGameTests::replacingTheToolBeforeExpansionDoesNotMineWithAnEmptyHand));
+
+    private static net.minecraft.resources.Identifier id(String name) {
+        return net.minecraft.resources.Identifier.fromNamespaceAndPath("futuretech", "area_mining_" + name);
+    }
+
+    /**
+     * Each case is a vanilla test function, so the test instances are plain {@code FunctionGameTestInstance}s.
+     * The test registry is synced to clients, and an anonymous instance borrowing the function codec breaks
+     * joining a world from the development client.
+     */
+    @net.neoforged.bus.api.SubscribeEvent
+    public static void registerFunctions(net.neoforged.neoforge.registries.RegisterEvent event) {
+        event.register(net.minecraft.core.registries.Registries.TEST_FUNCTION, registry -> CASES.forEach((name, test) ->
+                registry.register(id(name), (java.util.function.Consumer<net.minecraft.gametest.framework.GameTestHelper>) helper -> {
+                    test.accept(new AreaMiningGameTests(helper.absolutePos(new BlockPos(5, 5, 5))), helper.getLevel().getServer());
+                    helper.succeed();
+                })));
+    }
+
     @net.neoforged.bus.api.SubscribeEvent
     public static void register(net.neoforged.neoforge.event.RegisterGameTestsEvent event) {
         var environment = event.registerEnvironment(net.minecraft.resources.Identifier.fromNamespaceAndPath("futuretech", "area_mining"));
         var data = new net.minecraft.gametest.framework.TestData<>(environment,
                 net.minecraft.resources.Identifier.fromNamespaceAndPath("futuretech", "area_mining_empty"), 200, 0, true);
-        java.util.Map<String, java.util.function.BiConsumer<AreaMiningGameTests, MinecraftServer>> cases = java.util.Map.ofEntries(
-                java.util.Map.entry("planes", AreaMiningGameTests::minesExactlyOneThreeByThreePlaneInAllOrientationsAndPaysPerBlock),
-                java.util.Map.entry("sneaking", AreaMiningGameTests::sneakingMinesOnlyTheCenter),
-                java.util.Map.entry("creative", AreaMiningGameTests::creativeAlsoMinesTheAreaWithoutWear),
-                java.util.Map.entry("durability", AreaMiningGameTests::stopsWhenToolBreaks),
-                java.util.Map.entry("materials", AreaMiningGameTests::rejectsWrongMaterialsUnbreakableAndMuchHarderNeighbors),
-                java.util.Map.entry("canceled_center", AreaMiningGameTests::canceledCenterNeverBreaksNeighborsEvenWhenCanceledAfterOurListener),
-                java.util.Map.entry("protected_neighbor", AreaMiningGameTests::neighborProtectionIsRespected),
-                java.util.Map.entry("preview_selection", AreaMiningGameTests::previewSelectsOnlyTheBlocksThatTheHammerActuallyMines),
-                java.util.Map.entry("excavator", AreaMiningGameTests::excavatorMinesShovelBlocksOnlyAndLeavesStoneAlone),
-                java.util.Map.entry("lumber_axe", AreaMiningGameTests::lumberAxeFellsTheConnectedTreeOfOneKindAndNothingElse),
-                java.util.Map.entry("tree_limit", AreaMiningGameTests::lumberAxeStopsAtTheTreeLimit),
-                java.util.Map.entry("right_click", AreaMiningGameTests::rightClickStripsLogsAndFlattensGrassLikeTheVanillaTools),
-                java.util.Map.entry("swapped_tool", AreaMiningGameTests::replacingTheToolBeforeExpansionDoesNotMineWithAnEmptyHand));
-        cases.forEach((name, test) -> event.registerTest(
-                net.minecraft.resources.Identifier.fromNamespaceAndPath("futuretech", "area_mining_" + name),
-                new net.minecraft.gametest.framework.GameTestInstance(data) {
-                    @Override public void run(net.minecraft.gametest.framework.GameTestHelper helper) {
-                        test.accept(new AreaMiningGameTests(helper.absolutePos(new BlockPos(5, 5, 5))), helper.getLevel().getServer());
-                        helper.succeed();
-                    }
-                    @Override public com.mojang.serialization.MapCodec<? extends net.minecraft.gametest.framework.GameTestInstance> codec() {
-                        return net.minecraft.gametest.framework.FunctionGameTestInstance.CODEC;
-                    }
-                    @Override protected net.minecraft.network.chat.MutableComponent typeDescription() {
-                        return net.minecraft.network.chat.Component.literal("Area mining integration");
-                    }
-                }));
+        for (String name : CASES.keySet()) {
+            event.registerTest(id(name), new net.minecraft.gametest.framework.FunctionGameTestInstance(
+                    net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.TEST_FUNCTION, id(name)), data));
+        }
     }
 }

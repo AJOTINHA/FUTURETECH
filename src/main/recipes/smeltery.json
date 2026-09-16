@@ -3,7 +3,7 @@
   "recipes": {
     "steel_ingot": {
       "first": {
-        "ingredient": "minecraft:iron_ingot",
+        "ingredient": "#c:ingots/iron",
         "count": 1
       },
       "second": {
@@ -18,7 +18,7 @@
     },
     "steel_ingot_from_powder": {
       "first": {
-        "ingredient": "futuretech:iron_powder",
+        "ingredient": "#c:dusts/iron",
         "count": 1
       },
       "second": {
@@ -33,7 +33,7 @@
     },
     "steel_ingot_from_charcoal": {
       "first": {
-        "ingredient": "minecraft:iron_ingot",
+        "ingredient": "#c:ingots/iron",
         "count": 1
       },
       "second": {
@@ -52,7 +52,7 @@
         "count": 4
       },
       "second": {
-        "ingredient": "minecraft:gold_ingot",
+        "ingredient": "#c:ingots/gold",
         "count": 4
       },
       "result": {
