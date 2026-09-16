@@ -34,6 +34,7 @@ public final class FutureTech {
         NeoForge.EVENT_BUS.addListener(PerfProfiling::onServerTick);
         NeoForge.EVENT_BUS.addListener(AreaMining::onBreak);
         NeoForge.EVENT_BUS.addListener(AreaMining::onServerTick);
+        NeoForge.EVENT_BUS.addListener(ModRecipes::syncToClients);
         ModCreativeTabs.TABS.register(modEventBus);
     }
 }

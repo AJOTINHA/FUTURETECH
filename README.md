@@ -315,6 +315,12 @@ Cada máquina com receitas próprias tem **um único arquivo** em `src/main/reci
 
 O jogo só carrega uma receita por JSON, então a tarefa `expandMachineRecipes` do Gradle (que roda em todo `build`/`runClient`) gera `data/futuretech/recipe/<tipo>/<nome>.json` em `build/generated/recipes` a partir desses arquivos. Para adicionar uma receita, basta acrescentar uma entrada no arquivo da máquina; não crie arquivos soltos em `data/futuretech/recipe/crushing` ou `assembling`. As receitas de crafting das mesas vanilla continuam uma por arquivo em `src/main/resources/data/futuretech/recipe/`.
 
+### JEI
+
+Com o JEI instalado, cada máquina ganha uma aba própria: Triturador, Metal Press (com o molde de chapa ou engrenagem ao lado da entrada), Fundidora (duas entradas com quantidade, sem ordem) e Mesa de montagem (grade de até nove ingredientes). A linha de baixo mostra o tempo em MK1 e a energia total daquela receita. Clicar na Fornalha Elétrica abre as receitas de fornalha vanilla e no Gerador a Combustível Sólido a lista de combustíveis.
+
+Desde a 1.21.2 o cliente não recebe as receitas do servidor; `ModRecipes.syncToClients` envia os quatro tipos de receita de máquina no `OnDatapackSyncEvent` (funciona em servidor dedicado também) e `SyncedRecipes` guarda o que chegou no cliente para o plugin `FutureTechJeiPlugin` (`src/main/java/dev/futuretech/client/jei/`). O JEI é `compileOnly`/`localRuntime` no Gradle: o jar publicado não depende dele e o plugin só carrega quando o JEI está presente.
+
 ## Desenvolvimento no Windows
 
 Abra esta pasta como projeto Gradle na IDE, usando um JDK 25.

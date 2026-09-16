@@ -51,6 +51,7 @@ public final class FutureTechClient {
         NeoForge.EVENT_BUS.addListener(PerfOverlay::drawTotal);
         NeoForge.EVENT_BUS.addListener(AreaMiningPreview::extractOutline);
         NeoForge.EVENT_BUS.addListener(AreaMiningPreview::extractBreaking);
+        NeoForge.EVENT_BUS.addListener(SyncedRecipes::onReceived);
     }
 
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {

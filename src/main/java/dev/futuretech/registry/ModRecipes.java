@@ -30,6 +30,11 @@ public final class ModRecipes {
             SERIALIZERS.register("assembling", () -> new RecipeSerializer<>(dev.futuretech.recipe.AssemblingRecipe.CODEC, dev.futuretech.recipe.AssemblingRecipe.STREAM_CODEC));
     public static final DeferredHolder<RecipeBookCategory, RecipeBookCategory> ASSEMBLER_BOOK = BOOKS.register("assembler", RecipeBookCategory::new);
     private ModRecipes() {}
+
+    /** Vanilla only syncs recipe displays; the machine recipes go to every client for the recipe viewer. */
+    public static void syncToClients(net.neoforged.neoforge.event.OnDatapackSyncEvent event) {
+        event.sendRecipes(CRUSHING.get(), PRESSING.get(), ALLOYING.get(), ASSEMBLING.get());
+    }
     public static final DeferredHolder<RecipeType<?>, RecipeType<PressingRecipe>> PRESSING = TYPES.register("pressing", () -> new RecipeType<>() {
         @Override public String toString() { return "futuretech:pressing"; }
     });

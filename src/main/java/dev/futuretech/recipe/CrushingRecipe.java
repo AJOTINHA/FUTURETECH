@@ -15,6 +15,8 @@ public final class CrushingRecipe extends SingleItemRecipe {
         super(commonInfo, ingredient, result);
     }
 
+    /** Public for the recipe viewer; vanilla only exposes the result through {@code assemble}. */
+    @Override public ItemStackTemplate result() { return super.result(); }
     @Override public RecipeSerializer<CrushingRecipe> getSerializer() { return ModRecipes.CRUSHING_SERIALIZER.get(); }
     @Override public RecipeType<CrushingRecipe> getType() { return ModRecipes.CRUSHING.get(); }
     @Override public RecipeBookCategory recipeBookCategory() { return ModRecipes.CRUSHER_BOOK.get(); }

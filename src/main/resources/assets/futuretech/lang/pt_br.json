@@ -174,5 +174,6 @@
   "item.futuretech.diamond_lumber_axe": "Machado Lenhador de Diamante",
   "item.futuretech.netherite_lumber_axe": "Machado Lenhador de Netherita",
   "tooltip.futuretech.area_tool.plane": "Minera uma área 3×3 na face atingida.",
-  "tooltip.futuretech.area_tool.tree": "Derruba a árvore inteira a partir de qualquer tronco."
+  "tooltip.futuretech.area_tool.tree": "Derruba a árvore inteira a partir de qualquer tronco.",
+  "jei.futuretech.stats": "%s s · %s FE"
 }

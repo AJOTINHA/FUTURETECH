@@ -174,5 +174,6 @@
   "item.futuretech.diamond_lumber_axe": "Diamond Lumber Axe",
   "item.futuretech.netherite_lumber_axe": "Netherite Lumber Axe",
   "tooltip.futuretech.area_tool.plane": "Mines a 3×3 area on the struck face.",
-  "tooltip.futuretech.area_tool.tree": "Fells the whole tree from any of its logs."
+  "tooltip.futuretech.area_tool.tree": "Fells the whole tree from any of its logs.",
+  "jei.futuretech.stats": "%s s · %s FE"
 }
