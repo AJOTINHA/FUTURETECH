@@ -52,6 +52,13 @@ class LavaGeneratorTest {
         }
     }
 
+    private static void extract(ResourceHandler<FluidResource> handler, int amount) {
+        try (var tx = Transaction.openRoot()) {
+            assertEquals(amount, handler.extract(lava(), amount, tx));
+            tx.commit();
+        }
+    }
+
     @Test
     void oneBucketOfLavaProducesExactly50000FEAndLeavesTheEmptyBucket(MinecraftServer server) {
         var generator = generator();
@@ -134,7 +141,7 @@ class LavaGeneratorTest {
         assertEquals(TANK_CAPACITY, generator.lavaAmount());
         // The face closed later is honoured by a handler handed out earlier.
         sides.set(Direction.NORTH, SideMode.NONE);
-        generator.lava().extract(lava(), 1_000, null);
+        extract(generator.lava(), 1_000);
         assertEquals(0, insert(north, lava(), 100));
     }
 
@@ -156,10 +163,12 @@ class LavaGeneratorTest {
         assertTrue(generator.getItem(SLOT_INPUT).isEmpty());
         assertEquals(1, generator.getItem(SLOT_OUTPUT).getCount());
 
-        // A full output slot holds the next bucket back too.
+        // A full output slot holds the next bucket back too, even with room for it in the tank.
+        // The room is made directly: the buffer fills long before burning would open a bucket's worth.
+        extract(generator.lava(), 1_000);
         generator.setItem(SLOT_OUTPUT, new ItemStack(Items.BUCKET, 16));
         generator.setItem(SLOT_INPUT, new ItemStack(Items.LAVA_BUCKET));
-        for (int t = 0; t < 2_000; t++) tick(generator);
+        for (int t = 0; t < 20; t++) tick(generator);
         assertTrue(generator.getItem(SLOT_INPUT).is(Items.LAVA_BUCKET));
         assertEquals(16, generator.getItem(SLOT_OUTPUT).getCount());
         generator.setItem(SLOT_OUTPUT, new ItemStack(Items.BUCKET, 15));
