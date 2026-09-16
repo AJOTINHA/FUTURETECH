@@ -7,6 +7,7 @@ import dev.futuretech.perf.TickProfiler;
 import com.mojang.serialization.MapCodec;
 import dev.futuretech.block.entity.FluidTankBlockEntity;
 import dev.futuretech.api.side.SideConfig;
+import dev.futuretech.api.upgrade.MachineLevel;
 import dev.futuretech.api.side.SideConfigurableBlock;
 import dev.futuretech.api.side.SideMode;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -35,18 +36,21 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.transfer.fluid.FluidUtil;
 import net.neoforged.neoforge.transfer.access.ItemAccess;
 
-/** A sealed glass tank in the battery's metal frame. All six faces allow fluid transfer. */
+/**
+ * A sealed glass tank in the battery's metal frame. All six faces allow fluid transfer. The MK
+ * level, raised by upgrade kits, doubles what it holds for every level above the first.
+ */
 public final class FluidTankBlock extends BaseEntityBlock implements SideConfigurableBlock {
     public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final MapCodec<FluidTankBlock> CODEC = simpleCodec(FluidTankBlock::new);
 
     public FluidTankBlock(Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
+        registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(MachineLevel.MK, 1));
     }
 
     @Override
-    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) { builder.add(FACING); }
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) { builder.add(FACING, MachineLevel.MK); }
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {

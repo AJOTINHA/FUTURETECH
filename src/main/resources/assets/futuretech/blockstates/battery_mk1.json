@@ -1,19 +1,67 @@
 {
   "variants": {
-    "facing=north": {
+    "facing=north,mk=1": {
       "model": "futuretech:block/battery_mk1",
       "y": 0
     },
-    "facing=east": {
+    "facing=east,mk=1": {
       "model": "futuretech:block/battery_mk1",
       "y": 90
     },
-    "facing=south": {
+    "facing=south,mk=1": {
       "model": "futuretech:block/battery_mk1",
       "y": 180
     },
-    "facing=west": {
+    "facing=west,mk=1": {
       "model": "futuretech:block/battery_mk1",
+      "y": 270
+    },
+    "facing=north,mk=2": {
+      "model": "futuretech:block/battery_mk1/mk2",
+      "y": 0
+    },
+    "facing=east,mk=2": {
+      "model": "futuretech:block/battery_mk1/mk2",
+      "y": 90
+    },
+    "facing=south,mk=2": {
+      "model": "futuretech:block/battery_mk1/mk2",
+      "y": 180
+    },
+    "facing=west,mk=2": {
+      "model": "futuretech:block/battery_mk1/mk2",
+      "y": 270
+    },
+    "facing=north,mk=3": {
+      "model": "futuretech:block/battery_mk1/mk3",
+      "y": 0
+    },
+    "facing=east,mk=3": {
+      "model": "futuretech:block/battery_mk1/mk3",
+      "y": 90
+    },
+    "facing=south,mk=3": {
+      "model": "futuretech:block/battery_mk1/mk3",
+      "y": 180
+    },
+    "facing=west,mk=3": {
+      "model": "futuretech:block/battery_mk1/mk3",
+      "y": 270
+    },
+    "facing=north,mk=4": {
+      "model": "futuretech:block/battery_mk1/mk4",
+      "y": 0
+    },
+    "facing=east,mk=4": {
+      "model": "futuretech:block/battery_mk1/mk4",
+      "y": 90
+    },
+    "facing=south,mk=4": {
+      "model": "futuretech:block/battery_mk1/mk4",
+      "y": 180
+    },
+    "facing=west,mk=4": {
+      "model": "futuretech:block/battery_mk1/mk4",
       "y": 270
     }
   }

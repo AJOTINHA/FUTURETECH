@@ -74,7 +74,7 @@ public final class FluidTankScreen extends AbstractContainerScreen<FluidTankMenu
 
     @Override
     protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        graphics.text(font, title, titleLabelX, titleLabelY, TITLE, false);
+        drawMachineTitle(graphics, font, title, menu.mk(), titleLabelX, titleLabelY, imageWidth - titleLabelX - 7);
         graphics.text(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, TEXT, false);
         var fluid = menu.fluid();
         Component name = fluid.isEmpty() ? Component.translatable("gui.futuretech.empty") : fluid.getHoverName();
@@ -82,7 +82,7 @@ public final class FluidTankScreen extends AbstractContainerScreen<FluidTankMenu
         graphics.text(font, shortName, (imageWidth - font.width(shortName)) / 2, 25, TEXT, false);
         centred(graphics, Component.translatable("gui.futuretech.tank.input"), FluidTankMenu.INPUT_X + 8, 47);
         centred(graphics, Component.translatable("gui.futuretech.tank.output"), FluidTankMenu.OUTPUT_X + 8, 47);
-        centred(graphics, Component.translatable("gui.futuretech.tank.amount", fluid.getAmount(), FluidTankBlockEntity.CAPACITY),
+        centred(graphics, Component.translatable("gui.futuretech.tank.amount", fluid.getAmount(), menu.capacity()),
                 imageWidth / 2, 104);
     }
 
@@ -99,7 +99,7 @@ public final class FluidTankScreen extends AbstractContainerScreen<FluidTankMenu
             var fluid = menu.fluid();
             graphics.setTooltipForNextFrame(Component.translatable("gui.futuretech.tank.contents",
                     fluid.isEmpty() ? Component.translatable("gui.futuretech.empty") : fluid.getHoverName(),
-                    fluid.getAmount(), FluidTankBlockEntity.CAPACITY), mouseX, mouseY);
+                    fluid.getAmount(), menu.capacity()), mouseX, mouseY);
         }
     }
 }

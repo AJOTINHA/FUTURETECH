@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class MachineUpgradeKitTest {
     private static List<Block> machines() {
         return List.of(ModBlocks.SOLID_FUEL_GENERATOR.get(), ModBlocks.ELECTRIC_FURNACE.get(), ModBlocks.CRUSHER.get(), ModBlocks.SAWMILL.get(), ModBlocks.CHARGER.get(),
-                ModBlocks.METAL_PRESS.get(), ModBlocks.BATTERY_MK1.get());
+                ModBlocks.METAL_PRESS.get(), ModBlocks.BATTERY_MK1.get(), ModBlocks.FLUID_TANK.get());
     }
 
     @Test
@@ -49,7 +49,7 @@ class MachineUpgradeKitTest {
                 assertFalse(MachineLevel.canUpgrade(state, 1));
             }
         }
-        for (var block : List.of(Blocks.STONE, ModBlocks.MACHINE_CASING.get(), ModBlocks.FLUID_TANK.get())) {
+        for (var block : List.of(Blocks.STONE, ModBlocks.MACHINE_CASING.get())) {
             for (var kit : kits) assertFalse(MachineLevel.canUpgrade(block.defaultBlockState(), kit.targetLevel()));
         }
     }

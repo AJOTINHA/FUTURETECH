@@ -1,7 +1,16 @@
 {
   "variants": {
-    "": {
+    "mk=1": {
       "model": "futuretech:block/fluid_tank"
+    },
+    "mk=2": {
+      "model": "futuretech:block/fluid_tank/mk2"
+    },
+    "mk=3": {
+      "model": "futuretech:block/fluid_tank/mk3"
+    },
+    "mk=4": {
+      "model": "futuretech:block/fluid_tank/mk4"
     }
   }
 }
