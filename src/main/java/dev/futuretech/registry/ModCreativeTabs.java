@@ -17,6 +17,8 @@ public final class ModCreativeTabs {
                     .icon(() -> ModItems.UPGRADE_KIT_MK4.get().getDefaultInstance())
                     .displayItems((parameters, output) -> {
                         output.accept(ModItems.MACHINE_CASING.get());
+                        // A sample facade: any block makes one at the bench, this is the one on show.
+                        output.accept(dev.futuretech.item.FacadeItem.sample());
                         output.accept(ModItems.ASSEMBLY_TABLE.get());
                         output.accept(ModItems.TRANSPORT_ARM.get());
                         output.accept(ModItems.ASSEMBLY_ARM.get());

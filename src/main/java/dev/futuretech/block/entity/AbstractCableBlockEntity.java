@@ -1,6 +1,7 @@
 package dev.futuretech.block.entity;
 
 import com.mojang.serialization.Codec;
+import dev.futuretech.api.facade.CableFacades;
 import dev.futuretech.api.side.SideConfig;
 import dev.futuretech.api.side.SideConfigVisuals;
 import dev.futuretech.api.side.SideMode;
@@ -9,9 +10,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import dev.futuretech.item.FacadeItem;
 import net.minecraft.world.Container;
+import net.minecraft.world.Containers;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -20,6 +24,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.neoforged.neoforge.model.data.ModelData;
+import org.jspecify.annotations.Nullable;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -41,8 +46,10 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
     private static final String CUT_TAG = "Cut";
     private static final String CHANNELS_TAG = "Channels";
     private static final String COLORS_TAG = "Colors";
+    private static final String FACADES_TAG = "Facades";
     private static final Codec<Map<Direction, Integer>> INTS_CODEC = Codec.unboundedMap(Direction.CODEC, Codec.INT);
     private static final Codec<Map<Direction, DyeColor>> COLORS_CODEC = Codec.unboundedMap(Direction.CODEC, DyeColor.CODEC);
+    private static final Codec<Map<Direction, BlockState>> FACADES_CODEC = Codec.unboundedMap(Direction.CODEC, BlockState.CODEC);
 
     /** What each connector does; a fresh one starts on {@link CableKind#freshConnector()}. */
     private final SideConfig connectors;
@@ -58,6 +65,11 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
      * bit, so either end restores it. Reaches the client, whose shape updates must agree.
      */
     private int cutSides;
+    /**
+     * The block each covered face wears. Only covered faces are kept, so a bare cable saves
+     * nothing extra, and the map reaches the client because the panel is drawn from it.
+     */
+    private final EnumMap<Direction, BlockState> facades = new EnumMap<>(Direction.class);
 
     protected AbstractCableBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state, CableKind kind) {
         super(type, pos, state);
@@ -83,6 +95,24 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
         if (updated == cutSides) return;
         cutSides = updated;
         setChanged();
+    }
+
+    /** The block covering {@code side}, or null while that face shows the bare cable. */
+    public @Nullable BlockState facade(Direction side) { return facades.get(side); }
+
+    public boolean hasFacade(Direction side) { return facades.containsKey(side); }
+
+    /** The covered faces, for the model and for what a broken cable owes the player back. */
+    public Map<Direction, BlockState> facades() { return Map.copyOf(facades); }
+
+    /**
+     * Covers or uncovers one face. The panel is geometry, so the clients need the change and the
+     * chunk has to be meshed again; the shape changes with it, which is why the block is updated.
+     */
+    public void setFacade(Direction side, @Nullable BlockState state) {
+        if (state == null ? facades.remove(side) == null : state.equals(facades.put(side, state))) return;
+        setChanged();
+        if (level != null && !level.isClientSide()) SideConfigVisuals.refresh(this);
     }
 
     /** Where this connector stands when the network chooses whom to serve first; higher goes first. */
@@ -144,12 +174,19 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
     // The connector modes are the cable's only render data, and they drive the coloured band on
     // each collar, so they have to reach the client like the machines' face modes do.
     @Override
-    public ModelData getModelData() { return SideConfigVisuals.modelData(connectors); }
+    public ModelData getModelData() {
+        return ModelData.builder().with(SideConfigVisuals.FACE_MODES, SideConfigVisuals.faceModes(connectors))
+                .with(CableFacades.FACADES, facades()).build();
+    }
 
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = SideConfigVisuals.updateTag(connectors);
         if (cutSides != 0) tag.putInt(CUT_TAG, cutSides);
+        if (!facades.isEmpty()) {
+            FACADES_CODEC.encodeStart(NbtOps.INSTANCE, Map.copyOf(facades)).result()
+                    .ifPresent(encoded -> tag.put(FACADES_TAG, encoded));
+        }
         return tag;
     }
 
@@ -159,9 +196,13 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
     @Override
     public void handleUpdateTag(ValueInput input) {
         int previous = SideConfigVisuals.faceModes(connectors);
+        var previousFacades = Map.copyOf(facades);
         connectors.load(input);
         cutSides = input.getIntOr(CUT_TAG, 0);
-        if (previous != SideConfigVisuals.faceModes(connectors)) SideConfigVisuals.refresh(this);
+        loadFacades(input);
+        if (previous != SideConfigVisuals.faceModes(connectors) || !previousFacades.equals(facades)) {
+            SideConfigVisuals.refresh(this);
+        }
     }
 
     @Override
@@ -172,6 +213,7 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
         super.loadAdditional(input);
         connectors.load(input);
         cutSides = input.getIntOr(CUT_TAG, 0);
+        loadFacades(input);
         colors.clear();
         input.read(COLORS_TAG, COLORS_CODEC).ifPresent(colors::putAll);
         channels.clear();
@@ -191,9 +233,18 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
         super.saveAdditional(output);
         connectors.save(output);
         if (cutSides != 0) output.putInt(CUT_TAG, cutSides);
+        if (!facades.isEmpty()) output.store(FACADES_TAG, FACADES_CODEC, Map.copyOf(facades));
         if (!colors.isEmpty()) output.store(COLORS_TAG, COLORS_CODEC, Map.copyOf(colors));
         if (!channels.isEmpty()) output.store(CHANNELS_TAG, INTS_CODEC, Map.copyOf(channels));
         if (!priorities.isEmpty()) output.store(PRIORITIES_TAG, INTS_CODEC, Map.copyOf(priorities));
+    }
+
+    /** Keeps only what is still a legal facade, so a block that changed between versions is dropped quietly. */
+    private void loadFacades(ValueInput input) {
+        facades.clear();
+        input.read(FACADES_TAG, FACADES_CODEC).ifPresent(saved -> saved.forEach((side, state) -> {
+            if (CableFacades.isValid(state)) facades.put(side, state);
+        }));
     }
 
     /**
@@ -211,6 +262,17 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
                     && cable.kind() == kind()) {
                 cable.invalidateNetwork();
             }
+        }
+    }
+
+    /** A broken cable hands back every panel it was wearing, like a machine hands back its upgrades. */
+    @Override
+    public void preRemoveSideEffects(BlockPos pos, BlockState state) {
+        super.preRemoveSideEffects(pos, state);
+        if (level == null || level.isClientSide()) return;
+        for (var facade : facades.values()) {
+            Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5,
+                    FacadeItem.of(facade));
         }
     }
 

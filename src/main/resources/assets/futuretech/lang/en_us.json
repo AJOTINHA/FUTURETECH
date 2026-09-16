@@ -184,5 +184,8 @@
   "item.futuretech.portable_battery_mk2": "Portable Battery MK2",
   "item.futuretech.portable_battery_mk3": "Portable Battery MK3",
   "item.futuretech.portable_battery_mk4": "Portable Battery MK4",
-  "block.futuretech.charger": "Charger"
+  "block.futuretech.charger": "Charger",
+  "item.futuretech.facade": "Facade",
+  "item.futuretech.facade.named": "%s Facade",
+  "item.futuretech.facade.hint": "Right-click a cable to hide that face; the Wrench takes it off"
 }

@@ -184,5 +184,8 @@
   "item.futuretech.portable_battery_mk2": "Bateria Portátil MK2",
   "item.futuretech.portable_battery_mk3": "Bateria Portátil MK3",
   "item.futuretech.portable_battery_mk4": "Bateria Portátil MK4",
-  "block.futuretech.charger": "Carregador"
+  "block.futuretech.charger": "Carregador",
+  "item.futuretech.facade": "Facade",
+  "item.futuretech.facade.named": "Facade de %s",
+  "item.futuretech.facade.hint": "Clique num cabo para esconder aquele lado; a Chave tira"
 }

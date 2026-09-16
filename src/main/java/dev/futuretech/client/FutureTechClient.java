@@ -148,6 +148,9 @@ public final class FutureTechClient {
                     SideMode.OUTPUT, new BatteryPortModelPart(side, steel, output, output, 14.55F),
                     SideMode.BOTH, new BatteryPortModelPart(side, steel, input, output, 14.55F)));
         }
+        // The panels hold sprites from the atlas that was just thrown away.
+        FacadeModelPart.clearCache();
+        FacadeModelPart.setPinSprite(steel);
         event.getBakingResult().blockStateModels().replaceAll((state, model) -> {
             if (state.getBlock() instanceof AbstractCableBlock cable) return new CableConnectorModel(model, cable.kind(), connectorsByKind.get(cable.kind()));
             if (state.getBlock() instanceof BatteryBlock) return new ConfiguredSideModel(model, Map.of(), batteryPreviews, batteryPorts);

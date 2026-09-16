@@ -8,6 +8,8 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -48,6 +50,13 @@ public final class ModDataComponents {
             TYPES.register("filter_mode", () -> DataComponentType.<ItemFilterMode>builder()
                     .persistent(ItemFilterMode.CODEC)
                     .networkSynchronized(ItemFilterMode.STREAM_CODEC)
+                    .build());
+
+    /** The block a facade wears. Absent means a facade that lost its block, which covers nothing. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<BlockState>> FACADE_BLOCK =
+            TYPES.register("facade_block", () -> DataComponentType.<BlockState>builder()
+                    .persistent(BlockState.CODEC)
+                    .networkSynchronized(ByteBufCodecs.idMapper(Block.BLOCK_STATE_REGISTRY))
                     .build());
 
     private ModDataComponents() {}

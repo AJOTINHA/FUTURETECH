@@ -75,6 +75,8 @@ class CableConnectorModelTest {
                 new Class<?>[]{BlockAndTintGetter.class},(proxy,method,args)-> {
                     if (method.getName().equals("getBlockState")) return states.getOrDefault(args[0],Blocks.AIR.defaultBlockState());
                     if (method.getName().equals("getModelData")) return modelData;
+                    // The snapshot holds block states only, so nothing here wears a facade.
+                    if (method.getName().equals("getBlockEntity")) return null;
                     throw new UnsupportedOperationException(method.getName());
                 });
     }

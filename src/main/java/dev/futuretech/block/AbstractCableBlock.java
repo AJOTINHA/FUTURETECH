@@ -1,5 +1,6 @@
 package dev.futuretech.block;
 
+import dev.futuretech.api.facade.CableFacades;
 import dev.futuretech.perf.TickProfiler;
 import dev.futuretech.block.entity.AbstractCableBlockEntity;
 import dev.futuretech.menu.CableConnectorMenu;
@@ -33,6 +34,9 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * Shape, connections and connector menu shared by every kind of cable. The six connection
  * properties only drive the model and shape; what flows is handled by each kind's network.
@@ -49,6 +53,28 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
      * holds the full-cube answer, and the mesher never asks for the shape at all.
      */
     private final VoxelShape[] shapesWithConnectors = new VoxelShape[64 * 64];
+    /**
+     * The same, for the few cables wearing facades. Kept in a map rather than in an array of every
+     * combination, which would be a quarter of a million slots for a case most cables never reach;
+     * the identity stays stable, which is what the mesher's cache needs.
+     */
+    private final Map<Integer, VoxelShape> shapesWithFacades = new ConcurrentHashMap<>();
+    /** One panel per face, built once: the facade covers its whole face down to {@link CableFacades#THICKNESS}. */
+    private static final VoxelShape[] PANELS = new VoxelShape[Direction.values().length];
+
+    static {
+        float depth = CableFacades.THICKNESS / 16.0F;
+        for (Direction side : Direction.values()) {
+            PANELS[side.ordinal()] = switch (side) {
+                case DOWN -> Shapes.box(0, 0, 0, 1, depth, 1);
+                case UP -> Shapes.box(0, 1 - depth, 0, 1, 1, 1);
+                case NORTH -> Shapes.box(0, 0, 0, 1, 1, depth);
+                case SOUTH -> Shapes.box(0, 0, 1 - depth, 1, 1, 1);
+                case WEST -> Shapes.box(0, 0, 0, depth, 1, 1);
+                case EAST -> Shapes.box(1 - depth, 0, 0, 1, 1, 1);
+            };
+        }
+    }
 
     protected AbstractCableBlock(Properties properties) {
         super(SIZE, properties);
@@ -71,12 +97,32 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         VoxelShape cable = super.getShape(state, level, pos, context);
         int connectors = CableConnector.mask(level, pos, state);
-        if (connectors == 0) return cable;
+        int facades = facadeMask(level, pos);
+        if (connectors == 0 && facades == 0) return cable;
         int slot = connectionMask(state) << 6 | connectors;
         VoxelShape shape = shapesWithConnectors[slot];
         // Two threads may build the same slot at once; both results are equal, so nothing is lost.
-        if (shape == null) shapesWithConnectors[slot] = shape = Shapes.or(cable, CableConnector.shape(connectors));
-        return shape;
+        if (shape == null) shapesWithConnectors[slot] = shape = connectors == 0 ? cable
+                : Shapes.or(cable, CableConnector.shape(connectors));
+        if (facades == 0) return shape;
+        VoxelShape withConnectors = shape;
+        return shapesWithFacades.computeIfAbsent(facades << 12 | slot, key -> {
+            VoxelShape joined = withConnectors;
+            for (Direction side : Direction.values()) {
+                if ((facades & (1 << side.ordinal())) != 0) joined = Shapes.or(joined, PANELS[side.ordinal()]);
+            }
+            return joined.optimize();
+        });
+    }
+
+    /** The covered faces as bits, in {@code Direction.ordinal()} order, like the collar mask. */
+    private static int facadeMask(BlockGetter level, BlockPos pos) {
+        if (!(level.getBlockEntity(pos) instanceof AbstractCableBlockEntity cable)) return 0;
+        int mask = 0;
+        for (Direction side : Direction.values()) {
+            if (cable.hasFacade(side)) mask |= 1 << side.ordinal();
+        }
+        return mask;
     }
 
     /** The six run connections as bits, {@code Direction.ordinal()} order, like the collar mask. */
@@ -106,6 +152,29 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
 
     private static boolean isCut(LevelReader level, BlockPos pos, Direction side) {
         return level.getBlockEntity(pos) instanceof AbstractCableBlockEntity cable && cable.isCut(side);
+    }
+
+    /**
+     * The wrench on a covered cable takes the panel off the face it hit and hands it back, before
+     * the wrench gets to the links: a player reaching a hidden cable wants the cover off first.
+     */
+    public InteractionResult removeFacade(Level level, BlockPos pos, Vec3 hitLocation, Direction clickedFace,
+                                          @Nullable Player player) {
+        if (!(level.getBlockEntity(pos) instanceof AbstractCableBlockEntity cable)) return InteractionResult.PASS;
+        // A covered face swallows the hit, so the clicked face wins over the arm the point is nearest.
+        Direction side = cable.hasFacade(clickedFace) ? clickedFace : hitSide(pos, hitLocation, clickedFace);
+        BlockState facade = cable.facade(side);
+        if (facade == null) return InteractionResult.PASS;
+        if (level.isClientSide()) return InteractionResult.SUCCESS;
+        cable.setFacade(side, null);
+        var stack = dev.futuretech.item.FacadeItem.of(facade);
+        if (player == null || !player.getInventory().add(stack)) {
+            net.minecraft.world.Containers.dropItemStack(level, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, stack);
+        }
+        var sound = facade.getSoundType();
+        level.playSound(null, pos, sound.getBreakSound(), SoundSource.BLOCKS,
+                (sound.getVolume() + 1.0F) / 2.0F, sound.getPitch() * 0.8F);
+        return InteractionResult.SUCCESS;
     }
 
     /**
@@ -141,7 +210,7 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
      * The side a click on the cable means: the arm or collar it landed on, told by the axis the
      * hit point is farthest from the centre along; a hit on the core itself means the face hit.
      */
-    static Direction hitSide(BlockPos pos, Vec3 hitLocation, Direction clickedFace) {
+    public static Direction hitSide(BlockPos pos, Vec3 hitLocation, Direction clickedFace) {
         Vec3 local = hitLocation.subtract(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
         double x = Math.abs(local.x), y = Math.abs(local.y), z = Math.abs(local.z);
         double farthest = Math.max(x, Math.max(y, z));

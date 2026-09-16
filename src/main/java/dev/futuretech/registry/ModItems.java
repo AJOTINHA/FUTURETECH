@@ -3,6 +3,7 @@ package dev.futuretech.registry;
 import dev.futuretech.FutureTech;
 import dev.futuretech.block.BatteryBlock;
 import dev.futuretech.item.BatteryBlockItem;
+import dev.futuretech.item.FacadeItem;
 import dev.futuretech.item.FluidTankBlockItem;
 import dev.futuretech.item.ItemFilterItem;
 import dev.futuretech.item.WrenchItem;
@@ -171,6 +172,9 @@ public final class ModItems {
     /** Right-click any block to rotate it. */
     public static final DeferredItem<WrenchItem> WRENCH = ITEMS.registerItem(
             "wrench", WrenchItem::new, properties -> properties.stacksTo(1));
+
+    /** The block it wears rides on the stack, so one item covers every kind of cable. */
+    public static final DeferredItem<FacadeItem> FACADE = ITEMS.registerItem("facade", FacadeItem::new);
 
     public static final DeferredItem<BlockItem> ASSEMBLY_TABLE = ITEMS.registerSimpleBlockItem(ModBlocks.ASSEMBLY_TABLE);
     public static final DeferredItem<BlockItem> TRANSPORT_ARM = ITEMS.registerSimpleBlockItem(ModBlocks.TRANSPORT_ARM);

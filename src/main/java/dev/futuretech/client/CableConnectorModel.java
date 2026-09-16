@@ -1,5 +1,6 @@
 package dev.futuretech.client;
 
+import dev.futuretech.api.facade.CableFacades;
 import dev.futuretech.api.side.SideConfigVisuals;
 import dev.futuretech.api.side.SideMode;
 import dev.futuretech.block.CableConnector;
@@ -52,6 +53,18 @@ public final class CableConnectorModel extends DelegateBlockStateModel {
             var part=entry.getValue().get(SideConfigVisuals.mode(modes,entry.getKey()));
             if (part != null) output.add(part);
         }
+        // The panels come last so the collars stay on top of them, which is what tells the player
+        // a hidden cable still has a connector on that face.
+        for (var facade : facades(level,pos).entrySet()) {
+            var panel=FacadeModelPart.of(facade.getValue(),facade.getKey());
+            if (panel != null) output.add(panel);
+        }
+    }
+
+    /** The blocks covering this cable's faces; empty until the block entity's data arrives. */
+    private static Map<Direction,BlockState> facades(BlockAndTintGetter level, BlockPos pos) {
+        var stored=level.getModelData(pos).get(CableFacades.FACADES);
+        return stored == null ? Map.of() : stored;
     }
 
     /**
@@ -68,14 +81,25 @@ public final class CableConnectorModel extends DelegateBlockStateModel {
         if (delegateKey == null) return null;
         Integer stored=level.getModelData(pos).get(SideConfigVisuals.FACE_MODES);
         return new GeometryKey(this,delegateKey,CableConnector.mask(level,pos,state),
-                stored==null ? defaultModes : stored);
+                stored==null ? defaultModes : stored,facades(level,pos));
     }
 
-    /** The wrapper's identity separates the kinds, which draw different contacts on the same collars. */
-    private record GeometryKey(CableConnectorModel model, Object delegate, int mask, int modes) {}
+    /**
+     * The wrapper's identity separates the kinds, which draw different contacts on the same collars.
+     * The facades ride along by value: two cables wearing the same blocks on the same faces share
+     * their geometry, and one that is uncovered stops matching the covered one at once.
+     */
+    private record GeometryKey(CableConnectorModel model, Object delegate, int mask, int modes,
+                               Map<Direction,BlockState> facades) {}
 
     @Override
     public int materialFlags(BlockAndTintGetter level, BlockPos pos, BlockState state) {
-        return delegate.materialFlags(level,pos,state) | connectorFlags;
+        int flags=delegate.materialFlags(level,pos,state) | connectorFlags;
+        // A panel may be cut out or animated where the cable is not, and the mesher has to know.
+        for (var facade : facades(level,pos).entrySet()) {
+            var panel=FacadeModelPart.of(facade.getValue(),facade.getKey());
+            if (panel != null) flags |= panel.materialFlags();
+        }
+        return flags;
     }
 }

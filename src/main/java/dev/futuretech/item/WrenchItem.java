@@ -44,6 +44,9 @@ public final class WrenchItem extends Item {
         if (context.isSecondaryUseActive()) return dismantle(state, level, pos, context.getPlayer());
         // A cable has nothing to turn; the wrench cuts and restores its links instead.
         if (state.getBlock() instanceof dev.futuretech.block.AbstractCableBlock cable) {
+            InteractionResult uncovered = cable.removeFacade(level, pos, context.getClickLocation(),
+                    context.getClickedFace(), context.getPlayer());
+            if (uncovered != InteractionResult.PASS) return uncovered;
             return cable.toggleLink(level, pos, state, context.getClickLocation(), context.getClickedFace());
         }
         if (level.getBlockEntity(pos) instanceof dev.futuretech.block.entity.AssemblerBlockEntity arm
