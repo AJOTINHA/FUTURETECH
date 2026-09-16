@@ -155,8 +155,9 @@ class CableResourcesTest {
 
     /**
      * Both fluid cables are the item cable's recipe again: children of the energy cable's models
-     * with their own core textures, and the see-through one drawn on the translucent layer so its
-     * glass core lets the fluid inside show.
+     * with their own core textures. The see-through one gets its window from the texture alone:
+     * the game picks each quad's layer from the sprite's alpha, so a model key would be ignored,
+     * and fully transparent pixels land on the cutout layer, which needs no sorting.
      */
     @Test
     void fluidCablesReuseTheCableGeometryWithTheirOwnSkins() throws Exception {
@@ -168,13 +169,24 @@ class CableResourcesTest {
                 assertFalse(model.has("elements"), "No geometry of its own: " + part);
                 var textures = model.getAsJsonObject("textures");
                 assertEquals(2, textures.size(), "Only the core changes: " + part);
+                boolean window = false;
                 for (var texture : textures.entrySet()) {
                     String path = texture.getValue().getAsString();
                     assertTrue(path.startsWith("futuretech:block/fluid_cable/" + name), path);
-                    assertNotNull(getClass().getResource("/assets/futuretech/textures/"
-                            + path.substring("futuretech:".length()) + ".png"), path);
+                    var png = getClass().getResource("/assets/futuretech/textures/"
+                            + path.substring("futuretech:".length()) + ".png");
+                    assertNotNull(png, path);
+                    var image = javax.imageio.ImageIO.read(png);
+                    for (int y = 0; y < image.getHeight(); y++) {
+                        for (int x = 0; x < image.getWidth(); x++) {
+                            int alpha = image.getRGB(x, y) >>> 24;
+                            assertTrue(alpha == 0 || alpha == 255, "Cutout, never translucent: " + path);
+                            window |= alpha == 0;
+                        }
+                    }
                 }
-                assertEquals(glass, model.has("render_type"), "Only the glass cable is translucent: " + part);
+                assertFalse(model.has("render_type"), "The layer comes from the texture: " + part);
+                assertEquals(glass, window, "Only the glass cable has a window: " + part);
             }
             var energy = resource("blockstates/cable_mk1.json").toString();
             var fluid = resource("blockstates/" + name + ".json").toString();

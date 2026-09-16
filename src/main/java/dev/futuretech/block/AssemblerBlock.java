@@ -27,6 +27,10 @@ public final class AssemblerBlock extends BaseEntityBlock {
             Codec.STRING.fieldOf("kind").forGetter(b -> b.kind.name()), propertiesCodec()
     ).apply(i, (kind, properties) -> new AssemblerBlock(Kind.valueOf(kind), properties)));
     public final Kind kind;
+    // Built once: the block's shape is asked for every frame the player looks at it and on every
+    // collision check, and a fresh box per call is an allocation each time for the same answer.
+    private static final VoxelShape TABLE_SHAPE = Block.box(0, 0, 0, 16, 13, 16);
+    private static final VoxelShape TOWER_SHAPE = Block.box(2, 0, 2, 14, 16, 14);
     public AssemblerBlock(Kind kind, Properties properties) {
         super(properties);
         this.kind = kind;
@@ -40,7 +44,7 @@ public final class AssemblerBlock extends BaseEntityBlock {
     @Override protected BlockState rotate(BlockState state, Rotation rotation) { return state.setValue(FACING, rotation.rotate(state.getValue(FACING))); }
     @Override protected BlockState mirror(BlockState state, Mirror mirror) { return rotate(state, mirror.getRotation(state.getValue(FACING))); }
     @Override protected VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level, BlockPos pos, CollisionContext context) {
-        return kind == Kind.TABLE ? Block.box(0, 0, 0, 16, 13, 16) : Block.box(2, 0, 2, 14, 16, 14);
+        return kind == Kind.TABLE ? TABLE_SHAPE : TOWER_SHAPE;
     }
     @Override public BlockEntity newBlockEntity(BlockPos pos, BlockState state) { return new AssemblerBlockEntity(pos, state); }
     @Override public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
