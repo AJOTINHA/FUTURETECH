@@ -3,6 +3,7 @@ package dev.futuretech.client;
 import dev.futuretech.api.side.SideConfigVisuals;
 import dev.futuretech.api.side.SideMode;
 import dev.futuretech.block.CableConnector;
+import dev.futuretech.block.CableKind;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
@@ -22,14 +23,15 @@ import java.util.Map;
  * its rim tells the player what that connector does without opening it.
  */
 public final class CableConnectorModel extends DelegateBlockStateModel {
-    /** What to draw before the block entity's data arrives: the mode a fresh connector starts on. */
-    private static final int DEFAULT_MODES=SideConfigVisuals.faceModes(SideMode.NONE);
+    /** What to draw before the block entity's data arrives: the mode a fresh connector of this kind starts on. */
+    private final int defaultModes;
 
     private final Map<Direction,Map<SideMode,BlockStateModelPart>> connectors;
     private final int connectorFlags;
 
-    public CableConnectorModel(BlockStateModel delegate, Map<Direction,Map<SideMode,BlockStateModelPart>> connectors) {
+    public CableConnectorModel(BlockStateModel delegate, CableKind kind, Map<Direction,Map<SideMode,BlockStateModelPart>> connectors) {
         super(delegate);
+        this.defaultModes=SideConfigVisuals.faceModes(kind.freshConnector());
         this.connectors=Map.copyOf(connectors);
         int flags=0;
         for (var modes : connectors.values()) {
@@ -44,7 +46,7 @@ public final class CableConnectorModel extends DelegateBlockStateModel {
         delegate.collectParts(level,pos,state,random,output);
         int mask=CableConnector.mask(level,pos,state);
         Integer stored=level.getModelData(pos).get(SideConfigVisuals.FACE_MODES);
-        int modes=stored==null ? DEFAULT_MODES : stored;
+        int modes=stored==null ? defaultModes : stored;
         for (var entry : connectors.entrySet()) {
             if ((mask & (1 << entry.getKey().ordinal())) == 0) continue;
             var part=entry.getValue().get(SideConfigVisuals.mode(modes,entry.getKey()));
@@ -66,7 +68,7 @@ public final class CableConnectorModel extends DelegateBlockStateModel {
         if (delegateKey == null) return null;
         Integer stored=level.getModelData(pos).get(SideConfigVisuals.FACE_MODES);
         return new GeometryKey(this,delegateKey,CableConnector.mask(level,pos,state),
-                stored==null ? DEFAULT_MODES : stored);
+                stored==null ? defaultModes : stored);
     }
 
     /** The wrapper's identity separates the kinds, which draw different contacts on the same collars. */

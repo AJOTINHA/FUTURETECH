@@ -52,7 +52,7 @@ public final class ItemCableBlockEntity extends AbstractCableBlockEntity {
     private final List<ItemFlight> parked = new ArrayList<>();
 
     public ItemCableBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.ITEM_CABLE.get(), pos, state);
+        super(ModBlockEntities.ITEM_CABLE.get(), pos, state, CableKind.ITEMS);
         this.tier = state.getBlock() instanceof ItemCableBlock block ? block.tier() : ItemCableTier.OPAQUE;
     }
 

@@ -19,7 +19,7 @@ public final class CableBlockEntity extends AbstractCableBlockEntity {
     private @Nullable CableNetwork network;
 
     public CableBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.CABLE.get(), pos, state);
+        super(ModBlockEntities.CABLE.get(), pos, state, CableKind.ENERGY);
         this.tier = state.getBlock() instanceof CableBlock block ? block.tier() : CableTier.MK1;
     }
 

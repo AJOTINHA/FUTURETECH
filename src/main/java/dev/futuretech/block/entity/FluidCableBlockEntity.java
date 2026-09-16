@@ -50,7 +50,7 @@ public final class FluidCableBlockEntity extends AbstractCableBlockEntity {
     private static final int MAX_TRACE = 256;
 
     public FluidCableBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.FLUID_CABLE.get(), pos, state);
+        super(ModBlockEntities.FLUID_CABLE.get(), pos, state, CableKind.FLUID);
         this.tier = state.getBlock() instanceof FluidCableBlock block ? block.tier() : FluidCableTier.OPAQUE;
     }
 

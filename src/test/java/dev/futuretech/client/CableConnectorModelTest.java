@@ -4,6 +4,7 @@ import dev.futuretech.api.side.SideConfigVisuals;
 import dev.futuretech.api.side.SideMode;
 import dev.futuretech.block.CableBlock;
 import dev.futuretech.block.CableConnector;
+import dev.futuretech.block.CableKind;
 import dev.futuretech.registry.ModBlocks;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
@@ -92,7 +93,7 @@ class CableConnectorModelTest {
     @Test
     void connectorsFollowMachineNeighborsInAllSixDirectionsWithoutExtraBlockStates(MinecraftServer server) {
         var cable=ModBlocks.CABLE_MK1.get().defaultBlockState();
-        var model=new CableConnectorModel(BASE,uniformParts(CONNECTOR));
+        var model=new CableConnectorModel(BASE,CableKind.ENERGY,uniformParts(CONNECTOR));
         var states=new HashMap<BlockPos,BlockState>();
         var level=snapshot(states);
         for (Direction side : Direction.values()) {
@@ -128,7 +129,7 @@ class CableConnectorModelTest {
     void cablesOfDifferentKindsAreNeighboursNotRuns(MinecraftServer server) {
         // An item cable beside an energy cable is a machine as far as either is concerned: the run
         // ends in a collar there, and only a cable of the same kind continues it.
-        var model=new CableConnectorModel(BASE,uniformParts(CONNECTOR));
+        var model=new CableConnectorModel(BASE,CableKind.ENERGY,uniformParts(CONNECTOR));
         var energy=ModBlocks.CABLE_MK1.get().defaultBlockState();
         var items=ModBlocks.ITEM_CABLE_OPAQUE.get().defaultBlockState();
         for (var pair : List.of(List.of(energy,items),List.of(items,energy))) {

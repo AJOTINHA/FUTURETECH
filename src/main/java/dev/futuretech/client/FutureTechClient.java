@@ -144,7 +144,7 @@ public final class FutureTechClient {
                     SideMode.BOTH, new BatteryPortModelPart(side, steel, input, output, 14.55F)));
         }
         event.getBakingResult().blockStateModels().replaceAll((state, model) -> {
-            if (state.getBlock() instanceof AbstractCableBlock cable) return new CableConnectorModel(model, connectorsByKind.get(cable.kind()));
+            if (state.getBlock() instanceof AbstractCableBlock cable) return new CableConnectorModel(model, cable.kind(), connectorsByKind.get(cable.kind()));
             if (state.getBlock() instanceof BatteryBlock) return new ConfiguredSideModel(model, Map.of(), batteryPreviews, batteryPorts);
             if (state.getBlock() instanceof FluidTankBlock) return new ConfiguredSideModel(model, Map.of(), tankPreviews, tankPorts);
             return state.getBlock() instanceof SideConfigurableBlock
