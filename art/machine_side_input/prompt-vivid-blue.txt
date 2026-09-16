@@ -1,3 +1,0 @@
-Edited with the built-in image_gen tool using the existing input side as reference.
-
-Use case: precise-object-edit. Edit this existing Minecraft machine input side texture. Change ONLY the four muted blue accent tabs immediately above, below, left and right of the central grille to vivid saturated electric blue (#008FFF midtone with subtle #18B5FF highlights). They must have vibrant strong saturation comparable to bright orange output indicators. Preserve absolutely all other pixels, shapes, gray panel, mottling, borders, corner bolts, black grille, placement, proportions. Do not add glow outside the tabs, do not enlarge tabs. Single square opaque flat texture, same resolution and layout as reference, no text.

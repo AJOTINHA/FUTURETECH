@@ -8,6 +8,7 @@ import dev.futuretech.api.side.SideConfigMenu;
 import dev.futuretech.api.side.SideMode;
 import dev.futuretech.api.upgrade.UpgradeInventory;
 import dev.futuretech.api.upgrade.UpgradeSlots;
+import dev.futuretech.api.upgrade.MachineLevel;
 import dev.futuretech.block.BatteryTier;
 import dev.futuretech.block.entity.BatteryBlockEntity;
 import dev.futuretech.energy.EnergySync;
@@ -34,7 +35,12 @@ public final class BatteryMenu extends MachineMenu implements SideConfigMenu, Re
     public static final int IMAGE_WIDTH = 176;
 
     public BatteryMenu(int id, Inventory inventory) {
-        this(id, inventory, null, new UpgradeInventory(() -> {}), new SimpleContainerData(DATA_COUNT));
+        this(id, inventory, new SimpleContainerData(DATA_COUNT));
+    }
+
+    /** Client side: the upgrade slots unlock by the synced tier, one per MK. */
+    private BatteryMenu(int id, Inventory inventory, ContainerData data) {
+        this(id, inventory, null, new UpgradeInventory(() -> BatteryTier.byOrdinal(data.get(DATA_TIER)).ordinal() + 1, () -> {}), data);
     }
 
     public BatteryMenu(int id, Inventory inventory, @Nullable BatteryBlockEntity battery, UpgradeInventory upgrades,
@@ -65,7 +71,9 @@ public final class BatteryMenu extends MachineMenu implements SideConfigMenu, Re
     public Direction front() { return Direction.values()[Math.clamp(data.get(DATA_FRONT), 0, 5)]; }
 
     @Override
-    public BlockState displayState() { return ModBlocks.BATTERY_MK1.get().displayState(front()); }
+    public BlockState displayState() {
+        return ModBlocks.BATTERY_MK1.get().displayState(front()).setValue(MachineLevel.MK, tier().ordinal() + 1);
+    }
 
     @Override
     public Set<SideMode> allowedModes() { return ModBlocks.BATTERY_MK1.get().allowedSideModes(); }

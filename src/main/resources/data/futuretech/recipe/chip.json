@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [" G ", "RQR", " C "],
+  "key": {
+    "G": "minecraft:gold_ingot",
+    "R": "minecraft:redstone",
+    "Q": "minecraft:quartz",
+    "C": "minecraft:copper_ingot"
+  },
+  "result": { "id": "futuretech:chip", "count": 1 }
+}

@@ -1,7 +1,9 @@
 package dev.futuretech.client;
 
 import dev.futuretech.api.upgrade.UpgradeSlot;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.Slot;
 import org.joml.Matrix3x2f;
 
@@ -11,7 +13,19 @@ public final class MachineScreenStyle {
     static final int TITLE = 0xFFFFFFFF;
     static final int BAR_BACK = 0xFF283541;
     static final int ENERGY_START = 0xFF1676C4;
-    static final int ENERGY_END = 0xFF55E7ED;
+    public static final int ENERGY_END = 0xFF55E7ED;
+
+    /** Append the synchronized level and keep long translated/custom names inside the header. */
+    static void drawMachineTitle(GuiGraphicsExtractor graphics, Font font, Component name, int mk,
+                                 int x, int y, int maxWidth) {
+        Component title = mk > 1 ? Component.translatable("item.futuretech.machine_level", name, mk) : name;
+        float scale = Math.min(1.0F, (float) maxWidth / Math.max(1, font.width(title)));
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(x, y + font.lineHeight * (1 - scale) / 2);
+        graphics.pose().scale(scale, scale);
+        graphics.text(font, title, 0, 0, TITLE, false);
+        graphics.pose().popMatrix();
+    }
 
     public static void drawPanel(GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
         // Small pixel steps reproduce vanilla-style corners without rounded panels.
@@ -69,6 +83,41 @@ public final class MachineScreenStyle {
         graphics.pose().scale(width, 1.0F);
         graphics.fillGradient(0, 0, 1, Math.max(1, height / 2), 0x18FFFFFF, 0x00FFFFFF);
         graphics.pose().popMatrix();
+    }
+
+    /**
+     * The same bar stood on end: it grows upward from {@code bottom}, so {@code startColor} sits at
+     * the foot of the column and {@code endColor} at its tip.
+     */
+    static void drawVerticalGradientBar(GuiGraphicsExtractor graphics, int x, int bottom, int width,
+                                        float height, int startColor, int endColor) {
+        if (height <= 0) return;
+        // Fractional scaling of a one-unit rect avoids whole GUI-pixel jumps as the bar fills.
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(x, bottom);
+        graphics.pose().scale(1.0F, height);
+        graphics.fillGradient(0, -1, width, 0, endColor, startColor);
+        graphics.pose().popMatrix();
+        // Sheen down the leading edge, mirroring the one the horizontal bar carries along its top.
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(x, bottom);
+        graphics.pose().mul(new Matrix3x2f(0, -1, 1, 0, 0, 0));
+        graphics.pose().scale(height, 1.0F);
+        graphics.fillGradient(0, 0, 1, Math.max(1, width / 2), 0x18FFFFFF, 0x00FFFFFF);
+        graphics.pose().popMatrix();
+    }
+
+    /**
+     * Shows the stored-against-capacity readout while the pointer is inside an energy bar. The box
+     * is the bar's outer one, so a half-empty or flat bar still answers.
+     *
+     * @param x , y, width, height the bar's outer box in screen coordinates
+     */
+    static void energyTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY,
+                              int x, int y, int width, int height, int stored, int capacity) {
+        if (mouseX < x || mouseX >= x + width || mouseY < y || mouseY >= y + height) return;
+        graphics.setTooltipForNextFrame(
+                Component.translatable("gui.futuretech.stored", stored, capacity), mouseX, mouseY);
     }
 
     static final class AnimatedBar {

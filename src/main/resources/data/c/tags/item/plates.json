@@ -1,0 +1,10 @@
+{
+  "values": [
+    "#c:plates/iron",
+    "#c:plates/gold",
+    "#c:plates/copper",
+    "#c:plates/netherite",
+    "#c:plates/steel"
+  ],
+  "replace": false
+}

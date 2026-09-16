@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "futuretech:wooden_hammer",
+    "futuretech:stone_hammer",
+    "futuretech:copper_hammer",
+    "futuretech:iron_hammer",
+    "futuretech:golden_hammer",
+    "futuretech:diamond_hammer",
+    "futuretech:netherite_hammer"
+  ]
+}

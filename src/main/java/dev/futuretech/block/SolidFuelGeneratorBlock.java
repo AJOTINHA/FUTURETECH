@@ -1,7 +1,13 @@
 package dev.futuretech.block;
 
+import org.jspecify.annotations.Nullable;
+import net.minecraft.world.level.redstone.Orientation;
+import dev.futuretech.api.redstone.RedstoneControl;
+import dev.futuretech.perf.TickProfiler;
 import com.mojang.serialization.MapCodec;
-import dev.futuretech.api.side.SideConfig;
+import dev.futuretech.api.upgrade.MachineLevel;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.StateDefinition;
 import dev.futuretech.api.side.SideConfig;
 import dev.futuretech.api.side.SideConfigurableBlock;
 import dev.futuretech.api.side.SideMode;
@@ -33,6 +39,12 @@ public final class SolidFuelGeneratorBlock extends AbstractFurnaceBlock implemen
     }
 
     @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
+        builder.add(MachineLevel.MK);
+    }
+
+    @Override
     public Set<SideMode> allowedSideModes() { return ALLOWED_SIDE_MODES; }
 
     @Override
@@ -55,6 +67,13 @@ public final class SolidFuelGeneratorBlock extends AbstractFurnaceBlock implemen
         return CODEC;
     }
 
+    /** Redstone is sampled on change rather than polled every tick. */
+    @Override
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, @Nullable Orientation orientation, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, block, orientation, movedByPiston);
+        RedstoneControl.sample(level, pos);
+    }
+
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new SolidFuelGeneratorBlockEntity(pos, state);
@@ -63,7 +82,7 @@ public final class SolidFuelGeneratorBlock extends AbstractFurnaceBlock implemen
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         return level.isClientSide() ? null : createTickerHelper(
-                type, ModBlockEntities.SOLID_FUEL_GENERATOR.get(), SolidFuelGeneratorBlockEntity::serverTick);
+                type, ModBlockEntities.SOLID_FUEL_GENERATOR.get(), TickProfiler.wrap(SolidFuelGeneratorBlockEntity::serverTick));
     }
 
     @Override

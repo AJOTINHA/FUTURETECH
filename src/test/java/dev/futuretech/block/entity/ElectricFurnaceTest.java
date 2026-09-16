@@ -2,6 +2,8 @@ package dev.futuretech.block.entity;
 
 import static dev.futuretech.block.entity.ElectricFurnaceBlockEntity.*;
 
+import dev.futuretech.api.upgrade.MachineLevel;
+
 import dev.futuretech.api.side.SideMode;
 import dev.futuretech.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
@@ -23,6 +25,25 @@ import static org.junit.jupiter.api.Assertions.*;
 class ElectricFurnaceTest {
     private static ElectricFurnaceBlockEntity furnace() {
         return new ElectricFurnaceBlockEntity(BlockPos.ZERO, ModBlocks.ELECTRIC_FURNACE.get().defaultBlockState());
+    }
+
+    @Test
+    void anMk2SmeltsTwoLanesAtOnceFasterAndHungrierThanAnMk1(MinecraftServer server) {
+        var furnace = new ElectricFurnaceBlockEntity(BlockPos.ZERO,
+                ModBlocks.ELECTRIC_FURNACE.get().defaultBlockState().setValue(MachineLevel.MK, 2));
+        assertEquals(MachineLevel.capacity(CAPACITY, 2), furnace.energy().getCapacityAsInt());
+        charge(furnace, CAPACITY);
+        furnace.setItem(SLOT_INPUT, new ItemStack(Items.RAW_IRON));
+        furnace.setItem(SLOT_INPUT + 1, new ItemStack(Items.SAND));
+        int ticks = MachineLevel.duration(200 / 2, 2);
+        int before = furnace.energy().getAmountAsInt();
+        for (int tick = 0; tick < ticks; tick++) assertTrue(tick(furnace, recipes(server)), "tick " + tick);
+        assertTrue(furnace.getItem(SLOT_OUTPUT).is(Items.IRON_INGOT));
+        assertTrue(furnace.getItem(SLOT_OUTPUT + 1).is(Items.GLASS));
+        assertEquals(before - 2 * ticks * MachineLevel.consumption(ENERGY_PER_TICK, 2), furnace.energy().getAmountAsInt());
+        // The third lane stays shut on an MK2.
+        furnace.setItem(SLOT_INPUT + 2, new ItemStack(Items.SAND));
+        assertFalse(tick(furnace, recipes(server)));
     }
 
     /** Fills the buffer the way a cable would: the handler only accepts INPUT_PER_TICK each tick. */

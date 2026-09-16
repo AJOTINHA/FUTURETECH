@@ -1,0 +1,6 @@
+{
+  "parent": "futuretech:item/lumber_axe",
+  "textures": {
+    "palette": "minecraft:item/wooden_axe"
+  }
+}

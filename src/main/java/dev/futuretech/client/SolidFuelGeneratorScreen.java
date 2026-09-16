@@ -2,6 +2,7 @@ package dev.futuretech.client;
 
 import static dev.futuretech.client.MachineScreenStyle.*;
 
+import dev.futuretech.api.gui.EnergyInfoTab;
 import dev.futuretech.api.gui.TabStrip;
 import dev.futuretech.api.redstone.client.RedstoneControlTab;
 import dev.futuretech.api.side.client.SideConfigTab;
@@ -24,7 +25,8 @@ public final class SolidFuelGeneratorScreen extends AbstractContainerScreen<Soli
         titleLabelX = menu.slots.getFirst().x - 1;
         inventoryLabelX = titleLabelX;
         inventoryLabelY = 90;
-        tabs = new TabStrip(new UpgradeTab(menu, font), new SideConfigTab<>(menu, font), new RedstoneControlTab<>(menu, font));
+        tabs = new TabStrip(new UpgradeTab(menu, font), new SideConfigTab<>(menu, font),
+                new RedstoneControlTab<>(menu, font), new EnergyInfoTab(menu, font));
     }
 
     @Override
@@ -36,7 +38,7 @@ public final class SolidFuelGeneratorScreen extends AbstractContainerScreen<Soli
         drawSlots(graphics, x, y, menu.slots);
         // The energy box is centred on the fuel slot's vertical span (44..62) without changing its size.
         graphics.fill(x + 69, y + 46, x + 163, y + 60, BAR_BACK);
-        float energyWidth = energyBar.width(menu.energyStored(), SolidFuelGeneratorBlockEntity.CAPACITY, 92, menu.isSynced());
+        float energyWidth = energyBar.width(menu.energyStored(), menu.energyCapacity(), 92, menu.isSynced());
         drawGradientBar(graphics, x + 70, y + 47, energyWidth, 12, ENERGY_START, ENERGY_END);
         graphics.fill(x + 7, y + 65, x + 25, y + 69, 0xFF56616D);
         float burnWidth = fuelBar.width(menu.burnRemaining(), menu.burnTotal(), 18, menu.isSynced());
@@ -47,6 +49,9 @@ public final class SolidFuelGeneratorScreen extends AbstractContainerScreen<Soli
     @Override
     protected void extractTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         super.extractTooltip(graphics, mouseX, mouseY);
+        // Same outer box the bar's backing plate fills.
+        energyTooltip(graphics, mouseX, mouseY, leftPos + 69, topPos + 46, 94, 14,
+                menu.energyStored(), menu.energyCapacity());
         tabs.extractTooltip(graphics, mouseX, mouseY);
     }
 
@@ -57,7 +62,7 @@ public final class SolidFuelGeneratorScreen extends AbstractContainerScreen<Soli
 
     @Override
     protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        graphics.text(font, title, titleLabelX, titleLabelY, TITLE, false);
+        drawMachineTitle(graphics, font, title, menu.mk(), titleLabelX, titleLabelY, imageWidth - titleLabelX - 7);
         graphics.text(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, TEXT, false);
         var fuelStack = menu.slots.getFirst().getItem();
         Component fuelName = fuelStack.isEmpty()
@@ -72,6 +77,6 @@ public final class SolidFuelGeneratorScreen extends AbstractContainerScreen<Soli
                 menu.isGenerating() ? SolidFuelGeneratorBlockEntity.GENERATION_PER_TICK : 0);
         graphics.text(font, generationRate, 163 - font.width(generationRate), 26, TEXT, false);
         graphics.text(font, Component.translatable("gui.futuretech.stored", menu.energyStored(),
-                SolidFuelGeneratorBlockEntity.CAPACITY), 70, 63, TEXT, false);
+                menu.energyCapacity()), 70, 63, TEXT, false);
     }
 }

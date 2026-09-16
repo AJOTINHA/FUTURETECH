@@ -1,0 +1,16 @@
+{
+  "type": "futuretech:assembling",
+  "recipes": {
+    "machine_casing": {
+      "ingredients": [
+        "minecraft:stone",
+        "minecraft:iron_ingot"
+      ],
+      "result": {
+        "id": "futuretech:machine_casing",
+        "count": 1
+      },
+      "duration": 80
+    }
+  }
+}

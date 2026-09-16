@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": ["IGI", "RSR", "IGI"],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "G": "minecraft:gold_ingot",
+    "R": "minecraft:redstone",
+    "S": "minecraft:sugar"
+  },
+  "result": {
+    "id": "futuretech:speed_upgrade",
+    "count": 1
+  }
+}

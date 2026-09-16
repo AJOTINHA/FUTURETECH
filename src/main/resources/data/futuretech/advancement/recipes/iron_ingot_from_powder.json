@@ -1,0 +1,32 @@
+{
+  "requirements": [
+    [
+      "has_powder",
+      "has_the_recipe"
+    ]
+  ],
+  "criteria": {
+    "has_powder": {
+      "conditions": {
+        "items": [
+          {
+            "items": "futuretech:iron_powder"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    },
+    "has_the_recipe": {
+      "conditions": {
+        "recipe": "futuretech:iron_ingot_from_powder"
+      },
+      "trigger": "minecraft:recipe_unlocked"
+    }
+  },
+  "rewards": {
+    "recipes": [
+      "futuretech:iron_ingot_from_powder"
+    ]
+  },
+  "parent": "minecraft:recipes/root"
+}

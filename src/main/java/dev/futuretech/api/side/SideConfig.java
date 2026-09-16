@@ -80,9 +80,14 @@ public final class SideConfig {
 
     /** Moves the face to the next allowed mode in {@link #CYCLE} and returns it. */
     public SideMode cycle(Direction side) {
+        return cycle(side, false);
+    }
+
+    /** Moves one step through the allowed modes, reversing the order for a right click. */
+    public SideMode cycle(Direction side, boolean backwards) {
         int start = CYCLE.indexOf(modes.get(side));
         for (int step = 1; step <= CYCLE.size(); step++) {
-            SideMode candidate = CYCLE.get((start + step) % CYCLE.size());
+            SideMode candidate = CYCLE.get(Math.floorMod(start + (backwards ? -step : step), CYCLE.size()));
             if (allowed.contains(candidate)) {
                 modes.put(side, candidate);
                 return candidate;
@@ -95,6 +100,12 @@ public final class SideConfig {
     public void clear() {
         if (!allowed.contains(SideMode.NONE)) return;
         for (Direction side : Direction.values()) modes.put(side, SideMode.NONE);
+    }
+
+    /** Carry the configured ports with the block, preserving top and bottom during a yaw turn. */
+    public void rotate(net.minecraft.world.level.block.Rotation rotation) {
+        var previous = new EnumMap<>(modes);
+        previous.forEach((side, mode) -> modes.put(rotation.rotate(side), mode));
     }
 
     /** Menu data slot value for face {@code index} (a {@link Direction} ordinal). */

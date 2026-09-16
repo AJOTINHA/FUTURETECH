@@ -1,36 +1,132 @@
 {
   "variants": {
-    "facing=north,lit=false": {
+    "facing=north,lit=false,mk=1": {
       "y": 0,
       "model": "futuretech:block/electric_furnace"
     },
-    "facing=north,lit=true": {
+    "facing=east,lit=false,mk=1": {
+      "y": 90,
+      "model": "futuretech:block/electric_furnace"
+    },
+    "facing=south,lit=false,mk=1": {
+      "y": 180,
+      "model": "futuretech:block/electric_furnace"
+    },
+    "facing=west,lit=false,mk=1": {
+      "y": 270,
+      "model": "futuretech:block/electric_furnace"
+    },
+    "facing=north,lit=true,mk=1": {
       "y": 0,
       "model": "futuretech:block/electric_furnace_on"
     },
-    "facing=east,lit=false": {
-      "y": 90,
-      "model": "futuretech:block/electric_furnace"
-    },
-    "facing=east,lit=true": {
+    "facing=east,lit=true,mk=1": {
       "y": 90,
       "model": "futuretech:block/electric_furnace_on"
     },
-    "facing=south,lit=false": {
-      "y": 180,
-      "model": "futuretech:block/electric_furnace"
-    },
-    "facing=south,lit=true": {
+    "facing=south,lit=true,mk=1": {
       "y": 180,
       "model": "futuretech:block/electric_furnace_on"
     },
-    "facing=west,lit=false": {
-      "y": 270,
-      "model": "futuretech:block/electric_furnace"
-    },
-    "facing=west,lit=true": {
+    "facing=west,lit=true,mk=1": {
       "y": 270,
       "model": "futuretech:block/electric_furnace_on"
+    },
+    "facing=north,lit=false,mk=2": {
+      "y": 0,
+      "model": "futuretech:block/electric_furnace/mk2"
+    },
+    "facing=east,lit=false,mk=2": {
+      "y": 90,
+      "model": "futuretech:block/electric_furnace/mk2"
+    },
+    "facing=south,lit=false,mk=2": {
+      "y": 180,
+      "model": "futuretech:block/electric_furnace/mk2"
+    },
+    "facing=west,lit=false,mk=2": {
+      "y": 270,
+      "model": "futuretech:block/electric_furnace/mk2"
+    },
+    "facing=north,lit=true,mk=2": {
+      "y": 0,
+      "model": "futuretech:block/electric_furnace/mk2_on"
+    },
+    "facing=east,lit=true,mk=2": {
+      "y": 90,
+      "model": "futuretech:block/electric_furnace/mk2_on"
+    },
+    "facing=south,lit=true,mk=2": {
+      "y": 180,
+      "model": "futuretech:block/electric_furnace/mk2_on"
+    },
+    "facing=west,lit=true,mk=2": {
+      "y": 270,
+      "model": "futuretech:block/electric_furnace/mk2_on"
+    },
+    "facing=north,lit=false,mk=3": {
+      "y": 0,
+      "model": "futuretech:block/electric_furnace/mk3"
+    },
+    "facing=east,lit=false,mk=3": {
+      "y": 90,
+      "model": "futuretech:block/electric_furnace/mk3"
+    },
+    "facing=south,lit=false,mk=3": {
+      "y": 180,
+      "model": "futuretech:block/electric_furnace/mk3"
+    },
+    "facing=west,lit=false,mk=3": {
+      "y": 270,
+      "model": "futuretech:block/electric_furnace/mk3"
+    },
+    "facing=north,lit=true,mk=3": {
+      "y": 0,
+      "model": "futuretech:block/electric_furnace/mk3_on"
+    },
+    "facing=east,lit=true,mk=3": {
+      "y": 90,
+      "model": "futuretech:block/electric_furnace/mk3_on"
+    },
+    "facing=south,lit=true,mk=3": {
+      "y": 180,
+      "model": "futuretech:block/electric_furnace/mk3_on"
+    },
+    "facing=west,lit=true,mk=3": {
+      "y": 270,
+      "model": "futuretech:block/electric_furnace/mk3_on"
+    },
+    "facing=north,lit=false,mk=4": {
+      "y": 0,
+      "model": "futuretech:block/electric_furnace/mk4"
+    },
+    "facing=east,lit=false,mk=4": {
+      "y": 90,
+      "model": "futuretech:block/electric_furnace/mk4"
+    },
+    "facing=south,lit=false,mk=4": {
+      "y": 180,
+      "model": "futuretech:block/electric_furnace/mk4"
+    },
+    "facing=west,lit=false,mk=4": {
+      "y": 270,
+      "model": "futuretech:block/electric_furnace/mk4"
+    },
+    "facing=north,lit=true,mk=4": {
+      "y": 0,
+      "model": "futuretech:block/electric_furnace/mk4_on"
+    },
+    "facing=east,lit=true,mk=4": {
+      "y": 90,
+      "model": "futuretech:block/electric_furnace/mk4_on"
+    },
+    "facing=south,lit=true,mk=4": {
+      "y": 180,
+      "model": "futuretech:block/electric_furnace/mk4_on"
+    },
+    "facing=west,lit=true,mk=4": {
+      "y": 270,
+      "model": "futuretech:block/electric_furnace/mk4_on"
     }
   }
 }

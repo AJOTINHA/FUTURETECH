@@ -6,7 +6,16 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "futuretech:electric_furnace"
+          "name": "futuretech:electric_furnace",
+          "functions": [
+            {
+              "function": "minecraft:copy_state",
+              "properties": [
+                "mk"
+              ],
+              "block": "futuretech:electric_furnace"
+            }
+          ]
         }
       ],
       "conditions": [

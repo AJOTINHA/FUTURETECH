@@ -9,8 +9,8 @@ import net.neoforged.neoforge.transfer.transaction.TransactionContext;
  * so neighbours pushing or pulling through the capability cannot exceed the block's rated transfer.
  */
 public final class TickLimitedEnergyHandler extends SimpleEnergyHandler {
-    private final int inputPerTick;
-    private final int outputPerTick;
+    private int inputPerTick;
+    private int outputPerTick;
     private final Runnable onChanged;
     private int inputRemaining;
     private int outputRemaining;
@@ -36,6 +36,30 @@ public final class TickLimitedEnergyHandler extends SimpleEnergyHandler {
         this.inputRemaining = inputPerTick;
         this.outputRemaining = outputPerTick;
         this.onChanged = onChanged;
+    }
+
+    /**
+     * Changes how much the buffer holds, for upgrades coming and going. Energy above a smaller
+     * capacity stays until it is drawn down; nothing more goes in until then.
+     */
+    public void setCapacity(int capacity) {
+        if (this.capacity != capacity) {
+            this.capacity = capacity;
+            onChanged.run();
+        }
+    }
+
+    /** Updates upgrade limits without refunding energy already transferred during this tick. */
+    public void setTransferLimits(int inputPerTick, int outputPerTick) {
+        if (inputPerTick < 0 || outputPerTick < 0) throw new IllegalArgumentException("Negative transfer limit");
+        if (this.inputPerTick == inputPerTick && this.outputPerTick == outputPerTick) return;
+        inputRemaining = Math.max(0, inputPerTick - inputUsed());
+        outputRemaining = Math.max(0, outputPerTick - outputUsed());
+        this.inputPerTick = inputPerTick;
+        this.outputPerTick = outputPerTick;
+        this.maxInsert = inputPerTick;
+        this.maxExtract = outputPerTick;
+        onChanged.run();
     }
 
     /** Restores the full transfer budgets; call once at the start of each server tick. */

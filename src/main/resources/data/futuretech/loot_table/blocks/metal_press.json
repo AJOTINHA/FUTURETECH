@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "futuretech:metal_press",
+          "functions": [
+            {
+              "function": "minecraft:copy_state",
+              "properties": [
+                "mk"
+              ],
+              "block": "futuretech:metal_press"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "type": "futuretech:pressing",
+  "recipes": {
+    "iron_plate": {
+      "ingredient": "#c:ingots/iron",
+      "count": 1,
+      "result": {
+        "count": 1,
+        "id": "futuretech:iron_plate"
+      },
+      "duration": 100,
+      "gear": false
+    },
+    "iron_gear": {
+      "ingredient": "#c:ingots/iron",
+      "count": 2,
+      "result": {
+        "count": 1,
+        "id": "futuretech:iron_gear"
+      },
+      "duration": 160,
+      "gear": true
+    },
+    "gold_plate": {
+      "ingredient": "#c:ingots/gold",
+      "count": 1,
+      "result": {
+        "count": 1,
+        "id": "futuretech:gold_plate"
+      },
+      "duration": 100,
+      "gear": false
+    },
+    "gold_gear": {
+      "ingredient": "#c:ingots/gold",
+      "count": 2,
+      "result": {
+        "count": 1,
+        "id": "futuretech:gold_gear"
+      },
+      "duration": 160,
+      "gear": true
+    },
+    "copper_plate": {
+      "ingredient": "#c:ingots/copper",
+      "count": 1,
+      "result": {
+        "count": 1,
+        "id": "futuretech:copper_plate"
+      },
+      "duration": 100,
+      "gear": false
+    },
+    "copper_gear": {
+      "ingredient": "#c:ingots/copper",
+      "count": 2,
+      "result": {
+        "count": 1,
+        "id": "futuretech:copper_gear"
+      },
+      "duration": 160,
+      "gear": true
+    },
+    "netherite_plate": {
+      "ingredient": "#c:ingots/netherite",
+      "count": 1,
+      "result": {
+        "count": 1,
+        "id": "futuretech:netherite_plate"
+      },
+      "duration": 100,
+      "gear": false
+    },
+    "netherite_gear": {
+      "ingredient": "#c:ingots/netherite",
+      "count": 2,
+      "result": {
+        "count": 1,
+        "id": "futuretech:netherite_gear"
+      },
+      "duration": 160,
+      "gear": true
+    },
+    "steel_plate": {
+      "ingredient": "#c:ingots/steel",
+      "result": {
+        "count": 1,
+        "id": "futuretech:steel_plate"
+      },
+      "duration": 100,
+      "count": 1,
+      "gear": false
+    },
+    "steel_gear": {
+      "ingredient": "#c:ingots/steel",
+      "result": {
+        "count": 1,
+        "id": "futuretech:steel_gear"
+      },
+      "duration": 160,
+      "count": 2,
+      "gear": true
+    }
+  }
+}

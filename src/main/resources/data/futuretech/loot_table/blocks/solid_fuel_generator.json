@@ -6,7 +6,16 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "futuretech:solid_fuel_generator"
+          "name": "futuretech:solid_fuel_generator",
+          "functions": [
+            {
+              "function": "minecraft:copy_state",
+              "properties": [
+                "mk"
+              ],
+              "block": "futuretech:solid_fuel_generator"
+            }
+          ]
         }
       ],
       "conditions": [

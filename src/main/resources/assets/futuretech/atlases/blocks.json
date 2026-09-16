@@ -2,15 +2,99 @@
   "sources": [
     {
       "type": "single",
-      "resource": "futuretech:block/machine_side_input"
+      "resource": "futuretech:block/cable_connector/cable_connector"
     },
     {
       "type": "single",
-      "resource": "futuretech:block/machine_side_output"
+      "resource": "futuretech:block/cable_mk1/cable_contact"
     },
     {
       "type": "single",
-      "resource": "futuretech:block/machine_side_input_output"
+      "resource": "futuretech:block/cable_connector/cable_connector_insert"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/cable_connector/cable_connector_extract"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/cable_connector/cable_connector_both"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/battery/battery_port_input"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/battery/battery_port_output"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/machine/machine_side_input"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/machine/machine_side_output"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/machine/machine_side_input_output"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/battery/battery_frame_preview"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/battery/battery_frame_preview_input"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/battery/battery_frame_preview_output"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/item_cable/item_cable_contact"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/fluid_cable/fluid_cable_contact"
+    },
+    {
+      "resource": "futuretech:block/machine/mk2/machine_side_input",
+      "type": "single"
+    },
+    {
+      "resource": "futuretech:block/machine/mk2/machine_side_output",
+      "type": "single"
+    },
+    {
+      "resource": "futuretech:block/machine/mk2/machine_side_input_output",
+      "type": "single"
+    },
+    {
+      "resource": "futuretech:block/machine/mk3/machine_side_input",
+      "type": "single"
+    },
+    {
+      "resource": "futuretech:block/machine/mk3/machine_side_output",
+      "type": "single"
+    },
+    {
+      "resource": "futuretech:block/machine/mk3/machine_side_input_output",
+      "type": "single"
+    },
+    {
+      "resource": "futuretech:block/machine/mk4/machine_side_input",
+      "type": "single"
+    },
+    {
+      "resource": "futuretech:block/machine/mk4/machine_side_output",
+      "type": "single"
+    },
+    {
+      "resource": "futuretech:block/machine/mk4/machine_side_input_output",
+      "type": "single"
     }
   ]
 }

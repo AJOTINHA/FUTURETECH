@@ -1,0 +1,2042 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "gui_light": "front",
+  "textures": {
+    "particle": "futuretech:item/chip/ceramic",
+    "board": "futuretech:item/chip/board",
+    "dark": "futuretech:item/chip/ceramic",
+    "gold": "futuretech:item/chip/gold",
+    "cyan": "futuretech:item/chip/die"
+  },
+  "elements": [
+    {
+      "name": "substrate",
+      "from": [
+        2.75,
+        2.75,
+        7.6
+      ],
+      "to": [
+        13.25,
+        13.25,
+        8.4
+      ],
+      "faces": {
+        "north": {
+          "texture": "#board",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#board",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#board",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ]
+        },
+        "west": {
+          "texture": "#board",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ]
+        },
+        "up": {
+          "texture": "#board",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ]
+        },
+        "down": {
+          "texture": "#board",
+          "uv": [
+            7,
+            7,
+            9,
+            9
+          ]
+        }
+      }
+    },
+    {
+      "name": "ceramic_package",
+      "from": [
+        4.75,
+        4.75,
+        7.05
+      ],
+      "to": [
+        11.25,
+        11.25,
+        8.95
+      ],
+      "faces": {
+        "north": {
+          "texture": "#dark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#dark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#dark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#dark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#dark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#dark",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "processor_lid",
+      "from": [
+        5.2,
+        5.2,
+        6.85
+      ],
+      "to": [
+        10.8,
+        10.8,
+        7.05
+      ],
+      "faces": {
+        "north": {
+          "texture": "#cyan",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#cyan",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#cyan",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#cyan",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#cyan",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#cyan",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "back_lid",
+      "from": [
+        5.2,
+        5.2,
+        8.95
+      ],
+      "to": [
+        10.8,
+        10.8,
+        9.15
+      ],
+      "faces": {
+        "north": {
+          "texture": "#cyan",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#cyan",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#cyan",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#cyan",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#cyan",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#cyan",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_left_0",
+      "from": [
+        1.4,
+        3.925,
+        7.8
+      ],
+      "to": [
+        2.75,
+        4.575,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_right_0",
+      "from": [
+        13.25,
+        3.925,
+        7.8
+      ],
+      "to": [
+        14.6,
+        4.575,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_bottom_0",
+      "from": [
+        3.925,
+        1.4,
+        7.8
+      ],
+      "to": [
+        4.575,
+        2.75,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_top_0",
+      "from": [
+        3.925,
+        13.25,
+        7.8
+      ],
+      "to": [
+        4.575,
+        14.6,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_left_1",
+      "from": [
+        1.4,
+        5.425,
+        7.8
+      ],
+      "to": [
+        2.75,
+        6.075,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_right_1",
+      "from": [
+        13.25,
+        5.425,
+        7.8
+      ],
+      "to": [
+        14.6,
+        6.075,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_bottom_1",
+      "from": [
+        5.425,
+        1.4,
+        7.8
+      ],
+      "to": [
+        6.075,
+        2.75,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_top_1",
+      "from": [
+        5.425,
+        13.25,
+        7.8
+      ],
+      "to": [
+        6.075,
+        14.6,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_left_2",
+      "from": [
+        1.4,
+        6.925,
+        7.8
+      ],
+      "to": [
+        2.75,
+        7.575,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_right_2",
+      "from": [
+        13.25,
+        6.925,
+        7.8
+      ],
+      "to": [
+        14.6,
+        7.575,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_bottom_2",
+      "from": [
+        6.925,
+        1.4,
+        7.8
+      ],
+      "to": [
+        7.575,
+        2.75,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_top_2",
+      "from": [
+        6.925,
+        13.25,
+        7.8
+      ],
+      "to": [
+        7.575,
+        14.6,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_left_3",
+      "from": [
+        1.4,
+        8.425,
+        7.8
+      ],
+      "to": [
+        2.75,
+        9.075000000000001,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_right_3",
+      "from": [
+        13.25,
+        8.425,
+        7.8
+      ],
+      "to": [
+        14.6,
+        9.075000000000001,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_bottom_3",
+      "from": [
+        8.425,
+        1.4,
+        7.8
+      ],
+      "to": [
+        9.075000000000001,
+        2.75,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_top_3",
+      "from": [
+        8.425,
+        13.25,
+        7.8
+      ],
+      "to": [
+        9.075000000000001,
+        14.6,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_left_4",
+      "from": [
+        1.4,
+        9.925,
+        7.8
+      ],
+      "to": [
+        2.75,
+        10.575000000000001,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_right_4",
+      "from": [
+        13.25,
+        9.925,
+        7.8
+      ],
+      "to": [
+        14.6,
+        10.575000000000001,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_bottom_4",
+      "from": [
+        9.925,
+        1.4,
+        7.8
+      ],
+      "to": [
+        10.575000000000001,
+        2.75,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_top_4",
+      "from": [
+        9.925,
+        13.25,
+        7.8
+      ],
+      "to": [
+        10.575000000000001,
+        14.6,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_left_5",
+      "from": [
+        1.4,
+        11.425,
+        7.8
+      ],
+      "to": [
+        2.75,
+        12.075000000000001,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_right_5",
+      "from": [
+        13.25,
+        11.425,
+        7.8
+      ],
+      "to": [
+        14.6,
+        12.075000000000001,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_bottom_5",
+      "from": [
+        11.425,
+        1.4,
+        7.8
+      ],
+      "to": [
+        12.075000000000001,
+        2.75,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    },
+    {
+      "name": "pin_top_5",
+      "from": [
+        11.425,
+        13.25,
+        7.8
+      ],
+      "to": [
+        12.075000000000001,
+        14.6,
+        8.2
+      ],
+      "faces": {
+        "north": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "south": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "east": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "west": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "up": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        },
+        "down": {
+          "texture": "#gold",
+          "uv": [
+            2,
+            2,
+            6,
+            12
+          ]
+        }
+      }
+    }
+  ],
+  "display": {
+    "gui": {
+      "rotation": [
+        12,
+        -20,
+        -12
+      ],
+      "scale": [
+        0.95,
+        0.95,
+        0.95
+      ]
+    },
+    "ground": {
+      "translation": [
+        0,
+        3,
+        0
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "scale": [
+        0.85,
+        0.85,
+        0.85
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        0,
+        -30,
+        5
+      ],
+      "scale": [
+        0.75,
+        0.75,
+        0.75
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        0,
+        30,
+        -5
+      ],
+      "scale": [
+        0.75,
+        0.75,
+        0.75
+      ]
+    },
+    "thirdperson_righthand": {
+      "rotation": [
+        0,
+        -90,
+        0
+      ],
+      "translation": [
+        0,
+        2,
+        0
+      ],
+      "scale": [
+        0.65,
+        0.65,
+        0.65
+      ]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [
+        0,
+        90,
+        0
+      ],
+      "translation": [
+        0,
+        2,
+        0
+      ],
+      "scale": [
+        0.65,
+        0.65,
+        0.65
+      ]
+    }
+  }
+}

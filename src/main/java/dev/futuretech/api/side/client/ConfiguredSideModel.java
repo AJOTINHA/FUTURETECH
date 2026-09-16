@@ -28,14 +28,29 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class ConfiguredSideModel extends DelegateBlockStateModel {
     /** Sprite per mode; {@link SideMode#NONE} is absent so untouched faces keep the model's own texture. */
     private final Map<SideMode, TextureAtlasSprite> sprites;
+    private final Map<SideMode, TextureAtlasSprite> previews;
+    private final Map<Direction, Map<SideMode, BlockStateModelPart>> attachments;
     private final int sideFlags;
     private final Map<PartKey, BlockStateModelPart> partsCache = new ConcurrentHashMap<>();
 
     public ConfiguredSideModel(BlockStateModel delegate, Map<SideMode, TextureAtlasSprite> sprites) {
+        this(delegate, sprites, sprites, Map.of());
+    }
+
+    public ConfiguredSideModel(BlockStateModel delegate, Map<SideMode, TextureAtlasSprite> sprites,
+                               Map<SideMode, TextureAtlasSprite> previews,
+                               Map<Direction, Map<SideMode, BlockStateModelPart>> attachments) {
         super(delegate);
-        this.sprites = new EnumMap<>(sprites);
+        this.sprites = new EnumMap<>(SideMode.class);
+        this.sprites.putAll(sprites);
+        this.previews = new EnumMap<>(SideMode.class);
+        this.previews.putAll(previews);
+        this.attachments = Map.copyOf(attachments);
         int flags = 0;
         for (TextureAtlasSprite sprite : this.sprites.values()) flags |= flags(sprite);
+        for (var modes : attachments.values()) {
+            for (var part : modes.values()) flags |= part.materialFlags();
+        }
         sideFlags = flags;
     }
 
@@ -46,7 +61,7 @@ public final class ConfiguredSideModel extends DelegateBlockStateModel {
 
     /** Sprite the configuration screen should draw for {@code mode}, or {@code null} to keep the model's own. */
     public @Nullable TextureAtlasSprite spriteFor(SideMode mode) {
-        return sprites.get(mode);
+        return previews.get(mode);
     }
 
     @Override
@@ -54,6 +69,10 @@ public final class ConfiguredSideModel extends DelegateBlockStateModel {
                              List<BlockStateModelPart> output) {
         Integer stored = level.getModelData(pos).get(SideConfigVisuals.FACE_MODES);
         int modes = stored == null ? 0 : stored;
+        for (var entry : attachments.entrySet()) {
+            var attachment = entry.getValue().get(SideConfigVisuals.mode(modes, entry.getKey()));
+            if (attachment != null) output.add(attachment);
+        }
         if (!retextures(modes)) {
             delegate.collectParts(level, pos, state, random, output);
             return;
@@ -64,6 +83,25 @@ public final class ConfiguredSideModel extends DelegateBlockStateModel {
             output.add(partsCache.computeIfAbsent(new PartKey(part, modes), key -> new ConfiguredPart(key.part(), key.modes())));
         }
     }
+
+    /**
+     * What this model's geometry depends on: the delegate's own key and the face modes that came
+     * in as model data. {@link DelegateBlockStateModel} does not forward this one, and its default
+     * answer of {@code null} tells the chunk mesher the geometry cannot be cached at all: every
+     * machine in a section would rebuild its quads from scratch on every rebuild of that section,
+     * which is every time any block in it is placed or broken.
+     */
+    @Override
+    public @Nullable Object createGeometryKey(BlockAndTintGetter level, BlockPos pos, BlockState state,
+                                              RandomSource random) {
+        Object delegateKey = delegate.createGeometryKey(level, pos, state, random);
+        if (delegateKey == null) return null;
+        Integer stored = level.getModelData(pos).get(SideConfigVisuals.FACE_MODES);
+        return new GeometryKey(this, delegateKey, stored == null ? 0 : stored);
+    }
+
+    /** The wrapper's identity separates two machines that share a delegate but not their sprites. */
+    private record GeometryKey(ConfiguredSideModel model, Object delegate, int modes) {}
 
     /** False when no face carries a mode this model has a sprite for, so the delegate can be used untouched. */
     private boolean retextures(int modes) {
@@ -124,8 +162,10 @@ public final class ConfiguredSideModel extends DelegateBlockStateModel {
         var replacement = BakedQuad.MaterialInfo.of(new Material.Baked(target, false), target.transparency(),
                 material.tintIndex(), material.shade(), material.lightEmission(), material.ambientOcclusion());
         return new BakedQuad(quad.position0(), quad.position1(), quad.position2(), quad.position3(),
-                remapUV(quad.packedUV0(), sprite, target), remapUV(quad.packedUV1(), sprite, target),
-                remapUV(quad.packedUV2(), sprite, target), remapUV(quad.packedUV3(), sprite, target),
+                remapUV(quad.packedUV0(), sprite, target),
+                remapUV(quad.packedUV1(), sprite, target),
+                remapUV(quad.packedUV2(), sprite, target),
+                remapUV(quad.packedUV3(), sprite, target),
                 quad.direction(), replacement, quad.bakedNormals(), quad.bakedColors());
     }
 
@@ -134,4 +174,5 @@ public final class ConfiguredSideModel extends DelegateBlockStateModel {
         float v = (UVPair.unpackV(uv) - source.getV0()) / (source.getV1() - source.getV0());
         return UVPair.pack(target.getU(u), target.getV(v));
     }
+
 }

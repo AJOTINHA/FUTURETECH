@@ -2,8 +2,16 @@
   "values": [
     "futuretech:machine_casing",
     "futuretech:solid_fuel_generator",
+    "futuretech:lava_generator",
     "futuretech:electric_furnace",
-    "futuretech:battery_mk1"
+    "futuretech:crusher",
+    "futuretech:battery_mk1",
+    "futuretech:fluid_tank",
+    "futuretech:assembly_table",
+    "futuretech:transport_arm",
+    "futuretech:assembly_arm",
+    "futuretech:assembler_terminal",
+    "futuretech:metal_press"
   ],
   "replace": false
 }

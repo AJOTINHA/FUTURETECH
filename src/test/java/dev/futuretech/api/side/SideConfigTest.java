@@ -22,6 +22,74 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(EphemeralTestServerProvider.class)
 class SideConfigTest {
     @Test
+    void rotatingPortsCarriesInputOutputAndClosedFacesWithTheBlock(MinecraftServer server) {
+        var config = new SideConfig(EnumSet.allOf(SideMode.class), true, side -> switch (side) {
+            case NORTH -> SideMode.INPUT;
+            case EAST -> SideMode.OUTPUT;
+            case SOUTH -> SideMode.BOTH;
+            case WEST -> SideMode.NONE;
+            case UP -> SideMode.OUTPUT;
+            case DOWN -> SideMode.INPUT;
+        });
+        for (int turn = 1; turn <= 4; turn++) {
+            config.rotate(net.minecraft.world.level.block.Rotation.CLOCKWISE_90);
+            var rotation = net.minecraft.world.level.block.Rotation.values()[turn % 4];
+            assertEquals(SideMode.INPUT, config.mode(rotation.rotate(Direction.NORTH)));
+            assertEquals(SideMode.OUTPUT, config.mode(rotation.rotate(Direction.EAST)));
+            assertEquals(SideMode.BOTH, config.mode(rotation.rotate(Direction.SOUTH)));
+            assertEquals(SideMode.NONE, config.mode(rotation.rotate(Direction.WEST)));
+            assertEquals(SideMode.OUTPUT, config.mode(Direction.UP));
+            assertEquals(SideMode.INPUT, config.mode(Direction.DOWN));
+            assertTrue(config.allowsEnergyInput(rotation.rotate(Direction.NORTH)));
+            assertFalse(config.allowsEnergyOutput(rotation.rotate(Direction.NORTH)));
+            assertTrue(config.allowsEnergyOutput(rotation.rotate(Direction.EAST)));
+        }
+    }
+    @Test
+    void reverseCycleWrapsAndSkipsUnsupportedModes(MinecraftServer server) {
+        var all = new SideConfig(EnumSet.allOf(SideMode.class), side -> SideMode.NONE);
+        for (SideMode expected : new SideMode[]{SideMode.BOTH, SideMode.OUTPUT, SideMode.INPUT, SideMode.NONE}) {
+            assertEquals(expected, all.cycle(Direction.UP, true));
+        }
+        assertEquals(SideMode.NONE, all.mode(Direction.DOWN));
+        var battery = new SideConfig(Set.of(SideMode.INPUT, SideMode.OUTPUT, SideMode.NONE), side -> SideMode.NONE);
+        for (SideMode expected : new SideMode[]{SideMode.OUTPUT, SideMode.INPUT, SideMode.NONE}) {
+            assertEquals(expected, battery.cycle(Direction.NORTH, true));
+        }
+        // Going back must undo a forward click even for restricted and single-mode machines.
+        for (int mask = 1; mask < 16; mask++) {
+            var allowed = EnumSet.noneOf(SideMode.class);
+            for (SideMode mode : SideMode.values()) if ((mask & 1 << mode.ordinal()) != 0) allowed.add(mode);
+            for (SideMode initial : allowed) {
+                var config = new SideConfig(allowed, side -> initial);
+                config.cycle(Direction.SOUTH);
+                assertEquals(initial, config.cycle(Direction.SOUTH, true));
+            }
+        }
+    }
+
+    @Test
+    void reverseMenuButtonsReachEachFaceWithoutOverlappingRedstone(MinecraftServer server) {
+        var battery = new BatteryBlockEntity(BlockPos.ZERO, ModBlocks.BATTERY_MK1.get().defaultBlockState());
+        for (Direction side : Direction.values()) {
+            battery.sideConfig().clear();
+            int reverseId = SideConfigMenu.BUTTON_REVERSE_BASE + side.ordinal();
+            assertTrue(SideConfigMenu.handleButton(battery, reverseId));
+            assertEquals(SideMode.OUTPUT, battery.sideConfig().mode(side));
+            for (Direction other : Direction.values()) {
+                if (other != side) assertEquals(SideMode.NONE, battery.sideConfig().mode(other));
+            }
+            assertTrue(SideConfigMenu.handleButton(battery, reverseId));
+            assertEquals(SideMode.INPUT, battery.sideConfig().mode(side));
+            assertTrue(SideConfigMenu.handleButton(battery, side.ordinal()));
+            assertEquals(SideMode.OUTPUT, battery.sideConfig().mode(side));
+        }
+        assertFalse(SideConfigMenu.handleButton(battery, -1));
+        assertFalse(SideConfigMenu.handleButton(battery, SideConfigMenu.BUTTON_COUNT));
+        assertFalse(SideConfigMenu.handleButton(battery, dev.futuretech.api.redstone.RedstoneControlMenu.BUTTON_BASE));
+    }
+
+    @Test
     void cycleVisitsOnlyAllowedModesInOrder(MinecraftServer server) {
         var all = new SideConfig(EnumSet.allOf(SideMode.class), side -> SideMode.NONE);
         assertEquals(SideMode.INPUT, all.cycle(Direction.UP));

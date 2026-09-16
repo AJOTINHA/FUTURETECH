@@ -6,9 +6,10 @@ import net.minecraft.client.input.MouseButtonEvent;
 import java.util.List;
 
 /**
- * Stacks {@link MachineTab}s down the right edge of a machine screen. Screens forward background
- * drawing, tooltips and mouse clicks here; an open tab pushes the ones below it down. Tabs whose
- * content has a fixed position (menu slots) must therefore come first on the strip.
+ * Stacks {@link MachineTab}s down the edges of a machine screen. Screens forward background
+ * drawing, tooltips and mouse clicks here; an open tab pushes the ones below it down. Each edge
+ * stacks on its own, so tabs whose content has a fixed position (menu slots) must come first
+ * among the tabs sharing their side.
  */
 public final class TabStrip {
     /** Panel rows between two stacked tabs. */
@@ -22,13 +23,15 @@ public final class TabStrip {
         this.tabs = List.of(tabs);
     }
 
-    /** Call from {@code extractBackground}. Tabs share the screen's right border, one pixel below its top. */
+    /** Call from {@code extractBackground}. Tabs share the screen's side border, one pixel below its top. */
     public void render(GuiGraphicsExtractor graphics, int leftPos, int topPos, int imageWidth, int mouseX, int mouseY) {
-        int x = leftPos + imageWidth - 2;
-        int y = topPos + TOP_OFFSET;
+        int leftY = topPos + TOP_OFFSET;
+        int rightY = topPos + TOP_OFFSET;
         for (MachineTab tab : tabs) {
-            tab.render(graphics, x, y, mouseX, mouseY);
-            y += tab.height() + SPACING;
+            boolean left = tab.side() == MachineTab.Side.LEFT;
+            tab.render(graphics, left ? leftPos + 2 : leftPos + imageWidth - 2, left ? leftY : rightY, mouseX, mouseY);
+            if (left) leftY += tab.height() + SPACING;
+            else rightY += tab.height() + SPACING;
         }
     }
 

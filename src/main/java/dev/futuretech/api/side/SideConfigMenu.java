@@ -9,15 +9,17 @@ import java.util.Set;
 /**
  * Menu side of the face configuration. Modes, the front and the auto-transfer toggles reach the
  * client through data slots; clicks travel back as vanilla menu button ids, the six face ordinals
- * followed by {@link #BUTTON_CLEAR_ALL}, {@link #BUTTON_AUTO_PULL} and {@link #BUTTON_AUTO_PUSH}.
+ * followed by clear/auto-transfer buttons and six reverse-cycle ids.
  */
 public interface SideConfigMenu {
     /** Button id that resets every face to {@link SideMode#NONE}; face ids are the six direction ordinals. */
     int BUTTON_CLEAR_ALL = Direction.values().length;
     int BUTTON_AUTO_PULL = BUTTON_CLEAR_ALL + 1;
     int BUTTON_AUTO_PUSH = BUTTON_AUTO_PULL + 1;
+    /** Six right-click ids, indexed by direction just like the forward face buttons. */
+    int BUTTON_REVERSE_BASE = BUTTON_AUTO_PUSH + 1;
     /** Ids this feature owns; whatever comes next starts here. */
-    int BUTTON_COUNT = BUTTON_AUTO_PUSH + 1;
+    int BUTTON_COUNT = BUTTON_REVERSE_BASE + Direction.values().length;
 
     SideMode sideMode(Direction side);
 
@@ -49,6 +51,9 @@ public interface SideConfigMenu {
             return true;
         }
         if (buttonId == BUTTON_CLEAR_ALL) target.sideConfig().clear();
+        else if (buttonId >= BUTTON_REVERSE_BASE) {
+            target.sideConfig().cycle(Direction.values()[buttonId - BUTTON_REVERSE_BASE], true);
+        }
         else target.sideConfig().cycle(Direction.values()[buttonId]);
         target.sideConfigChanged();
         return true;

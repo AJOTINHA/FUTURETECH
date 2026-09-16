@@ -3,6 +3,7 @@ package dev.futuretech.block.entity;
 import dev.futuretech.api.redstone.RedstoneControl;
 import dev.futuretech.api.redstone.RedstoneControllable;
 import dev.futuretech.api.upgrade.UpgradeInventory;
+import dev.futuretech.api.upgrade.MachineLevel;
 import dev.futuretech.api.upgrade.Upgradeable;
 import dev.futuretech.api.side.AutoTransfer;
 import dev.futuretech.api.side.AutoTransferable;
@@ -11,7 +12,7 @@ import dev.futuretech.api.side.SideConfig;
 import dev.futuretech.api.side.SideConfigurable;
 import dev.futuretech.api.side.SideConfigurableBlock;
 import dev.futuretech.block.SolidFuelGeneratorBlock;
-import dev.futuretech.energy.EnergyNetworkUtil;
+import dev.futuretech.energy.EnergyExporter;
 import dev.futuretech.energy.EnergySync;
 import dev.futuretech.energy.TickLimitedEnergyHandler;
 import dev.futuretech.menu.SolidFuelGeneratorMenu;
@@ -68,7 +69,8 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
     public static final int DATA_FRONT = DATA_SIDE_BASE + SideConfig.DATA_COUNT;
     public static final int DATA_AUTO_BASE = DATA_FRONT + 1;
     public static final int DATA_REDSTONE_BASE = DATA_AUTO_BASE + AutoTransfer.DATA_COUNT;
-    public static final int DATA_COUNT = DATA_REDSTONE_BASE + RedstoneControl.DATA_COUNT;
+    public static final int DATA_MK = DATA_REDSTONE_BASE + RedstoneControl.DATA_COUNT;
+    public static final int DATA_COUNT = DATA_MK + 1;
     public static final TagKey<Item> WOODEN_FUELS = TagKey.create(Registries.ITEM,
             Identifier.fromNamespaceAndPath("futuretech", "generator_wooden_fuels"));
 
@@ -83,7 +85,11 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
     private final SideConfig sides;
     private final AutoTransfer auto = new AutoTransfer();
     private final RedstoneControl redstone = new RedstoneControl();
-    private final UpgradeInventory upgrades = new UpgradeInventory(this::setChanged);
+    private final ComparatorNotifier comparator = new ComparatorNotifier();
+    private final EnergyExporter exporter = new EnergyExporter();
+    private final LitHold litHold = new LitHold();
+    private final ItemTransferUtil transfer = new ItemTransferUtil();
+    private final UpgradeInventory upgrades = new UpgradeInventory(() -> MachineLevel.of(getBlockState()), this::setChanged);
     private final ContainerData data = new ContainerData() {
         @Override
         public int get(int index) {
@@ -94,10 +100,11 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
                 case DATA_GENERATING -> generating ? 1 : 0;
                 case DATA_BURN_TOTAL -> burnTotal;
                 case DATA_FRONT -> front().ordinal();
+                case DATA_MK -> MachineLevel.of(getBlockState());
                 default -> {
                     if (index >= DATA_SIDE_BASE && index < DATA_FRONT) yield sides.data(index - DATA_SIDE_BASE);
                     if (index >= DATA_AUTO_BASE && index < DATA_REDSTONE_BASE) yield auto.data(index - DATA_AUTO_BASE);
-                    if (index >= DATA_REDSTONE_BASE && index < DATA_COUNT) yield redstone.data(index - DATA_REDSTONE_BASE);
+                    if (index >= DATA_REDSTONE_BASE && index < DATA_MK) yield redstone.data(index - DATA_REDSTONE_BASE);
                     yield 0;
                 }
             };
@@ -115,6 +122,7 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
     public SolidFuelGeneratorBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.SOLID_FUEL_GENERATOR.get(), pos, state);
         this.sides = ((SideConfigurableBlock) ModBlocks.SOLID_FUEL_GENERATOR.get()).createSideConfig(state);
+        energy.setCapacity(MachineLevel.capacity(CAPACITY, MachineLevel.of(state)));
     }
 
     @Override
@@ -149,6 +157,13 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
 
     @Override
     public UpgradeInventory upgrades() { return upgrades; }
+
+    /** An upgrade kit swaps the block state under us; the buffer grows with the new level. */
+    @Override
+    public void setBlockState(BlockState state) {
+        super.setBlockState(state);
+        energy.setCapacity(MachineLevel.capacity(CAPACITY, MachineLevel.of(state)));
+    }
 
     @Override
     public void preRemoveSideEffects(BlockPos pos, BlockState state) {
@@ -195,34 +210,42 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
         return 300;
     }
 
+    /** The redstone signal is sampled here and on neighbour changes, not every tick. */
+    @Override
+    public void onLoad() {
+        super.onLoad();
+        if (level != null) RedstoneControl.sample(level, worldPosition);
+    }
+
+    /** Marks the chunk only; comparators hear about the signal from the tick, not from every change. */
+    @Override
+    public void setChanged() { ComparatorNotifier.markChanged(this); }
+
     public static void serverTick(Level level, BlockPos pos, BlockState state, SolidFuelGeneratorBlockEntity generator) {
-        int previousSignal = EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(generator.energy);
         generator.beginTick();
         generator.exportEnergy(level, pos);
-        if (generator.auto.isPulling()) ItemTransferUtil.pullFromNeighbours(level, pos, generator, generator.sides);
+        if (generator.auto.isPulling()) generator.transfer.pullFromNeighbours(level, pos, generator, generator.sides);
         // Redstone only gates generation; stored energy still leaves through the output faces.
-        generator.redstone.update(level, pos);
         if (generator.redstone.allowsRunning()) generator.generateEnergy(level.fuelValues());
         else generator.generating = false;
-        if (state.getValue(SolidFuelGeneratorBlock.LIT) != generator.generating) {
-            level.setBlock(pos, state.setValue(SolidFuelGeneratorBlock.LIT, generator.generating), 3);
+        boolean lit = generator.litHold.update(generator.generating);
+        if (state.getValue(SolidFuelGeneratorBlock.LIT) != lit) {
+            level.setBlock(pos, state.setValue(SolidFuelGeneratorBlock.LIT, lit), 3);
         }
-        if (previousSignal != EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(generator.energy)) {
-            level.updateNeighbourForOutputSignal(pos, state.getBlock());
-        }
+        generator.comparator.update(level, pos, state, EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(generator.energy));
     }
 
     /** Opens a new tick's output budget; neighbours pulling energy share it with {@link #exportEnergy}. */
     void beginTick() { energy.beginTick(); }
 
     private void exportEnergy(Level level, BlockPos pos) {
-        EnergyNetworkUtil.pushToNeighbours(level, pos, energy, sides::allowsEnergyOutput);
+        exporter.pushToNeighbours(level, pos, energy, sides::allowsEnergyOutput);
     }
 
     void generateEnergy(FuelValues fuelValues) {
         generating = false;
         // Reserve a whole tick's output before using fuel, including the last few FE.
-        if (CAPACITY - energy.getAmountAsInt() < GENERATION_PER_TICK) return;
+        if (energy.getCapacityAsInt() - energy.getAmountAsInt() < GENERATION_PER_TICK) return;
         if (burnRemaining == 0) {
             ItemStack fuel = items.getFirst();
             int duration = burnDuration(fuel, fuelValues);
@@ -244,13 +267,14 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
         super.loadAdditional(input);
         items = NonNullList.withSize(1, ItemStack.EMPTY);
         ContainerHelper.loadAllItems(input, items);
-        energy.set(Math.clamp(input.getIntOr("Energy", 0), 0, CAPACITY));
+        upgrades.load(input);
+        energy.setCapacity(MachineLevel.capacity(CAPACITY, MachineLevel.of(getBlockState())));
+        energy.set(Math.clamp(input.getIntOr("Energy", 0), 0, energy.getCapacityAsInt()));
         burnTotal = Math.max(1, input.getIntOr("BurnTotal", BURN_TICKS));
         burnRemaining = Math.clamp(input.getIntOr("BurnRemaining", 0), 0, burnTotal);
         sides.load(input);
         auto.load(input);
         redstone.load(input);
-        upgrades.load(input);
         generating = false;
     }
 

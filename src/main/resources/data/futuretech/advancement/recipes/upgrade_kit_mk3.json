@@ -1,0 +1,25 @@
+{
+  "criteria": {
+    "has_material": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "minecraft:gold_ingot"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_material"
+    ]
+  ],
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "futuretech:upgrade_kit_mk3"
+    ]
+  }
+}

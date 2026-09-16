@@ -1,0 +1,6 @@
+{
+  "parent": "futuretech:block/machine_base",
+  "textures": {
+    "front": "futuretech:block/crusher/crusher_front"
+  }
+}

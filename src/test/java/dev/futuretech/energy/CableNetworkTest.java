@@ -27,10 +27,32 @@ class CableNetworkTest {
     private static final int THROUGHPUT = CableTier.MK1.throughput();
     private static final BlockPos CABLE = BlockPos.ZERO;
 
-    /** Stand-in for a block next to the cable; {@code handler} may be null for blocks without energy. */
+    /**
+     * Stand-in for a block next to the cable; {@code handler} may be null for blocks without energy.
+     * These connectors all deliver, which is what a cable face does until the player narrows it.
+     */
     private record FakeEndpoint(Direction side, @Nullable EnergyHandler handler) implements CableNetwork.Endpoint {
         @Override
         public CableNetwork.EndpointKey key() { return new CableNetwork.EndpointKey(CABLE, side); }
+
+        @Override
+        public boolean delivers() { return true; }
+
+        @Override
+        public boolean pulls() { return false; }
+    }
+
+    /** A connector the player set to extract only: energy may enter the cable, never leave through it. */
+    private record ExtractOnlyEndpoint(Direction side, @Nullable EnergyHandler handler)
+            implements CableNetwork.Endpoint {
+        @Override
+        public CableNetwork.EndpointKey key() { return new CableNetwork.EndpointKey(CABLE, side); }
+
+        @Override
+        public boolean delivers() { return false; }
+
+        @Override
+        public boolean pulls() { return true; }
     }
 
     private static CableNetwork network(CableNetwork.Endpoint... endpoints) {
@@ -61,15 +83,67 @@ class CableNetworkTest {
     }
 
     @Test
-    void networkAcceptsOneTickOfThroughputAndRejectsTheRest(MinecraftServer server) {
-        var network = network();
-        assertEquals(THROUGHPUT, insert(network, Direction.NORTH, 10_000));
-        assertEquals(0, insert(network, Direction.SOUTH, 1));
-        assertEquals(THROUGHPUT, network.stored());
-        // With nowhere to send it, the buffer stays full and keeps refusing inserts on later ticks.
+    void aConnectorSetToExtractOnlyNeverReceivesTheDistribution(MinecraftServer server) {
+        var machine = new SimpleEnergyHandler(10_000);
+        var closed = new SimpleEnergyHandler(10_000);
+        var network = network(new FakeEndpoint(Direction.NORTH, machine),
+                new ExtractOnlyEndpoint(Direction.SOUTH, closed));
+        assertEquals(THROUGHPUT, insert(network, Direction.UP, THROUGHPUT));
         network.tick(1);
+        // Everything the network held went out through the one connector that still delivers.
+        assertEquals(THROUGHPUT, machine.getAmountAsInt());
+        assertEquals(0, closed.getAmountAsInt());
+        assertEquals(THROUGHPUT, network.lastMoved());
+    }
+
+    @Test
+    void aConnectorSetToExtractOnlyPullsFromABlockThatNeverPushes(MinecraftServer server) {
+        // A battery only pushes through its own output faces. Set to input, it just sits on its
+        // charge, so the connector has to do the pulling or nothing ever comes out.
+        var hoarder = new SimpleEnergyHandler(50_000, 0, 50_000, 50_000);
+        var machine = new SimpleEnergyHandler(10_000);
+        var network = network(new ExtractOnlyEndpoint(Direction.NORTH, hoarder),
+                new FakeEndpoint(Direction.SOUTH, machine));
+        network.tick(1);
+        assertEquals(THROUGHPUT, machine.getAmountAsInt());
+        assertEquals(50_000 - THROUGHPUT, hoarder.getAmountAsInt());
+    }
+
+    @Test
+    void anOrdinaryConnectorNeverDrainsTheBlockItIsFeeding(MinecraftServer server) {
+        // The default leaves both directions open, and a cable touching a furnace must not start
+        // siphoning it. Only a connector narrowed to extract alone pumps.
+        var machine = new SimpleEnergyHandler(10_000, 10_000, 10_000, 4_000);
+        var network = network(new FakeEndpoint(Direction.NORTH, machine));
+        network.tick(1);
+        assertEquals(4_000, machine.getAmountAsInt());
+        assertEquals(0, network.stored());
+    }
+
+    @Test
+    void networkAcceptsOneTickOfThroughputAndRejectsTheRest(MinecraftServer server) {
+        // A sink with room for far more than a tick: the buffer still takes only a tick's worth.
+        var sink = new SimpleEnergyHandler(1_000_000);
+        var network = network(new FakeEndpoint(Direction.SOUTH, sink));
+        assertEquals(THROUGHPUT, insert(network, Direction.NORTH, 10_000));
         assertEquals(0, insert(network, Direction.NORTH, 1));
         assertEquals(THROUGHPUT, network.stored());
+    }
+
+    @Test
+    void networkRefusesWhatNoConnectedMachineCouldTake(MinecraftServer server) {
+        // Nowhere to send: nothing is accepted, so the pushing block keeps its energy instead of
+        // feeding a buffer that is never saved.
+        var network = network();
+        assertEquals(0, insert(network, Direction.NORTH, 10_000));
+        assertEquals(0, network.stored());
+        // A sink with room for 100 lets exactly 100 in.
+        var small = new SimpleEnergyHandler(100);
+        var withSink = network(new FakeEndpoint(Direction.SOUTH, small));
+        assertEquals(100, insert(withSink, Direction.NORTH, 10_000));
+        withSink.tick(1);
+        assertEquals(100, small.getAmountAsInt());
+        assertEquals(0, withSink.stored());
     }
 
     @Test
@@ -109,7 +183,13 @@ class CableNetworkTest {
 
     /** Endpoint on an explicit cable face, for a network that touches one block from two sides. */
     private record FakeEndpointAt(CableNetwork.EndpointKey key, @Nullable EnergyHandler handler)
-            implements CableNetwork.Endpoint {}
+            implements CableNetwork.Endpoint {
+        @Override
+        public boolean delivers() { return true; }
+
+        @Override
+        public boolean pulls() { return false; }
+    }
 
     @Test
     void energyIsNotHandedBackThroughASecondFaceOfTheSameBlock(MinecraftServer server) {
@@ -141,13 +221,14 @@ class CableNetworkTest {
     void tickRunsOnceEvenWhenEveryCableCallsIt(MinecraftServer server) {
         var consumer = new SimpleEnergyHandler(50, 50, 0);
         var network = network(new FakeEndpoint(Direction.DOWN, consumer));
-        insert(network, Direction.NORTH, 300);
+        // Only what the consumer can take is let in; the rest stays with the pusher.
+        assertEquals(50, insert(network, Direction.NORTH, 300));
         network.tick(7);
         network.tick(7);
         network.tick(7);
         assertEquals(50, consumer.getAmountAsInt());
         assertEquals(50, network.lastMoved());
-        assertEquals(250, network.stored());
+        assertEquals(0, network.stored());
         // Output is capped per tick too: a second tick delivers at most the throughput.
         var hungry = new SimpleEnergyHandler(10_000);
         var wide = network(new FakeEndpoint(Direction.DOWN, hungry));

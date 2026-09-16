@@ -1,0 +1,19 @@
+{
+  "result": {
+    "count": 1,
+    "id": "futuretech:upgrade_kit_mk2"
+  },
+  "type": "minecraft:crafting_shaped",
+  "key": {
+    "D": "futuretech:machine_casing",
+    "A": "minecraft:iron_ingot",
+    "B": "minecraft:gold_ingot",
+    "C": "minecraft:redstone"
+  },
+  "pattern": [
+    "ABA",
+    "CDC",
+    "ABA"
+  ],
+  "category": "misc"
+}

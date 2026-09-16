@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IAI",
+    "CMC",
+    "IRI"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "A": "minecraft:iron_axe",
+    "C": "minecraft:copper_ingot",
+    "M": "futuretech:machine_casing",
+    "R": "minecraft:redstone"
+  },
+  "result": {
+    "id": "futuretech:sawmill",
+    "count": 1
+  }
+}

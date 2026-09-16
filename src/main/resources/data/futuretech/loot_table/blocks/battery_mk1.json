@@ -9,6 +9,11 @@
           "name": "futuretech:battery_mk1",
           "functions": [
             {
+              "function": "minecraft:copy_state",
+              "properties": ["mk"],
+              "block": "futuretech:battery_mk1"
+            },
+            {
               "function": "minecraft:copy_components",
               "source": "block_entity",
               "include": [

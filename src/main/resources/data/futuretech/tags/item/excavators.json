@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "futuretech:wooden_excavator",
+    "futuretech:stone_excavator",
+    "futuretech:copper_excavator",
+    "futuretech:iron_excavator",
+    "futuretech:golden_excavator",
+    "futuretech:diamond_excavator",
+    "futuretech:netherite_excavator"
+  ]
+}

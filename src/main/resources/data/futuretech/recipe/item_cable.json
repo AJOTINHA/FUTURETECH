@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "III",
+    "PPP",
+    "III"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "P": "minecraft:glass_pane"
+  },
+  "result": {
+    "id": "futuretech:item_cable",
+    "count": 6
+  }
+}

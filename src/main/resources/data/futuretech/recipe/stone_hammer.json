@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "MMM",
+    "MSM",
+    " S "
+  ],
+  "key": {
+    "M": "#minecraft:stone_tool_materials",
+    "S": "minecraft:stick"
+  },
+  "result": {
+    "id": "futuretech:stone_hammer",
+    "count": 1
+  }
+}

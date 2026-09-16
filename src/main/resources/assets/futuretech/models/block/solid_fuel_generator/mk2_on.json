@@ -1,0 +1,7 @@
+{
+  "parent": "futuretech:block/machine_base",
+  "textures": {
+    "side": "futuretech:block/machine/mk2/machine_side",
+    "front": "futuretech:block/solid_fuel_generator/mk2/solid_fuel_generator_front_on"
+  }
+}

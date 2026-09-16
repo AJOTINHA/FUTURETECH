@@ -1,0 +1,117 @@
+{
+  "type": "futuretech:crushing",
+  "recipes": {
+    "blaze_rod": {
+      "ingredient": "minecraft:blaze_rod",
+      "result": {
+        "count": 4,
+        "id": "minecraft:blaze_powder"
+      }
+    },
+    "bone": {
+      "ingredient": "minecraft:bone",
+      "result": {
+        "count": 6,
+        "id": "minecraft:bone_meal"
+      }
+    },
+    "cobblestone": {
+      "ingredient": "minecraft:cobblestone",
+      "result": {
+        "count": 1,
+        "id": "minecraft:gravel"
+      }
+    },
+    "copper_ingot": {
+      "ingredient": "#c:ingots/copper",
+      "result": {
+        "count": 1,
+        "id": "futuretech:copper_powder"
+      }
+    },
+    "copper_ore": {
+      "ingredient": "#c:ores/copper",
+      "result": {
+        "count": 2,
+        "id": "futuretech:copper_powder"
+      }
+    },
+    "glass": {
+      "ingredient": "minecraft:glass",
+      "result": {
+        "count": 1,
+        "id": "minecraft:sand"
+      }
+    },
+    "gold_ingot": {
+      "ingredient": "#c:ingots/gold",
+      "result": {
+        "count": 1,
+        "id": "futuretech:gold_powder"
+      }
+    },
+    "gold_ore": {
+      "ingredient": "#c:ores/gold",
+      "result": {
+        "count": 2,
+        "id": "futuretech:gold_powder"
+      }
+    },
+    "gravel": {
+      "ingredient": "minecraft:gravel",
+      "result": {
+        "count": 1,
+        "id": "minecraft:sand"
+      }
+    },
+    "iron_ingot": {
+      "ingredient": "#c:ingots/iron",
+      "result": {
+        "count": 1,
+        "id": "futuretech:iron_powder"
+      }
+    },
+    "iron_ore": {
+      "ingredient": "#c:ores/iron",
+      "result": {
+        "count": 2,
+        "id": "futuretech:iron_powder"
+      }
+    },
+    "raw_copper": {
+      "ingredient": "#c:raw_materials/copper",
+      "result": {
+        "count": 2,
+        "id": "futuretech:copper_powder"
+      }
+    },
+    "raw_gold": {
+      "ingredient": "#c:raw_materials/gold",
+      "result": {
+        "count": 2,
+        "id": "futuretech:gold_powder"
+      }
+    },
+    "raw_iron": {
+      "ingredient": "#c:raw_materials/iron",
+      "result": {
+        "count": 2,
+        "id": "futuretech:iron_powder"
+      }
+    },
+    "red_sandstone": {
+      "ingredient": "minecraft:red_sandstone",
+      "result": {
+        "count": 4,
+        "id": "minecraft:red_sand"
+      }
+    },
+    "sandstone": {
+      "ingredient": "minecraft:sandstone",
+      "result": {
+        "count": 4,
+        "id": "minecraft:sand"
+      }
+    }
+  }
+}

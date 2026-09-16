@@ -1,0 +1,6 @@
+{
+  "parent": "futuretech:item/hammer",
+  "textures": {
+    "palette": "minecraft:item/diamond_pickaxe"
+  }
+}

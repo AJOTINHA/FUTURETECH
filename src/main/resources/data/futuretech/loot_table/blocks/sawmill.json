@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "futuretech:sawmill",
+          "functions": [
+            {
+              "function": "minecraft:copy_state",
+              "properties": [
+                "mk"
+              ],
+              "block": "futuretech:sawmill"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

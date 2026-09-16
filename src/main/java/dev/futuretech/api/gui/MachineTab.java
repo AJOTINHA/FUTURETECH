@@ -7,7 +7,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 
 /**
- * A tab glued to the right edge of a machine screen. Collapsed it is a square with an icon; clicked
+ * A tab glued to one side edge of a machine screen. Collapsed it is a square with an icon; clicked
  * it grows in place into a panel with a title and whatever content the subclass draws. Tabs are
  * stacked and driven by a {@link TabStrip}.
  */
@@ -19,7 +19,11 @@ public abstract class MachineTab {
     /** Opening and closing slide over this many milliseconds. */
     private static final double SLIDE_MILLIS = 150.0;
 
+    /** Which edge of the screen the tab hangs off; it grows away from that edge. */
+    public enum Side { LEFT, RIGHT }
+
     protected final Font font;
+    private final Side side;
     private boolean open;
     // 0 = closed, 1 = fully open; moves towards the target every frame for the slide.
     private double slide;
@@ -30,7 +34,12 @@ public abstract class MachineTab {
     private int height = SIZE;
 
     protected MachineTab(Font font) {
+        this(font, Side.RIGHT);
+    }
+
+    protected MachineTab(Font font, Side side) {
         this.font = font;
+        this.side = side;
     }
 
     protected abstract Component title();
@@ -49,7 +58,12 @@ public abstract class MachineTab {
     /** Handles a click on the content while fully open; return true when it was consumed. */
     protected abstract boolean clickContent(MouseButtonEvent event, int contentX, int contentY);
 
+    /** Tabs opt in to additional buttons without changing header or other tab behaviour. */
+    protected boolean acceptsContentButton(int button) { return button == 0; }
+
     protected abstract void contentTooltip(GuiGraphicsExtractor graphics, int contentX, int contentY, int mouseX, int mouseY);
+
+    public Side side() { return side; }
 
     public boolean isOpen() { return open; }
 
@@ -71,28 +85,38 @@ public abstract class MachineTab {
 
     private int contentY() { return y + SIZE + PADDING; }
 
-    public void render(GuiGraphicsExtractor graphics, int x, int y, int mouseX, int mouseY) {
-        this.x = x;
-        this.y = y;
+    /** The icon square stays against the screen, so on a left tab it sits at the tab's far end. */
+    private int iconX() { return side == Side.LEFT ? x + width - SIZE : x; }
+
+    /**
+     * @param anchorX the screen edge the tab hangs off: its left corner for a right tab, its right
+     *                corner for a left tab, which therefore grows away from the screen
+     */
+    public void render(GuiGraphicsExtractor graphics, int anchorX, int y, int mouseX, int mouseY) {
         advanceSlide();
         width = SIZE + (int) Math.round((fullWidth() - SIZE) * slide);
         height = SIZE + (int) Math.round((fullHeight() - SIZE) * slide);
-        boolean hovered = slide <= 0 && isOver(mouseX, mouseY, x, y, SIZE, SIZE);
+        this.x = side == Side.LEFT ? anchorX - width : anchorX;
+        this.y = y;
+        int iconX = iconX();
+        boolean hovered = slide <= 0 && isOver(mouseX, mouseY, iconX, y, SIZE, SIZE);
         // Same cut corners, shadow and header band as the machine screens; collapsed, the band fills the tab.
         MachineScreenStyle.drawPanel(graphics, x, y, width, height);
         if (hovered) graphics.fill(x + 2, y + 3, x + width - 2, y + SIZE - 2, 0x1AFFFFFF);
-        drawIcon(graphics, x, y);
+        drawIcon(graphics, iconX, y);
         if (slide <= 0) return;
 
         // Content only shows inside the part of the tab that has grown so far.
-        graphics.enableScissor(x, y, x + width - 2, y + height - 2);
-        graphics.text(font, title(), x + SIZE, y + 6, TITLE_COLOR, false);
+        if (side == Side.LEFT) graphics.enableScissor(x + 2, y, x + width, y + height - 2);
+        else graphics.enableScissor(x, y, x + width - 2, y + height - 2);
+        int titleX = side == Side.LEFT ? iconX - font.width(title()) - 2 : x + SIZE;
+        graphics.text(font, title(), titleX, y + 6, TITLE_COLOR, false);
         drawContent(graphics, contentX(), contentY(), mouseX, mouseY);
         graphics.disableScissor();
     }
 
     public void extractTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        if (isOver(mouseX, mouseY, x, y, SIZE, SIZE)) {
+        if (isOver(mouseX, mouseY, iconX(), y, SIZE, SIZE)) {
             graphics.setTooltipForNextFrame(title(), mouseX, mouseY);
             return;
         }
@@ -101,12 +125,12 @@ public abstract class MachineTab {
 
     /** Returns true when the click landed on this tab. */
     public boolean mouseClicked(MouseButtonEvent event) {
-        if (event.button() != 0) return false;
-        if (isOver(event.x(), event.y(), x, y, SIZE, SIZE)) {
+        if (isOver(event.x(), event.y(), iconX(), y, SIZE, SIZE)) {
+            if (event.button() != 0) return false;
             open = !open;
             return true;
         }
-        return isFullyOpen() && isOver(event.x(), event.y(), x, y, width, height)
+        return acceptsContentButton(event.button()) && isFullyOpen() && isOver(event.x(), event.y(), x, y, width, height)
                 && clickContent(event, contentX(), contentY());
     }
 

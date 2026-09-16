@@ -42,6 +42,9 @@ public final class BatteryScreen extends AbstractContainerScreen<BatteryMenu> {
     @Override
     protected void extractTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         super.extractTooltip(graphics, mouseX, mouseY);
+        // Same outer box the bar's backing plate fills.
+        energyTooltip(graphics, mouseX, mouseY, leftPos + 7, topPos + 38, 162, 14,
+                menu.energyStored(), menu.tier().capacity());
         tabs.extractTooltip(graphics, mouseX, mouseY);
     }
 
@@ -52,7 +55,8 @@ public final class BatteryScreen extends AbstractContainerScreen<BatteryMenu> {
 
     @Override
     protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        graphics.text(font, title, titleLabelX, titleLabelY, TITLE, false);
+        Component tierTitle = Component.translatable("block.futuretech." + menu.tier().blockName());
+        graphics.text(font, tierTitle, titleLabelX, titleLabelY, TITLE, false);
         graphics.text(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, TEXT, false);
         graphics.text(font, Component.translatable("gui.futuretech.energy"), 7, 26, TEXT, false);
         graphics.text(font, Component.translatable("gui.futuretech.stored", menu.energyStored(),
