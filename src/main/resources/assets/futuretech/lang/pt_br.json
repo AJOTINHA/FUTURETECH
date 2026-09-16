@@ -148,6 +148,7 @@
   "item.futuretech.steel_plate": "Chapa de Aço",
   "item.futuretech.steel_gear": "Engrenagem de Aço",
   "block.futuretech.smeltery": "Fundidora",
+  "block.futuretech.paint_machine": "Máquina de Pintura",
   "command.futuretech.perf.on": "Medição de tick ligada: o custo aparece em cima dos blocos do mod.",
   "command.futuretech.perf.off": "Medição de tick desligada.",
   "gui.futuretech.perf.network": " · rede de %s cabos",

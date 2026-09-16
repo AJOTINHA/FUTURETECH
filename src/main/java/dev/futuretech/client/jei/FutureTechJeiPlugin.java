@@ -4,6 +4,7 @@ import dev.futuretech.FutureTech;
 import dev.futuretech.block.entity.AssemblerBlockEntity;
 import dev.futuretech.block.entity.LaneMachineBlockEntity;
 import dev.futuretech.block.entity.MetalPressBlockEntity;
+import dev.futuretech.block.entity.PaintMachineBlockEntity;
 import dev.futuretech.block.entity.SmelteryBlockEntity;
 import dev.futuretech.client.SyncedRecipes;
 import dev.futuretech.recipe.AlloyingRecipe;
@@ -20,15 +21,17 @@ import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.types.IRecipeHolderType;
+import mezz.jei.api.recipe.types.IRecipeType;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 
 import java.util.List;
 
-/** Shows what each machine makes: crushing, sawing, pressing, alloying and assembling, plus the vanilla furnace and fuel pages. */
+/** Shows what each machine makes: crushing, sawing, pressing, alloying, assembling and painting, plus the vanilla furnace and fuel pages. */
 @JeiPlugin
 public final class FutureTechJeiPlugin implements IModPlugin {
     private static final org.slf4j.Logger LOG = com.mojang.logging.LogUtils.getLogger();
@@ -39,6 +42,9 @@ public final class FutureTechJeiPlugin implements IModPlugin {
     private static final IRecipeHolderType<PressingRecipe> PRESSING = IRecipeHolderType.create(ModRecipes.PRESSING.getId());
     private static final IRecipeHolderType<AlloyingRecipe> ALLOYING = IRecipeHolderType.create(ModRecipes.ALLOYING.getId());
     private static final IRecipeHolderType<AssemblingRecipe> ASSEMBLING = IRecipeHolderType.create(ModRecipes.ASSEMBLING.getId());
+    /** The paint machine has no recipe book: its one page is written here, over every block a facade may wear. */
+    private static final IRecipeType<PaintingDisplay> PAINTING =
+            IRecipeType.create(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "painting"), PaintingDisplay.class);
 
     @Override
     public Identifier getPluginUid() {
@@ -49,16 +55,18 @@ public final class FutureTechJeiPlugin implements IModPlugin {
     public void registerCategories(IRecipeCategoryRegistration registration) {
         IGuiHelper gui = registration.getJeiHelpers().getGuiHelper();
         registration.addRecipeCategories(
-                new MachineRecipeCategory<>(gui, CRUSHING, ModBlocks.CRUSHER.get(), 100, 42, 34, 9,
+                MachineRecipeCategory.ofHolders(gui, CRUSHING, ModBlocks.CRUSHER.get(), 100, 42, 34, 9,
                         LaneMachineBlockEntity.ENERGY_PER_TICK, recipe -> LaneMachineBlockEntity.WORK_TICKS, FutureTechJeiPlugin::singleItem),
-                new MachineRecipeCategory<>(gui, SAWING, ModBlocks.SAWMILL.get(), 100, 42, 34, 9,
+                MachineRecipeCategory.ofHolders(gui, SAWING, ModBlocks.SAWMILL.get(), 100, 42, 34, 9,
                         LaneMachineBlockEntity.ENERGY_PER_TICK, recipe -> LaneMachineBlockEntity.WORK_TICKS, FutureTechJeiPlugin::singleItem),
-                new MachineRecipeCategory<>(gui, PRESSING, ModBlocks.METAL_PRESS.get(), 122, 42, 56, 9,
+                MachineRecipeCategory.ofHolders(gui, PRESSING, ModBlocks.METAL_PRESS.get(), 122, 42, 56, 9,
                         MetalPressBlockEntity.ENERGY_PER_TICK, PressingRecipe::duration, FutureTechJeiPlugin::pressing),
-                new MachineRecipeCategory<>(gui, ALLOYING, ModBlocks.SMELTERY.get(), 122, 42, 56, 9,
+                MachineRecipeCategory.ofHolders(gui, ALLOYING, ModBlocks.SMELTERY.get(), 122, 42, 56, 9,
                         SmelteryBlockEntity.ENERGY_PER_TICK, AlloyingRecipe::duration, FutureTechJeiPlugin::alloying),
-                new MachineRecipeCategory<>(gui, ASSEMBLING, ModBlocks.ASSEMBLY_TABLE.get(), 126, 70, 64, 22,
-                        AssemblerBlockEntity.ENERGY_PER_TICK, AssemblingRecipe::duration, FutureTechJeiPlugin::assembling));
+                MachineRecipeCategory.ofHolders(gui, ASSEMBLING, ModBlocks.ASSEMBLY_TABLE.get(), 126, 70, 64, 22,
+                        AssemblerBlockEntity.ENERGY_PER_TICK, AssemblingRecipe::duration, FutureTechJeiPlugin::assembling),
+                new MachineRecipeCategory<>(gui, PAINTING, ModBlocks.PAINT_MACHINE.get(), 122, 42, 56, 9,
+                        PaintMachineBlockEntity.ENERGY_PER_TICK, display -> PaintMachineBlockEntity.PAINT_TICKS, FutureTechJeiPlugin::painting));
     }
 
     @Override
@@ -75,6 +83,7 @@ public final class FutureTechJeiPlugin implements IModPlugin {
         registration.addRecipes(PRESSING, pressing);
         registration.addRecipes(ALLOYING, alloying);
         registration.addRecipes(ASSEMBLING, assembling);
+        registration.addRecipes(PAINTING, List.of(PaintingDisplay.everyBlock()));
     }
 
     @Override
@@ -84,6 +93,7 @@ public final class FutureTechJeiPlugin implements IModPlugin {
         registration.addCraftingStation(PRESSING, ModBlocks.METAL_PRESS.get());
         registration.addCraftingStation(ALLOYING, ModBlocks.SMELTERY.get());
         registration.addCraftingStation(ASSEMBLING, ModBlocks.ASSEMBLY_TABLE.get(), ModBlocks.ASSEMBLER_TERMINAL.get());
+        registration.addCraftingStation(PAINTING, ModBlocks.PAINT_MACHINE.get());
         // The electric furnace smelts vanilla recipes; the solid fuel generator burns vanilla fuels.
         registration.addCraftingStation(RecipeTypes.SMELTING, ModBlocks.ELECTRIC_FURNACE.get());
         registration.addCraftingStation(RecipeTypes.SMELTING_FUEL, ModBlocks.SOLID_FUEL_GENERATOR.get());
@@ -110,6 +120,15 @@ public final class FutureTechJeiPlugin implements IModPlugin {
                 .addItemStacks(MachineRecipeCategory.stacks(recipe.second().ingredient(), recipe.second().count()));
         builder.addOutputSlot(90, 8).setOutputSlotBackground().add(recipe.result());
         builder.setShapeless();
+    }
+
+    /** The block and the panel cycle together, so looking up a block lands on its own panel and back. */
+    private static void painting(IRecipeLayoutBuilder builder, PaintingDisplay display) {
+        var block = builder.addInputSlot(8, 8).setStandardSlotBackground().addItemStacks(display.blocks());
+        builder.addInputSlot(30, 8).setStandardSlotBackground()
+                .add(new ItemStack(ModItems.STEEL_PLATE.get(), PaintMachineBlockEntity.PLATES_PER_JOB));
+        var panels = builder.addOutputSlot(90, 8).setOutputSlotBackground().addItemStacks(display.panels());
+        builder.createFocusLink(block, panels);
     }
 
     private static void assembling(IRecipeLayoutBuilder builder, AssemblingRecipe recipe) {

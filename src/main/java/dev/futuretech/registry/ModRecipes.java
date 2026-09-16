@@ -18,10 +18,6 @@ public final class ModRecipes {
     public static final DeferredRegister<RecipeSerializer<?>> SERIALIZERS = DeferredRegister.create(Registries.RECIPE_SERIALIZER, FutureTech.MOD_ID);
     public static final DeferredRegister<RecipeBookCategory> BOOKS = DeferredRegister.create(Registries.RECIPE_BOOK_CATEGORY, FutureTech.MOD_ID);
 
-    /** The bench recipe that turns any coverable block into panels; the block itself rides on the result. */
-    public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<dev.futuretech.recipe.FacadeRecipe>> FACADE =
-            SERIALIZERS.register("facade", () -> new RecipeSerializer<>(
-                    dev.futuretech.recipe.FacadeRecipe.CODEC, dev.futuretech.recipe.FacadeRecipe.STREAM_CODEC));
     public static final DeferredHolder<RecipeType<?>, RecipeType<LaneMachineRecipe>> CRUSHING = laneType("crushing");
     public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<LaneMachineRecipe>> CRUSHING_SERIALIZER =
             laneSerializer("crushing", LaneMachineKind.CRUSHER);

@@ -10,6 +10,7 @@ import dev.futuretech.menu.LavaGeneratorMenu;
 import dev.futuretech.menu.ChargerMenu;
 import dev.futuretech.menu.LaneMachineMenu;
 import dev.futuretech.menu.MetalPressMenu;
+import dev.futuretech.menu.PaintMachineMenu;
 import dev.futuretech.menu.SmelteryMenu;
 import dev.futuretech.menu.SolidFuelGeneratorMenu;
 import net.minecraft.core.registries.Registries;
@@ -50,6 +51,8 @@ public final class ModMenus {
 
     public static final DeferredHolder<MenuType<?>, MenuType<SmelteryMenu>> SMELTERY = TYPES.register(
             "smeltery", () -> IMenuTypeExtension.create(SmelteryMenu::new));
+    public static final DeferredHolder<MenuType<?>, MenuType<PaintMachineMenu>> PAINT_MACHINE = TYPES.register(
+            "paint_machine", () -> IMenuTypeExtension.create(PaintMachineMenu::new));
 
     public static final DeferredHolder<MenuType<?>, MenuType<CableConnectorMenu>> CABLE_CONNECTOR = TYPES.register(
             "cable_connector", () -> IMenuTypeExtension.create(CableConnectorMenu::new));
