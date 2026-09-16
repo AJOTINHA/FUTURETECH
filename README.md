@@ -373,3 +373,24 @@ Ferro     Redstone    Ferro
 ## Aço
 
 O lingote de aço (`futuretech:steel_ingot`) é produzido na Fundidora (1 ferro ou 1 pó de ferro + 2 carvões, ou 1 ferro + 3 carvões vegetais). A Metal Press aceita aço com os moldes existentes: 1 lingote produz 1 chapa de aço; 2 lingotes produzem 1 engrenagem de aço. As receitas ficam no arquivo único `src/main/recipes/metal_press.json`. Os itens integram as tags `c:ingots/steel`, `c:plates/steel` e `c:gears/steel`.
+
+## Martelos, Escavadoras e Machados Lenhadores
+
+Os martelos, as escavadoras e os machados lenhadores de **madeira, pedra, cobre, ferro, ouro, diamante e netherita** aparecem na aba FUTURETECH. Martelo e escavadora quebram uma camada 3×3 centrada no bloco atingido, conforme a face: parede, chão ou teto. O martelo alcança blocos de picareta (pedra, minérios); a escavadora, blocos de pá (terra, areia, cascalho, neve). O machado lenhador derruba a árvore inteira a partir de qualquer tronco: todos os troncos **do mesmo tipo** conectados (inclusive na diagonal, para galhos e árvores grandes), até 128 blocos; tábuas, troncos descascados e uma bétula encostada no carvalho ficam de fora. **Segure Shift** para quebrar apenas um bloco. Funcionam também no criativo. Com o botão direito, o machado lenhador descasca troncos, raspa e desencera cobre, e a escavadora faz caminhos de terra e apaga fogueiras, como as ferramentas vanilla (o `useOn` é delegado ao machado/pá de ferro, que cobra o desgaste da ferramenta em mão). Os três são o mesmo `AreaToolItem`; um `Kind` define a tag de blocos, o alcance (`Reach.PLANE` ou `Reach.TREE`), as `ItemAbilities` e a ferramenta vanilla delegada.
+
+Ao mirar com uma dessas ferramentas, o contorno mostra os blocos que vão junto: a área 3×3 ou a árvore inteira. Durante a mineração, todos recebem as rachaduras no mesmo estágio do bloco central. Soltar o ataque, trocar de ferramenta ou segurar Shift remove a animação adicional; a seleção respeita o material e a dureza dos blocos. Os modelos têm bordas iluminadas, sombras na parte inferior da cabeça, detalhes de superfície e veios no cabo, mantendo as paletas das picaretas (martelo), das pás (escavadora) e dos machados (lenhador).
+
+Cada material usa a velocidade, durabilidade, reparo e nível de mineração da picareta (martelo), da pá (escavadora) ou do machado (lenhador) equivalente; todos batem mais forte e mais devagar que a ferramenta vanilla. Cada bloco quebrado consome um uso, com os efeitos normais de Inquebrável; a área para quando a ferramenta quebra. Fortuna, Toque Suave, Eficiência e Remendo são compatíveis. A netherita resiste ao fogo. A quebra adicional respeita proteções e drops normais, alcança apenas blocos compatíveis com a ferramenta e o material e ignora vizinhos com dureza superior a três vezes a do bloco central.
+
+Na bancada, o martelo usa **cinco materiais**, o machado lenhador **quatro** e a escavadora **três**, sempre com dois gravetos (tábuas para madeira; materiais de ferramenta de pedra para pedra; lingotes de cobre/ferro/ouro ou diamantes):
+
+```text
+Martelo                       Escavadora                    Machado Lenhador
+Material Material Material             Material             Material Material Material
+Material Graveto  Material    Material Graveto  Material    Material Graveto
+         Graveto                       Graveto                       Graveto
+```
+
+Os de netherita são uma melhoria da versão de diamante na mesa de ferraria, com um molde de melhoria de netherita e um lingote de netherita. Os modelos 3D reutilizam diretamente as cores das texturas das picaretas, pás e machados vanilla, acompanhando também resource packs. `python tools/generate_area_tools.py` regenera modelos, receitas, desbloqueios, tags e nomes.
+
+O teste `AreaToolItemTest` valida materiais e carregamento das receitas das três ferramentas. `./gradlew.bat runGameTestServer` executa os testes de mineração em um mundo separado em `build/gametest-run`, cobrindo as três orientações, Shift, criativo, desgaste, proteção, limites do material, a separação entre blocos de picareta e de pá, a derrubada de uma árvore com galho, o limite de troncos e o botão direito (descascar, caminho). O código em `src/gameTest` só é usado no desenvolvimento e não entra no JAR distribuído.

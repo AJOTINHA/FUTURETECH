@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " M ",
+    "MSM",
+    " S "
+  ],
+  "key": {
+    "M": "#minecraft:diamond_tool_materials",
+    "S": "minecraft:stick"
+  },
+  "result": {
+    "id": "futuretech:diamond_excavator",
+    "count": 1
+  }
+}

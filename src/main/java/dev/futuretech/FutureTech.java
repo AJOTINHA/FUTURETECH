@@ -9,6 +9,7 @@ import dev.futuretech.registry.ModMenus;
 import dev.futuretech.registry.ModRecipes;
 import dev.futuretech.perf.PerfProfiling;
 import dev.futuretech.transfer.ItemJourneys;
+import dev.futuretech.item.AreaMining;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
@@ -31,6 +32,8 @@ public final class FutureTech {
         modEventBus.addListener(PerfProfiling::registerPayloads);
         NeoForge.EVENT_BUS.addListener(PerfProfiling::registerCommands);
         NeoForge.EVENT_BUS.addListener(PerfProfiling::onServerTick);
+        NeoForge.EVENT_BUS.addListener(AreaMining::onBreak);
+        NeoForge.EVENT_BUS.addListener(AreaMining::onServerTick);
         ModCreativeTabs.TABS.register(modEventBus);
     }
 }

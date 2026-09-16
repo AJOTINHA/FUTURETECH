@@ -49,6 +49,8 @@ public final class FutureTechClient {
         PerfProfiling.setViewer(PerfOverlay::accept);
         NeoForge.EVENT_BUS.addListener(PerfOverlay::submitLabels);
         NeoForge.EVENT_BUS.addListener(PerfOverlay::drawTotal);
+        NeoForge.EVENT_BUS.addListener(AreaMiningPreview::extractOutline);
+        NeoForge.EVENT_BUS.addListener(AreaMiningPreview::extractBreaking);
     }
 
     private static void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {

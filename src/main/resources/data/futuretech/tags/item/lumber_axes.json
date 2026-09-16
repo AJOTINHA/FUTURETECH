@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "futuretech:wooden_lumber_axe",
+    "futuretech:stone_lumber_axe",
+    "futuretech:copper_lumber_axe",
+    "futuretech:iron_lumber_axe",
+    "futuretech:golden_lumber_axe",
+    "futuretech:diamond_lumber_axe",
+    "futuretech:netherite_lumber_axe"
+  ]
+}

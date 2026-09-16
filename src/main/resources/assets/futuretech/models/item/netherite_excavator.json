@@ -1,0 +1,6 @@
+{
+  "parent": "futuretech:item/excavator",
+  "textures": {
+    "palette": "minecraft:item/netherite_shovel"
+  }
+}
