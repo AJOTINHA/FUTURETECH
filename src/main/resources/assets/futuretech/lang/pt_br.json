@@ -1,5 +1,6 @@
 {
   "itemGroup.futuretech": "FUTURETECH",
+  "item.futuretech.chip": "Chip Eletrônico",
   "item.futuretech.filter": "Filtro",
   "item.futuretech.speed_upgrade": "Speed Upgrade",
   "item.futuretech.iron_powder": "Pó de Ferro",
@@ -8,6 +9,7 @@
   "block.futuretech.crusher": "Triturador",
   "block.futuretech.machine_casing": "Carcaça de Máquina",
   "block.futuretech.solid_fuel_generator": "Gerador a Combustível Sólido",
+  "block.futuretech.lava_generator": "Gerador a Lava",
   "gui.futuretech.empty": "Vazio",
   "gui.futuretech.energy": "Energia",
   "gui.futuretech.rate": "%s FE/t",

@@ -63,6 +63,7 @@ public final class FutureTechClient {
         event.register(ModMenus.ASSEMBLER.get(), AssemblerScreen::new);
         event.register(ModMenus.FLUID_TANK.get(), FluidTankScreen::new);
         event.register(ModMenus.SOLID_FUEL_GENERATOR.get(), SolidFuelGeneratorScreen::new);
+        event.register(ModMenus.LAVA_GENERATOR.get(), LavaGeneratorScreen::new);
         event.register(ModMenus.BATTERY.get(), BatteryScreen::new);
         event.register(ModMenus.ELECTRIC_FURNACE.get(), ElectricFurnaceScreen::new);
         event.register(ModMenus.CRUSHER.get(), CrusherScreen::new);

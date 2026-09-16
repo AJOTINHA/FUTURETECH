@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "futuretech:lava_generator",
+          "functions": [
+            {
+              "function": "minecraft:copy_state",
+              "properties": [
+                "mk"
+              ],
+              "block": "futuretech:lava_generator"
+            }
+          ]
+        }
+      ],
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ]
+    }
+  ]
+}

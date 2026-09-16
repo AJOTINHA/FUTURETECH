@@ -11,8 +11,10 @@ import dev.futuretech.block.FluidCableBlock;
 import dev.futuretech.block.FluidCableTier;
 import dev.futuretech.block.ItemCableBlock;
 import dev.futuretech.block.ItemCableTier;
+import dev.futuretech.block.LavaGeneratorBlock;
 import dev.futuretech.block.CrusherBlock;
 import dev.futuretech.block.MetalPressBlock;
+import dev.futuretech.block.MachineCasingBlock;
 import dev.futuretech.block.SmelteryBlock;
 import dev.futuretech.block.SolidFuelGeneratorBlock;
 import net.minecraft.world.level.block.Block;
@@ -34,9 +36,10 @@ public final class ModBlocks {
                 properties -> properties.mapColor(MapColor.METAL).noOcclusion().strength(3.5F, 6).sound(SoundType.METAL).requiresCorrectToolForDrops());
     }
 
-    public static final DeferredBlock<Block> MACHINE_CASING = BLOCKS.registerSimpleBlock(
-            "machine_casing", properties -> properties
+    public static final DeferredBlock<MachineCasingBlock> MACHINE_CASING = BLOCKS.registerBlock(
+            "machine_casing", MachineCasingBlock::new, properties -> properties
                     .mapColor(MapColor.METAL)
+                    .noOcclusion()
                     .strength(3.5F, 6.0F)
                     .sound(SoundType.METAL)
                     .requiresCorrectToolForDrops());
@@ -48,6 +51,14 @@ public final class ModBlocks {
                     .sound(SoundType.METAL)
                     .requiresCorrectToolForDrops()
                     .lightLevel(state -> state.getValue(SolidFuelGeneratorBlock.LIT) ? 10 : 0));
+
+    public static final DeferredBlock<LavaGeneratorBlock> LAVA_GENERATOR = BLOCKS.registerBlock(
+            "lava_generator", LavaGeneratorBlock::new, properties -> properties
+                    .mapColor(MapColor.METAL)
+                    .strength(3.5F, 6.0F)
+                    .sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops()
+                    .lightLevel(state -> state.getValue(LavaGeneratorBlock.LIT) ? 13 : 0));
 
     public static final DeferredBlock<ElectricFurnaceBlock> ELECTRIC_FURNACE = BLOCKS.registerBlock(
             "electric_furnace", ElectricFurnaceBlock::new, properties -> properties

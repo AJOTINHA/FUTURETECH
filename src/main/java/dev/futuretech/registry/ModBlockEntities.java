@@ -2,6 +2,7 @@ package dev.futuretech.registry;
 
 import dev.futuretech.FutureTech;
 import dev.futuretech.api.side.SidedEnergy;
+import dev.futuretech.api.side.SidedFluids;
 import dev.futuretech.api.side.SidedItems;
 import dev.futuretech.block.entity.BatteryBlockEntity;
 import dev.futuretech.block.entity.FluidTankBlockEntity;
@@ -9,6 +10,7 @@ import dev.futuretech.block.entity.CableBlockEntity;
 import dev.futuretech.block.entity.ElectricFurnaceBlockEntity;
 import dev.futuretech.block.entity.FluidCableBlockEntity;
 import dev.futuretech.block.entity.ItemCableBlockEntity;
+import dev.futuretech.block.entity.LavaGeneratorBlockEntity;
 import dev.futuretech.block.entity.CrusherBlockEntity;
 import dev.futuretech.block.entity.MetalPressBlockEntity;
 import dev.futuretech.block.entity.SmelteryBlockEntity;
@@ -26,6 +28,10 @@ public final class ModBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SolidFuelGeneratorBlockEntity>> SOLID_FUEL_GENERATOR =
             TYPES.register("solid_fuel_generator", () -> new BlockEntityType<>(
                     SolidFuelGeneratorBlockEntity::new, ModBlocks.SOLID_FUEL_GENERATOR.get()));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LavaGeneratorBlockEntity>> LAVA_GENERATOR =
+            TYPES.register("lava_generator", () -> new BlockEntityType<>(
+                    LavaGeneratorBlockEntity::new, ModBlocks.LAVA_GENERATOR.get()));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ElectricFurnaceBlockEntity>> ELECTRIC_FURNACE =
             TYPES.register("electric_furnace", () -> new BlockEntityType<>(
@@ -90,6 +96,8 @@ public final class ModBlockEntities {
                 SidedEnergy.view(generator.energy(), generator.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, ELECTRIC_FURNACE.get(), (furnace, side) ->
                 SidedEnergy.view(furnace.energy(), furnace.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, LAVA_GENERATOR.get(), (generator, side) ->
+                SidedEnergy.view(generator.energy(), generator.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, BATTERY.get(), (battery, side) ->
                 SidedEnergy.view(battery.energy(), battery.sideConfig(), side));
 
@@ -98,6 +106,11 @@ public final class ModBlockEntities {
                 SidedItems.view(generator, generator.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Item.BLOCK, ELECTRIC_FURNACE.get(), (furnace, side) ->
                 SidedItems.view(furnace, furnace.sideConfig(), side));
+        // Lava only goes in, through the faces in an input mode; buckets follow the same faces above.
+        event.registerBlockEntity(Capabilities.Item.BLOCK, LAVA_GENERATOR.get(), (generator, side) ->
+                SidedItems.view(generator, generator.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Fluid.BLOCK, LAVA_GENERATOR.get(), (generator, side) ->
+                SidedFluids.intake(generator.lava(), generator.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, CABLE.get(),
                 (cable, side) -> cable.handler(side));
         event.registerBlockEntity(Capabilities.Item.BLOCK, ITEM_CABLE.get(),

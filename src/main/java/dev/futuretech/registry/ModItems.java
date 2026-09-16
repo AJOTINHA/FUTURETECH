@@ -24,6 +24,10 @@ public final class ModItems {
             "solid_fuel_generator", properties -> new TieredMachineBlockItem(ModBlocks.SOLID_FUEL_GENERATOR.get(), properties),
             properties -> properties.useBlockDescriptionPrefix());
 
+    public static final DeferredItem<TieredMachineBlockItem> LAVA_GENERATOR = ITEMS.registerItem(
+            "lava_generator", properties -> new TieredMachineBlockItem(ModBlocks.LAVA_GENERATOR.get(), properties),
+            properties -> properties.useBlockDescriptionPrefix());
+
     public static final DeferredItem<TieredMachineBlockItem> ELECTRIC_FURNACE = ITEMS.registerItem(
             "electric_furnace", properties -> new TieredMachineBlockItem(ModBlocks.ELECTRIC_FURNACE.get(), properties),
             properties -> properties.useBlockDescriptionPrefix());
@@ -81,6 +85,7 @@ public final class ModItems {
             "filter", ItemFilterItem::new, properties -> properties.stacksTo(1));
 
     public static final DeferredItem<Item> SPEED_UPGRADE = ITEMS.registerSimpleItem("speed_upgrade");
+    public static final DeferredItem<Item> CHIP = ITEMS.registerSimpleItem("chip");
 
     public static final DeferredItem<MachineUpgradeKitItem> UPGRADE_KIT_MK2 = ITEMS.registerItem(
             "upgrade_kit_mk2", properties -> new MachineUpgradeKitItem(2, properties));

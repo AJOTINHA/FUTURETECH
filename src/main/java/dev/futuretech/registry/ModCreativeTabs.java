@@ -22,6 +22,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.ASSEMBLY_ARM.get());
                         output.accept(ModItems.ASSEMBLER_TERMINAL.get());
                         output.accept(ModItems.SOLID_FUEL_GENERATOR.get());
+                        output.accept(ModItems.LAVA_GENERATOR.get());
                         output.accept(ModItems.ELECTRIC_FURNACE.get());
                         output.accept(ModItems.CRUSHER.get());
                         output.accept(ModItems.METAL_PRESS.get());
@@ -37,6 +38,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.FLUID_CABLE.get());
                         output.accept(ModItems.FILTER.get());
                         output.accept(ModItems.SPEED_UPGRADE.get());
+                        output.accept(ModItems.CHIP.get());
                         output.accept(ModItems.UPGRADE_KIT_MK2.get());
                         output.accept(ModItems.UPGRADE_KIT_MK3.get());
                         output.accept(ModItems.UPGRADE_KIT_MK4.get());

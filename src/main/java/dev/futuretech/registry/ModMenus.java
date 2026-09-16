@@ -6,6 +6,7 @@ import dev.futuretech.menu.FluidTankMenu;
 import dev.futuretech.menu.CableConnectorMenu;
 import dev.futuretech.menu.ElectricFurnaceMenu;
 import dev.futuretech.menu.ItemFilterMenu;
+import dev.futuretech.menu.LavaGeneratorMenu;
 import dev.futuretech.menu.CrusherMenu;
 import dev.futuretech.menu.MetalPressMenu;
 import dev.futuretech.menu.SmelteryMenu;
@@ -22,6 +23,9 @@ public final class ModMenus {
             Registries.MENU, FutureTech.MOD_ID);
     public static final DeferredHolder<MenuType<?>, MenuType<SolidFuelGeneratorMenu>> SOLID_FUEL_GENERATOR = TYPES.register(
             "solid_fuel_generator", () -> new MenuType<>(SolidFuelGeneratorMenu::new, FeatureFlags.DEFAULT_FLAGS));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<LavaGeneratorMenu>> LAVA_GENERATOR = TYPES.register(
+            "lava_generator", () -> new MenuType<>(LavaGeneratorMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
     public static final DeferredHolder<MenuType<?>, MenuType<ElectricFurnaceMenu>> ELECTRIC_FURNACE = TYPES.register(
             "electric_furnace", () -> IMenuTypeExtension.create(ElectricFurnaceMenu::new));
