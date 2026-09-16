@@ -280,6 +280,10 @@ A **Bateria Portátil** (`futuretech:portable_battery`, 200.000 FE no MK1, não 
 
 Há quatro níveis, `PortableBatteryItem.Tier`: MK1 200.000 FE a 500 FE/t, MK2 400.000 a 1.000, MK3 800.000 a 2.000 e MK4 1.600.000 a 4.000 (`portable_battery_mk2..4`). Sobe de nível **na bancada**: a bateria mais o Kit de Upgrade do próximo MK (receita `crafting_transmute`, que preserva a carga e o interruptor). Os ícones levam as cores de MK das máquinas no terminal e na faixa de cima, com um pino por nível; `python tools/generate_portable_battery.py` desenha os quatro.
 
+## Carregador (Charger)
+
+O **Carregador** (`futuretech:charger`) enche itens que guardam energia: qualquer item com a capability de energia do NeoForge, deste mod (Bateria Portátil, bateria-bloco no bolso) ou de outros. A interface tem o slot de entrada à esquerda, a **barra de energia no meio** e o slot de saída à direita: o item fica na entrada enquanto carrega e, cheio, passa sozinho para a saída, de onde um funil ou cabo em "Extrair" só tira itens carregados. Só entra na entrada o que tem energia; a saída não aceita nada por cima. Buffer de 50.000 FE, 1.000 FE/t no MK1 (a taxa e o buffer crescem com o MK, como nas outras máquinas), com os mesmos kits, lados, redstone, transporte automático e melhorias. Receita: ferro nos cantos, Bateria MK1 em cima, cobre dos lados, carcaça no meio, redstone embaixo. `python tools/generate_charger.py` desenha a frente (a baia com a bateria enchendo e o raio no contato) e gera modelos, blockstate, loot e receita.
+
 ## Tanque de fluido
 
 O **Tanque de Fluido** (`futuretech:fluid_tank`) usa a mesma armação metálica da bateria, com os seis vãos fechados por vidro. Guarda **16.000 mB (16 baldes)** de um fluido por vez. O conteúdo aparece dentro do bloco com a textura e a cor do fluido; a superfície sobe e desce suavemente conforme o tanque enche ou esvazia.

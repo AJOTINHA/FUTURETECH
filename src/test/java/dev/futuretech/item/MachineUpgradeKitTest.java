@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(EphemeralTestServerProvider.class)
 class MachineUpgradeKitTest {
     private static List<Block> machines() {
-        return List.of(ModBlocks.SOLID_FUEL_GENERATOR.get(), ModBlocks.ELECTRIC_FURNACE.get(), ModBlocks.CRUSHER.get(), ModBlocks.SAWMILL.get(),
+        return List.of(ModBlocks.SOLID_FUEL_GENERATOR.get(), ModBlocks.ELECTRIC_FURNACE.get(), ModBlocks.CRUSHER.get(), ModBlocks.SAWMILL.get(), ModBlocks.CHARGER.get(),
                 ModBlocks.METAL_PRESS.get(), ModBlocks.BATTERY_MK1.get());
     }
 
@@ -106,7 +106,7 @@ class MachineUpgradeKitTest {
 
     @Test
     void everyMachineDropCopiesTheRegisteredMkProperty() throws Exception {
-        for (String machine : List.of("solid_fuel_generator", "electric_furnace", "crusher", "sawmill", "metal_press", "battery_mk1")) {
+        for (String machine : List.of("solid_fuel_generator", "electric_furnace", "crusher", "sawmill", "charger", "metal_press", "battery_mk1")) {
             try (var stream = getClass().getResourceAsStream("/data/futuretech/loot_table/blocks/" + machine + ".json")) {
                 assertNotNull(stream);
                 var table = JsonParser.parseReader(new InputStreamReader(stream, StandardCharsets.UTF_8)).getAsJsonObject();

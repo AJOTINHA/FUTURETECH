@@ -183,5 +183,6 @@
   "item.futuretech.portable_battery.pulled": "+%s FE",
   "item.futuretech.portable_battery_mk2": "Portable Battery MK2",
   "item.futuretech.portable_battery_mk3": "Portable Battery MK3",
-  "item.futuretech.portable_battery_mk4": "Portable Battery MK4"
+  "item.futuretech.portable_battery_mk4": "Portable Battery MK4",
+  "block.futuretech.charger": "Charger"
 }

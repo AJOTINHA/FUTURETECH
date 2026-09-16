@@ -71,6 +71,7 @@ public final class FutureTechClient {
         event.register(ModMenus.ELECTRIC_FURNACE.get(), ElectricFurnaceScreen::new);
         event.register(ModMenus.CRUSHER.get(), LaneMachineScreen::new);
         event.register(ModMenus.SAWMILL.get(), LaneMachineScreen::new);
+        event.register(ModMenus.CHARGER.get(), ChargerScreen::new);
         event.register(ModMenus.METAL_PRESS.get(), MetalPressScreen::new);
         event.register(ModMenus.SMELTERY.get(), SmelteryScreen::new);
         event.register(ModMenus.CABLE_CONNECTOR.get(), CableConnectorScreen::new);

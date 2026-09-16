@@ -7,6 +7,7 @@ import dev.futuretech.menu.CableConnectorMenu;
 import dev.futuretech.menu.ElectricFurnaceMenu;
 import dev.futuretech.menu.ItemFilterMenu;
 import dev.futuretech.menu.LavaGeneratorMenu;
+import dev.futuretech.menu.ChargerMenu;
 import dev.futuretech.menu.LaneMachineMenu;
 import dev.futuretech.menu.MetalPressMenu;
 import dev.futuretech.menu.SmelteryMenu;
@@ -38,6 +39,8 @@ public final class ModMenus {
 
     public static final DeferredHolder<MenuType<?>, MenuType<LaneMachineMenu>> CRUSHER = TYPES.register(
             "crusher", () -> IMenuTypeExtension.create(LaneMachineMenu::new));
+    public static final DeferredHolder<MenuType<?>, MenuType<ChargerMenu>> CHARGER = TYPES.register(
+            "charger", () -> IMenuTypeExtension.create(ChargerMenu::new));
     public static final DeferredHolder<MenuType<?>, MenuType<LaneMachineMenu>> SAWMILL = TYPES.register(
             "sawmill", () -> IMenuTypeExtension.create(LaneMachineMenu::new));
 

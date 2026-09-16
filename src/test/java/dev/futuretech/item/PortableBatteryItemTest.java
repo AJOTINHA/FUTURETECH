@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(EphemeralTestServerProvider.class)
 class PortableBatteryItemTest {
     @Test
-    void switchingOnGlintsAndSwitchingOffClearsBothTheSwitchAndTheGlint() {
+    void switchingOnGlintsAndSwitchingOffClearsBothTheSwitchAndTheGlint(net.minecraft.server.MinecraftServer server) {
         var battery = ModItems.PORTABLE_BATTERY.get().getDefaultInstance();
         assertFalse(PortableBatteryItem.isActive(battery));
         assertNull(battery.get(DataComponents.ENCHANTMENT_GLINT_OVERRIDE));
@@ -32,7 +32,7 @@ class PortableBatteryItemTest {
     }
 
     @Test
-    void theBatteryStoresEnergyInItsComponentThroughTheItemCapability() {
+    void theBatteryStoresEnergyInItsComponentThroughTheItemCapability(net.minecraft.server.MinecraftServer server) {
         var battery = ModItems.PORTABLE_BATTERY.get().getDefaultInstance();
         var handler = ItemAccess.forStack(battery).getCapability(Capabilities.Energy.ITEM);
         assertNotNull(handler);
@@ -75,7 +75,7 @@ class PortableBatteryItemTest {
     }
 
     @Test
-    void aBatteryBlockInThePocketTakesChargeUpToItsTiersCapacity() {
+    void aBatteryBlockInThePocketTakesChargeUpToItsTiersCapacity(net.minecraft.server.MinecraftServer server) {
         var portable = ModItems.PORTABLE_BATTERY.get().getDefaultInstance();
         portable.set(ModDataComponents.ENERGY.get(), PortableBatteryItem.Tier.MK1.capacity);
         var mk1 = ModItems.BATTERY_MK1.get().getDefaultInstance();

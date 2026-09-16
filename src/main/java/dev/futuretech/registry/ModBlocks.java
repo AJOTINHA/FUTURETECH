@@ -12,6 +12,7 @@ import dev.futuretech.block.FluidCableTier;
 import dev.futuretech.block.ItemCableBlock;
 import dev.futuretech.block.ItemCableTier;
 import dev.futuretech.block.LavaGeneratorBlock;
+import dev.futuretech.block.ChargerBlock;
 import dev.futuretech.block.LaneMachineBlock;
 import dev.futuretech.block.LaneMachineKind;
 import dev.futuretech.block.MetalPressBlock;
@@ -76,6 +77,11 @@ public final class ModBlocks {
 
     public static final DeferredBlock<LaneMachineBlock> SAWMILL = BLOCKS.registerBlock(
             "sawmill", properties -> new LaneMachineBlock(LaneMachineKind.SAWMILL, properties), properties -> properties
+                    .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops());
+
+    public static final DeferredBlock<ChargerBlock> CHARGER = BLOCKS.registerBlock(
+            "charger", ChargerBlock::new, properties -> properties
                     .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
                     .requiresCorrectToolForDrops());
 

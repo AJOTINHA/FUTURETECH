@@ -5,6 +5,7 @@ import dev.futuretech.api.side.SidedEnergy;
 import dev.futuretech.api.side.SidedFluids;
 import dev.futuretech.api.side.SidedItems;
 import dev.futuretech.block.entity.BatteryBlockEntity;
+import dev.futuretech.block.entity.ChargerBlockEntity;
 import dev.futuretech.block.entity.FluidTankBlockEntity;
 import dev.futuretech.block.entity.CableBlockEntity;
 import dev.futuretech.block.entity.ElectricFurnaceBlockEntity;
@@ -45,6 +46,8 @@ public final class ModBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LaneMachineBlockEntity>> CRUSHER =
             TYPES.register("crusher", () -> new BlockEntityType<>(
                     (pos, state) -> new LaneMachineBlockEntity(LaneMachineKind.CRUSHER, pos, state), ModBlocks.CRUSHER.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ChargerBlockEntity>> CHARGER =
+            TYPES.register("charger", () -> new BlockEntityType<>(ChargerBlockEntity::new, ModBlocks.CHARGER.get()));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LaneMachineBlockEntity>> SAWMILL =
             TYPES.register("sawmill", () -> new BlockEntityType<>(
                     (pos, state) -> new LaneMachineBlockEntity(LaneMachineKind.SAWMILL, pos, state), ModBlocks.SAWMILL.get()));
@@ -101,6 +104,10 @@ public final class ModBlockEntities {
                 SidedItems.view(smeltery, smeltery.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, ASSEMBLER.get(), (assembler, side) -> assembler.energyHandler());
         event.registerBlockEntity(Capabilities.Fluid.BLOCK, FLUID_TANK.get(), (tank, side) -> tank.handler(side));
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, CHARGER.get(), (charger, side) ->
+                SidedEnergy.view(charger.energy(), charger.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Item.BLOCK, CHARGER.get(), (charger, side) ->
+                SidedItems.view(charger, charger.sideConfig(), side));
         for (var lane : List.of(CRUSHER, SAWMILL)) {
             event.registerBlockEntity(Capabilities.Energy.BLOCK, lane.get(), (machine, side) ->
                     SidedEnergy.view(machine.energy(), machine.sideConfig(), side));
