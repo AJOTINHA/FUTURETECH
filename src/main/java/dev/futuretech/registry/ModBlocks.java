@@ -12,7 +12,8 @@ import dev.futuretech.block.FluidCableTier;
 import dev.futuretech.block.ItemCableBlock;
 import dev.futuretech.block.ItemCableTier;
 import dev.futuretech.block.LavaGeneratorBlock;
-import dev.futuretech.block.CrusherBlock;
+import dev.futuretech.block.LaneMachineBlock;
+import dev.futuretech.block.LaneMachineKind;
 import dev.futuretech.block.MetalPressBlock;
 import dev.futuretech.block.MachineCasingBlock;
 import dev.futuretech.block.SmelteryBlock;
@@ -68,8 +69,13 @@ public final class ModBlocks {
                     .requiresCorrectToolForDrops()
                     .lightLevel(state -> state.getValue(ElectricFurnaceBlock.LIT) ? 10 : 0));
 
-    public static final DeferredBlock<CrusherBlock> CRUSHER = BLOCKS.registerBlock(
-            "crusher", CrusherBlock::new, properties -> properties
+    public static final DeferredBlock<LaneMachineBlock> CRUSHER = BLOCKS.registerBlock(
+            "crusher", properties -> new LaneMachineBlock(LaneMachineKind.CRUSHER, properties), properties -> properties
+                    .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops());
+
+    public static final DeferredBlock<LaneMachineBlock> SAWMILL = BLOCKS.registerBlock(
+            "sawmill", properties -> new LaneMachineBlock(LaneMachineKind.SAWMILL, properties), properties -> properties
                     .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
                     .requiresCorrectToolForDrops());
 

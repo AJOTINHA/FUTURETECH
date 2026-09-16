@@ -91,6 +91,10 @@ public final class ModItems {
             "crusher", properties -> new TieredMachineBlockItem(ModBlocks.CRUSHER.get(), properties),
             properties -> properties.useBlockDescriptionPrefix());
 
+    public static final DeferredItem<TieredMachineBlockItem> SAWMILL = ITEMS.registerItem(
+            "sawmill", properties -> new TieredMachineBlockItem(ModBlocks.SAWMILL.get(), properties),
+            properties -> properties.useBlockDescriptionPrefix());
+
     public static final DeferredItem<Item> IRON_POWDER = ITEMS.registerSimpleItem("iron_powder");
     public static final DeferredItem<TieredMachineBlockItem> METAL_PRESS = ITEMS.registerItem(
             "metal_press", properties -> new TieredMachineBlockItem(ModBlocks.METAL_PRESS.get(), properties),

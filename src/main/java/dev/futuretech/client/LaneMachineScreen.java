@@ -7,14 +7,14 @@ import dev.futuretech.api.gui.TabStrip;
 import dev.futuretech.api.redstone.client.RedstoneControlTab;
 import dev.futuretech.api.side.client.SideConfigTab;
 import dev.futuretech.api.upgrade.client.UpgradeTab;
-import dev.futuretech.menu.CrusherMenu;
+import dev.futuretech.menu.LaneMachineMenu;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
-public final class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
+public final class LaneMachineScreen extends AbstractContainerScreen<LaneMachineMenu> {
     /** The energy column down the left edge, centred on the slot rows: outer box, with the fill inset by a pixel. */
     private static final int ENERGY_X = 7;
     private static final int ENERGY_HEIGHT = 49;
@@ -26,9 +26,9 @@ public final class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
     private static final int ARROW_BOTTOM = 15;
     private static final int ARROW_SHAFT_TOP = 6;
     private static final int ARROW_SHAFT_BOTTOM = 11;
-    /** The rollers sit under the last input slot, however many lanes there are. */
-    private static final int ROLLERS_X = 57;
-    private static final int ROLLERS_BELOW_ROW = 20;
+    /** The working indicator (rollers or saw blade) sits under the last input slot, however many lanes there are. */
+    private static final int INDICATOR_X = 57;
+    private static final int INDICATOR_BELOW_ROW = 20;
     /** Columns of the head; it loses a row off each side per step, ending in a single pixel. */
     private static final int ARROW_HEAD = 7;
     private static final int ARROW_BACK = 0xFF56616D;
@@ -39,8 +39,8 @@ public final class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
     private final AnimatedBar[] progressBars;
     private final TabStrip tabs;
 
-    public CrusherScreen(CrusherMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title, CrusherMenu.IMAGE_WIDTH, 184 + menu.extraHeight());
+    public LaneMachineScreen(LaneMachineMenu menu, Inventory inventory, Component title) {
+        super(menu, inventory, title, LaneMachineMenu.IMAGE_WIDTH, 184 + menu.extraHeight());
         // Title and inventory label stay against the left edge; the slots no longer sit under them.
         titleLabelX = ENERGY_X;
         inventoryLabelX = ENERGY_X;
@@ -71,7 +71,11 @@ public final class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
             float crushWidth = progressBars[lane].width(menu.progress(lane), menu.progressTotal(lane), ARROW_WIDTH, menu.isSynced());
             drawProgressArrow(graphics, x, y + menu.rowY(lane), crushWidth);
         }
-        drawRollers(graphics, x + ROLLERS_X, y + menu.rowY(menu.lanes() - 1) + ROLLERS_BELOW_ROW, menu.isWorking());
+        int indicatorY = y + menu.rowY(menu.lanes() - 1) + INDICATOR_BELOW_ROW;
+        switch (menu.kind) {
+            case CRUSHER -> drawRollers(graphics, x + INDICATOR_X, indicatorY, menu.isWorking());
+            case SAWMILL -> drawSawBlade(graphics, x + INDICATOR_X, indicatorY, menu.isWorking());
+        }
         tabs.render(graphics, x, y, imageWidth, mouseX, mouseY);
     }
 
@@ -84,6 +88,26 @@ public final class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
             graphics.fill(x + tooth * 5, y + 3, x + tooth * 5 + 3, y + 5, color);
             graphics.fill(x + tooth * 5 + 1, y + 7, x + tooth * 5 + 4, y + 9, color);
         }
+    }
+
+    /** A circular blade over a board, in the same 14 x 12 footprint as the rollers; it lights up at work. */
+    private static void drawSawBlade(GuiGraphicsExtractor graphics, int x, int y, boolean working) {
+        int color = working ? ENERGY_END : 0xFF8B959F;
+        int board = working ? 0xFFB08A50 : 0xFF8B959F;
+        // The board under the blade, with the kerf where the blade cuts in.
+        graphics.fill(x, y + 9, x + 6, y + 12, board);
+        graphics.fill(x + 8, y + 9, x + 14, y + 12, board);
+        // The disc: a pixel-art circle of diameter 9 with a hub, and four teeth on the rim.
+        graphics.fill(x + 3, y, x + 11, y + 1, color);
+        graphics.fill(x + 2, y + 1, x + 12, y + 2, color);
+        graphics.fill(x + 1, y + 2, x + 13, y + 7, color);
+        graphics.fill(x + 2, y + 7, x + 12, y + 8, color);
+        graphics.fill(x + 3, y + 8, x + 11, y + 9, color);
+        graphics.fill(x + 6, y + 4, x + 8, y + 5, BAR_BACK);
+        graphics.fill(x + 4, y - 1, x + 6, y, color);
+        graphics.fill(x + 8, y - 1, x + 10, y, color);
+        graphics.fill(x, y + 3, x + 1, y + 6, color);
+        graphics.fill(x + 13, y + 3, x + 14, y + 6, color);
     }
     /**
      * Draws the arrow a column at a time, so the fill follows the head's taper instead of stopping
@@ -137,7 +161,7 @@ public final class CrusherScreen extends AbstractContainerScreen<CrusherMenu> {
 
     /** The column's top, relative to the panel: centred on the block of slot rows (29 on a single lane). */
     private int energyTop() {
-        int rowsMiddle = menu.rowY(0) + menu.lanes() * CrusherMenu.ROW_SPACING / 2;
+        int rowsMiddle = menu.rowY(0) + menu.lanes() * LaneMachineMenu.ROW_SPACING / 2;
         return rowsMiddle - (ENERGY_HEIGHT + 1) / 2;
     }
 

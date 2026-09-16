@@ -1,6 +1,6 @@
 package dev.futuretech.menu;
 
-import static dev.futuretech.block.entity.CrusherBlockEntity.*;
+import static dev.futuretech.block.entity.LaneMachineBlockEntity.*;
 
 import dev.futuretech.api.gui.EnergyInfoMenu;
 import dev.futuretech.api.redstone.RedstoneControlMenu;
@@ -13,10 +13,9 @@ import dev.futuretech.api.side.SideMode;
 import dev.futuretech.api.upgrade.UpgradeInventory;
 import dev.futuretech.api.upgrade.MachineLevel;
 import dev.futuretech.api.upgrade.UpgradeSlots;
-import dev.futuretech.block.entity.CrusherBlockEntity;
+import dev.futuretech.block.LaneMachineKind;
+import dev.futuretech.block.entity.LaneMachineBlockEntity;
 import dev.futuretech.energy.EnergySync;
-import dev.futuretech.registry.ModBlocks;
-import dev.futuretech.registry.ModMenus;
 import net.minecraft.core.Direction;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.Container;
@@ -32,11 +31,12 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.Set;
 
 /**
- * The crusher's menu lays out one row of slots per open lane, centred on the panel, so the MK
- * travels in the opening packet: the client has to know how many rows to make before any data
- * slot arrives.
+ * The crusher's and the sawmill's menu lays out one row of slots per open lane, centred on the
+ * panel, so the kind and the MK travel in the opening packet: the client has to know which machine
+ * and how many rows to make before any data slot arrives.
  */
-public final class CrusherMenu extends MachineMenu implements SideConfigMenu, RedstoneControlMenu, EnergyInfoMenu {
+public final class LaneMachineMenu extends MachineMenu implements SideConfigMenu, RedstoneControlMenu, EnergyInfoMenu {
+    public final LaneMachineKind kind;
     private final Container contents;
     private final ContainerData data;
     private final int lanes;
@@ -44,7 +44,7 @@ public final class CrusherMenu extends MachineMenu implements SideConfigMenu, Re
     private final int inventoryEnd;
     private final int hotbarStart;
 
-    /** Width of the crusher screen; upgrade slots sit in the tab beside it. */
+    /** Width of the screen; upgrade slots sit in the tab beside it. */
     public static final int IMAGE_WIDTH = 176;
     public static final int INPUT_X = 56;
     public static final int OUTPUT_X = 104;
@@ -59,21 +59,22 @@ public final class CrusherMenu extends MachineMenu implements SideConfigMenu, Re
     /** Top of the player inventory on a single-lane panel. */
     public static final int INVENTORY_Y = 102;
 
-    public CrusherMenu(int id, Inventory inventory, RegistryFriendlyByteBuf buffer) {
-        this(id, inventory, buffer.readVarInt());
+    public LaneMachineMenu(int id, Inventory inventory, RegistryFriendlyByteBuf buffer) {
+        this(LaneMachineKind.values()[buffer.readVarInt()], id, inventory, buffer.readVarInt());
     }
 
     /** Client side: the upgrade slots lock by the same MK, so the tab draws them right before any sync. */
-    private CrusherMenu(int id, Inventory inventory, int mk) {
-        this(id, inventory, new SimpleContainer(2 * LANES), new UpgradeInventory(() -> mk, () -> {}), new SimpleContainerData(DATA_COUNT), mk);
+    private LaneMachineMenu(LaneMachineKind kind, int id, Inventory inventory, int mk) {
+        this(kind, id, inventory, new SimpleContainer(2 * LANES), new UpgradeInventory(() -> mk, () -> {}), new SimpleContainerData(DATA_COUNT), mk);
     }
 
-    public CrusherMenu(int id, Inventory inventory, Container contents, UpgradeInventory upgrades, ContainerData data) {
-        this(id, inventory, contents, upgrades, data, data.get(DATA_MK));
+    public LaneMachineMenu(LaneMachineKind kind, int id, Inventory inventory, Container contents, UpgradeInventory upgrades, ContainerData data) {
+        this(kind, id, inventory, contents, upgrades, data, data.get(DATA_MK));
     }
 
-    private CrusherMenu(int id, Inventory inventory, Container contents, UpgradeInventory upgrades, ContainerData data, int mk) {
-        super(ModMenus.CRUSHER.get(), id);
+    private LaneMachineMenu(LaneMachineKind kind, int id, Inventory inventory, Container contents, UpgradeInventory upgrades, ContainerData data, int mk) {
+        super(kind.menuType(), id);
+        this.kind = kind;
         checkContainerSize(contents, 2 * LANES);
         checkContainerDataCount(data, DATA_COUNT);
         this.contents = contents;
@@ -93,12 +94,13 @@ public final class CrusherMenu extends MachineMenu implements SideConfigMenu, Re
         addStandardInventorySlots(inventory, 8, INVENTORY_Y + extraHeight());
         UpgradeSlots.addSlots(upgrades, IMAGE_WIDTH, this::addSlot);
         addDataSlots(data);
-        if (contents instanceof CrusherBlockEntity) markSynced();
+        if (contents instanceof LaneMachineBlockEntity) markSynced();
     }
 
-    /** What to write when opening: the MK, which fixes the number of rows. */
-    public static void writeOpeningData(RegistryFriendlyByteBuf buffer, CrusherBlockEntity crusher) {
-        buffer.writeVarInt(crusher.lanes());
+    /** What to write when opening: the kind, and the MK, which fixes the number of rows. */
+    public static void writeOpeningData(RegistryFriendlyByteBuf buffer, LaneMachineBlockEntity machine) {
+        buffer.writeVarInt(machine.kind.ordinal());
+        buffer.writeVarInt(machine.lanes());
     }
 
     /** Open lanes, each an input row paired with an output row. */
@@ -141,18 +143,18 @@ public final class CrusherMenu extends MachineMenu implements SideConfigMenu, Re
     public Direction front() { return Direction.values()[Math.clamp(data.get(DATA_FRONT), 0, 5)]; }
 
     @Override
-    public BlockState displayState() { return ModBlocks.CRUSHER.get().displayState(front()).setValue(MachineLevel.MK, Math.clamp(data.get(DATA_MK), 1, 4)); }
+    public BlockState displayState() { return kind.block().displayState(front()).setValue(MachineLevel.MK, Math.clamp(data.get(DATA_MK), 1, 4)); }
 
     @Override
     public Set<SideMode> allowedModes() {
-        return ((SideConfigurableBlock) ModBlocks.CRUSHER.get()).allowedSideModes();
+        return ((SideConfigurableBlock) kind.block()).allowedSideModes();
     }
 
     @Override
-    public boolean supportsAutoPull() { return ModBlocks.CRUSHER.get().supportsAutoPull(); }
+    public boolean supportsAutoPull() { return kind.block().supportsAutoPull(); }
 
     @Override
-    public boolean supportsAutoPush() { return ModBlocks.CRUSHER.get().supportsAutoPush(); }
+    public boolean supportsAutoPush() { return kind.block().supportsAutoPush(); }
 
     @Override
     public boolean isAutoPulling() { return data.get(DATA_AUTO_BASE) != 0; }

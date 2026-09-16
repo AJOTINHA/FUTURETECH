@@ -7,7 +7,7 @@ import dev.futuretech.menu.CableConnectorMenu;
 import dev.futuretech.menu.ElectricFurnaceMenu;
 import dev.futuretech.menu.ItemFilterMenu;
 import dev.futuretech.menu.LavaGeneratorMenu;
-import dev.futuretech.menu.CrusherMenu;
+import dev.futuretech.menu.LaneMachineMenu;
 import dev.futuretech.menu.MetalPressMenu;
 import dev.futuretech.menu.SmelteryMenu;
 import dev.futuretech.menu.SolidFuelGeneratorMenu;
@@ -36,8 +36,10 @@ public final class ModMenus {
     public static final DeferredHolder<MenuType<?>, MenuType<FluidTankMenu>> FLUID_TANK = TYPES.register(
             "fluid_tank", () -> IMenuTypeExtension.create(FluidTankMenu::new));
 
-    public static final DeferredHolder<MenuType<?>, MenuType<CrusherMenu>> CRUSHER = TYPES.register(
-            "crusher", () -> IMenuTypeExtension.create(CrusherMenu::new));
+    public static final DeferredHolder<MenuType<?>, MenuType<LaneMachineMenu>> CRUSHER = TYPES.register(
+            "crusher", () -> IMenuTypeExtension.create(LaneMachineMenu::new));
+    public static final DeferredHolder<MenuType<?>, MenuType<LaneMachineMenu>> SAWMILL = TYPES.register(
+            "sawmill", () -> IMenuTypeExtension.create(LaneMachineMenu::new));
 
     // The face and the kind of cable ride in the opening packet, so this one needs the extra data.
     public static final DeferredHolder<MenuType<?>, MenuType<MetalPressMenu>> METAL_PRESS = TYPES.register(

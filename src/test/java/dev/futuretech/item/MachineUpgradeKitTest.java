@@ -3,7 +3,7 @@ package dev.futuretech.item;
 import com.google.gson.JsonParser;
 import com.mojang.serialization.JsonOps;
 import dev.futuretech.api.upgrade.MachineLevel;
-import dev.futuretech.block.entity.CrusherBlockEntity;
+import dev.futuretech.block.entity.LaneMachineBlockEntity;
 import dev.futuretech.block.entity.ElectricFurnaceBlockEntity;
 import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
 import dev.futuretech.registry.ModBlocks;
@@ -32,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(EphemeralTestServerProvider.class)
 class MachineUpgradeKitTest {
     private static List<Block> machines() {
-        return List.of(ModBlocks.SOLID_FUEL_GENERATOR.get(), ModBlocks.ELECTRIC_FURNACE.get(), ModBlocks.CRUSHER.get(),
+        return List.of(ModBlocks.SOLID_FUEL_GENERATOR.get(), ModBlocks.ELECTRIC_FURNACE.get(), ModBlocks.CRUSHER.get(), ModBlocks.SAWMILL.get(),
                 ModBlocks.METAL_PRESS.get(), ModBlocks.BATTERY_MK1.get());
     }
 
@@ -92,21 +92,21 @@ class MachineUpgradeKitTest {
     @Test
     void menusReadTheCurrentLevelAfterAnInPlaceUpgrade() {
         var furnace = new ElectricFurnaceBlockEntity(BlockPos.ZERO, ModBlocks.ELECTRIC_FURNACE.get().defaultBlockState());
-        var crusher = new CrusherBlockEntity(BlockPos.ZERO, ModBlocks.CRUSHER.get().defaultBlockState());
+        var crusher = new LaneMachineBlockEntity(dev.futuretech.block.LaneMachineKind.CRUSHER, BlockPos.ZERO, ModBlocks.CRUSHER.get().defaultBlockState());
         var generator = new SolidFuelGeneratorBlockEntity(BlockPos.ZERO, ModBlocks.SOLID_FUEL_GENERATOR.get().defaultBlockState());
         for (int mk = 1; mk <= 4; mk++) {
             furnace.setBlockState(furnace.getBlockState().setValue(MachineLevel.MK, mk));
             crusher.setBlockState(crusher.getBlockState().setValue(MachineLevel.MK, mk));
             generator.setBlockState(generator.getBlockState().setValue(MachineLevel.MK, mk));
             assertEquals(mk, furnace.menuData().get(ElectricFurnaceBlockEntity.DATA_MK));
-            assertEquals(mk, crusher.menuData().get(CrusherBlockEntity.DATA_MK));
+            assertEquals(mk, crusher.menuData().get(LaneMachineBlockEntity.DATA_MK));
             assertEquals(mk, generator.menuData().get(SolidFuelGeneratorBlockEntity.DATA_MK));
         }
     }
 
     @Test
     void everyMachineDropCopiesTheRegisteredMkProperty() throws Exception {
-        for (String machine : List.of("solid_fuel_generator", "electric_furnace", "crusher", "metal_press", "battery_mk1")) {
+        for (String machine : List.of("solid_fuel_generator", "electric_furnace", "crusher", "sawmill", "metal_press", "battery_mk1")) {
             try (var stream = getClass().getResourceAsStream("/data/futuretech/loot_table/blocks/" + machine + ".json")) {
                 assertNotNull(stream);
                 var table = JsonParser.parseReader(new InputStreamReader(stream, StandardCharsets.UTF_8)).getAsJsonObject();

@@ -2,13 +2,13 @@ package dev.futuretech.client.jei;
 
 import dev.futuretech.FutureTech;
 import dev.futuretech.block.entity.AssemblerBlockEntity;
-import dev.futuretech.block.entity.CrusherBlockEntity;
+import dev.futuretech.block.entity.LaneMachineBlockEntity;
 import dev.futuretech.block.entity.MetalPressBlockEntity;
 import dev.futuretech.block.entity.SmelteryBlockEntity;
 import dev.futuretech.client.SyncedRecipes;
 import dev.futuretech.recipe.AlloyingRecipe;
 import dev.futuretech.recipe.AssemblingRecipe;
-import dev.futuretech.recipe.CrushingRecipe;
+import dev.futuretech.recipe.LaneMachineRecipe;
 import dev.futuretech.recipe.PressingRecipe;
 import dev.futuretech.registry.ModBlocks;
 import dev.futuretech.registry.ModItems;
@@ -28,13 +28,14 @@ import net.minecraft.world.item.crafting.Ingredient;
 
 import java.util.List;
 
-/** Shows what each machine makes: crushing, pressing, alloying and assembling, plus the vanilla furnace and fuel pages. */
+/** Shows what each machine makes: crushing, sawing, pressing, alloying and assembling, plus the vanilla furnace and fuel pages. */
 @JeiPlugin
 public final class FutureTechJeiPlugin implements IModPlugin {
     private static final org.slf4j.Logger LOG = com.mojang.logging.LogUtils.getLogger();
     // By id, not by registry lookup: JEI instantiates plugins while mods are still being constructed,
     // before the recipe types are registered, and a failing static initializer drops the plugin silently.
-    private static final IRecipeHolderType<CrushingRecipe> CRUSHING = IRecipeHolderType.create(ModRecipes.CRUSHING.getId());
+    private static final IRecipeHolderType<LaneMachineRecipe> CRUSHING = IRecipeHolderType.create(ModRecipes.CRUSHING.getId());
+    private static final IRecipeHolderType<LaneMachineRecipe> SAWING = IRecipeHolderType.create(ModRecipes.SAWING.getId());
     private static final IRecipeHolderType<PressingRecipe> PRESSING = IRecipeHolderType.create(ModRecipes.PRESSING.getId());
     private static final IRecipeHolderType<AlloyingRecipe> ALLOYING = IRecipeHolderType.create(ModRecipes.ALLOYING.getId());
     private static final IRecipeHolderType<AssemblingRecipe> ASSEMBLING = IRecipeHolderType.create(ModRecipes.ASSEMBLING.getId());
@@ -49,7 +50,9 @@ public final class FutureTechJeiPlugin implements IModPlugin {
         IGuiHelper gui = registration.getJeiHelpers().getGuiHelper();
         registration.addRecipeCategories(
                 new MachineRecipeCategory<>(gui, CRUSHING, ModBlocks.CRUSHER.get(), 100, 42, 34, 9,
-                        CrusherBlockEntity.ENERGY_PER_TICK, recipe -> CrusherBlockEntity.CRUSH_TICKS, FutureTechJeiPlugin::crushing),
+                        LaneMachineBlockEntity.ENERGY_PER_TICK, recipe -> LaneMachineBlockEntity.WORK_TICKS, FutureTechJeiPlugin::singleItem),
+                new MachineRecipeCategory<>(gui, SAWING, ModBlocks.SAWMILL.get(), 100, 42, 34, 9,
+                        LaneMachineBlockEntity.ENERGY_PER_TICK, recipe -> LaneMachineBlockEntity.WORK_TICKS, FutureTechJeiPlugin::singleItem),
                 new MachineRecipeCategory<>(gui, PRESSING, ModBlocks.METAL_PRESS.get(), 122, 42, 56, 9,
                         MetalPressBlockEntity.ENERGY_PER_TICK, PressingRecipe::duration, FutureTechJeiPlugin::pressing),
                 new MachineRecipeCategory<>(gui, ALLOYING, ModBlocks.SMELTERY.get(), 122, 42, 56, 9,
@@ -61,12 +64,14 @@ public final class FutureTechJeiPlugin implements IModPlugin {
     @Override
     public void registerRecipes(IRecipeRegistration registration) {
         var crushing = SyncedRecipes.of(ModRecipes.CRUSHING.get());
+        var sawing = SyncedRecipes.of(ModRecipes.SAWING.get());
         var pressing = SyncedRecipes.of(ModRecipes.PRESSING.get());
         var alloying = SyncedRecipes.of(ModRecipes.ALLOYING.get());
         var assembling = SyncedRecipes.of(ModRecipes.ASSEMBLING.get());
-        LOG.info("JEI: {} crushing, {} pressing, {} alloying, {} assembling recipes",
-                crushing.size(), pressing.size(), alloying.size(), assembling.size());
+        LOG.info("JEI: {} crushing, {} sawing, {} pressing, {} alloying, {} assembling recipes",
+                crushing.size(), sawing.size(), pressing.size(), alloying.size(), assembling.size());
         registration.addRecipes(CRUSHING, crushing);
+        registration.addRecipes(SAWING, sawing);
         registration.addRecipes(PRESSING, pressing);
         registration.addRecipes(ALLOYING, alloying);
         registration.addRecipes(ASSEMBLING, assembling);
@@ -75,6 +80,7 @@ public final class FutureTechJeiPlugin implements IModPlugin {
     @Override
     public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
         registration.addCraftingStation(CRUSHING, ModBlocks.CRUSHER.get());
+        registration.addCraftingStation(SAWING, ModBlocks.SAWMILL.get());
         registration.addCraftingStation(PRESSING, ModBlocks.METAL_PRESS.get());
         registration.addCraftingStation(ALLOYING, ModBlocks.SMELTERY.get());
         registration.addCraftingStation(ASSEMBLING, ModBlocks.ASSEMBLY_TABLE.get(), ModBlocks.ASSEMBLER_TERMINAL.get());
@@ -83,7 +89,7 @@ public final class FutureTechJeiPlugin implements IModPlugin {
         registration.addCraftingStation(RecipeTypes.SMELTING_FUEL, ModBlocks.SOLID_FUEL_GENERATOR.get());
     }
 
-    private static void crushing(IRecipeLayoutBuilder builder, CrushingRecipe recipe) {
+    private static void singleItem(IRecipeLayoutBuilder builder, LaneMachineRecipe recipe) {
         builder.addInputSlot(8, 8).setStandardSlotBackground().add(recipe.input());
         builder.addOutputSlot(68, 8).setOutputSlotBackground().add(recipe.result());
     }

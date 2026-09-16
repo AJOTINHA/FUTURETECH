@@ -4,18 +4,18 @@ import org.jspecify.annotations.Nullable;
 import net.minecraft.world.level.redstone.Orientation;
 import dev.futuretech.api.redstone.RedstoneControl;
 import dev.futuretech.perf.TickProfiler;
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.futuretech.api.upgrade.MachineLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.StateDefinition;
 import dev.futuretech.api.side.SideConfig;
 import dev.futuretech.api.side.SideConfigurableBlock;
 import dev.futuretech.api.side.SideMode;
-import dev.futuretech.block.entity.CrusherBlockEntity;
-import dev.futuretech.registry.ModBlockEntities;
+import dev.futuretech.block.entity.LaneMachineBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -28,14 +28,21 @@ import net.neoforged.neoforge.transfer.energy.EnergyHandlerUtil;
 
 import java.util.Set;
 
-public final class CrusherBlock extends AbstractFurnaceBlock implements SideConfigurableBlock {
-    public static final MapCodec<CrusherBlock> CODEC = simpleCodec(CrusherBlock::new);
+/** A machine with one input and one output slot per open lane; {@link LaneMachineKind} says which one. */
+public final class LaneMachineBlock extends AbstractFurnaceBlock implements SideConfigurableBlock {
+    public static final MapCodec<LaneMachineBlock> CODEC = RecordCodecBuilder.mapCodec(i -> i.group(
+            Codec.STRING.fieldOf("kind").forGetter(block -> block.kind.name()),
+            propertiesCodec()
+    ).apply(i, (kind, properties) -> new LaneMachineBlock(LaneMachineKind.valueOf(kind), properties)));
     // Items go both ways: in as ingredient, out as result, or both on one face. Energy always comes in.
     private static final Set<SideMode> ALLOWED_SIDE_MODES =
             Set.of(SideMode.INPUT, SideMode.OUTPUT, SideMode.BOTH, SideMode.NONE);
 
-    public CrusherBlock(Properties properties) {
+    public final LaneMachineKind kind;
+
+    public LaneMachineBlock(LaneMachineKind kind, Properties properties) {
         super(properties);
+        this.kind = kind;
     }
 
     @Override
@@ -53,7 +60,7 @@ public final class CrusherBlock extends AbstractFurnaceBlock implements SideConf
         return new SideConfig(ALLOWED_SIDE_MODES, side -> SideMode.NONE);
     }
 
-    /** A crusher both takes ingredients in and hands results out. */
+    /** The machine both takes ingredients in and hands results out. */
     @Override
     public boolean supportsAutoPull() { return true; }
 
@@ -66,7 +73,7 @@ public final class CrusherBlock extends AbstractFurnaceBlock implements SideConf
     }
 
     @Override
-    public MapCodec<CrusherBlock> codec() {
+    public MapCodec<LaneMachineBlock> codec() {
         return CODEC;
     }
 
@@ -79,36 +86,32 @@ public final class CrusherBlock extends AbstractFurnaceBlock implements SideConf
 
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new CrusherBlockEntity(pos, state);
+        return new LaneMachineBlockEntity(kind, pos, state);
     }
 
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         return level.isClientSide() ? null : createTickerHelper(
-                type, ModBlockEntities.CRUSHER.get(), TickProfiler.wrap(CrusherBlockEntity::serverTick));
+                type, kind.blockEntityType(), TickProfiler.wrap(LaneMachineBlockEntity::serverTick));
     }
 
     @Override
     protected void openContainer(Level level, BlockPos pos, Player player) {
-        if (level.getBlockEntity(pos) instanceof CrusherBlockEntity crusher) {
-            player.openMenu(crusher, buffer -> dev.futuretech.menu.CrusherMenu.writeOpeningData(buffer, crusher));
+        if (level.getBlockEntity(pos) instanceof LaneMachineBlockEntity machine) {
+            player.openMenu(machine, buffer -> dev.futuretech.menu.LaneMachineMenu.writeOpeningData(buffer, machine));
         }
     }
 
     @Override
     protected int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos, Direction direction) {
-        return level.getBlockEntity(pos) instanceof CrusherBlockEntity crusher
-                ? EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(crusher.energy()) : 0;
+        return level.getBlockEntity(pos) instanceof LaneMachineBlockEntity machine
+                ? EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(machine.energy()) : 0;
     }
 
     @Override
     public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-        // Small sparks at the intake while the rollers are working.
+        // A little something at the intake while the machine is working.
         if (!state.getValue(LIT) || random.nextInt(3) != 0) return;
-        Direction facing = state.getValue(FACING);
-        double x = pos.getX() + 0.5 + facing.getStepX() * 0.53;
-        double y = pos.getY() + 0.35;
-        double z = pos.getZ() + 0.5 + facing.getStepZ() * 0.53;
-        level.addParticle(ParticleTypes.ELECTRIC_SPARK, x, y, z, 0, 0, 0);
+        kind.addWorkingParticle(level, pos, state.getValue(FACING), random);
     }
 }

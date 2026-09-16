@@ -11,7 +11,8 @@ import dev.futuretech.block.entity.ElectricFurnaceBlockEntity;
 import dev.futuretech.block.entity.FluidCableBlockEntity;
 import dev.futuretech.block.entity.ItemCableBlockEntity;
 import dev.futuretech.block.entity.LavaGeneratorBlockEntity;
-import dev.futuretech.block.entity.CrusherBlockEntity;
+import dev.futuretech.block.LaneMachineKind;
+import dev.futuretech.block.entity.LaneMachineBlockEntity;
 import dev.futuretech.block.entity.MetalPressBlockEntity;
 import dev.futuretech.block.entity.SmelteryBlockEntity;
 import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
@@ -21,6 +22,8 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
+
+import java.util.List;
 
 public final class ModBlockEntities {
     public static final DeferredRegister<BlockEntityType<?>> TYPES = DeferredRegister.create(
@@ -37,8 +40,12 @@ public final class ModBlockEntities {
             TYPES.register("electric_furnace", () -> new BlockEntityType<>(
                     ElectricFurnaceBlockEntity::new, ModBlocks.ELECTRIC_FURNACE.get()));
 
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CrusherBlockEntity>> CRUSHER =
-            TYPES.register("crusher", () -> new BlockEntityType<>(CrusherBlockEntity::new, ModBlocks.CRUSHER.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LaneMachineBlockEntity>> CRUSHER =
+            TYPES.register("crusher", () -> new BlockEntityType<>(
+                    (pos, state) -> new LaneMachineBlockEntity(LaneMachineKind.CRUSHER, pos, state), ModBlocks.CRUSHER.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LaneMachineBlockEntity>> SAWMILL =
+            TYPES.register("sawmill", () -> new BlockEntityType<>(
+                    (pos, state) -> new LaneMachineBlockEntity(LaneMachineKind.SAWMILL, pos, state), ModBlocks.SAWMILL.get()));
 
     // One block entity type serves every battery tier; list each tier's block here.
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MetalPressBlockEntity>> METAL_PRESS =
@@ -86,10 +93,12 @@ public final class ModBlockEntities {
                 SidedItems.view(smeltery, smeltery.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, ASSEMBLER.get(), (assembler, side) -> assembler.energyHandler());
         event.registerBlockEntity(Capabilities.Fluid.BLOCK, FLUID_TANK.get(), (tank, side) -> tank.handler(side));
-        event.registerBlockEntity(Capabilities.Energy.BLOCK, CRUSHER.get(), (crusher, side) ->
-                SidedEnergy.view(crusher.energy(), crusher.sideConfig(), side));
-        event.registerBlockEntity(Capabilities.Item.BLOCK, CRUSHER.get(), (crusher, side) ->
-                SidedItems.view(crusher, crusher.sideConfig(), side));
+        for (var lane : List.of(CRUSHER, SAWMILL)) {
+            event.registerBlockEntity(Capabilities.Energy.BLOCK, lane.get(), (machine, side) ->
+                    SidedEnergy.view(machine.energy(), machine.sideConfig(), side));
+            event.registerBlockEntity(Capabilities.Item.BLOCK, lane.get(), (machine, side) ->
+                    SidedItems.view(machine, machine.sideConfig(), side));
+        }
         // A null side is the machine's own unrestricted access; real faces follow their configured mode.
         // Only the battery configures energy; the generator and furnace pass every face straight through.
         event.registerBlockEntity(Capabilities.Energy.BLOCK, SOLID_FUEL_GENERATOR.get(), (generator, side) ->

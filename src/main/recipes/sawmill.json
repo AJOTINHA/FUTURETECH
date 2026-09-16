@@ -1,0 +1,96 @@
+{
+  "type": "futuretech:sawing",
+  "recipes": {
+    "acacia_planks": {
+      "ingredient": "#minecraft:acacia_logs",
+      "result": {
+        "id": "minecraft:acacia_planks",
+        "count": 8
+      }
+    },
+    "bamboo_planks": {
+      "ingredient": "#minecraft:bamboo_blocks",
+      "result": {
+        "id": "minecraft:bamboo_planks",
+        "count": 4
+      }
+    },
+    "birch_planks": {
+      "ingredient": "#minecraft:birch_logs",
+      "result": {
+        "id": "minecraft:birch_planks",
+        "count": 8
+      }
+    },
+    "cherry_planks": {
+      "ingredient": "#minecraft:cherry_logs",
+      "result": {
+        "id": "minecraft:cherry_planks",
+        "count": 8
+      }
+    },
+    "crimson_planks": {
+      "ingredient": "#minecraft:crimson_stems",
+      "result": {
+        "id": "minecraft:crimson_planks",
+        "count": 8
+      }
+    },
+    "dark_oak_planks": {
+      "ingredient": "#minecraft:dark_oak_logs",
+      "result": {
+        "id": "minecraft:dark_oak_planks",
+        "count": 8
+      }
+    },
+    "jungle_planks": {
+      "ingredient": "#minecraft:jungle_logs",
+      "result": {
+        "id": "minecraft:jungle_planks",
+        "count": 8
+      }
+    },
+    "mangrove_planks": {
+      "ingredient": "#minecraft:mangrove_logs",
+      "result": {
+        "id": "minecraft:mangrove_planks",
+        "count": 8
+      }
+    },
+    "oak_planks": {
+      "ingredient": "#minecraft:oak_logs",
+      "result": {
+        "id": "minecraft:oak_planks",
+        "count": 8
+      }
+    },
+    "pale_oak_planks": {
+      "ingredient": "#minecraft:pale_oak_logs",
+      "result": {
+        "id": "minecraft:pale_oak_planks",
+        "count": 8
+      }
+    },
+    "spruce_planks": {
+      "ingredient": "#minecraft:spruce_logs",
+      "result": {
+        "id": "minecraft:spruce_planks",
+        "count": 8
+      }
+    },
+    "stick": {
+      "ingredient": "#minecraft:planks",
+      "result": {
+        "id": "minecraft:stick",
+        "count": 4
+      }
+    },
+    "warped_planks": {
+      "ingredient": "#minecraft:warped_stems",
+      "result": {
+        "id": "minecraft:warped_planks",
+        "count": 8
+      }
+    }
+  }
+}

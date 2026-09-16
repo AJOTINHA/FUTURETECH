@@ -12,12 +12,11 @@ import dev.futuretech.api.side.SideConfigurableBlock;
 import dev.futuretech.api.upgrade.UpgradeInventory;
 import dev.futuretech.api.upgrade.MachineLevel;
 import dev.futuretech.api.upgrade.Upgradeable;
-import dev.futuretech.block.CrusherBlock;
+import dev.futuretech.block.LaneMachineBlock;
+import dev.futuretech.block.LaneMachineKind;
 import dev.futuretech.energy.EnergySync;
 import dev.futuretech.energy.TickLimitedEnergyHandler;
-import dev.futuretech.menu.CrusherMenu;
-import dev.futuretech.registry.ModBlockEntities;
-import dev.futuretech.registry.ModBlocks;
+import dev.futuretech.menu.LaneMachineMenu;
 import dev.futuretech.transfer.ItemTransferUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -37,8 +36,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
-import dev.futuretech.recipe.CrushingRecipe;
-import dev.futuretech.registry.ModRecipes;
+import dev.futuretech.recipe.LaneMachineRecipe;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
@@ -53,18 +51,21 @@ import org.jspecify.annotations.Nullable;
 import java.util.Arrays;
 
 /**
- * Crushes ingredients with energy using the dedicated crushing recipe type. The machine has up to
- * {@link #LANES} lanes, each an input slot paired with an output slot and its own job; the MK
- * level says how many are open, so an MK4 crushes four things at once and draws energy for each.
+ * Turns one ingredient into a result with energy, using the kind's recipe type: the crusher and the
+ * sawmill. The machine has up to {@link #LANES} lanes, each an input slot paired with an output slot
+ * and its own job; the MK level says how many are open, so an MK4 works four things at once and
+ * draws energy for each.
  */
-public final class CrusherBlockEntity extends BaseContainerBlockEntity
+public final class LaneMachineBlockEntity extends BaseContainerBlockEntity
         implements AutoTransferable, SideConfigurable, RedstoneControllable, Upgradeable {
     public static final int CAPACITY = 20_000;
     /** Drawn from the buffer for every tick of progress on one lane; one generator running flat out feeds one lane. */
     public static final int ENERGY_PER_TICK = 20;
     public static final int INPUT_PER_TICK = 200;
     /** Five seconds of powered work per item at 20 ticks per second. */
-    public static final int CRUSH_TICKS = 100;
+    public static final int WORK_TICKS = 100;
+    /** Crusher or sawmill: the recipe book, the block behind the menu and the name. */
+    public final LaneMachineKind kind;
     /** Input slots come first, then the outputs, so lane {@code n} is slots {@code n} and {@code LANES + n}. */
     public static final int LANES = 4;
     public static final int SLOT_INPUT = 0;
@@ -87,12 +88,12 @@ public final class CrusherBlockEntity extends BaseContainerBlockEntity
     private static final int[] NO_SLOTS = {};
 
     /**
-     * How the crusher finds the recipe for a stack. The crushing book is all it really needs, so this
+     * How the machine finds the recipe for a stack. The recipe book is all it really needs, so this
      * is a parameter rather than a {@link ServerLevel} field: the world only exists to reach the book.
      */
     @FunctionalInterface
-    public interface CrushingLookup {
-        @Nullable RecipeHolder<CrushingRecipe> find(SingleRecipeInput input);
+    public interface RecipeLookup {
+        @Nullable RecipeHolder<LaneMachineRecipe> find(SingleRecipeInput input);
     }
 
     private NonNullList<ItemStack> items = NonNullList.withSize(2 * LANES, ItemStack.EMPTY);
@@ -102,11 +103,10 @@ public final class CrusherBlockEntity extends BaseContainerBlockEntity
     private final ItemStack[] workResult = new ItemStack[LANES];
     /** The recipe behind {@link #workResult}; not saved, so a reloaded lane looks it up once more. */
     @SuppressWarnings("unchecked")
-    private final @Nullable RecipeHolder<CrushingRecipe>[] workRecipe = new RecipeHolder[LANES];
+    private final @Nullable RecipeHolder<LaneMachineRecipe>[] workRecipe = new RecipeHolder[LANES];
     /** Bit {@code n} set while lane {@code n} advanced this tick. */
     private int workingLanes;
-    private final RecipeManager.CachedCheck<SingleRecipeInput, CrushingRecipe> quickCheck =
-            RecipeManager.createCheck(ModRecipes.CRUSHING.get());
+    private final RecipeManager.CachedCheck<SingleRecipeInput, LaneMachineRecipe> quickCheck;
     private final TickLimitedEnergyHandler energy =
             new TickLimitedEnergyHandler(CAPACITY, INPUT_PER_TICK, 0, this::setChanged);
     private final SideConfig sides;
@@ -146,10 +146,12 @@ public final class CrusherBlockEntity extends BaseContainerBlockEntity
         public int getCount() { return DATA_COUNT; }
     };
 
-    public CrusherBlockEntity(BlockPos pos, BlockState state) {
-        super(ModBlockEntities.CRUSHER.get(), pos, state);
-        this.sides = ((SideConfigurableBlock) ModBlocks.CRUSHER.get()).createSideConfig(state);
-        Arrays.fill(progressTotal, CRUSH_TICKS);
+    public LaneMachineBlockEntity(LaneMachineKind kind, BlockPos pos, BlockState state) {
+        super(kind.blockEntityType(), pos, state);
+        this.kind = kind;
+        this.quickCheck = RecipeManager.createCheck(kind.recipeType());
+        this.sides = ((SideConfigurableBlock) kind.block()).createSideConfig(state);
+        Arrays.fill(progressTotal, WORK_TICKS);
         Arrays.fill(workInput, ItemStack.EMPTY);
         Arrays.fill(workResult, ItemStack.EMPTY);
         energy.setCapacity(MachineLevel.capacity(CAPACITY, MachineLevel.of(state)));
@@ -209,8 +211,8 @@ public final class CrusherBlockEntity extends BaseContainerBlockEntity
 
     @Override
     public Direction front() {
-        return getBlockState().hasProperty(CrusherBlock.FACING)
-                ? getBlockState().getValue(CrusherBlock.FACING) : Direction.NORTH;
+        return getBlockState().hasProperty(LaneMachineBlock.FACING)
+                ? getBlockState().getValue(LaneMachineBlock.FACING) : Direction.NORTH;
     }
 
     @Override
@@ -237,38 +239,38 @@ public final class CrusherBlockEntity extends BaseContainerBlockEntity
     @Override
     public void setChanged() { ComparatorNotifier.markChanged(this); }
 
-    public static void serverTick(Level level, BlockPos pos, BlockState state, CrusherBlockEntity crusher) {
-        crusher.beginTick();
-        if (crusher.auto.isPulling()) crusher.transfer.pullFromNeighbours(level, pos, crusher, crusher.sides);
-        if (crusher.auto.isPushing()) crusher.transfer.pushToNeighbours(level, pos, crusher, crusher.sides);
-        int wasWorking = crusher.workingLanes;
-        boolean working = crusher.redstone.allowsRunning() && level instanceof ServerLevel server
-                && crusher.crush(input -> crusher.quickCheck.getRecipeFor(input, server).orElse(null));
+    public static void serverTick(Level level, BlockPos pos, BlockState state, LaneMachineBlockEntity machine) {
+        machine.beginTick();
+        if (machine.auto.isPulling()) machine.transfer.pullFromNeighbours(level, pos, machine, machine.sides);
+        if (machine.auto.isPushing()) machine.transfer.pushToNeighbours(level, pos, machine, machine.sides);
+        int wasWorking = machine.workingLanes;
+        boolean working = machine.redstone.allowsRunning() && level instanceof ServerLevel server
+                && machine.work(input -> machine.quickCheck.getRecipeFor(input, server).orElse(null));
         // Pausing preserves the current jobs.
-        boolean lit = crusher.litHold.update(working);
-        if (state.getValue(CrusherBlock.LIT) != lit) {
-            level.setBlock(pos, state.setValue(CrusherBlock.LIT, lit), 3);
+        boolean lit = machine.litHold.update(working);
+        if (state.getValue(LaneMachineBlock.LIT) != lit) {
+            level.setBlock(pos, state.setValue(LaneMachineBlock.LIT, lit), 3);
         }
-        if (wasWorking != crusher.workingLanes) crusher.setChanged();
-        crusher.comparator.update(level, pos, state, EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(crusher.energy));
+        if (wasWorking != machine.workingLanes) machine.setChanged();
+        machine.comparator.update(level, pos, state, EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(machine.energy));
     }
 
     /** Opens a new tick's input budget so neighbours can push their rated amount in. */
     void beginTick() { energy.beginTick(); }
 
     /** Advances one tick on every open lane; false when none had anything to do or energy to do it with. */
-    boolean crush(CrushingLookup recipes) {
+    boolean work(RecipeLookup recipes) {
         int mk = MachineLevel.of(getBlockState());
         int perTick = MachineLevel.consumption(ENERGY_PER_TICK, mk);
-        int total = MachineLevel.duration(CRUSH_TICKS, mk);
+        int total = MachineLevel.duration(WORK_TICKS, mk);
         workingLanes = 0;
         for (int lane = 0; lane < lanes(); lane++) {
-            if (crushLane(lane, recipes, perTick, total)) workingLanes |= 1 << lane;
+            if (workLane(lane, recipes, perTick, total)) workingLanes |= 1 << lane;
         }
         return workingLanes != 0;
     }
 
-    private boolean crushLane(int lane, CrushingLookup recipes, int perTick, int total) {
+    private boolean workLane(int lane, RecipeLookup recipes, int perTick, int total) {
         ItemStack ingredient = items.get(SLOT_INPUT + lane);
         if (ingredient.isEmpty()) { resetWork(lane); return false; }
         // Without energy nothing below matters; pausing keeps the job, so the recipe is not touched.
@@ -278,7 +280,7 @@ public final class CrusherBlockEntity extends BaseContainerBlockEntity
         if (!sameJob) {
             if (misses.known(lane, ingredient, ItemStack.EMPTY, 0, now())) { resetWork(lane); return false; }
             var input = new SingleRecipeInput(ingredient);
-            RecipeHolder<CrushingRecipe> recipe = recipes.find(input);
+            RecipeHolder<LaneMachineRecipe> recipe = recipes.find(input);
             if (recipe == null) { misses.remember(lane, ingredient, ItemStack.EMPTY, 0, now()); resetWork(lane); return false; }
             ItemStack result = recipe.value().assemble(input);
             if (!ItemStack.isSameItemSameComponents(workInput[lane], ingredient)
@@ -338,7 +340,7 @@ public final class CrusherBlockEntity extends BaseContainerBlockEntity
         energy.set(Math.clamp(input.getIntOr("Energy", 0), 0, energy.getCapacityAsInt()));
         for (int lane = 0; lane < LANES; lane++) {
             String suffix = lane == 0 ? "" : String.valueOf(lane);
-            progressTotal[lane] = Math.max(1, input.getIntOr("ProgressTotal" + suffix, CRUSH_TICKS));
+            progressTotal[lane] = Math.max(1, input.getIntOr("ProgressTotal" + suffix, WORK_TICKS));
             progress[lane] = Math.clamp(input.getIntOr("Progress" + suffix, 0), 0, progressTotal[lane]);
             workInput[lane] = input.read("WorkInput" + suffix, ItemStack.CODEC).orElse(ItemStack.EMPTY);
             workResult[lane] = input.read("WorkResult" + suffix, ItemStack.CODEC).orElse(ItemStack.EMPTY);
@@ -435,10 +437,10 @@ public final class CrusherBlockEntity extends BaseContainerBlockEntity
     protected void setItems(NonNullList<ItemStack> items) { this.items = items; }
 
     @Override
-    protected Component getDefaultName() { return Component.translatable("block.futuretech.crusher"); }
+    protected Component getDefaultName() { return Component.translatable(kind.nameKey); }
 
     @Override
     protected AbstractContainerMenu createMenu(int id, Inventory inventory) {
-        return new CrusherMenu(id, inventory, this, upgrades, data);
+        return new LaneMachineMenu(kind, id, inventory, this, upgrades, data);
     }
 }

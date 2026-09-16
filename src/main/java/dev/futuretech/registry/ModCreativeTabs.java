@@ -25,6 +25,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.LAVA_GENERATOR.get());
                         output.accept(ModItems.ELECTRIC_FURNACE.get());
                         output.accept(ModItems.CRUSHER.get());
+                        output.accept(ModItems.SAWMILL.get());
                         output.accept(ModItems.METAL_PRESS.get());
                         output.accept(ModItems.PLATE_MOLD.get());
                         output.accept(ModItems.GEAR_MOLD.get());

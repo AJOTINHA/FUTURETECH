@@ -1,9 +1,10 @@
 package dev.futuretech.block.entity;
 
-import static dev.futuretech.block.entity.CrusherBlockEntity.*;
+import static dev.futuretech.block.entity.LaneMachineBlockEntity.*;
 
 import dev.futuretech.api.side.SideMode;
 import dev.futuretech.api.upgrade.MachineLevel;
+import dev.futuretech.block.LaneMachineKind;
 import dev.futuretech.registry.ModBlocks;
 import dev.futuretech.registry.ModItems;
 import net.minecraft.world.item.Item;
@@ -15,6 +16,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import dev.futuretech.recipe.LaneMachineRecipe;
 import dev.futuretech.registry.ModRecipes;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.neoforged.neoforge.transfer.transaction.Transaction;
@@ -25,7 +27,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(EphemeralTestServerProvider.class)
-class CrusherTest {
+class LaneMachineTest {
     @Test
     void loadsAllCrushingRecipesWithTheirFullOutputCounts(MinecraftServer server) {
         var inputs = new net.minecraft.world.item.Item[] {
@@ -40,14 +42,46 @@ class CrusherTest {
         int[] counts = {1, 1, 4, 4, 6, 4, 1, 2, 2, 2, 1, 1, 1};
         for (int i = 0; i < inputs.length; i++) {
             var machine = crusher();
-            charge(machine, CRUSH_TICKS * ENERGY_PER_TICK);
+            charge(machine, WORK_TICKS * ENERGY_PER_TICK);
             machine.setItem(SLOT_INPUT, new ItemStack(inputs[i]));
-            for (int t = 0; t < CRUSH_TICKS; t++) assertTrue(tick(machine, recipes(server)));
+            for (int t = 0; t < WORK_TICKS; t++) assertTrue(tick(machine, recipes(server)));
             assertTrue(machine.getItem(SLOT_INPUT).isEmpty());
             assertTrue(machine.getItem(SLOT_OUTPUT).is(outputs[i]));
             assertEquals(counts[i], machine.getItem(SLOT_OUTPUT).getCount());
             assertEquals(0, machine.energy().getAmountAsInt());
         }
+    }
+
+    @Test
+    void theSawmillTurnsAnyLogOfEveryWoodIntoTwiceThePlanksAndAPlankIntoTwiceTheSticks(MinecraftServer server) {
+        var inputs = new net.minecraft.world.item.Item[] {
+                Items.OAK_LOG, Items.STRIPPED_OAK_LOG, Items.OAK_WOOD, Items.SPRUCE_LOG, Items.BIRCH_LOG, Items.JUNGLE_LOG,
+                Items.ACACIA_LOG, Items.DARK_OAK_LOG, Items.MANGROVE_LOG, Items.CHERRY_LOG, Items.PALE_OAK_LOG,
+                Items.CRIMSON_STEM, Items.WARPED_STEM, Items.BAMBOO_BLOCK, Items.OAK_PLANKS};
+        var outputs = new net.minecraft.world.item.Item[] {
+                Items.OAK_PLANKS, Items.OAK_PLANKS, Items.OAK_PLANKS, Items.SPRUCE_PLANKS, Items.BIRCH_PLANKS, Items.JUNGLE_PLANKS,
+                Items.ACACIA_PLANKS, Items.DARK_OAK_PLANKS, Items.MANGROVE_PLANKS, Items.CHERRY_PLANKS, Items.PALE_OAK_PLANKS,
+                Items.CRIMSON_PLANKS, Items.WARPED_PLANKS, Items.BAMBOO_PLANKS, Items.STICK};
+        var sawing = recipes(server, ModRecipes.SAWING.get());
+        for (int i = 0; i < inputs.length; i++) {
+            var machine = new LaneMachineBlockEntity(LaneMachineKind.SAWMILL, BlockPos.ZERO, ModBlocks.SAWMILL.get().defaultBlockState());
+            charge(machine, WORK_TICKS * ENERGY_PER_TICK);
+            machine.setItem(SLOT_INPUT, new ItemStack(inputs[i]));
+            for (int t = 0; t < WORK_TICKS; t++) assertTrue(tick(machine, sawing), inputs[i].toString());
+            assertTrue(machine.getItem(SLOT_INPUT).isEmpty());
+            assertTrue(machine.getItem(SLOT_OUTPUT).is(outputs[i]), inputs[i].toString());
+            assertEquals(inputs[i] == Items.BAMBOO_BLOCK ? 4 : inputs[i] == Items.OAK_PLANKS ? 4 : 8, machine.getItem(SLOT_OUTPUT).getCount());
+        }
+        // The books do not leak into each other: a log is nothing to the crusher, cobblestone nothing to the sawmill.
+        var crusher = crusher();
+        charge(crusher, CAPACITY);
+        crusher.setItem(SLOT_INPUT, new ItemStack(Items.OAK_LOG));
+        assertFalse(tick(crusher, recipes(server)));
+        var sawmill = new LaneMachineBlockEntity(LaneMachineKind.SAWMILL, BlockPos.ZERO, ModBlocks.SAWMILL.get().defaultBlockState());
+        charge(sawmill, CAPACITY);
+        sawmill.setItem(SLOT_INPUT, new ItemStack(Items.COBBLESTONE));
+        assertFalse(tick(sawmill, sawing));
+        assertEquals(net.minecraft.network.chat.Component.translatable("block.futuretech.sawmill"), sawmill.getDisplayName());
     }
 
     @Test
@@ -74,7 +108,7 @@ class CrusherTest {
         assertEquals(25, machine.menuData().get(DATA_PROGRESS));
         assertEquals(energyBefore, machine.energy().getAmountAsInt());
         machine.setItem(SLOT_OUTPUT, new ItemStack(Items.BONE_MEAL, 58));
-        for (int t = 25; t < CRUSH_TICKS; t++) assertTrue(tick(machine, recipes(server)));
+        for (int t = 25; t < WORK_TICKS; t++) assertTrue(tick(machine, recipes(server)));
         assertEquals(64, machine.getItem(SLOT_OUTPUT).getCount());
         assertTrue(machine.getItem(SLOT_INPUT).isEmpty());
     }
@@ -97,8 +131,8 @@ class CrusherTest {
         for (int i = 0; i < raw.length; i++) {
             var machine = crusher();
             machine.setItem(SLOT_INPUT, new ItemStack(raw[i]));
-            charge(machine, CRUSH_TICKS * ENERGY_PER_TICK);
-            for (int t = 0; t < CRUSH_TICKS; t++) assertTrue(tick(machine, recipes(server)));
+            charge(machine, WORK_TICKS * ENERGY_PER_TICK);
+            for (int t = 0; t < WORK_TICKS; t++) assertTrue(tick(machine, recipes(server)));
             ItemStack dust = machine.getItem(SLOT_OUTPUT).copy();
             assertTrue(dust.is(powder[i]));
             assertEquals(2, dust.getCount());
@@ -137,20 +171,20 @@ class CrusherTest {
             machine.setItem(SLOT_INPUT, new ItemStack(ingots[i]));
             machine.setItem(SLOT_OUTPUT, ItemStack.EMPTY);
             charge(machine, CAPACITY);
-            for (int t = 0; t < CRUSH_TICKS; t++) assertTrue(tick(machine, recipes(server)));
+            for (int t = 0; t < WORK_TICKS; t++) assertTrue(tick(machine, recipes(server)));
             assertTrue(machine.getItem(SLOT_INPUT).isEmpty());
             assertTrue(machine.getItem(SLOT_OUTPUT).is(powder[i]));
             assertEquals(1, machine.getItem(SLOT_OUTPUT).getCount());
-            assertEquals(CAPACITY - CRUSH_TICKS * ENERGY_PER_TICK, machine.energy().getAmountAsInt());
+            assertEquals(CAPACITY - WORK_TICKS * ENERGY_PER_TICK, machine.energy().getAmountAsInt());
         }
     }
 
-    private static CrusherBlockEntity crusher() {
+    private static LaneMachineBlockEntity crusher() {
         return crusher(1);
     }
 
-    private static CrusherBlockEntity crusher(int mk) {
-        return new CrusherBlockEntity(BlockPos.ZERO, ModBlocks.CRUSHER.get().defaultBlockState().setValue(MachineLevel.MK, mk));
+    private static LaneMachineBlockEntity crusher(int mk) {
+        return new LaneMachineBlockEntity(LaneMachineKind.CRUSHER, BlockPos.ZERO, ModBlocks.CRUSHER.get().defaultBlockState().setValue(MachineLevel.MK, mk));
     }
 
     @Test
@@ -160,7 +194,7 @@ class CrusherTest {
         Item[] inputs = {Items.COBBLESTONE, Items.BONE, Items.RAW_IRON, Items.BLAZE_ROD};
         for (int lane = 0; lane < 4; lane++) crusher.setItem(SLOT_INPUT + lane, new ItemStack(inputs[lane]));
         int before = crusher.energy().getAmountAsInt();
-        int ticks = MachineLevel.duration(CRUSH_TICKS, 4);
+        int ticks = MachineLevel.duration(WORK_TICKS, 4);
         int perTick = MachineLevel.consumption(ENERGY_PER_TICK, 4);
         for (int tick = 0; tick < ticks; tick++) assertTrue(tick(crusher, recipes(server)));
         assertEquals(before - 4 * ticks * perTick, crusher.energy().getAmountAsInt(), "four jobs, four times the draw");
@@ -182,7 +216,7 @@ class CrusherTest {
         assertArrayEquals(new int[] {SLOT_OUTPUT, SLOT_OUTPUT + 1, SLOT_OUTPUT + 2, SLOT_OUTPUT + 3}, lanesOf(crusher, SideMode.OUTPUT));
     }
 
-    private static int[] lanesOf(CrusherBlockEntity crusher, SideMode mode) {
+    private static int[] lanesOf(LaneMachineBlockEntity crusher, SideMode mode) {
         crusher.sideConfig().set(Direction.UP, mode);
         return crusher.getSlotsForFace(Direction.UP);
     }
@@ -213,10 +247,10 @@ class CrusherTest {
         assertEquals(25_000, crusher(2).energy().getCapacityAsInt());
         assertEquals(30_000, crusher(3).energy().getCapacityAsInt());
         assertEquals(35_000, crusher(4).energy().getCapacityAsInt());
-        assertEquals(100, MachineLevel.duration(CRUSH_TICKS, 1));
-        assertEquals(87, MachineLevel.duration(CRUSH_TICKS, 2));
-        assertEquals(77, MachineLevel.duration(CRUSH_TICKS, 3));
-        assertEquals(69, MachineLevel.duration(CRUSH_TICKS, 4));
+        assertEquals(100, MachineLevel.duration(WORK_TICKS, 1));
+        assertEquals(87, MachineLevel.duration(WORK_TICKS, 2));
+        assertEquals(77, MachineLevel.duration(WORK_TICKS, 3));
+        assertEquals(69, MachineLevel.duration(WORK_TICKS, 4));
         assertEquals(20, MachineLevel.consumption(ENERGY_PER_TICK, 1));
         assertEquals(24, MachineLevel.consumption(ENERGY_PER_TICK, 2));
         assertEquals(28, MachineLevel.consumption(ENERGY_PER_TICK, 3));
@@ -250,7 +284,7 @@ class CrusherTest {
     }
 
     /** Fills the buffer the way a cable would: the handler only accepts INPUT_PER_TICK each tick. */
-    private static void charge(CrusherBlockEntity crusher, int amount) {
+    private static void charge(LaneMachineBlockEntity crusher, int amount) {
         for (int filled = 0; filled < amount; filled += INPUT_PER_TICK) {
             crusher.beginTick();
             try (var transaction = Transaction.openRoot()) {
@@ -267,14 +301,18 @@ class CrusherTest {
      * recipes match on the item alone - {@code SingleItemRecipe.matches} ignores its level argument -
      * so the lookup needs no world, which is why the crusher takes a lookup instead of a level.
      */
-    private static CrusherBlockEntity.CrushingLookup recipes(MinecraftServer server) {
-        return input -> server.getRecipeManager().getRecipeFor(ModRecipes.CRUSHING.get(), input, null).orElse(null);
+    private static LaneMachineBlockEntity.RecipeLookup recipes(MinecraftServer server) {
+        return recipes(server, ModRecipes.CRUSHING.get());
+    }
+
+    private static LaneMachineBlockEntity.RecipeLookup recipes(MinecraftServer server, RecipeType<LaneMachineRecipe> type) {
+        return input -> server.getRecipeManager().getRecipeFor(type, input, null).orElse(null);
     }
 
     /** One tick of work, as {@code serverTick} does without needing a block state in the world. */
-    private static boolean tick(CrusherBlockEntity crusher, CrusherBlockEntity.CrushingLookup recipes) {
+    private static boolean tick(LaneMachineBlockEntity crusher, LaneMachineBlockEntity.RecipeLookup recipes) {
         crusher.beginTick();
-        return crusher.crush(recipes);
+        return crusher.work(recipes);
     }
 
     @Test
@@ -286,12 +324,12 @@ class CrusherTest {
         int before = crusher.energy().getAmountAsInt();
 
         // Each crushing recipe takes 100 ticks.
-        for (int tick = 0; tick < CRUSH_TICKS; tick++) assertTrue(tick(crusher, level), "tick " + tick);
+        for (int tick = 0; tick < WORK_TICKS; tick++) assertTrue(tick(crusher, level), "tick " + tick);
 
         assertEquals(new ItemStack(Items.GRAVEL).getItem(), crusher.getItem(SLOT_OUTPUT).getItem());
         assertEquals(1, crusher.getItem(SLOT_OUTPUT).getCount());
         assertEquals(1, crusher.getItem(SLOT_INPUT).getCount());
-        assertEquals(before - CRUSH_TICKS * ENERGY_PER_TICK, crusher.energy().getAmountAsInt());
+        assertEquals(before - WORK_TICKS * ENERGY_PER_TICK, crusher.energy().getAmountAsInt());
         assertEquals(0, crusher.menuData().get(DATA_PROGRESS));
     }
 
@@ -414,7 +452,7 @@ class CrusherTest {
         assertEquals(1, restored.getItem(SLOT_INPUT).getCount());
 
         // It picks the work back up exactly where it stopped.
-        for (int tick = 25; tick < CRUSH_TICKS; tick++) assertTrue(tick(restored, level));
+        for (int tick = 25; tick < WORK_TICKS; tick++) assertTrue(tick(restored, level));
         assertEquals(1, restored.getItem(SLOT_OUTPUT).getCount());
     }
 }

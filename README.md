@@ -167,6 +167,12 @@ Cobre     Carcaça   Cobre
 Ferro     Redstone  Ferro
 ```
 
+## Serraria (Sawmill)
+
+A **Serraria** (`futuretech:sawmill`) é o mesmo tipo de máquina que o Triturador — um item de entrada vira um resultado, uma faixa por MK, mesmos kits, lados, redstone e melhorias — com o livro de receitas `futuretech:sawing` em `src/main/recipes/sawmill.json`. Qualquer tronco, madeira ou tronco descascado (`#minecraft:<madeira>_logs`, `#minecraft:crimson_stems`, `#minecraft:warped_stems`) rende **8 tábuas**, o dobro da bancada; um bloco de bambu rende 4 tábuas de bambu e uma tábua (`#minecraft:planks`) rende **4 gravetos**. Receita: lingotes de ferro nos cantos, um machado de ferro no topo, cobre dos lados, carcaça no meio e redstone embaixo.
+
+No código, Triturador e Serraria são um `LaneMachineBlock`/`LaneMachineBlockEntity`/`LaneMachineMenu`/`LaneMachineScreen` só, e `LaneMachineKind` (`CRUSHER`, `SAWMILL`) escolhe o livro de receitas, o bloco, o nome, as partículas (faíscas ou serragem) e o indicador da tela (rolos ou disco de serra). As receitas dos dois são `LaneMachineRecipe`, registradas em dois tipos. `python tools/generate_sawmill.py` desenha a frente (o disco girando com dentes ciano e serragem sobre um tronco, na moldura do Triturador) e gera modelos, blockstate, loot, receita e nomes.
+
 A arte e seus exportadores ficam em `art/crusher/`; a textura estática é `assets/futuretech/textures/block/crusher/crusher_front.png`. Durante o processamento, `crusher_front_on.png` mostra os rolos girando em sentidos opostos e o visor ciano pulsante, em dez quadros com ciclo de um segundo. A carcaça permanece idêntica e parada. Veja `art/crusher/active-preview.html` para comparar as duas versões.
 
 ## Desempenho
@@ -264,7 +270,7 @@ A API fica em `dev.futuretech.api.side` e é reaproveitável por qualquer máqui
 
 ## Faixas por MK
 
-O Triturador e a Fornalha Elétrica têm até quatro **faixas**, cada uma um slot de entrada emparelhado com um de saída e o próprio progresso. O MK diz quantas estão abertas: MK1 uma, MK2 duas, MK3 três e MK4 quatro, então um MK4 processa quatro itens ao mesmo tempo. Cada faixa em trabalho paga o consumo por tick do nível, ou seja, quatro faixas ativas gastam quatro vezes mais; faixa parada não gasta. A interface cresce uma linha de slots por faixa extra, cada uma com a própria seta de progresso (e, com mais de uma faixa, os rolos ou a chama ao lado de cada saída). O MK viaja no pacote de abertura do menu, por isso esses dois menus usam `IMenuTypeExtension`.
+O Triturador, a Serraria e a Fornalha Elétrica têm até quatro **faixas**, cada uma um slot de entrada emparelhado com um de saída e o próprio progresso. O MK diz quantas estão abertas: MK1 uma, MK2 duas, MK3 três e MK4 quatro, então um MK4 processa quatro itens ao mesmo tempo. Cada faixa em trabalho paga o consumo por tick do nível, ou seja, quatro faixas ativas gastam quatro vezes mais; faixa parada não gasta. A interface cresce uma linha de slots por faixa extra, cada uma com a própria seta de progresso (e, com mais de uma faixa, os rolos ou a chama ao lado de cada saída). O MK viaja no pacote de abertura do menu, por isso esses dois menus usam `IMenuTypeExtension`.
 
 No inventário do bloco as entradas são os slots 0–3 e as saídas 4–7 (`SLOT_INPUT + faixa`, `SLOT_OUTPUT + faixa`); só as faixas abertas aparecem para funis, cabos e configuração de lados. Um funil ou cabo que empurra um mesmo item é distribuído entre as faixas abertas: cada item vai para a faixa que tem menos daquele item (vazias incluídas), então uma pilha se espalha e as faixas trabalham em paralelo em vez de encher a primeira. Um item diferente só entra numa faixa vazia. O progresso de cada faixa é salvo com o bloco (`Progress`, `Progress1`…) e o da faixa 0 usa as chaves antigas, então mundos anteriores continuam de onde estavam.
 
@@ -302,7 +308,7 @@ As receitas próprias ficam em `src/main/recipes/assembler.json` (veja [Receitas
 
 ## Receitas das máquinas
 
-Cada máquina com receitas próprias tem **um único arquivo** em `src/main/recipes/`: `crusher.json` (tipo `futuretech:crushing`), `metal_press.json` (tipo `futuretech:pressing`), `smeltery.json` (tipo `futuretech:alloying`) e `assembler.json` (tipo `futuretech:assembling`). O arquivo traz o `type` uma vez e um mapa `recipes` em que a chave é o nome da receita e o valor é o corpo dela, sem o `type`:
+Cada máquina com receitas próprias tem **um único arquivo** em `src/main/recipes/`: `crusher.json` (tipo `futuretech:crushing`), `sawmill.json` (tipo `futuretech:sawing`), `metal_press.json` (tipo `futuretech:pressing`), `smeltery.json` (tipo `futuretech:alloying`) e `assembler.json` (tipo `futuretech:assembling`). O arquivo traz o `type` uma vez e um mapa `recipes` em que a chave é o nome da receita e o valor é o corpo dela, sem o `type`:
 
 ```json
 {
@@ -317,7 +323,7 @@ O jogo só carrega uma receita por JSON, então a tarefa `expandMachineRecipes` 
 
 ### JEI
 
-Com o JEI instalado, cada máquina ganha uma aba própria: Triturador, Metal Press (com o molde de chapa ou engrenagem ao lado da entrada), Fundidora (duas entradas com quantidade, sem ordem) e Mesa de montagem (grade de até nove ingredientes). A linha de baixo mostra o tempo em MK1 e a energia total daquela receita. Clicar na Fornalha Elétrica abre as receitas de fornalha vanilla e no Gerador a Combustível Sólido a lista de combustíveis.
+Com o JEI instalado, cada máquina ganha uma aba própria: Triturador, Serraria, Metal Press (com o molde de chapa ou engrenagem ao lado da entrada), Fundidora (duas entradas com quantidade, sem ordem) e Mesa de montagem (grade de até nove ingredientes). A linha de baixo mostra o tempo em MK1 e a energia total daquela receita. Clicar na Fornalha Elétrica abre as receitas de fornalha vanilla e no Gerador a Combustível Sólido a lista de combustíveis.
 
 Desde a 1.21.2 o cliente não recebe as receitas do servidor; `ModRecipes.syncToClients` envia os quatro tipos de receita de máquina no `OnDatapackSyncEvent` (funciona em servidor dedicado também) e `SyncedRecipes` guarda o que chegou no cliente para o plugin `FutureTechJeiPlugin` (`src/main/java/dev/futuretech/client/jei/`). O JEI é `compileOnly`/`localRuntime` no Gradle: o jar publicado não depende dele e o plugin só carrega quando o JEI está presente.
 
