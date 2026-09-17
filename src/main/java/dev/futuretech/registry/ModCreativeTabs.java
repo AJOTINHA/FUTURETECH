@@ -33,6 +33,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.PLATE_MOLD.get());
                         output.accept(ModItems.GEAR_MOLD.get());
                         output.accept(ModItems.SMELTERY.get());
+                        output.accept(ModItems.MELTER.get());
                         output.accept(ModItems.PAINT_MACHINE.get());
                         output.accept(ModItems.WATER_PUMP.get());
                         output.accept(ModItems.TELEPORTER.get());

@@ -1,0 +1,21 @@
+{
+  "type": "futuretech:melting",
+  "recipes": {
+    "lava_from_cobblestone": {
+      "ingredient": "minecraft:cobblestone",
+      "result": {
+        "id": "minecraft:lava",
+        "amount": 100
+      },
+      "duration": 100
+    },
+    "lava_from_stone": {
+      "ingredient": "minecraft:stone",
+      "result": {
+        "id": "minecraft:lava",
+        "amount": 100
+      },
+      "duration": 100
+    }
+  }
+}

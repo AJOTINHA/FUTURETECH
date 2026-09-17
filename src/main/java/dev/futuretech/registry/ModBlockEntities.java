@@ -20,6 +20,7 @@ import dev.futuretech.block.LaneMachineKind;
 import dev.futuretech.block.entity.LaneMachineBlockEntity;
 import dev.futuretech.block.entity.MetalPressBlockEntity;
 import dev.futuretech.block.entity.PaintMachineBlockEntity;
+import dev.futuretech.block.entity.MelterBlockEntity;
 import dev.futuretech.block.entity.SmelteryBlockEntity;
 import dev.futuretech.block.entity.TeleporterBlockEntity;
 import dev.futuretech.block.entity.WaterPumpBlockEntity;
@@ -63,6 +64,8 @@ public final class ModBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MetalPressBlockEntity>> METAL_PRESS =
             TYPES.register("metal_press", () -> new BlockEntityType<>(MetalPressBlockEntity::new, ModBlocks.METAL_PRESS.get()));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MelterBlockEntity>> MELTER =
+            TYPES.register("melter", () -> new BlockEntityType<>(MelterBlockEntity::new, ModBlocks.MELTER.get()));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SmelteryBlockEntity>> SMELTERY =
             TYPES.register("smeltery", () -> new BlockEntityType<>(SmelteryBlockEntity::new, ModBlocks.SMELTERY.get()));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PaintMachineBlockEntity>> PAINT_MACHINE =
@@ -126,6 +129,13 @@ public final class ModBlockEntities {
                 SidedEnergy.view(press.energy(), press.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Item.BLOCK, METAL_PRESS.get(), (press, side) ->
                 SidedItems.view(press, press.sideConfig(), side));
+        // The melter takes energy anywhere, items on the input faces, and its fluid is drawn from the output ones.
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, MELTER.get(), (melter, side) ->
+                SidedEnergy.view(melter.energy(), melter.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Item.BLOCK, MELTER.get(), (melter, side) ->
+                SidedItems.view(melter, melter.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Fluid.BLOCK, MELTER.get(), (melter, side) ->
+                SidedFluids.outflow(melter.tank(), melter.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, SMELTERY.get(), (smeltery, side) ->
                 SidedEnergy.view(smeltery.energy(), smeltery.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Item.BLOCK, SMELTERY.get(), (smeltery, side) ->

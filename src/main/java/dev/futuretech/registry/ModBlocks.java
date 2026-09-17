@@ -22,6 +22,7 @@ import dev.futuretech.block.LaneMachineKind;
 import dev.futuretech.block.MetalPressBlock;
 import dev.futuretech.block.MachineCasingBlock;
 import dev.futuretech.block.PaintMachineBlock;
+import dev.futuretech.block.MelterBlock;
 import dev.futuretech.block.SmelteryBlock;
 import dev.futuretech.block.TeleporterBlock;
 import dev.futuretech.block.WaterPumpBlock;
@@ -104,6 +105,12 @@ public final class ModBlocks {
                     .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
                     .requiresCorrectToolForDrops()
                     .lightLevel(state -> state.getValue(SmelteryBlock.LIT) ? 13 : 0));
+
+    public static final DeferredBlock<MelterBlock> MELTER = BLOCKS.registerBlock(
+            "melter", MelterBlock::new, properties -> properties
+                    .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops()
+                    .lightLevel(state -> state.getValue(MelterBlock.LIT) ? 13 : 0));
 
     public static final DeferredBlock<PaintMachineBlock> PAINT_MACHINE = BLOCKS.registerBlock(
             "paint_machine", PaintMachineBlock::new, properties -> properties

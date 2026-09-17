@@ -4,6 +4,7 @@ import dev.futuretech.FutureTech;
 import dev.futuretech.recipe.AlloyingRecipe;
 import dev.futuretech.block.LaneMachineKind;
 import dev.futuretech.recipe.LaneMachineRecipe;
+import dev.futuretech.recipe.MeltingRecipe;
 import dev.futuretech.recipe.PressingRecipe;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.crafting.RecipeBookCategory;
@@ -48,7 +49,7 @@ public final class ModRecipes {
 
     /** Vanilla only syncs recipe displays; the machine recipes go to every client for the recipe viewer. */
     public static void syncToClients(net.neoforged.neoforge.event.OnDatapackSyncEvent event) {
-        event.sendRecipes(CRUSHING.get(), SAWING.get(), PRESSING.get(), ALLOYING.get(), ASSEMBLING.get());
+        event.sendRecipes(CRUSHING.get(), SAWING.get(), PRESSING.get(), ALLOYING.get(), ASSEMBLING.get(), MELTING.get());
     }
     public static final DeferredHolder<RecipeType<?>, RecipeType<PressingRecipe>> PRESSING = TYPES.register("pressing", () -> new RecipeType<>() {
         @Override public String toString() { return "futuretech:pressing"; }
@@ -62,4 +63,10 @@ public final class ModRecipes {
     public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<AlloyingRecipe>> ALLOYING_SERIALIZER =
             SERIALIZERS.register("alloying", () -> new RecipeSerializer<>(AlloyingRecipe.CODEC, AlloyingRecipe.STREAM_CODEC));
     public static final DeferredHolder<RecipeBookCategory, RecipeBookCategory> SMELTERY_BOOK = BOOKS.register("smeltery", RecipeBookCategory::new);
+    public static final DeferredHolder<RecipeType<?>, RecipeType<MeltingRecipe>> MELTING = TYPES.register("melting", () -> new RecipeType<>() {
+        @Override public String toString() { return "futuretech:melting"; }
+    });
+    public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<MeltingRecipe>> MELTING_SERIALIZER =
+            SERIALIZERS.register("melting", () -> new RecipeSerializer<>(MeltingRecipe.CODEC, MeltingRecipe.STREAM_CODEC));
+    public static final DeferredHolder<RecipeBookCategory, RecipeBookCategory> MELTER_BOOK = BOOKS.register("melter", RecipeBookCategory::new);
 }

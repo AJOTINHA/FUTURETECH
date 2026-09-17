@@ -3,6 +3,7 @@ package dev.futuretech.client.jei;
 import dev.futuretech.FutureTech;
 import dev.futuretech.block.entity.AssemblerBlockEntity;
 import dev.futuretech.block.entity.LaneMachineBlockEntity;
+import dev.futuretech.block.entity.MelterBlockEntity;
 import dev.futuretech.block.entity.MetalPressBlockEntity;
 import dev.futuretech.block.entity.PaintMachineBlockEntity;
 import dev.futuretech.block.entity.SmelteryBlockEntity;
@@ -10,6 +11,7 @@ import dev.futuretech.client.SyncedRecipes;
 import dev.futuretech.recipe.AlloyingRecipe;
 import dev.futuretech.recipe.AssemblingRecipe;
 import dev.futuretech.recipe.LaneMachineRecipe;
+import dev.futuretech.recipe.MeltingRecipe;
 import dev.futuretech.recipe.PressingRecipe;
 import dev.futuretech.registry.ModBlocks;
 import dev.futuretech.registry.ModItems;
@@ -31,7 +33,7 @@ import net.minecraft.world.item.crafting.Ingredient;
 
 import java.util.List;
 
-/** Shows what each machine makes: crushing, sawing, pressing, alloying, assembling and painting, plus the vanilla furnace and fuel pages. */
+/** Shows what each machine makes: crushing, sawing, pressing, alloying, assembling, melting and painting, plus the vanilla furnace and fuel pages. */
 @JeiPlugin
 public final class FutureTechJeiPlugin implements IModPlugin {
     private static final org.slf4j.Logger LOG = com.mojang.logging.LogUtils.getLogger();
@@ -42,6 +44,7 @@ public final class FutureTechJeiPlugin implements IModPlugin {
     private static final IRecipeHolderType<PressingRecipe> PRESSING = IRecipeHolderType.create(ModRecipes.PRESSING.getId());
     private static final IRecipeHolderType<AlloyingRecipe> ALLOYING = IRecipeHolderType.create(ModRecipes.ALLOYING.getId());
     private static final IRecipeHolderType<AssemblingRecipe> ASSEMBLING = IRecipeHolderType.create(ModRecipes.ASSEMBLING.getId());
+    private static final IRecipeHolderType<MeltingRecipe> MELTING = IRecipeHolderType.create(ModRecipes.MELTING.getId());
     /** The paint machine has no recipe book: its one page is written here, over every block a facade may wear. */
     private static final IRecipeType<PaintingDisplay> PAINTING =
             IRecipeType.create(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "painting"), PaintingDisplay.class);
@@ -65,6 +68,8 @@ public final class FutureTechJeiPlugin implements IModPlugin {
                         SmelteryBlockEntity.ENERGY_PER_TICK, AlloyingRecipe::duration, FutureTechJeiPlugin::alloying),
                 MachineRecipeCategory.ofHolders(gui, ASSEMBLING, ModBlocks.ASSEMBLY_TABLE.get(), 126, 70, 64, 22,
                         AssemblerBlockEntity.ENERGY_PER_TICK, AssemblingRecipe::duration, FutureTechJeiPlugin::assembling),
+                MachineRecipeCategory.ofHolders(gui, MELTING, ModBlocks.MELTER.get(), 100, 42, 34, 9,
+                        MelterBlockEntity.ENERGY_PER_TICK, MeltingRecipe::duration, FutureTechJeiPlugin::melting),
                 new MachineRecipeCategory<>(gui, PAINTING, ModBlocks.PAINT_MACHINE.get(), 122, 42, 56, 9,
                         PaintMachineBlockEntity.ENERGY_PER_TICK, display -> PaintMachineBlockEntity.PAINT_TICKS, FutureTechJeiPlugin::painting));
     }
@@ -76,13 +81,15 @@ public final class FutureTechJeiPlugin implements IModPlugin {
         var pressing = SyncedRecipes.of(ModRecipes.PRESSING.get());
         var alloying = SyncedRecipes.of(ModRecipes.ALLOYING.get());
         var assembling = SyncedRecipes.of(ModRecipes.ASSEMBLING.get());
-        LOG.info("JEI: {} crushing, {} sawing, {} pressing, {} alloying, {} assembling recipes",
-                crushing.size(), sawing.size(), pressing.size(), alloying.size(), assembling.size());
+        var melting = SyncedRecipes.of(ModRecipes.MELTING.get());
+        LOG.info("JEI: {} crushing, {} sawing, {} pressing, {} alloying, {} assembling, {} melting recipes",
+                crushing.size(), sawing.size(), pressing.size(), alloying.size(), assembling.size(), melting.size());
         registration.addRecipes(CRUSHING, crushing);
         registration.addRecipes(SAWING, sawing);
         registration.addRecipes(PRESSING, pressing);
         registration.addRecipes(ALLOYING, alloying);
         registration.addRecipes(ASSEMBLING, assembling);
+        registration.addRecipes(MELTING, melting);
         registration.addRecipes(PAINTING, List.of(PaintingDisplay.everyBlock()));
     }
 
@@ -93,6 +100,7 @@ public final class FutureTechJeiPlugin implements IModPlugin {
         registration.addCraftingStation(PRESSING, ModBlocks.METAL_PRESS.get());
         registration.addCraftingStation(ALLOYING, ModBlocks.SMELTERY.get());
         registration.addCraftingStation(ASSEMBLING, ModBlocks.ASSEMBLY_TABLE.get(), ModBlocks.ASSEMBLER_TERMINAL.get());
+        registration.addCraftingStation(MELTING, ModBlocks.MELTER.get());
         registration.addCraftingStation(PAINTING, ModBlocks.PAINT_MACHINE.get());
         // The electric furnace smelts vanilla recipes; the solid fuel generator burns vanilla fuels.
         registration.addCraftingStation(RecipeTypes.SMELTING, ModBlocks.ELECTRIC_FURNACE.get());
@@ -102,6 +110,15 @@ public final class FutureTechJeiPlugin implements IModPlugin {
     private static void singleItem(IRecipeLayoutBuilder builder, LaneMachineRecipe recipe) {
         builder.addInputSlot(8, 8).setStandardSlotBackground().add(recipe.input());
         builder.addOutputSlot(68, 8).setOutputSlotBackground().add(recipe.result());
+    }
+
+    /** The item in, and the fluid out drawn as a bucket's worth in a slot, the way JEI shows fluids. */
+    private static void melting(IRecipeLayoutBuilder builder, MeltingRecipe recipe) {
+        builder.addInputSlot(8, 8).setStandardSlotBackground().add(recipe.ingredient());
+        var made = recipe.result();
+        builder.addOutputSlot(68, 8).setOutputSlotBackground()
+                .setFluidRenderer(net.neoforged.neoforge.fluids.FluidType.BUCKET_VOLUME, false, 16, 16)
+                .add(made.fluid().value(), made.amount(), made.components());
     }
 
     private static void pressing(IRecipeLayoutBuilder builder, PressingRecipe recipe) {

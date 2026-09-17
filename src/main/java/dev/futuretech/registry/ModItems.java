@@ -106,6 +106,9 @@ public final class ModItems {
     public static final DeferredItem<TieredMachineBlockItem> METAL_PRESS = ITEMS.registerItem(
             "metal_press", properties -> new TieredMachineBlockItem(ModBlocks.METAL_PRESS.get(), properties),
             properties -> properties.useBlockDescriptionPrefix());
+    public static final DeferredItem<TieredMachineBlockItem> MELTER = ITEMS.registerItem(
+            "melter", properties -> new TieredMachineBlockItem(ModBlocks.MELTER.get(), properties),
+            properties -> properties.useBlockDescriptionPrefix());
     public static final DeferredItem<TieredMachineBlockItem> SMELTERY = ITEMS.registerItem(
             "smeltery", properties -> new TieredMachineBlockItem(ModBlocks.SMELTERY.get(), properties),
             properties -> properties.useBlockDescriptionPrefix());
