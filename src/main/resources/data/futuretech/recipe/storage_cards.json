@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IAI",
+    "CHC",
+    "IAI"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "A": "minecraft:amethyst_shard",
+    "C": "futuretech:chip",
+    "H": "minecraft:chest"
+  },
+  "result": {
+    "id": "futuretech:storage_cards",
+    "count": 1
+  }
+}

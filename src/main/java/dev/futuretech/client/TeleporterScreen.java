@@ -26,49 +26,44 @@ import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import java.util.List;
 
 /**
- * The pad's name to edit at the top, then one row per card slot: the card's name, what the trip
- * costs, and the row lit when it is the chosen destination. The energy column stands at the
- * right, spanning the rows.
- *
- * <p>The window is always four rows tall, whatever the pad's level holds. A level with more cards
- * than that scrolls, on the wheel or the bar beside the rows, and the rows give up eight pixels of
- * width to make room for it; a pad whose cards all fit shows no bar and keeps the full width.
+ * The pad's name to edit at the top, then the one card slot with its row: the card's name, what
+ * the trip costs, and the row lit when it is the chosen destination. The energy column stands at
+ * the right. The rest of the pad's destinations are on the network and picked from a panel, so
+ * a pad sending to one of those shows no row lit here.
  */
 public final class TeleporterScreen extends AbstractContainerScreen<TeleporterMenu> {
     private static final int LABEL_X = 7;
-    private static final int NAME_X = 42;
-    private static final int NAME_Y = 17;
-    private static final int NAME_WIDTH = 126;
+    /** The card's row beside its slot: from the slot's right edge to the energy column. */
+    private static final int ROW_X = TeleporterMenu.CARD_X + 24;
+    private static final int ROW_WIDTH = 120;
+    /**
+     * The name box sits over the row, its frame on the row's border: the row's border is a pixel
+     * outside its face and the box's frame is the outermost pixel of its own bounds, so the box
+     * goes a pixel out on each side for the two edges to line up. Its label is in the slot's column.
+     */
+    private static final int NAME_LABEL_X = 5;
+    private static final int NAME_X = ROW_X - 1;
+    /** Under the header and its shadow, not on them. */
+    private static final int NAME_Y = 21;
+    private static final int NAME_WIDTH = ROW_WIDTH + 2;
     private static final int NAME_HEIGHT = 12;
-    /** Each card's row beside its slot: from the slot's right edge to the energy column. */
-    private static final int ROW_X = TeleporterMenu.CARD_X + 22;
-    private static final int ROW_FULL_WIDTH = 120;
     private static final int ROW_HEIGHT = 16;
-    private static final int SCROLL_WIDTH = 6;
-    /** What the rows give up to the bar: its own width plus a pixel of air on either side. */
-    private static final int SCROLL_GUTTER = SCROLL_WIDTH + 2;
-    private static final int ENERGY_X = 158;
+    private static final int ENERGY_X = 156;
     private static final int ENERGY_WIDTH = 14;
-    private static final int ENERGY_TOP = TeleporterMenu.CARD_Y - 1;
-    private static final int ENERGY_HEIGHT = TeleporterMenu.VISIBLE * TeleporterMenu.CARD_SPACING;
+    private static final int ENERGY_HEIGHT = TeleporterMenu.LIST_HEIGHT;
+    /** Centred on the card row, which is itself centred in the window: the middle of the window. */
+    private static final int ENERGY_TOP = TeleporterMenu.CARD_Y + ROW_HEIGHT / 2 - ENERGY_HEIGHT / 2;
     private static final int ROW_BACK = 0xFF56616D;
     private static final int ROW_FACE = 0xFF65717D;
     private static final int SELECTED = 0xFF55E7ED;
     private static final int UNREACHABLE = 0xFFB03A2E;
-    private static final int SCROLL_TRACK = 0xFF3E4752;
-    private static final int SCROLL_KNOB = 0xFF8B959F;
-    private static final int SCROLL_KNOB_HELD = 0xFFB8C2CC;
-    private static final int MIN_KNOB = 12;
 
     private final AnimatedBar energyBar = new AnimatedBar();
     private final TabStrip tabs;
-    private final int rowWidth;
     private EditBox nameBox;
-    private boolean draggingKnob;
 
     public TeleporterScreen(TeleporterMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, TeleporterMenu.IMAGE_WIDTH, TeleporterMenu.INVENTORY_Y + 82);
-        this.rowWidth = menu.scrollable() ? ROW_FULL_WIDTH - SCROLL_GUTTER : ROW_FULL_WIDTH;
         titleLabelX = LABEL_X;
         inventoryLabelX = LABEL_X;
         inventoryLabelY = TeleporterMenu.INVENTORY_Y - 12;
@@ -98,19 +93,14 @@ public final class TeleporterScreen extends AbstractContainerScreen<TeleporterMe
         int y = topPos;
         drawPanel(graphics, x, y, imageWidth, imageHeight);
         drawSlots(graphics, x, y, menu.slots);
-        for (int row = 0; row < TeleporterMenu.VISIBLE; row++) {
-            // The last window of a level whose count is not a multiple of four runs off the end.
-            if (menu.cardAt(row) >= menu.cards()) continue;
-            int rowX = x + ROW_X;
-            int rowY = y + rowY(row);
-            boolean selected = menu.selected() == menu.cardAt(row);
-            graphics.fill(rowX - 1, rowY - 1, rowX + rowWidth + 1, rowY + ROW_HEIGHT + 1, selected ? SELECTED : ROW_BACK);
-            graphics.fill(rowX, rowY, rowX + rowWidth, rowY + ROW_HEIGHT, ROW_FACE);
-            if (menu.rowCard(row) != null && isOverRow(row, mouseX, mouseY)) {
-                graphics.fill(rowX, rowY, rowX + rowWidth, rowY + ROW_HEIGHT, 0x40FFFFFF);
-            }
+        int rowX = x + ROW_X;
+        int rowY = y + TeleporterMenu.CARD_Y;
+        boolean selected = menu.selected() == TeleporterBlockEntity.CARD_SLOT;
+        graphics.fill(rowX - 1, rowY - 1, rowX + ROW_WIDTH + 1, rowY + ROW_HEIGHT + 1, selected ? SELECTED : ROW_BACK);
+        graphics.fill(rowX, rowY, rowX + ROW_WIDTH, rowY + ROW_HEIGHT, ROW_FACE);
+        if (menu.card() != null && isOverRow(mouseX, mouseY)) {
+            graphics.fill(rowX, rowY, rowX + ROW_WIDTH, rowY + ROW_HEIGHT, 0x40FFFFFF);
         }
-        if (menu.scrollable()) drawScrollbar(graphics, x, y);
         int energyTop = y + ENERGY_TOP;
         graphics.fill(x + ENERGY_X, energyTop, x + ENERGY_X + ENERGY_WIDTH, energyTop + ENERGY_HEIGHT, BAR_BACK);
         float energyFill = energyBar.width(menu.energyStored(), menu.energyCapacity(), ENERGY_HEIGHT - 2, menu.isSynced());
@@ -119,87 +109,29 @@ public final class TeleporterScreen extends AbstractContainerScreen<TeleporterMe
         tabs.render(graphics, x, y, imageWidth, mouseX, mouseY);
     }
 
-    private static int rowY(int row) { return TeleporterMenu.CARD_Y + row * TeleporterMenu.CARD_SPACING; }
-
-    private static int scrollX() { return ROW_X + ROW_FULL_WIDTH - SCROLL_WIDTH; }
-
-    private static int scrollTop() { return TeleporterMenu.CARD_Y - 1; }
-
-    /** The knob's height: the share of the cards on screen, never too small to grab. */
-    private int knobHeight() {
-        return Math.max(MIN_KNOB, ENERGY_HEIGHT * TeleporterMenu.VISIBLE / menu.cards());
-    }
-
-    private int knobY() {
-        int travel = ENERGY_HEIGHT - knobHeight();
-        return scrollTop() + (menu.maxScroll() == 0 ? 0 : travel * menu.scrollRow() / menu.maxScroll());
-    }
-
-    private void drawScrollbar(GuiGraphicsExtractor graphics, int x, int y) {
-        int barX = x + scrollX();
-        int top = y + scrollTop();
-        graphics.fill(barX, top, barX + SCROLL_WIDTH, top + ENERGY_HEIGHT, SCROLL_TRACK);
-        int knobY = y + knobY();
-        graphics.fill(barX, knobY, barX + SCROLL_WIDTH, knobY + knobHeight(),
-                draggingKnob ? SCROLL_KNOB_HELD : SCROLL_KNOB);
-    }
-
-    private boolean isOverRow(int row, int mouseX, int mouseY) {
+    private boolean isOverRow(int mouseX, int mouseY) {
         int rowX = leftPos + ROW_X;
-        int rowY = topPos + rowY(row);
-        return mouseX >= rowX && mouseX < rowX + rowWidth && mouseY >= rowY && mouseY < rowY + ROW_HEIGHT;
-    }
-
-    private boolean isOverScrollbar(double mouseX, double mouseY) {
-        if (!menu.scrollable()) return false;
-        int barX = leftPos + scrollX();
-        int top = topPos + scrollTop();
-        return mouseX >= barX && mouseX < barX + SCROLL_WIDTH && mouseY >= top && mouseY < top + ENERGY_HEIGHT;
-    }
-
-    /** Scrolls so the knob's middle sits under the pointer. */
-    private void dragTo(double mouseY) {
-        int travel = ENERGY_HEIGHT - knobHeight();
-        if (travel <= 0) return;
-        double offset = mouseY - topPos - scrollTop() - knobHeight() / 2.0;
-        scrollTo((int) Math.round(offset * menu.maxScroll() / travel));
-    }
-
-    /**
-     * Moves the window on both sides. The button goes out before whatever click follows it, on the
-     * same connection, so the server has already moved the rows by the time it resolves that click.
-     */
-    private void scrollTo(int row) {
-        int clamped = Math.clamp(row, 0, menu.maxScroll());
-        if (clamped == menu.scrollRow()) return;
-        menu.scrollTo(clamped);
-        var gameMode = Minecraft.getInstance().gameMode;
-        if (gameMode != null) {
-            gameMode.handleInventoryButtonClick(menu.containerId, TeleporterMenu.SCROLL_BASE + clamped);
-        }
+        int rowY = topPos + TeleporterMenu.CARD_Y;
+        return mouseX >= rowX && mouseX < rowX + ROW_WIDTH && mouseY >= rowY && mouseY < rowY + ROW_HEIGHT;
     }
 
     @Override
     protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         drawMachineTitle(graphics, font, title, menu.mk(), titleLabelX, titleLabelY, imageWidth - titleLabelX - 7);
         graphics.text(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, TEXT, false);
-        graphics.text(font, Component.translatable("gui.futuretech.teleporter.name"), LABEL_X, NAME_Y + 2, TEXT, false);
-        for (int row = 0; row < TeleporterMenu.VISIBLE; row++) {
-            if (menu.cardAt(row) >= menu.cards()) continue;
-            TeleportTarget target = menu.rowCard(row);
-            int textY = rowY(row) + (ROW_HEIGHT - font.lineHeight) / 2 + 1;
-            if (target == null) {
-                graphics.text(font, Component.translatable("gui.futuretech.teleporter.empty"), ROW_X + 4, textY, 0xFF8B959F, false);
-                continue;
-            }
-            boolean reaches = menu.rowReaches(row);
-            String cost = String.format("%,d FE", menu.rowCost(row));
-            int costWidth = font.width(cost);
-            String name = font.plainSubstrByWidth(target.name(), rowWidth - costWidth - 12);
-            int colour = reaches ? TITLE : UNREACHABLE;
-            graphics.text(font, name, ROW_X + 4, textY, colour, false);
-            graphics.text(font, cost, ROW_X + rowWidth - 4 - costWidth, textY, colour, false);
+        graphics.text(font, Component.translatable("gui.futuretech.teleporter.name"), NAME_LABEL_X, NAME_Y + 2, TEXT, false);
+        TeleportTarget target = menu.card();
+        int textY = TeleporterMenu.CARD_Y + (ROW_HEIGHT - font.lineHeight) / 2 + 1;
+        if (target == null) {
+            graphics.text(font, Component.translatable("gui.futuretech.teleporter.empty"), ROW_X + 4, textY, 0xFF8B959F, false);
+            return;
         }
+        String cost = String.format("%,d FE", menu.cost());
+        int costWidth = font.width(cost);
+        String name = font.plainSubstrByWidth(target.name(), ROW_WIDTH - costWidth - 12);
+        int colour = menu.reaches() ? TITLE : UNREACHABLE;
+        graphics.text(font, name, ROW_X + 4, textY, colour, false);
+        graphics.text(font, cost, ROW_X + ROW_WIDTH - 4 - costWidth, textY, colour, false);
     }
 
     @Override
@@ -207,15 +139,14 @@ public final class TeleporterScreen extends AbstractContainerScreen<TeleporterMe
         super.extractTooltip(graphics, mouseX, mouseY);
         energyTooltip(graphics, mouseX, mouseY, leftPos + ENERGY_X, topPos + ENERGY_TOP, ENERGY_WIDTH, ENERGY_HEIGHT,
                 menu.energyStored(), menu.energyCapacity());
-        for (int row = 0; row < TeleporterMenu.VISIBLE; row++) {
-            TeleportTarget target = menu.rowCard(row);
-            if (target == null || !isOverRow(row, mouseX, mouseY)) continue;
+        TeleportTarget target = menu.card();
+        if (target != null && isOverRow(mouseX, mouseY)) {
             var pos = target.pos().pos();
             var lines = new java.util.ArrayList<>(List.of(
                     Component.literal(target.name()).getVisualOrderText(),
                     Component.translatable("item.futuretech.teleport_card.target", pos.getX(), pos.getY(), pos.getZ(),
                             target.dimensionName()).getVisualOrderText()));
-            if (!menu.rowReaches(row)) {
+            if (!menu.reaches()) {
                 lines.add(Component.translatable("message.futuretech.teleporter.dimension", TeleporterBlockEntity.CROSS_DIMENSION_LEVEL).getVisualOrderText());
             }
             graphics.setTooltipForNextFrame(lines, mouseX, mouseY);
@@ -226,48 +157,15 @@ public final class TeleporterScreen extends AbstractContainerScreen<TeleporterMe
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         if (tabs.mouseClicked(event)) return true;
-        int mouseX = (int) event.x();
-        int mouseY = (int) event.y();
-        if (isOverScrollbar(event.x(), event.y())) {
-            draggingKnob = true;
-            dragTo(event.y());
-            return true;
-        }
-        for (int row = 0; row < TeleporterMenu.VISIBLE; row++) {
-            if (menu.rowCard(row) == null || !isOverRow(row, mouseX, mouseY)) continue;
+        if (menu.card() != null && isOverRow((int) event.x(), (int) event.y())) {
             var gameMode = Minecraft.getInstance().gameMode;
             if (gameMode != null) {
-                gameMode.handleInventoryButtonClick(menu.containerId, TeleporterMenu.SELECT_BASE + menu.cardAt(row));
+                gameMode.handleInventoryButtonClick(menu.containerId, TeleporterMenu.SELECT_BASE + TeleporterBlockEntity.CARD_SLOT);
             }
             Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
             return true;
         }
         return super.mouseClicked(event, doubleClick);
-    }
-
-    @Override
-    public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
-        if (draggingKnob) {
-            dragTo(event.y());
-            return true;
-        }
-        return super.mouseDragged(event, dx, dy);
-    }
-
-    @Override
-    public boolean mouseReleased(MouseButtonEvent event) {
-        draggingKnob = false;
-        return super.mouseReleased(event);
-    }
-
-    /** The wheel scrolls anywhere over the window, not only on the bar. */
-    @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        if (menu.scrollable() && scrollY != 0) {
-            scrollTo(menu.scrollRow() - (int) Math.signum(scrollY));
-            return true;
-        }
-        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 
     /** While the name box has the focus it takes the keys, the inventory key included; Escape still closes. */

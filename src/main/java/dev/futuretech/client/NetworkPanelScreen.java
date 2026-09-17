@@ -16,8 +16,9 @@ import net.minecraft.world.entity.player.Inventory;
 import java.util.List;
 
 /**
- * The teleporter's destinations, seen from the panel: one row per written card of the pad on the
- * panel's cables, empty slots left out. Clicking a row sets that card as the pad's destination,
+ * The teleporter's destinations, seen from the panel: one row per written card the pad on the
+ * panel's cables can send to — its own, then the storages' — empty slots left out. Clicking a
+ * row sets that card as the pad's destination,
  * the same card again unpicking it, the way the pad's own screen does. The pencil beside a row
  * opens that card in its own screen, to rename it and to colour the pad's beam for it.
  *
@@ -33,7 +34,6 @@ public final class NetworkPanelScreen extends AbstractContainerScreen<NetworkPan
     private static final int ROW_HEIGHT = 16;
     /** The pencil: a slot-sized button past the row, clear of the scrollbar. */
     private static final int PENCIL_X = ROW_X + ROW_WIDTH + 4;
-    private static final int PENCIL_WIDTH = 16;
     private static final int ROW_BACK = 0xFF56616D;
     private static final int ROW_FACE = 0xFF65717D;
     private static final int SELECTED = 0xFF55E7ED;
@@ -113,57 +113,13 @@ public final class NetworkPanelScreen extends AbstractContainerScreen<NetworkPan
             if (index >= rows()) break;
             int rowX = x + ROW_X;
             int top = y + rowY(row);
-            boolean chosen = pad != null && pad.selected() == cards().get(index).slot();
+            boolean chosen = pad != null && pad.chose(cards().get(index));
             graphics.fill(rowX - 1, top - 1, rowX + width + 1, top + ROW_HEIGHT + 1, chosen ? SELECTED : ROW_BACK);
             graphics.fill(rowX, top, rowX + width, top + ROW_HEIGHT, ROW_FACE);
             if (index == hovered) graphics.fill(rowX, top, rowX + width, top + ROW_HEIGHT, 0x40FFFFFF);
             drawPencil(graphics, x + PENCIL_X, top, index == hoveredPencil);
         }
         if (maxScroll() > 0) drawScrollbar(graphics, x, y);
-    }
-
-    /**
-     * The pencil, drawn pixel by pixel in the 16 by 16 of the button: the eraser at the top right,
-     * a three-pixel body down to the tip, and the graphite at the bottom left.
-     */
-    private static final String[] PENCIL = {
-            "................",
-            "................",
-            "...........EE...",
-            "..........EEE...",
-            ".........BBBE...",
-            "........BBBB....",
-            ".......BBBB.....",
-            "......BBBB......",
-            ".....BBBB.......",
-            "....TBBB........",
-            "...TTBB.........",
-            "..GTT...........",
-            "..GG............",
-            "................",
-            "................",
-            "................",
-    };
-    private static final int PENCIL_TIP = 0xFFC9A66B;
-
-    /** A slot-sized button in the row's style, with the pencil on it. */
-    private static void drawPencil(GuiGraphicsExtractor graphics, int x, int top, boolean lit) {
-        graphics.fill(x - 1, top - 1, x + PENCIL_WIDTH + 1, top + ROW_HEIGHT + 1, ROW_BACK);
-        graphics.fill(x, top, x + PENCIL_WIDTH, top + ROW_HEIGHT, ROW_FACE);
-        if (lit) graphics.fill(x, top, x + PENCIL_WIDTH, top + ROW_HEIGHT, 0x40FFFFFF);
-        for (int row = 0; row < PENCIL.length; row++) {
-            String line = PENCIL[row];
-            for (int col = 0; col < line.length(); col++) {
-                int colour = switch (line.charAt(col)) {
-                    case 'B' -> TITLE;
-                    case 'E' -> MUTED;
-                    case 'T' -> PENCIL_TIP;
-                    case 'G' -> TEXT;
-                    default -> 0;
-                };
-                if (colour != 0) graphics.fill(x + col, top + row, x + col + 1, top + row + 1, colour);
-            }
-        }
     }
 
     private void drawScrollbar(GuiGraphicsExtractor graphics, int x, int y) {
@@ -219,13 +175,15 @@ public final class NetworkPanelScreen extends AbstractContainerScreen<NetworkPan
         }
         int pencil = pencilAt(event.x(), event.y());
         if (pencil >= 0) {
-            Minecraft.getInstance().gui.pushScreenLayer(new CardEditScreen(cards().get(pencil)));
+            var card = cards().get(pencil);
+            Minecraft.getInstance().gui.pushScreenLayer(new CardEditScreen(card.name(), card.colour(),
+                    (name, colour) -> NetworkPanelMenu.sendEdit(card, name, colour)));
             Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
             return true;
         }
         int index = rowAt(event.x(), event.y());
         if (index >= 0) {
-            NetworkPanelMenu.sendPick(cards().get(index).slot());
+            NetworkPanelMenu.sendPick(cards().get(index));
             Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
             return true;
         }

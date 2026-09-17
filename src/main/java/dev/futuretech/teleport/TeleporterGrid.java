@@ -4,11 +4,13 @@ import dev.futuretech.block.AbstractCableBlock;
 import dev.futuretech.block.NetworkCableBlock;
 import dev.futuretech.block.NetworkPanelBlock;
 import dev.futuretech.block.entity.AbstractCableBlockEntity;
+import dev.futuretech.block.entity.StorageCardsBlockEntity;
 import dev.futuretech.block.entity.TeleporterBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.PipeBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayDeque;
@@ -19,10 +21,11 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * What a network panel reaches: the teleporters on the far end of the network cables running from
- * it. The walk is the same flood-fill the other cables do, but nothing is carried and nothing is
- * cached — a panel is only asked while a player has its screen open, which is rare enough that
- * walking the cables then costs less than keeping a network alive for every panel in the world.
+ * What a network panel or a pad reaches: the teleporters and card storages on the far end of the
+ * network cables running from it. The walk is the same flood-fill the other cables do, but nothing
+ * is carried and nothing is cached — it is only asked while a player has a screen open or a trip
+ * is about to happen, which is rare enough that walking the cables then costs less than keeping a
+ * network alive for every panel in the world.
  *
  * <p>Only a cable's own links are followed, so a side the wrench cut stops the walk exactly the
  * way it stops energy: cutting a cable is how a player splits one panel's pads from another's.
@@ -43,15 +46,16 @@ public final class TeleporterGrid {
     }
 
     /**
-     * What one walk saw: the pads, and how many cables it went through to find them. The count is
-     * what lets the panel tell "no cable is touching me" from "the cables reach no pad", which are
-     * two different things for the player to go and fix.
+     * What one walk saw: the pads, the card storages, and how many cables it went through to find
+     * them. The count is what lets the panel tell "no cable is touching me" from "the cables reach
+     * no pad", which are two different things for the player to go and fix.
      */
-    public record Walk(List<BlockPos> pads, int cables) {}
+    public record Walk(List<BlockPos> pads, List<BlockPos> storages, int cables) {}
 
     public static Walk walk(LevelReader level, BlockPos start) {
         Set<BlockPos> cables = new HashSet<>();
         Set<BlockPos> found = new HashSet<>();
+        Set<BlockPos> storages = new HashSet<>();
         ArrayDeque<BlockPos> queue = new ArrayDeque<>();
         // The first step out of the panel. A cable's link flag towards a panel or a pad says
         // nothing the cut bit does not: the cable links to those blocks for being those blocks, so
@@ -70,9 +74,12 @@ public final class TeleporterGrid {
             for (Direction side : Direction.values()) {
                 BlockPos neighbour = pos.relative(side);
                 if (!level.hasChunkAt(neighbour.getX(), neighbour.getZ())) continue;
-                if (level.getBlockEntity(neighbour) instanceof TeleporterBlockEntity) {
-                    // Same rule as the panel: the pad is reached unless that side was cut.
-                    if (!isCut(level, pos, side)) found.add(neighbour.immutable());
+                BlockEntity entity = level.getBlockEntity(neighbour);
+                if (entity instanceof TeleporterBlockEntity || entity instanceof StorageCardsBlockEntity) {
+                    // Same rule as the panel: the block is reached unless that side was cut.
+                    if (!isCut(level, pos, side)) {
+                        (entity instanceof TeleporterBlockEntity ? found : storages).add(neighbour.immutable());
+                    }
                     continue;
                 }
                 if (!state.getValue(PipeBlock.PROPERTY_BY_DIRECTION.get(side))) continue;
@@ -85,10 +92,15 @@ public final class TeleporterGrid {
                 }
             }
         }
+        return new Walk(nearestFirst(found, start), nearestFirst(storages, start), cables.size());
+    }
+
+    /** Nearest first and then by position, so a list keeps the same order between openings. */
+    private static List<BlockPos> nearestFirst(Set<BlockPos> found, BlockPos start) {
         List<BlockPos> result = new ArrayList<>(found);
         result.sort(Comparator.comparingDouble((BlockPos pos) -> pos.distSqr(start))
                 .thenComparingInt(BlockPos::getX).thenComparingInt(BlockPos::getY).thenComparingInt(BlockPos::getZ));
-        return new Walk(result, cables.size());
+        return result;
     }
 
     /**

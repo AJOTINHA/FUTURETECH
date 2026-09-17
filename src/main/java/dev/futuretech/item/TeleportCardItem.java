@@ -1,6 +1,7 @@
 package dev.futuretech.item;
 
 import dev.futuretech.block.entity.TeleporterBlockEntity;
+import dev.futuretech.menu.TeleporterMenu;
 import dev.futuretech.registry.ModDataComponents;
 import dev.futuretech.teleport.TeleportTarget;
 import net.minecraft.ChatFormatting;
@@ -34,6 +35,21 @@ public final class TeleportCardItem extends Item {
 
     /** A card with a destination on it, the only kind a teleporter's slots take. */
     public static boolean isWritten(ItemStack stack) { return target(stack) != null; }
+
+    /**
+     * The target as the player edited it: the label the screens show for that destination and the
+     * colour a pad's beam takes for it, never the pad it points at. A blank name falls back to the
+     * destination's coordinates, the way a card written on a nameless pad reads.
+     */
+    public static TeleportTarget edited(TeleportTarget target, String name, int colour) {
+        String trimmed = name.strip();
+        if (trimmed.length() > TeleporterMenu.NAME_LENGTH) trimmed = trimmed.substring(0, TeleporterMenu.NAME_LENGTH);
+        if (trimmed.isBlank()) {
+            var pos = target.pos().pos();
+            trimmed = pos.getX() + ", " + pos.getY() + ", " + pos.getZ();
+        }
+        return new TeleportTarget(target.pos(), trimmed, colour & 0xFFFFFF);
+    }
 
     @Override
     public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) {

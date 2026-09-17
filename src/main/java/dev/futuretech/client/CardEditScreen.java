@@ -3,9 +3,7 @@ package dev.futuretech.client;
 import static dev.futuretech.client.MachineScreenStyle.*;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import dev.futuretech.menu.NetworkPanelMenu;
 import dev.futuretech.menu.TeleporterMenu;
-import dev.futuretech.teleport.PanelView;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -16,10 +14,11 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 
 /**
- * One card of the panel's pad, opened from its pencil: the name the rows show for it, and the
- * colour the pad's beam takes while it is the destination. Done sends both up at once; Cancel and
- * Escape go back to the panel with nothing sent. It is a layer pushed over the panel's screen,
- * which stays underneath with its menu open, and popping the layer lands back on it as it was.
+ * One card, opened from the pencil beside its row on the panel or in the storage: the name the
+ * rows show for it, and the colour a pad's beam takes while it is the destination. Done hands both
+ * to whoever opened the screen, which knows where to send them; Cancel and Escape go back with
+ * nothing sent. It is a layer pushed over the screen underneath, which stays with its menu open,
+ * and popping the layer lands back on it as it was.
  */
 public final class CardEditScreen extends Screen {
     private static final int WIDTH = 176;
@@ -48,16 +47,23 @@ public final class CardEditScreen extends Screen {
             0xFDCC02, 0xC8F542, 0x5BE36B, 0x1FA97A, 0xFFFFFF, 0xB8C2CC, 0x6B7480, 0x283541,
     };
 
-    private final PanelView.Card card;
+    /** What to do with the name and colour when the player is done: send them where the card is. */
+    public interface Done {
+        void accept(String name, int colour);
+    }
+
+    private final String name;
+    private final Done done;
     private int colour;
     private EditBox nameBox;
     private int left;
     private int top;
 
-    public CardEditScreen(PanelView.Card card) {
+    public CardEditScreen(String name, int colour, Done done) {
         super(Component.translatable("gui.futuretech.network_panel.rename"));
-        this.card = card;
-        this.colour = card.colour();
+        this.name = name;
+        this.colour = colour;
+        this.done = done;
     }
 
     @Override
@@ -65,7 +71,7 @@ public final class CardEditScreen extends Screen {
         super.init();
         left = (width - WIDTH) / 2;
         top = (height - HEIGHT) / 2;
-        String typed = nameBox == null ? card.name() : nameBox.getValue();
+        String typed = nameBox == null ? name : nameBox.getValue();
         nameBox = new EditBox(font, left + NAME_X, top + NAME_Y, NAME_WIDTH, NAME_HEIGHT,
                 Component.translatable("gui.futuretech.teleporter.name"));
         nameBox.setMaxLength(TeleporterMenu.NAME_LENGTH);
@@ -79,7 +85,7 @@ public final class CardEditScreen extends Screen {
     }
 
     private void done() {
-        NetworkPanelMenu.sendEdit(card.slot(), nameBox.getValue(), colour);
+        done.accept(nameBox.getValue(), colour);
         onClose();
     }
 

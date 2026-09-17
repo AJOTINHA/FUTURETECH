@@ -14,6 +14,7 @@ import dev.futuretech.block.ItemCableTier;
 import dev.futuretech.block.LavaGeneratorBlock;
 import dev.futuretech.block.NetworkCableBlock;
 import dev.futuretech.block.NetworkPanelBlock;
+import dev.futuretech.block.StorageCardsBlock;
 import dev.futuretech.block.ChargerBlock;
 import dev.futuretech.block.LaneMachineBlock;
 import dev.futuretech.block.LaneMachineKind;
@@ -124,6 +125,12 @@ public final class ModBlocks {
             "network_panel", NetworkPanelBlock::new, properties -> properties
                     .mapColor(MapColor.COLOR_PURPLE).strength(3.5F, 6.0F).sound(SoundType.METAL)
                     .noOcclusion()
+                    .requiresCorrectToolForDrops());
+
+    // The card storage holds the network's destinations; no energy and nothing to tick either.
+    public static final DeferredBlock<StorageCardsBlock> STORAGE_CARDS = BLOCKS.registerBlock(
+            "storage_cards", StorageCardsBlock::new, properties -> properties
+                    .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
                     .requiresCorrectToolForDrops());
 
     public static final DeferredBlock<FluidTankBlock> FLUID_TANK = BLOCKS.registerBlock(

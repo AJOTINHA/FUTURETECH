@@ -15,9 +15,9 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The panel's menu holds no slots but the player's own: what it shows lives in another block, and
+ * The panel's menu holds no slots but the player's own: what it shows lives in other blocks, and
  * arrives as a {@link PanelView} over its own packet. The server rebuilds that view now and then
- * while the screen is open and sends it when it changed, so a card moved in the pad a hundred
+ * while the screen is open and sends it when it changed, so a card moved in a storage a hundred
  * blocks away shows up here without the player closing anything.
  */
 public final class NetworkPanelMenu extends MachineMenu {
@@ -75,25 +75,25 @@ public final class NetworkPanelMenu extends MachineMenu {
     public void setView(PanelView view) { this.view = view; }
 
     /** The server's side of a pick: written to the panel's own pad, and shown back on the next view. */
-    public void pick(int card) {
-        if (panel != null && panel.pick(card)) untilRefresh = 0;
+    public void pick(BlockPos source, int slot) {
+        if (panel != null && panel.pick(source, slot)) untilRefresh = 0;
     }
 
     /** The client's side: ask for the change, and let the next view come back with the answer. */
-    public static void sendPick(int card) {
+    public static void sendPick(PanelView.Card card) {
         net.neoforged.neoforge.client.network.ClientPacketDistributor.sendToServer(
-                new NetworkPanelPayloads.Pick(card));
+                new NetworkPanelPayloads.Pick(card.source(), card.slot()));
     }
 
-    /** The server's side of a card's edit: written to the card in the panel's own pad, and shown back on the next view. */
-    public void edit(int slot, String name, int colour) {
-        if (panel != null && panel.editCard(slot, name, colour)) untilRefresh = 0;
+    /** The server's side of a card's edit: written to the card where it is kept, and shown back on the next view. */
+    public void edit(BlockPos source, int slot, String name, int colour) {
+        if (panel != null && panel.editCard(source, slot, name, colour)) untilRefresh = 0;
     }
 
     /** The client's side: name and colour go up once, when the player is done with them. */
-    public static void sendEdit(int slot, String name, int colour) {
+    public static void sendEdit(PanelView.Card card, String name, int colour) {
         net.neoforged.neoforge.client.network.ClientPacketDistributor.sendToServer(
-                new NetworkPanelPayloads.Edit(slot, name, colour));
+                new NetworkPanelPayloads.Edit(card.source(), card.slot(), name, colour));
     }
 
     /**

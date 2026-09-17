@@ -13,6 +13,7 @@ import dev.futuretech.menu.TeleporterMenu;
 import dev.futuretech.registry.ModBlockEntities;
 import dev.futuretech.registry.ModDataComponents;
 import dev.futuretech.teleport.TeleportTarget;
+import dev.futuretech.teleport.TeleporterGrid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.HolderLookup;
@@ -45,16 +46,19 @@ import org.jspecify.annotations.Nullable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
 /**
- * A pad that sends whoever stands on it to another teleporter. The destinations are the teleport
- * cards in its slots; the player picks one on the screen, and the pad lights up to say it is
- * armed. Standing on the pad charges for a moment, then the trip is paid from the buffer, base plus distance, and the player lands on the
- * other pad, where nothing happens until they step off and back on. The pick is spent with the
- * trip: the pad goes back to sending nowhere until someone picks again. Every level charges
- * faster and travels cheaper; only an MK4 crosses into another dimension.
+ * A pad that sends whoever stands on it to another teleporter. The destinations are the one
+ * teleport card in its slot and every card in the storages on its network cables; the player
+ * picks one on the pad's screen or on a network panel, and the pad lights up to say it is armed.
+ * Standing on the pad charges for a moment, then the trip is paid from the buffer, base plus
+ * distance, and the player lands on the other pad, where nothing happens until they step off and
+ * back on. The pick is spent with the trip: the pad goes back to sending nowhere until someone
+ * picks again. Every level charges faster and travels cheaper; only an MK4 crosses into another
+ * dimension.
  */
 public final class TeleporterBlockEntity extends BaseContainerBlockEntity implements RedstoneControllable, Upgradeable {
     public static final int CAPACITY = 100_000;
@@ -70,16 +74,16 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
     public static final int CHARGE_TICKS = 20;
     /** The level that reaches other dimensions. */
     public static final int CROSS_DIMENSION_LEVEL = 4;
-    /** Card slots an MK1 has; every level above it doubles the count. */
-    public static final int BASE_CARDS = 4;
-    /** What an MK4 reaches, and the size the slots are always stored at. */
-    public static final int MAX_CARDS = BASE_CARDS << (MachineLevel.MAX - 1);
+    /** The one card slot a pad has, at every level; the rest of its destinations live on the network. */
+    public static final int CARD_SLOT = 0;
     public static final int DATA_ENERGY_LOW = 0;
     public static final int DATA_ENERGY_HIGH = 1;
-    /** The card slot chosen as destination, or -1. */
+    /** The pad's own card slot when it is the chosen destination, or -1: a network card is not this slot. */
     public static final int DATA_SELECTED = 2;
     public static final int DATA_CHARGING = 3;
-    public static final int DATA_REDSTONE_BASE = 4;
+    /** What the chosen trip costs, wherever its card is; zero with nothing chosen. */
+    public static final int DATA_COST = 4;
+    public static final int DATA_REDSTONE_BASE = 5;
     public static final int DATA_MK = DATA_REDSTONE_BASE + RedstoneControl.DATA_COUNT;
     public static final int DATA_COUNT = DATA_MK + 1;
 
@@ -90,11 +94,19 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
         boolean go(ServerPlayer player, TeleportTarget target);
     }
 
-    private NonNullList<ItemStack> cards = NonNullList.withSize(MAX_CARDS, ItemStack.EMPTY);
+    private NonNullList<ItemStack> cards = NonNullList.withSize(1, ItemStack.EMPTY);
     private String name = "";
+    /**
+     * The chosen destination: a slot, and the card storage it is in, or null for the pad's own
+     * slot. -1 with nothing chosen. A storage is named by position and read when asked, so a card
+     * moved or a storage broken simply leaves the pad sending nowhere.
+     */
     private int selected = -1;
+    private @Nullable BlockPos selectedSource;
     /** The beam's colour as the client last heard it; the server reads it off the chosen card instead. */
     private int beamColour = TeleportTarget.DEFAULT_COLOUR;
+    /** What the client was last told the beam's colour is, so a change is sent once. */
+    private int syncedBeam = TeleportTarget.DEFAULT_COLOUR;
     /** Ticks each player on the pad has been charging; a player who steps off is dropped. */
     private final Map<UUID, Integer> charging = new HashMap<>();
     /** Players who arrived here and have not stepped off yet: the pad does nothing for them. */
@@ -111,8 +123,12 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
             return switch (index) {
                 case DATA_ENERGY_LOW -> EnergySync.low(energy.getAmountAsInt());
                 case DATA_ENERGY_HIGH -> EnergySync.high(energy.getAmountAsInt());
-                case DATA_SELECTED -> selected;
+                case DATA_SELECTED -> selected();
                 case DATA_CHARGING -> active ? 1 : 0;
+                case DATA_COST -> {
+                    TeleportTarget target = target();
+                    yield target == null ? 0 : cost(globalPos(), target, MachineLevel.of(getBlockState()));
+                }
                 case DATA_MK -> MachineLevel.of(getBlockState());
                 default -> {
                     if (index >= DATA_REDSTONE_BASE && index < DATA_MK) yield redstone.data(index - DATA_REDSTONE_BASE);
@@ -170,23 +186,18 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
     }
 
     /**
-     * Edits the card in {@code slot}: the label this pad shows for that destination and the colour
-     * its beam takes, never the pad it points at. A blank name falls back to the destination's
-     * coordinates, the way a card written on a nameless pad reads. False for a locked or empty slot.
+     * Edits the pad's own card: the label the screens show for that destination and the colour
+     * the beam takes for it, never the pad it points at. False with no card in the slot.
      */
     public boolean editCard(int slot, String name, int colour) {
-        if (slot < 0 || slot >= unlockedCards()) return false;
+        if (slot != CARD_SLOT) return false;
         ItemStack card = cards.get(slot);
         TeleportTarget target = TeleportCardItem.target(card);
         if (target == null) return false;
-        String trimmed = name.strip();
-        if (trimmed.length() > TeleporterMenu.NAME_LENGTH) trimmed = trimmed.substring(0, TeleporterMenu.NAME_LENGTH);
-        String label = displayName(trimmed, target.pos().pos());
-        int rgb = colour & 0xFFFFFF;
-        if (label.equals(target.name()) && rgb == target.colour()) return false;
-        card.set(ModDataComponents.TELEPORT_TARGET.get(), new TeleportTarget(target.pos(), label, rgb));
+        TeleportTarget edited = TeleportCardItem.edited(target, name, colour);
+        if (edited.equals(target)) return false;
+        card.set(ModDataComponents.TELEPORT_TARGET.get(), edited);
         setChanged();
-        sync();
         return true;
     }
 
@@ -200,11 +211,16 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
         return target == null ? TeleportTarget.DEFAULT_COLOUR : target.colour();
     }
 
-    /** Sends the client what the beam should look like now: its colour rides on the update packet. */
-    private void sync() {
-        if (level != null && !level.isClientSide()) {
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
-        }
+    /**
+     * Sends the client what the beam should look like now, once per change: its colour rides on
+     * the update packet. Checked every tick rather than on every path that could change it,
+     * because a card in a storage far away can change under the pad without the pad hearing.
+     */
+    private void syncBeam() {
+        int beam = beamColour();
+        if (beam == syncedBeam || level == null || level.isClientSide()) return;
+        syncedBeam = beam;
+        level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
     }
 
     public void setName(String name) {
@@ -215,42 +231,47 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
         setChanged();
     }
 
+    /** The pad's own slot when it is the chosen destination, or -1: none, or a card on the network. */
+    public int selected() { return selectedSource == null ? selected : -1; }
+
+    /** The chosen slot, in the pad or in the storage {@link #selectedSource()} names; -1 for none. */
+    public int selectedSlot() { return selected; }
+
+    /** The card storage the chosen card is in, or null when it is the pad's own or there is none. */
+    public @Nullable BlockPos selectedSource() { return selectedSource; }
+
+    /** Picks the pad's own card slot; the same slot again unpicks it. */
+    public void select(int slot) { select(null, slot); }
+
     /**
-     * How many card slots a level-{@code mk} pad has: four at MK1, doubling each level, so an MK4
-     * holds {@value #MAX_CARDS}. The slots are always stored at the full size and only the first
-     * of them take a card, the way the upgrade slots unlock — a pad never has to resize, and an
-     * upgrade only opens what was already there.
+     * Picks a destination: the pad's own slot with {@code source} null, or a slot of the card
+     * storage at {@code source}. The same pick again unpicks it, and a slot that cannot exist
+     * counts as unpicking.
      */
-    public static int cards(int mk) {
-        return BASE_CARDS << (Math.clamp(mk, 1, MachineLevel.MAX) - 1);
-    }
-
-    /** The card slots this pad has open at its level. */
-    public int unlockedCards() { return cards(MachineLevel.of(getBlockState())); }
-
-    /** The card slot the player chose, or -1 for none. */
-    public int selected() { return selected; }
-
-    /** Picks a card slot; the same slot again unpicks it. */
-    public void select(int slot) {
-        int next = slot < 0 || slot >= unlockedCards() || slot == selected ? -1 : slot;
-        if (next == selected) return;
-        selected = next;
+    public void select(@Nullable BlockPos source, int slot) {
+        boolean exists = source == null ? slot == CARD_SLOT : slot >= 0 && slot < StorageCardsBlockEntity.SLOTS;
+        boolean same = slot == selected && Objects.equals(source, selectedSource);
+        if (!exists || same) {
+            source = null;
+            slot = -1;
+        }
+        if (slot == selected && Objects.equals(source, selectedSource)) return;
+        selected = slot;
+        selectedSource = source == null ? null : source.immutable();
         charging.clear();
         setChanged();
-        sync();
     }
 
-    /** A card put in or taken out may be the chosen one, and the beam's colour with it. */
-    @Override
-    public void setItem(int slot, ItemStack stack) {
-        super.setItem(slot, stack);
-        sync();
-    }
-
-    /** Where the pad sends players right now: the chosen card's target, or null with no card there. */
+    /**
+     * Where the pad sends players right now: the chosen card's target, or null with no card
+     * there. A network card is read off its storage on the spot, so it is gone the moment the
+     * card or the storage is.
+     */
     public @Nullable TeleportTarget target() {
-        return selected < 0 ? null : TeleportCardItem.target(cards.get(selected));
+        if (selected < 0) return null;
+        if (selectedSource == null) return TeleportCardItem.target(cards.get(selected));
+        return level != null && level.getBlockEntity(selectedSource) instanceof StorageCardsBlockEntity storage
+                ? storage.target(selected) : null;
     }
 
     /** Whether the pad would send someone who stepped on: a destination chosen and redstone not holding it. */
@@ -300,6 +321,7 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
         // Lit while armed, and for a moment after a trip: the light says the pad is ready to send.
         boolean lit = teleporter.litHold.update(teleporter.tick((ServerLevel) level)) || teleporter.armed();
         if (state.getValue(TeleporterBlock.LIT) != lit) level.setBlock(pos, state.setValue(TeleporterBlock.LIT, lit), 3);
+        teleporter.syncBeam();
         teleporter.comparator.update(level, pos, state, EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(teleporter.energy));
     }
 
@@ -345,6 +367,13 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
     boolean attempt(ServerLevel level, ServerPlayer player, TeleportTarget target, Trip trip) {
         int mk = MachineLevel.of(getBlockState());
         GlobalPos from = globalPos();
+        // A network card is only a destination while its storage is still on this pad's cables:
+        // the pick was made down them, and a cable cut since takes the destination with it.
+        if (selectedSource != null && !TeleporterGrid.walk(level, worldPosition).storages().contains(selectedSource)) {
+            player.sendOverlayMessage(Component.translatable("message.futuretech.teleporter.network"));
+            select(null, -1);
+            return false;
+        }
         if (!reaches(from, target, mk)) {
             player.sendOverlayMessage(Component.translatable("message.futuretech.teleporter.dimension", CROSS_DIMENSION_LEVEL));
             return false;
@@ -361,8 +390,8 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
         }
         energy.set(energy.getAmountAsInt() - cost);
         selected = -1;
+        selectedSource = null;
         charging.clear();
-        sync();
         level.sendParticles(ParticleTypes.REVERSE_PORTAL, centre.x, centre.y + 1.2, centre.z, 40, 0.3, 0.6, 0.3, 0.2);
         level.playSound(null, worldPosition, SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, 1.0F, 1.0F);
         setChanged();
@@ -385,13 +414,15 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
     @Override
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
-        cards = NonNullList.withSize(MAX_CARDS, ItemStack.EMPTY);
+        cards = NonNullList.withSize(1, ItemStack.EMPTY);
         ContainerHelper.loadAllItems(input, cards);
         upgrades.load(input);
         energy.setCapacity(MachineLevel.capacity(CAPACITY, MachineLevel.of(getBlockState())));
         energy.set(Math.clamp(input.getIntOr("Energy", 0), 0, energy.getCapacityAsInt()));
         name = input.getStringOr("Name", "");
-        selected = Math.clamp(input.getIntOr("Selected", -1), -1, MAX_CARDS - 1);
+        selectedSource = input.read("SelectedSource", BlockPos.CODEC).orElse(null);
+        selected = Math.clamp(input.getIntOr("Selected", -1), -1,
+                (selectedSource == null ? 1 : StorageCardsBlockEntity.SLOTS) - 1);
         beamColour = input.getIntOr("Beam", TeleportTarget.DEFAULT_COLOUR);
         redstone.load(input);
     }
@@ -403,6 +434,7 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
         output.putInt("Energy", energy.getAmountAsInt());
         if (!name.isEmpty()) output.putString("Name", name);
         output.putInt("Selected", selected);
+        if (selectedSource != null) output.store("SelectedSource", BlockPos.CODEC, selectedSource);
         redstone.save(output);
         upgrades.save(output);
     }
@@ -424,12 +456,12 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
 
     @Override
     public boolean canPlaceItem(int slot, ItemStack stack) {
-        return slot < unlockedCards() && TeleportCardItem.isWritten(stack);
+        return slot == CARD_SLOT && TeleportCardItem.isWritten(stack);
     }
 
-    /** Always the full size: the locked slots exist and stay empty, so an upgrade never resizes. */
+    /** The one slot, at every level. */
     @Override
-    public int getContainerSize() { return MAX_CARDS; }
+    public int getContainerSize() { return 1; }
 
     @Override
     protected NonNullList<ItemStack> getItems() { return cards; }

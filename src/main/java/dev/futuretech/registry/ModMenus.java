@@ -62,6 +62,8 @@ public final class ModMenus {
 
     public static final DeferredHolder<MenuType<?>, MenuType<dev.futuretech.menu.NetworkPanelMenu>> NETWORK_PANEL =
             TYPES.register("network_panel", () -> IMenuTypeExtension.create(dev.futuretech.menu.NetworkPanelMenu::new));
+    public static final DeferredHolder<MenuType<?>, MenuType<dev.futuretech.menu.StorageCardsMenu>> STORAGE_CARDS =
+            TYPES.register("storage_cards", () -> IMenuTypeExtension.create(dev.futuretech.menu.StorageCardsMenu::new));
 
     public static final DeferredHolder<MenuType<?>, MenuType<CableConnectorMenu>> CABLE_CONNECTOR = TYPES.register(
             "cable_connector", () -> IMenuTypeExtension.create(CableConnectorMenu::new));

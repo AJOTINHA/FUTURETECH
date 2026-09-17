@@ -170,6 +170,7 @@ public final class ModItems {
     public static final DeferredItem<BlockItem> NETWORK_CABLE = ITEMS.registerSimpleBlockItem(ModBlocks.NETWORK_CABLE);
 
     public static final DeferredItem<BlockItem> NETWORK_PANEL = ITEMS.registerSimpleBlockItem(ModBlocks.NETWORK_PANEL);
+    public static final DeferredItem<BlockItem> STORAGE_CARDS = ITEMS.registerSimpleBlockItem(ModBlocks.STORAGE_CARDS);
 
     /** Filter card for item cable connectors; its list and mode live in data components. */
     public static final DeferredItem<ItemFilterItem> FILTER = ITEMS.registerItem(

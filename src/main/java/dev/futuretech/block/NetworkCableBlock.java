@@ -19,9 +19,10 @@ import org.jspecify.annotations.Nullable;
  * The network cable: the shape, the links, the wrench and the facades every cable shares, and
  * nothing flowing through them yet. It has one size, so there is no tier to choose between.
  *
- * <p>The one machine it reaches for is the teleporter. Every other cable asks the neighbour for
- * the capability of what it carries; this one carries nothing yet, so it names the block instead,
- * and every other machine beside it stays a neighbour it never touches.
+ * <p>What it reaches for is the teleporter, the panel that sets it and the card storage that
+ * feeds it. Every other cable asks the neighbour for the capability of what it carries; this one
+ * carries nothing yet, so it names the blocks instead, and every other machine beside it stays a
+ * neighbour it never touches.
  */
 public final class NetworkCableBlock extends AbstractCableBlock {
     public static final MapCodec<NetworkCableBlock> CODEC = simpleCodec(NetworkCableBlock::new);
@@ -44,13 +45,14 @@ public final class NetworkCableBlock extends AbstractCableBlock {
     }
 
     /**
-     * The teleporter and the panel that sets it: the two blocks this cable has anything to say to.
-     * A pad takes a cable on any face, but a panel is a plate with a front and a back, and only
-     * its back — the face it is mounted on — has anywhere for a cable to go.
+     * The teleporter, the card storage and the panel that sets it: the blocks this cable has
+     * anything to say to. A pad or a storage takes a cable on any face, but a panel is a plate
+     * with a front and a back, and only its back — the face it is mounted on — has anywhere for a
+     * cable to go.
      */
     @Override
     protected boolean linksTo(BlockState neighbour, Direction side) {
-        if (neighbour.getBlock() instanceof TeleporterBlock) return true;
+        if (neighbour.getBlock() instanceof TeleporterBlock || neighbour.getBlock() instanceof StorageCardsBlock) return true;
         // The panel lies `side` of this cable, so the cable is on the panel's `side.getOpposite()`
         // face; that is its back when the screen looks the other way, which is `side`.
         return neighbour.getBlock() instanceof NetworkPanelBlock

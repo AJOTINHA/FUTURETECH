@@ -18,7 +18,7 @@ import net.neoforged.testframework.junit.EphemeralTestServerProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
-/** The teleporter's sums and its slots: what a trip costs by level and distance, and which cards it takes. */
+/** The teleporter's sums and its slot: what a trip costs by level and distance, which card it takes, and what a pick names. */
 @ExtendWith(EphemeralTestServerProvider.class)
 class TeleporterTest {
     private static final GlobalPos HOME = GlobalPos.of(Level.OVERWORLD, BlockPos.ZERO);
@@ -54,62 +54,63 @@ class TeleporterTest {
                 ModBlocks.TELEPORTER.get().defaultBlockState().setValue(MachineLevel.MK, mk));
     }
 
-    /** Four cards at MK1, doubling each level, and the store always the size an MK4 needs. */
+    /** One card slot at every level; the rest of a pad's destinations live on the network. */
     @Test
-    void everyLevelDoublesTheCardSlotsAndOnlyTheOpenOnesTakeACard(MinecraftServer server) {
-        assertEquals(BASE_CARDS, cards(1));
-        assertEquals(8, cards(2));
-        assertEquals(16, cards(3));
-        assertEquals(MAX_CARDS, cards(4));
-        assertEquals(32, MAX_CARDS);
-        // Out of range clamps rather than shifting past the store; a pad is never MK0 or MK5.
-        assertEquals(cards(1), cards(0));
-        assertEquals(cards(4), cards(9));
-
+    void everyLevelHoldsOneCardAndNothingElse(MinecraftServer server) {
         var written = new ItemStack(ModItems.TELEPORT_CARD.get());
         written.set(ModDataComponents.TELEPORT_TARGET.get(), target(GlobalPos.of(Level.OVERWORLD, BlockPos.ZERO)));
         for (int mk = 1; mk <= MachineLevel.MAX; mk++) {
             var pad = pad(mk);
-            assertEquals(MAX_CARDS, pad.getContainerSize(), "the store never resizes");
-            assertEquals(cards(mk), pad.unlockedCards(), "MK" + mk);
-            assertTrue(pad.canPlaceItem(cards(mk) - 1, written), "MK" + mk + " reaches its last slot");
-            if (mk < MachineLevel.MAX) {
-                assertFalse(pad.canPlaceItem(cards(mk), written), "MK" + mk + " stops at its last slot");
-            }
+            assertEquals(1, pad.getContainerSize(), "MK" + mk);
+            assertTrue(pad.canPlaceItem(CARD_SLOT, written), "MK" + mk + " takes a card in its slot");
+            assertFalse(pad.canPlaceItem(1, written), "MK" + mk + " has no second slot");
         }
     }
 
-    /** A slot the level has not opened is no destination, however the pick arrives. */
+    /** A slot that does not exist is no destination, however the pick arrives. */
     @Test
-    void aLockedSlotCannotBeChosen(MinecraftServer server) {
+    void aSlotThatDoesNotExistCannotBeChosen(MinecraftServer server) {
         var pad = pad(1);
-        var written = new ItemStack(ModItems.TELEPORT_CARD.get());
-        var there = target(GlobalPos.of(Level.OVERWORLD, new BlockPos(5, 64, 5)));
-        written.set(ModDataComponents.TELEPORT_TARGET.get(), there);
-        // The card is put straight into the store, past canPlaceItem, the way a loaded world could.
-        pad.setItem(cards(1), written);
-        pad.select(cards(1));
-        assertEquals(-1, pad.selected(), "a locked slot is not picked");
+        pad.select(1);
+        assertEquals(-1, pad.selected(), "a second slot is not picked");
         assertNull(pad.target());
-        pad.select(MAX_CARDS);
-        assertEquals(-1, pad.selected(), "nor is one past the store");
+        pad.select(new BlockPos(1, 2, 3), StorageCardsBlockEntity.SLOTS);
+        assertEquals(-1, pad.selectedSlot(), "nor is one past a storage's shelf");
+        assertNull(pad.selectedSource());
     }
 
-    /** What an upgrade does to the cards: opens more slots, and keeps what was already in them. */
+    /**
+     * A pick on the network names the storage and the slot in it; the pad's own slot is then not
+     * the chosen one, and the same pick again unpicks it.
+     */
     @Test
-    void anUpgradeOpensMoreSlotsAndKeepsTheCardsAlreadyThere(MinecraftServer server) {
+    void aPickOnTheNetworkNamesTheStorageAndItsSlot(MinecraftServer server) {
+        var pad = pad(1);
+        var storage = new BlockPos(4, 64, 4);
+        pad.select(storage, 3);
+        assertEquals(storage, pad.selectedSource());
+        assertEquals(3, pad.selectedSlot());
+        assertEquals(-1, pad.selected(), "the pad's own slot is not the chosen one");
+        assertNull(pad.target(), "no world to read the storage from, so nowhere to send");
+        pad.select(storage, 3);
+        assertNull(pad.selectedSource(), "the same pick again unpicks it");
+        assertEquals(-1, pad.selectedSlot());
+    }
+
+    /** What an upgrade does to the card: nothing, it keeps the card and the choice. */
+    @Test
+    void anUpgradeKeepsTheCardAndTheChoice(MinecraftServer server) {
         var written = new ItemStack(ModItems.TELEPORT_CARD.get());
         var there = target(GlobalPos.of(Level.OVERWORLD, new BlockPos(5, 64, 5)));
         written.set(ModDataComponents.TELEPORT_TARGET.get(), there);
         var pad = pad(1);
-        pad.setItem(0, written);
-        pad.select(0);
+        pad.setItem(CARD_SLOT, written);
+        pad.select(CARD_SLOT);
         assertEquals(there, pad.target());
         // The MK lives in the block state, so an upgrade is the same entity under a new state.
         pad.setBlockState(ModBlocks.TELEPORTER.get().defaultBlockState().setValue(MachineLevel.MK, 2));
-        assertEquals(8, pad.unlockedCards());
         assertEquals(there, pad.target(), "the chosen card survives the upgrade");
-        assertTrue(pad.canPlaceItem(7, written), "the new slots are open");
+        assertTrue(pad.canPlaceItem(CARD_SLOT, written));
     }
 
     @Test
@@ -120,17 +121,18 @@ class TeleporterTest {
         var there = target(GlobalPos.of(Level.OVERWORLD, new BlockPos(5, 64, 5)));
         written.set(ModDataComponents.TELEPORT_TARGET.get(), there);
         assertFalse(TeleportCardItem.isWritten(blank));
-        assertFalse(teleporter.canPlaceItem(0, blank));
-        assertTrue(teleporter.canPlaceItem(0, written));
+        assertFalse(teleporter.canPlaceItem(CARD_SLOT, blank));
+        assertTrue(teleporter.canPlaceItem(CARD_SLOT, written));
         assertNull(teleporter.target(), "nothing chosen yet");
-        teleporter.setItem(1, written);
-        teleporter.select(1);
-        assertEquals(1, teleporter.selected());
+        teleporter.setItem(CARD_SLOT, written);
+        teleporter.select(CARD_SLOT);
+        assertEquals(CARD_SLOT, teleporter.selected());
         assertEquals(there, teleporter.target());
         // Choosing the same slot again unchooses it; an empty slot is no destination.
-        teleporter.select(1);
+        teleporter.select(CARD_SLOT);
         assertEquals(-1, teleporter.selected());
-        teleporter.select(0);
+        teleporter.setItem(CARD_SLOT, ItemStack.EMPTY);
+        teleporter.select(CARD_SLOT);
         assertNull(teleporter.target());
         teleporter.setName("  Base  ");
         assertEquals("Base", teleporter.name());

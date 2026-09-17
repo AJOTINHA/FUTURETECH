@@ -40,6 +40,55 @@ public final class MachineScreenStyle {
         graphics.fillGradient(x + 2, y + 18, x + width - 2, y + 20, 0x18000000, 0x00000000);
     }
 
+    /** The pencil button beside a card row: a slot-sized square in the row's colours. */
+    public static final int PENCIL_WIDTH = 16;
+    private static final int PENCIL_ROW_BACK = 0xFF56616D;
+    private static final int PENCIL_ROW_FACE = 0xFF65717D;
+    private static final int PENCIL_MUTED = 0xFF8B959F;
+    private static final int PENCIL_TIP = 0xFFC9A66B;
+    /**
+     * The pencil, drawn pixel by pixel in the 16 by 16 of the button: the eraser at the top right,
+     * a three-pixel body down to the tip, and the graphite at the bottom left.
+     */
+    private static final String[] PENCIL = {
+            "................",
+            "................",
+            "...........EE...",
+            "..........EEE...",
+            ".........BBBE...",
+            "........BBBB....",
+            ".......BBBB.....",
+            "......BBBB......",
+            ".....BBBB.......",
+            "....TBBB........",
+            "...TTBB.........",
+            "..GTT...........",
+            "..GG............",
+            "................",
+            "................",
+            "................",
+    };
+
+    /** A slot-sized button in the card rows' style, with the pencil on it, at the row's {@code top}. */
+    static void drawPencil(GuiGraphicsExtractor graphics, int x, int top, boolean lit) {
+        graphics.fill(x - 1, top - 1, x + PENCIL_WIDTH + 1, top + PENCIL_WIDTH + 1, PENCIL_ROW_BACK);
+        graphics.fill(x, top, x + PENCIL_WIDTH, top + PENCIL_WIDTH, PENCIL_ROW_FACE);
+        if (lit) graphics.fill(x, top, x + PENCIL_WIDTH, top + PENCIL_WIDTH, 0x40FFFFFF);
+        for (int row = 0; row < PENCIL.length; row++) {
+            String line = PENCIL[row];
+            for (int col = 0; col < line.length(); col++) {
+                int colour = switch (line.charAt(col)) {
+                    case 'B' -> TITLE;
+                    case 'E' -> PENCIL_MUTED;
+                    case 'T' -> PENCIL_TIP;
+                    case 'G' -> TEXT;
+                    default -> 0;
+                };
+                if (colour != 0) graphics.fill(x + col, top + row, x + col + 1, top + row + 1, colour);
+            }
+        }
+    }
+
     /** Draws the panel's own slots; upgrade slots are drawn by their tab instead. */
     static void drawSlots(GuiGraphicsExtractor graphics, int x, int y, Iterable<Slot> slots) {
         for (Slot slot : slots) {
