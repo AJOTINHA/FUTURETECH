@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "EPE",
+    "DMD",
+    "IRI"
+  ],
+  "key": {
+    "E": "minecraft:ender_pearl",
+    "P": "futuretech:steel_plate",
+    "D": "minecraft:diamond",
+    "M": "futuretech:machine_casing",
+    "I": "minecraft:iron_ingot",
+    "R": "minecraft:redstone"
+  },
+  "result": {
+    "id": "futuretech:teleporter",
+    "count": 1
+  }
+}

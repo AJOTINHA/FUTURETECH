@@ -1,5 +1,7 @@
 package dev.futuretech.registry;
 
+import dev.futuretech.teleport.TeleportTarget;
+
 import dev.futuretech.FutureTech;
 import dev.futuretech.item.ItemFilterMode;
 import dev.futuretech.item.StoredTankFluid;
@@ -57,6 +59,13 @@ public final class ModDataComponents {
             TYPES.register("facade_block", () -> DataComponentType.<BlockState>builder()
                     .persistent(BlockState.CODEC)
                     .networkSynchronized(ByteBufCodecs.idMapper(Block.BLOCK_STATE_REGISTRY))
+                    .build());
+
+    /** Where a teleport card points, with the name of the teleporter there. Absent means a blank card. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<TeleportTarget>> TELEPORT_TARGET =
+            TYPES.register("teleport_target", () -> DataComponentType.<TeleportTarget>builder()
+                    .persistent(TeleportTarget.CODEC)
+                    .networkSynchronized(TeleportTarget.STREAM_CODEC)
                     .build());
 
     private ModDataComponents() {}

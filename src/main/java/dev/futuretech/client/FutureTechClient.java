@@ -81,6 +81,7 @@ public final class FutureTechClient {
         event.register(ModMenus.SMELTERY.get(), SmelteryScreen::new);
         event.register(ModMenus.PAINT_MACHINE.get(), PaintMachineScreen::new);
         event.register(ModMenus.WATER_PUMP.get(), WaterPumpScreen::new);
+        event.register(ModMenus.TELEPORTER.get(), TeleporterScreen::new);
         event.register(ModMenus.CABLE_CONNECTOR.get(), CableConnectorScreen::new);
         event.register(ModMenus.ITEM_FILTER.get(), ItemFilterScreen::new);
     }

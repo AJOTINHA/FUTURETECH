@@ -17,6 +17,7 @@ import dev.futuretech.block.entity.LaneMachineBlockEntity;
 import dev.futuretech.block.entity.MetalPressBlockEntity;
 import dev.futuretech.block.entity.PaintMachineBlockEntity;
 import dev.futuretech.block.entity.SmelteryBlockEntity;
+import dev.futuretech.block.entity.TeleporterBlockEntity;
 import dev.futuretech.block.entity.WaterPumpBlockEntity;
 import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
 import net.minecraft.core.registries.Registries;
@@ -64,6 +65,8 @@ public final class ModBlockEntities {
             TYPES.register("paint_machine", () -> new BlockEntityType<>(PaintMachineBlockEntity::new, ModBlocks.PAINT_MACHINE.get()));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<WaterPumpBlockEntity>> WATER_PUMP =
             TYPES.register("water_pump", () -> new BlockEntityType<>(WaterPumpBlockEntity::new, ModBlocks.WATER_PUMP.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TeleporterBlockEntity>> TELEPORTER =
+            TYPES.register("teleporter", () -> new BlockEntityType<>(TeleporterBlockEntity::new, ModBlocks.TELEPORTER.get()));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BatteryBlockEntity>> BATTERY =
             TYPES.register("battery", () -> new BlockEntityType<>(
@@ -119,6 +122,8 @@ public final class ModBlockEntities {
                 SidedItems.view(pump, pump.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Fluid.BLOCK, WATER_PUMP.get(), (pump, side) ->
                 SidedFluids.outflow(pump.water(), pump.sideConfig(), side));
+        // The teleporter takes energy on every face and has no items to offer.
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, TELEPORTER.get(), (teleporter, side) -> teleporter.energy());
         event.registerBlockEntity(Capabilities.Energy.BLOCK, ASSEMBLER.get(), (assembler, side) -> assembler.energyHandler());
         event.registerBlockEntity(Capabilities.Fluid.BLOCK, FLUID_TANK.get(), (tank, side) -> tank.handler(side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, CHARGER.get(), (charger, side) ->

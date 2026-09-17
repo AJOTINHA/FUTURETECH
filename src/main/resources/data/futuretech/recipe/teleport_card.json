@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PPP",
+    "PEP",
+    "PPP"
+  ],
+  "key": {
+    "P": "minecraft:paper",
+    "E": "minecraft:ender_pearl"
+  },
+  "result": {
+    "id": "futuretech:teleport_card",
+    "count": 4
+  }
+}

@@ -30,6 +30,7 @@ public final class FutureTech {
         modEventBus.addListener(ModBlockEntities::registerCapabilities);
         modEventBus.addListener(ItemJourneys::register);
         modEventBus.addListener(PerfProfiling::registerPayloads);
+        modEventBus.addListener(dev.futuretech.teleport.TeleporterRenamePayload::register);
         NeoForge.EVENT_BUS.addListener(PerfProfiling::registerCommands);
         NeoForge.EVENT_BUS.addListener(PerfProfiling::onServerTick);
         NeoForge.EVENT_BUS.addListener(AreaMining::onBreak);

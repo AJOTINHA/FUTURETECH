@@ -10,6 +10,7 @@ import dev.futuretech.item.WrenchItem;
 import dev.futuretech.item.AreaToolItem;
 import dev.futuretech.item.MachineUpgradeKitItem;
 import dev.futuretech.item.PortableBatteryItem;
+import dev.futuretech.item.TeleportCardItem;
 import dev.futuretech.item.TieredMachineBlockItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -114,6 +115,11 @@ public final class ModItems {
     public static final DeferredItem<TieredMachineBlockItem> WATER_PUMP = ITEMS.registerItem(
             "water_pump", properties -> new TieredMachineBlockItem(ModBlocks.WATER_PUMP.get(), properties),
             properties -> properties.useBlockDescriptionPrefix());
+    public static final DeferredItem<TieredMachineBlockItem> TELEPORTER = ITEMS.registerItem(
+            "teleporter", properties -> new TieredMachineBlockItem(ModBlocks.TELEPORTER.get(), properties),
+            properties -> properties.useBlockDescriptionPrefix());
+    /** Remembers one teleporter; in another teleporter's slots it is a destination. */
+    public static final DeferredItem<TeleportCardItem> TELEPORT_CARD = ITEMS.registerItem("teleport_card", TeleportCardItem::new);
     public static final DeferredItem<Item> GOLD_POWDER = ITEMS.registerSimpleItem("gold_powder");
     public static final DeferredItem<Item> COPPER_POWDER = ITEMS.registerSimpleItem("copper_powder");
     public static final DeferredItem<Item> STEEL_INGOT = ITEMS.registerSimpleItem("steel_ingot");

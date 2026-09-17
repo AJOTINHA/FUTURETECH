@@ -19,6 +19,7 @@ import dev.futuretech.block.MetalPressBlock;
 import dev.futuretech.block.MachineCasingBlock;
 import dev.futuretech.block.PaintMachineBlock;
 import dev.futuretech.block.SmelteryBlock;
+import dev.futuretech.block.TeleporterBlock;
 import dev.futuretech.block.WaterPumpBlock;
 import dev.futuretech.block.SolidFuelGeneratorBlock;
 import net.minecraft.world.level.block.Block;
@@ -109,6 +110,12 @@ public final class ModBlocks {
             "water_pump", WaterPumpBlock::new, properties -> properties
                     .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
                     .requiresCorrectToolForDrops());
+
+    public static final DeferredBlock<TeleporterBlock> TELEPORTER = BLOCKS.registerBlock(
+            "teleporter", TeleporterBlock::new, properties -> properties
+                    .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops()
+                    .lightLevel(state -> state.getValue(TeleporterBlock.LIT) ? 10 : 0));
 
     public static final DeferredBlock<FluidTankBlock> FLUID_TANK = BLOCKS.registerBlock(
             "fluid_tank", FluidTankBlock::new, properties -> properties
