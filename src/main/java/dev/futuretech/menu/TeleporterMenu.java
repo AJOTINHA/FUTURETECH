@@ -40,14 +40,26 @@ public final class TeleporterMenu extends MachineMenu implements RedstoneControl
     public static final int CARD_X = 8;
     public static final int CARD_Y = 36;
     public static final int CARD_SPACING = 18;
-    public static final int INVENTORY_Y = 122;
+    /**
+     * Rows on screen at once, whatever the level holds. The window stays the size it has always
+     * been and the rows scroll through it, rather than the window growing with the pad: an MK4
+     * laid out a row per card would be seven hundred pixels tall.
+     */
+    public static final int VISIBLE = 4;
+    public static final int INVENTORY_Y = CARD_Y + VISIBLE * CARD_SPACING + 14;
     public static final int NAME_LENGTH = 24;
     /** {@code SELECT_BASE + slot} picks that card as the destination; past the redstone buttons. */
     public static final int SELECT_BASE = RedstoneControlMenu.BUTTON_BASE + RedstoneMode.values().length + 10;
+    /** {@code SCROLL_BASE + row} puts that card at the top of the window; past every select button. */
+    public static final int SCROLL_BASE = SELECT_BASE + MAX_CARDS + 1;
 
     private final Container contents;
     private final ContainerData data;
     private final int mk;
+    /** Card slots this level opened; what the window scrolls through. */
+    private final int cards;
+    /** The card showing in the window's top row. Both sides keep it, and clamp it the same way. */
+    private int scrollRow;
     private final GlobalPos pos;
     private String name;
     private final int inventoryStart;
@@ -61,7 +73,7 @@ public final class TeleporterMenu extends MachineMenu implements RedstoneControl
 
     /** Client side: the upgrade slots lock by the same MK, so the tab draws them right before any sync. */
     private TeleporterMenu(int id, Inventory inventory, int mk, GlobalPos pos, String name) {
-        this(id, inventory, new SimpleContainer(CARDS), new UpgradeInventory(() -> mk, () -> {}),
+        this(id, inventory, new SimpleContainer(MAX_CARDS), new UpgradeInventory(() -> mk, () -> {}),
                 new SimpleContainerData(DATA_COUNT), mk, pos, name);
     }
 
@@ -72,25 +84,20 @@ public final class TeleporterMenu extends MachineMenu implements RedstoneControl
     private TeleporterMenu(int id, Inventory inventory, Container contents, UpgradeInventory upgrades, ContainerData data,
                            int mk, GlobalPos pos, String name) {
         super(ModMenus.TELEPORTER.get(), id);
-        checkContainerSize(contents, CARDS);
+        checkContainerSize(contents, MAX_CARDS);
         checkContainerDataCount(data, DATA_COUNT);
         this.contents = contents;
         this.data = data;
         this.mk = Math.clamp(mk, 1, MachineLevel.MAX);
+        this.cards = TeleporterBlockEntity.cards(this.mk);
         this.pos = pos;
         this.name = name;
-        this.inventoryStart = CARDS;
+        // One Slot per visible row, never per card: the row is the fixed thing and the card behind
+        // it changes as the window scrolls.
+        this.inventoryStart = VISIBLE;
         this.inventoryEnd = inventoryStart + 36;
         this.hotbarStart = inventoryEnd - 9;
-        for (int card = 0; card < CARDS; card++) {
-            addSlot(new Slot(contents, card, CARD_X, CARD_Y + card * CARD_SPACING) {
-                @Override
-                public boolean mayPlace(ItemStack stack) { return TeleportCardItem.isWritten(stack); }
-
-                @Override
-                public int getMaxStackSize() { return 1; }
-            });
-        }
+        for (int row = 0; row < VISIBLE; row++) addSlot(new CardSlot(contents, row));
         addStandardInventorySlots(inventory, 8, INVENTORY_Y);
         UpgradeSlots.addSlots(upgrades, IMAGE_WIDTH, this::addSlot);
         addDataSlots(data);
@@ -108,6 +115,29 @@ public final class TeleporterMenu extends MachineMenu implements RedstoneControl
 
     public int mk() { return mk; }
 
+    /** How many cards this pad holds: four at MK1, doubling each level. */
+    public int cards() { return cards; }
+
+    /** Whether there are more cards than rows, which is when the scrollbar has anything to do. */
+    public boolean scrollable() { return cards > VISIBLE; }
+
+    /** The furthest the window can be scrolled down; zero when everything already fits. */
+    public int maxScroll() { return Math.max(0, cards - VISIBLE); }
+
+    public int scrollRow() { return scrollRow; }
+
+    /** The card showing in {@code row} of the window right now. */
+    public int cardAt(int row) { return scrollRow + row; }
+
+    /**
+     * Moves the window. Both sides clamp the same way, so a scroll the server trims lands where
+     * the client put it; the click that follows travels behind the scroll on the same connection,
+     * so the server has already moved the window by the time it resolves which card was hit.
+     */
+    public void scrollTo(int row) {
+        scrollRow = Math.clamp(row, 0, maxScroll());
+    }
+
     public GlobalPos pos() { return pos; }
 
     /** The name as last known here; the screen keeps it while the player types. */
@@ -117,6 +147,26 @@ public final class TeleporterMenu extends MachineMenu implements RedstoneControl
 
     /** The card in a slot, or null with none there. */
     public @Nullable TeleportTarget card(int slot) { return TeleportCardItem.target(contents.getItem(slot)); }
+
+    /**
+     * The card showing in {@code row} of the window, read through the row's own slot rather than
+     * by index: the slot is what the server fills, so it is right even on the tick a scroll lands.
+     */
+    public @Nullable TeleportTarget rowCard(int row) {
+        return TeleportCardItem.target(slots.get(row).getItem());
+    }
+
+    /** What a trip to the card showing in {@code row} costs from here, at this level. */
+    public int rowCost(int row) {
+        TeleportTarget target = rowCard(row);
+        return target == null ? 0 : TeleporterBlockEntity.cost(pos, target, mk);
+    }
+
+    /** Whether this level can go where the card showing in {@code row} points. */
+    public boolean rowReaches(int row) {
+        TeleportTarget target = rowCard(row);
+        return target != null && TeleporterBlockEntity.reaches(pos, target, mk);
+    }
 
     public int selected() { return data.get(DATA_SELECTED); }
 
@@ -160,8 +210,14 @@ public final class TeleporterMenu extends MachineMenu implements RedstoneControl
 
     @Override
     public boolean clickMenuButton(Player player, int buttonId) {
-        if (buttonId >= SELECT_BASE && buttonId < SELECT_BASE + CARDS) {
+        if (buttonId >= SELECT_BASE && buttonId < SELECT_BASE + cards) {
             if (contents instanceof TeleporterBlockEntity teleporter) teleporter.select(buttonId - SELECT_BASE);
+            return true;
+        }
+        if (buttonId >= SCROLL_BASE && buttonId <= SCROLL_BASE + maxScroll()) {
+            scrollTo(buttonId - SCROLL_BASE);
+            // The rows now show other cards; the client is holding what the old ones had.
+            broadcastFullState();
             return true;
         }
         return RedstoneControlMenu.handleButton(contents instanceof RedstoneControllable target ? target : null, buttonId);
@@ -173,8 +229,19 @@ public final class TeleporterMenu extends MachineMenu implements RedstoneControl
         this.name = name;
     }
 
+    /**
+      * Also closes when the pad's level changes underneath: this is the one machine whose slot
+      * count is its MK, so a screen opened on an MK1 and upgraded by someone else would be rows
+      * short of the server's. Closing it means the next open lays the rows out again.
+      */
     @Override
-    public boolean stillValid(Player player) { return contents.stillValid(player); }
+    public boolean stillValid(Player player) {
+        if (contents instanceof TeleporterBlockEntity teleporter
+                && MachineLevel.of(teleporter.getBlockState()) != mk) {
+            return false;
+        }
+        return contents.stillValid(player);
+    }
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
@@ -188,7 +255,7 @@ public final class TeleporterMenu extends MachineMenu implements RedstoneControl
             if (!moveItemStackTo(stack, inventoryStart, inventoryEnd, true)) return ItemStack.EMPTY;
         } else if (UpgradeInventory.isUpgrade(stack)) {
             if (!moveItemStackTo(stack, inventoryEnd, inventoryEnd + UpgradeInventory.SLOTS, false)) return ItemStack.EMPTY;
-        } else if (!TeleportCardItem.isWritten(stack) || !moveItemStackTo(stack, 0, CARDS, false)) {
+        } else if (!TeleportCardItem.isWritten(stack) || !moveItemStackTo(stack, 0, VISIBLE, false)) {
             if (index < hotbarStart) {
                 if (!moveItemStackTo(stack, hotbarStart, inventoryEnd, false)) return ItemStack.EMPTY;
             } else if (!moveItemStackTo(stack, inventoryStart, hotbarStart, false)) {
@@ -200,5 +267,49 @@ public final class TeleporterMenu extends MachineMenu implements RedstoneControl
         if (stack.getCount() == original.getCount()) return ItemStack.EMPTY;
         slot.onTake(player, stack);
         return original;
+    }
+    /**
+     * A row of the window, bound to whichever card is scrolled under it. The slot's own position
+     * and container index are final in vanilla, so the index is the thing that moves: every read
+     * and write goes through {@link #card()}, and a row past the end of this level's cards is
+     * simply not there.
+     */
+    private final class CardSlot extends Slot {
+        private final int row;
+
+        private CardSlot(Container contents, int row) {
+            super(contents, row, CARD_X, CARD_Y + row * CARD_SPACING);
+            this.row = row;
+        }
+
+        /** The card this row is showing right now. */
+        private int card() { return scrollRow + row; }
+
+        @Override
+        public int getSlotIndex() { return card(); }
+
+        @Override
+        public ItemStack getItem() { return contents.getItem(card()); }
+
+        @Override
+        public void set(ItemStack stack) {
+            contents.setItem(card(), stack);
+            setChanged();
+        }
+
+        @Override
+        public ItemStack remove(int amount) { return contents.removeItem(card(), amount); }
+
+        @Override
+        public boolean mayPlace(ItemStack stack) {
+            return card() < cards && TeleportCardItem.isWritten(stack);
+        }
+
+        /** The last window of a level whose count is not a multiple of four can run off the end. */
+        @Override
+        public boolean isActive() { return card() < cards; }
+
+        @Override
+        public int getMaxStackSize() { return 1; }
     }
 }

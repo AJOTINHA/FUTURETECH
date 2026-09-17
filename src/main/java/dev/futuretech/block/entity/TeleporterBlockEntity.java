@@ -66,7 +66,10 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
     public static final int CHARGE_TICKS = 20;
     /** The level that reaches other dimensions. */
     public static final int CROSS_DIMENSION_LEVEL = 4;
-    public static final int CARDS = 4;
+    /** Card slots an MK1 has; every level above it doubles the count. */
+    public static final int BASE_CARDS = 4;
+    /** What an MK4 reaches, and the size the slots are always stored at. */
+    public static final int MAX_CARDS = BASE_CARDS << (MachineLevel.MAX - 1);
     public static final int DATA_ENERGY_LOW = 0;
     public static final int DATA_ENERGY_HIGH = 1;
     /** The card slot chosen as destination, or -1. */
@@ -83,7 +86,7 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
         boolean go(ServerPlayer player, TeleportTarget target);
     }
 
-    private NonNullList<ItemStack> cards = NonNullList.withSize(CARDS, ItemStack.EMPTY);
+    private NonNullList<ItemStack> cards = NonNullList.withSize(MAX_CARDS, ItemStack.EMPTY);
     private String name = "";
     private int selected = -1;
     /** Ticks each player on the pad has been charging; a player who steps off is dropped. */
@@ -166,12 +169,25 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
         setChanged();
     }
 
+    /**
+     * How many card slots a level-{@code mk} pad has: four at MK1, doubling each level, so an MK4
+     * holds {@value #MAX_CARDS}. The slots are always stored at the full size and only the first
+     * of them take a card, the way the upgrade slots unlock — a pad never has to resize, and an
+     * upgrade only opens what was already there.
+     */
+    public static int cards(int mk) {
+        return BASE_CARDS << (Math.clamp(mk, 1, MachineLevel.MAX) - 1);
+    }
+
+    /** The card slots this pad has open at its level. */
+    public int unlockedCards() { return cards(MachineLevel.of(getBlockState())); }
+
     /** The card slot the player chose, or -1 for none. */
     public int selected() { return selected; }
 
     /** Picks a card slot; the same slot again unpicks it. */
     public void select(int slot) {
-        int next = slot < 0 || slot >= CARDS || slot == selected ? -1 : slot;
+        int next = slot < 0 || slot >= unlockedCards() || slot == selected ? -1 : slot;
         if (next == selected) return;
         selected = next;
         charging.clear();
@@ -306,13 +322,13 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
     @Override
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
-        cards = NonNullList.withSize(CARDS, ItemStack.EMPTY);
+        cards = NonNullList.withSize(MAX_CARDS, ItemStack.EMPTY);
         ContainerHelper.loadAllItems(input, cards);
         upgrades.load(input);
         energy.setCapacity(MachineLevel.capacity(CAPACITY, MachineLevel.of(getBlockState())));
         energy.set(Math.clamp(input.getIntOr("Energy", 0), 0, energy.getCapacityAsInt()));
         name = input.getStringOr("Name", "");
-        selected = Math.clamp(input.getIntOr("Selected", -1), -1, CARDS - 1);
+        selected = Math.clamp(input.getIntOr("Selected", -1), -1, MAX_CARDS - 1);
         redstone.load(input);
     }
 
@@ -336,10 +352,13 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
     }
 
     @Override
-    public boolean canPlaceItem(int slot, ItemStack stack) { return slot < CARDS && TeleportCardItem.isWritten(stack); }
+    public boolean canPlaceItem(int slot, ItemStack stack) {
+        return slot < unlockedCards() && TeleportCardItem.isWritten(stack);
+    }
 
+    /** Always the full size: the locked slots exist and stay empty, so an upgrade never resizes. */
     @Override
-    public int getContainerSize() { return CARDS; }
+    public int getContainerSize() { return MAX_CARDS; }
 
     @Override
     protected NonNullList<ItemStack> getItems() { return cards; }

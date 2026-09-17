@@ -49,6 +49,69 @@ class TeleporterTest {
         assertTrue(chargeTicks(4) < chargeTicks(1));
     }
 
+    private static TeleporterBlockEntity pad(int mk) {
+        return new TeleporterBlockEntity(BlockPos.ZERO,
+                ModBlocks.TELEPORTER.get().defaultBlockState().setValue(MachineLevel.MK, mk));
+    }
+
+    /** Four cards at MK1, doubling each level, and the store always the size an MK4 needs. */
+    @Test
+    void everyLevelDoublesTheCardSlotsAndOnlyTheOpenOnesTakeACard(MinecraftServer server) {
+        assertEquals(BASE_CARDS, cards(1));
+        assertEquals(8, cards(2));
+        assertEquals(16, cards(3));
+        assertEquals(MAX_CARDS, cards(4));
+        assertEquals(32, MAX_CARDS);
+        // Out of range clamps rather than shifting past the store; a pad is never MK0 or MK5.
+        assertEquals(cards(1), cards(0));
+        assertEquals(cards(4), cards(9));
+
+        var written = new ItemStack(ModItems.TELEPORT_CARD.get());
+        written.set(ModDataComponents.TELEPORT_TARGET.get(), target(GlobalPos.of(Level.OVERWORLD, BlockPos.ZERO)));
+        for (int mk = 1; mk <= MachineLevel.MAX; mk++) {
+            var pad = pad(mk);
+            assertEquals(MAX_CARDS, pad.getContainerSize(), "the store never resizes");
+            assertEquals(cards(mk), pad.unlockedCards(), "MK" + mk);
+            assertTrue(pad.canPlaceItem(cards(mk) - 1, written), "MK" + mk + " reaches its last slot");
+            if (mk < MachineLevel.MAX) {
+                assertFalse(pad.canPlaceItem(cards(mk), written), "MK" + mk + " stops at its last slot");
+            }
+        }
+    }
+
+    /** A slot the level has not opened is no destination, however the pick arrives. */
+    @Test
+    void aLockedSlotCannotBeChosen(MinecraftServer server) {
+        var pad = pad(1);
+        var written = new ItemStack(ModItems.TELEPORT_CARD.get());
+        var there = target(GlobalPos.of(Level.OVERWORLD, new BlockPos(5, 64, 5)));
+        written.set(ModDataComponents.TELEPORT_TARGET.get(), there);
+        // The card is put straight into the store, past canPlaceItem, the way a loaded world could.
+        pad.setItem(cards(1), written);
+        pad.select(cards(1));
+        assertEquals(-1, pad.selected(), "a locked slot is not picked");
+        assertNull(pad.target());
+        pad.select(MAX_CARDS);
+        assertEquals(-1, pad.selected(), "nor is one past the store");
+    }
+
+    /** What an upgrade does to the cards: opens more slots, and keeps what was already in them. */
+    @Test
+    void anUpgradeOpensMoreSlotsAndKeepsTheCardsAlreadyThere(MinecraftServer server) {
+        var written = new ItemStack(ModItems.TELEPORT_CARD.get());
+        var there = target(GlobalPos.of(Level.OVERWORLD, new BlockPos(5, 64, 5)));
+        written.set(ModDataComponents.TELEPORT_TARGET.get(), there);
+        var pad = pad(1);
+        pad.setItem(0, written);
+        pad.select(0);
+        assertEquals(there, pad.target());
+        // The MK lives in the block state, so an upgrade is the same entity under a new state.
+        pad.setBlockState(ModBlocks.TELEPORTER.get().defaultBlockState().setValue(MachineLevel.MK, 2));
+        assertEquals(8, pad.unlockedCards());
+        assertEquals(there, pad.target(), "the chosen card survives the upgrade");
+        assertTrue(pad.canPlaceItem(7, written), "the new slots are open");
+    }
+
     @Test
     void cardSlotsTakeWrittenCardsOnlyAndTheChosenOneIsTheDestination(MinecraftServer server) {
         var teleporter = new TeleporterBlockEntity(BlockPos.ZERO, ModBlocks.TELEPORTER.get().defaultBlockState().setValue(MachineLevel.MK, 1));
