@@ -41,9 +41,10 @@ import java.util.Set;
  */
 public final class MelterMenu extends MachineMenu implements SideConfigMenu, RedstoneControlMenu, EnergyInfoMenu {
     public static final int IMAGE_WIDTH = 176;
+    /** The slot on the smeltery's row, and the inventory where the smeltery has it: the same window. */
     public static final int SLOT_X = 44;
-    public static final int SLOT_Y = 40;
-    public static final int INVENTORY_Y = 84;
+    public static final int SLOT_Y = 45;
+    public static final int INVENTORY_Y = 102;
     private static final int PLAYER_START = INVENTORY_SIZE;
     private static final int HOTBAR_START = PLAYER_START + 27;
     private static final int PLAYER_END = HOTBAR_START + 9;

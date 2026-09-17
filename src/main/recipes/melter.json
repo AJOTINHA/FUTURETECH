@@ -5,12 +5,28 @@
       "ingredient": "minecraft:cobblestone",
       "result": {
         "id": "minecraft:lava",
-        "amount": 100
+        "amount": 50
       },
       "duration": 100
     },
     "lava_from_stone": {
       "ingredient": "minecraft:stone",
+      "result": {
+        "id": "minecraft:lava",
+        "amount": 100
+      },
+      "duration": 100
+    },
+    "lava_from_cobbled_deepslate": {
+      "ingredient": "minecraft:cobbled_deepslate",
+      "result": {
+        "id": "minecraft:lava",
+        "amount": 50
+      },
+      "duration": 100
+    },
+    "lava_from_deepslate": {
+      "ingredient": "minecraft:deepslate",
       "result": {
         "id": "minecraft:lava",
         "amount": 100

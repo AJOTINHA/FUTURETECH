@@ -18,9 +18,9 @@ import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.fluids.FluidStack;
 
 /**
- * The melter's screen: the input slot, the progress arrow running from it into the tank, the
- * tank drawn with its fluid's own texture, and the energy column at the right; the machine tabs
- * beside the window.
+ * The melter's screen: the energy column at the left as on every machine, then the input slot,
+ * the progress arrow running from it into the tank, and the tank drawn with its fluid's own
+ * texture; the machine tabs beside the window.
  */
 public final class MelterScreen extends AbstractContainerScreen<MelterMenu> {
     private static final int ARROW_X = MelterMenu.SLOT_X + 24;
@@ -34,15 +34,19 @@ public final class MelterScreen extends AbstractContainerScreen<MelterMenu> {
     private static final int ARROW_BACK = 0xFF56616D;
     private static final int ARROW_START = 0xFFEC761C;
     private static final int ARROW_END = 0xFFFFD76A;
-    /** The tank stands past the arrow, spanning the slot's row and the rows around it. */
+    /** The furnace's flame, centred under the slot a couple of rows below its border, lit while melting. */
+    private static final int FLAME_X = MelterMenu.SLOT_X + 1;
+    private static final int FLAME_Y = MelterMenu.SLOT_Y + 19;
+    /** The tank stands past the arrow, centred on the slot's row like the energy column. */
     private static final int TANK_X = ARROW_X + ARROW_WIDTH + 8;
-    private static final int TANK_Y = 24;
     private static final int TANK_WIDTH = 16;
     private static final int TANK_HEIGHT = 48;
-    private static final int ENERGY_X = 158;
-    private static final int ENERGY_TOP = TANK_Y;
+    private static final int TANK_Y = MelterMenu.SLOT_Y + 8 - TANK_HEIGHT / 2;
+    /** The energy column where every machine has it: at the left, centred on the slot's row. */
+    private static final int ENERGY_X = 7;
     private static final int ENERGY_WIDTH = 14;
-    private static final int ENERGY_HEIGHT = TANK_HEIGHT;
+    private static final int ENERGY_HEIGHT = 49;
+    private static final int ENERGY_TOP = MelterMenu.SLOT_Y + 8 - (ENERGY_HEIGHT + 1) / 2;
 
     private final AnimatedBar energyBar = new AnimatedBar();
     private final AnimatedBar fluidBar = new AnimatedBar();
@@ -67,6 +71,7 @@ public final class MelterScreen extends AbstractContainerScreen<MelterMenu> {
         drawSlots(graphics, x, y, menu.slots);
         float filled = progressBar.width(menu.progress(), menu.progressTotal(), ARROW_WIDTH, menu.isSynced());
         drawProgressArrow(graphics, x, y + MelterMenu.SLOT_Y, filled);
+        drawFurnaceFlame(graphics, x + FLAME_X, y + FLAME_Y, menu.isWorking());
         drawTank(graphics, x + TANK_X, y + TANK_Y);
         int energyTop = y + ENERGY_TOP;
         graphics.fill(x + ENERGY_X, energyTop, x + ENERGY_X + ENERGY_WIDTH, energyTop + ENERGY_HEIGHT, BAR_BACK);

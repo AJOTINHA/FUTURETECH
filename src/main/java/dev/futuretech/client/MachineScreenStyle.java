@@ -113,6 +113,71 @@ public final class MachineScreenStyle {
         }
     }
 
+    /**
+     * Vanilla's furnace flame, traced off its {@code lit_progress} sprite. That sprite is opaque and
+     * carries vanilla's own panel grey behind the flames, so blitting it would stamp a grey box onto
+     * our panel; drawing it a run at a time lets the panel show through. It also buys us an unlit
+     * state, which vanilla bakes into its background texture instead of shipping as a sprite.
+     * A dot is see-through, {@code o} the flames' shadow, the rest their fire colours.
+     */
+    private static final String[] FLAME = {
+        ".r.........r..",
+        ".#r...r...r#o.",
+        "..#...#...#.o.",
+        ".ryo..yr..yr..",
+        ".#yo...#..y#..",
+        ".yWo..r#o.Wyo.",
+        "ry#o..y#o.#yr.",
+        "#Wro.rWyo.ry#o",
+        "yWo..#yro..Wyo",
+        "WW#..#Woo.#Wyo",
+        "rWyo.yWo..yWro",
+        ".WWo.yWy..WWo.",
+        "#W#o.#WWo.#W#.",
+        ".ooo..ooo..ooo",
+    };
+    /**
+     * Unlit, the flames drop to one flat grey and shed their shadow. Vanilla's own unlit flame is
+     * 139 grey on a 198 background, so it barely lifts off the panel; matching that ratio against
+     * ours lands on the slot grey, and keeping the shadow would only thicken the silhouette.
+     */
+    private static final int FLAME_OFF = 0xFF8B959F;
+    private static final int FLAME_SHADOW = 0xFF56616D;
+    /** Draws the flame a horizontal run at a time; unlit, every run takes the same flat grey. */
+    static void drawFurnaceFlame(GuiGraphicsExtractor graphics, int x, int y, boolean lit) {
+        for (int row = 0; row < FLAME.length; row++) {
+            String line = FLAME[row];
+            int runStart = 0;
+            int runColour = 0;
+            for (int column = 0; column <= line.length(); column++) {
+                int colour = column < line.length() ? flameColour(line.charAt(column), lit) : 0;
+                if (colour == runColour) continue;
+                if (runColour != 0) graphics.fill(x + runStart, y + row, x + column, y + row + 1, runColour);
+                runStart = column;
+                runColour = colour;
+            }
+        }
+    }
+
+    /** Zero means the panel shows through. */
+    private static int flameColour(char pixel, boolean lit) {
+        if (pixel == '.') return 0;
+        if (!lit) return pixel == 'o' ? 0 : FLAME_OFF;
+        return switch (pixel) {
+            case 'r' -> 0xFFD84C45;
+            case '#' -> 0xFFFFB600;
+            case 'y' -> 0xFFFFFF1F;
+            case 'W' -> 0xFFFFFFFF;
+            // The sprite's own shadow, restated in our palette rather than vanilla's grey.
+            default -> FLAME_SHADOW;
+        };
+    }
+
+    /**
+     * Draws the arrow a column at a time, so the fill follows the head's taper instead of stopping
+     * at a straight edge. The last column is scaled to the leftover fraction, keeping the animation
+     * off whole-pixel steps the way the gradient bars do.
+     */
     /** Draws the panel's own slots; upgrade slots are drawn by their tab instead. */
     static void drawSlots(GuiGraphicsExtractor graphics, int x, int y, Iterable<Slot> slots) {
         for (Slot slot : slots) {
