@@ -68,8 +68,11 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
     public static final int COST_PER_BLOCK = 10;
     /** A trip to another dimension, flat: distance means nothing across worlds. */
     public static final int CROSS_DIMENSION_COST = 25_000;
-    /** How much cheaper every level above MK1 travels, in percent. */
-    public static final int DISCOUNT_PER_LEVEL = 10;
+    /**
+     * What an MK4 pays of an MK1's fare, in percent; the levels between are evenly spaced, so
+     * every upgrade takes the same slice off.
+     */
+    public static final int TOP_LEVEL_COST_PERCENT = 50;
     /** Ticks standing on the pad before the trip, at MK1; higher levels shorten it like a job. */
     public static final int CHARGE_TICKS = 20;
     /** The level that reaches other dimensions. */
@@ -287,7 +290,11 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
         int base = from.dimension().equals(target.dimension())
                 ? BASE_COST + (int) Math.round(COST_PER_BLOCK * Math.sqrt(from.pos().distSqr(target.pos().pos())))
                 : CROSS_DIMENSION_COST;
-        return base * (100 - DISCOUNT_PER_LEVEL * (Math.clamp(mk, 1, MachineLevel.MAX) - 1)) / 100;
+        // A straight line from 100% at MK1 to the top level's share at MK4, in whole percent
+        // thirds: the steps between levels are equal, and the ends are exactly what was asked.
+        int steps = MachineLevel.MAX - 1;
+        int share = steps * 100 - (100 - TOP_LEVEL_COST_PERCENT) * (Math.clamp(mk, 1, MachineLevel.MAX) - 1);
+        return base * share / (steps * 100);
     }
 
     /** Ticks a player stands on the pad before the trip at level {@code mk}. */

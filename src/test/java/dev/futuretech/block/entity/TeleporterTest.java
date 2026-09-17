@@ -28,12 +28,16 @@ class TeleporterTest {
     @Test
     void tripsCostBasePlusDistanceAndEveryLevelIsCheaper() {
         var near = target(GlobalPos.of(Level.OVERWORLD, new BlockPos(100, 0, 0)));
-        assertEquals(BASE_COST + 100 * COST_PER_BLOCK, cost(HOME, near, 1));
-        assertEquals((BASE_COST + 100 * COST_PER_BLOCK) * 90 / 100, cost(HOME, near, 2));
-        assertEquals((BASE_COST + 100 * COST_PER_BLOCK) * 70 / 100, cost(HOME, near, 4));
+        int full = BASE_COST + 100 * COST_PER_BLOCK;
+        assertEquals(full, cost(HOME, near, 1), "an MK1 pays the whole fare");
+        assertEquals(full * TOP_LEVEL_COST_PERCENT / 100, cost(HOME, near, 4), "an MK4 pays its share");
+        // The levels between step down evenly: each upgrade takes the same slice off.
+        int step = cost(HOME, near, 1) - cost(HOME, near, 2);
+        assertEquals(step, cost(HOME, near, 2) - cost(HOME, near, 3), 1);
+        assertEquals(step, cost(HOME, near, 3) - cost(HOME, near, 4), 1);
         var nether = target(GlobalPos.of(Level.NETHER, BlockPos.ZERO));
         assertEquals(CROSS_DIMENSION_COST, cost(HOME, nether, 1));
-        assertEquals(CROSS_DIMENSION_COST * 70 / 100, cost(HOME, nether, 4));
+        assertEquals(CROSS_DIMENSION_COST * TOP_LEVEL_COST_PERCENT / 100, cost(HOME, nether, 4));
     }
 
     @Test
