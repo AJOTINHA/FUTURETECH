@@ -49,6 +49,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.FLUID_CABLE_OPAQUE.get());
                         output.accept(ModItems.FLUID_CABLE.get());
                         output.accept(ModItems.NETWORK_CABLE.get());
+                        output.accept(ModItems.NETWORK_PANEL.get());
                         output.accept(ModItems.FILTER.get());
                         output.accept(ModItems.SPEED_UPGRADE.get());
                         output.accept(ModItems.CHIP.get());

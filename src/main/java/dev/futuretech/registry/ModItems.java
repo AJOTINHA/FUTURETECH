@@ -169,6 +169,8 @@ public final class ModItems {
 
     public static final DeferredItem<BlockItem> NETWORK_CABLE = ITEMS.registerSimpleBlockItem(ModBlocks.NETWORK_CABLE);
 
+    public static final DeferredItem<BlockItem> NETWORK_PANEL = ITEMS.registerSimpleBlockItem(ModBlocks.NETWORK_PANEL);
+
     /** Filter card for item cable connectors; its list and mode live in data components. */
     public static final DeferredItem<ItemFilterItem> FILTER = ITEMS.registerItem(
             "filter", ItemFilterItem::new, properties -> properties.stacksTo(1));

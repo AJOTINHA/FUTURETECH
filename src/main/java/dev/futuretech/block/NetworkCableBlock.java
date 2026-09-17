@@ -43,10 +43,18 @@ public final class NetworkCableBlock extends AbstractCableBlock {
         return neighbour.getBlock() instanceof NetworkCableBlock;
     }
 
-    /** The teleporter is the only machine this cable links to, on any of its faces. */
+    /**
+     * The teleporter and the panel that sets it: the two blocks this cable has anything to say to.
+     * A pad takes a cable on any face, but a panel is a plate with a front and a back, and only
+     * its back — the face it is mounted on — has anywhere for a cable to go.
+     */
     @Override
-    protected boolean linksTo(BlockState neighbour) {
-        return neighbour.getBlock() instanceof TeleporterBlock;
+    protected boolean linksTo(BlockState neighbour, Direction side) {
+        if (neighbour.getBlock() instanceof TeleporterBlock) return true;
+        // The panel lies `side` of this cable, so the cable is on the panel's `side.getOpposite()`
+        // face; that is its back when the screen looks the other way, which is `side`.
+        return neighbour.getBlock() instanceof NetworkPanelBlock
+                && neighbour.getValue(NetworkPanelBlock.FACING) == side;
     }
 
     /** Nothing is carried yet, so no neighbour is asked for a capability. */

@@ -13,6 +13,7 @@ import dev.futuretech.block.ItemCableBlock;
 import dev.futuretech.block.ItemCableTier;
 import dev.futuretech.block.LavaGeneratorBlock;
 import dev.futuretech.block.NetworkCableBlock;
+import dev.futuretech.block.NetworkPanelBlock;
 import dev.futuretech.block.ChargerBlock;
 import dev.futuretech.block.LaneMachineBlock;
 import dev.futuretech.block.LaneMachineKind;
@@ -117,6 +118,13 @@ public final class ModBlocks {
                     .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
                     .requiresCorrectToolForDrops()
                     .lightLevel(state -> state.getValue(TeleporterBlock.LIT) ? 10 : 0));
+
+    // The panel has no energy and nothing to tick; it is a screen onto the cables beside it.
+    public static final DeferredBlock<NetworkPanelBlock> NETWORK_PANEL = BLOCKS.registerBlock(
+            "network_panel", NetworkPanelBlock::new, properties -> properties
+                    .mapColor(MapColor.COLOR_PURPLE).strength(3.5F, 6.0F).sound(SoundType.METAL)
+                    .noOcclusion()
+                    .requiresCorrectToolForDrops());
 
     public static final DeferredBlock<FluidTankBlock> FLUID_TANK = BLOCKS.registerBlock(
             "fluid_tank", FluidTankBlock::new, properties -> properties

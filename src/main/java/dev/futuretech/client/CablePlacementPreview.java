@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.QuadInstance;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.futuretech.block.AbstractCableBlock;
+import dev.futuretech.block.NetworkPanelBlock;
 import dev.futuretech.block.entity.AbstractCableBlockEntity;
 import dev.futuretech.item.FacadeItem;
 import net.minecraft.client.Minecraft;
@@ -23,6 +24,7 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.CardinalLighting;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -36,8 +38,9 @@ import java.util.List;
 
 /**
  * A ghost of where a click would land. With a cable in hand it is the cable's bare core at the
- * spot it would take; with a facade it is the panel on the face the click would cover. Both are
- * the real models drawn see-through, so the ghost looks like the block it stands for.
+ * spot it would take; with a network panel it is the plate on the face it would mount on; with a
+ * facade it is the panel on the face the click would cover. All are the real models drawn
+ * see-through, so the ghost looks like the block it stands for.
  *
  * <p>Nothing here changes the world: the state is worked out the way placing does, on the client's
  * copy, and thrown away with the frame.
@@ -61,7 +64,7 @@ public final class CablePlacementPreview {
         if (stack.getItem() instanceof FacadeItem) {
             submitFacade(event, level, stack, hit, camera);
         } else {
-            submitCable(event, level, player, hand, stack, hit, camera);
+            submitBlock(event, level, player, hand, stack, hit, camera);
         }
     }
 
@@ -69,7 +72,7 @@ public final class CablePlacementPreview {
     private static @Nullable InteractionHand handHolding(LocalPlayer player) {
         for (InteractionHand hand : InteractionHand.values()) {
             var item = player.getItemInHand(hand).getItem();
-            if (item instanceof FacadeItem || item instanceof BlockItem block && block.getBlock() instanceof AbstractCableBlock) {
+            if (item instanceof FacadeItem || item instanceof BlockItem block && previews(block.getBlock())) {
                 return hand;
             }
             // Something else in the main hand takes the click before the off hand is tried.
@@ -78,22 +81,28 @@ public final class CablePlacementPreview {
         return null;
     }
 
-    private static void submitCable(SubmitCustomGeometryEvent event, ClientLevel level, LocalPlayer player,
+    /** The blocks that get a ghost when held: the ones whose place is hard to tell from the crosshair alone. */
+    private static boolean previews(Block block) {
+        return block instanceof AbstractCableBlock || block instanceof NetworkPanelBlock;
+    }
+
+    private static void submitBlock(SubmitCustomGeometryEvent event, ClientLevel level, LocalPlayer player,
                                     InteractionHand hand, ItemStack stack, BlockHitResult hit, Vec3 camera) {
-        var cable = (AbstractCableBlock) ((BlockItem) stack.getItem()).getBlock();
+        Block block = ((BlockItem) stack.getItem()).getBlock();
         var context = new BlockPlaceContext(player, hand, stack, hit);
         if (!context.canPlace()) return;
         BlockPos pos = context.getClickedPos();
         if (!player.mayUseItemAt(pos, hit.getDirection(), stack)) return;
-        BlockState state = cable.getStateForPlacement(context);
+        BlockState state = block.getStateForPlacement(context);
         if (state == null || !state.canSurvive(level, pos)
                 || !level.isUnobstructed(state, pos, CollisionContext.placementContext(player))) return;
-        // Only the core: where the cable lands is the question the ghost answers. The links it
-        // would make are drawn the moment it is placed, and a bare knot is easier to read.
-        BlockState core = cable.defaultBlockState();
+        // A cable's ghost is only the core: where it lands is the question the ghost answers. The
+        // links it would make are drawn the moment it is placed, and a bare knot is easier to read.
+        // The panel's is the state itself: which face the plate hugs is the whole point of looking.
+        BlockState shown = block instanceof AbstractCableBlock ? block.defaultBlockState() : state;
         List<BlockStateModelPart> parts = new ArrayList<>();
-        Minecraft.getInstance().getModelManager().getBlockStateModelSet().get(core)
-                .collectParts(level, pos, core, RandomSource.create(42), parts);
+        Minecraft.getInstance().getModelManager().getBlockStateModelSet().get(shown)
+                .collectParts(level, pos, shown, RandomSource.create(42), parts);
         submitParts(event, level, pos, parts, camera);
     }
 

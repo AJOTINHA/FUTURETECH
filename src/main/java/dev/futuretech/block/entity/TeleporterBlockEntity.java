@@ -11,6 +11,7 @@ import dev.futuretech.energy.TickLimitedEnergyHandler;
 import dev.futuretech.item.TeleportCardItem;
 import dev.futuretech.menu.TeleporterMenu;
 import dev.futuretech.registry.ModBlockEntities;
+import dev.futuretech.registry.ModDataComponents;
 import dev.futuretech.teleport.TeleportTarget;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
@@ -19,6 +20,7 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -30,6 +32,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BaseContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
@@ -47,10 +50,11 @@ import java.util.UUID;
 
 /**
  * A pad that sends whoever stands on it to another teleporter. The destinations are the teleport
- * cards in its slots; the player picks one on the screen. Standing on the pad charges for a
- * moment, then the trip is paid from the buffer, base plus distance, and the player lands on the
- * other pad, where nothing happens until they step off and back on. Every level charges faster
- * and travels cheaper; only an MK4 crosses into another dimension.
+ * cards in its slots; the player picks one on the screen, and the pad lights up to say it is
+ * armed. Standing on the pad charges for a moment, then the trip is paid from the buffer, base plus distance, and the player lands on the
+ * other pad, where nothing happens until they step off and back on. The pick is spent with the
+ * trip: the pad goes back to sending nowhere until someone picks again. Every level charges
+ * faster and travels cheaper; only an MK4 crosses into another dimension.
  */
 public final class TeleporterBlockEntity extends BaseContainerBlockEntity implements RedstoneControllable, Upgradeable {
     public static final int CAPACITY = 100_000;
@@ -89,6 +93,8 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
     private NonNullList<ItemStack> cards = NonNullList.withSize(MAX_CARDS, ItemStack.EMPTY);
     private String name = "";
     private int selected = -1;
+    /** The beam's colour as the client last heard it; the server reads it off the chosen card instead. */
+    private int beamColour = TeleportTarget.DEFAULT_COLOUR;
     /** Ticks each player on the pad has been charging; a player who steps off is dropped. */
     private final Map<UUID, Integer> charging = new HashMap<>();
     /** Players who arrived here and have not stepped off yet: the pad does nothing for them. */
@@ -157,8 +163,48 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
     public String name() { return name; }
 
     /** The name, or the coordinates when there is none: what cards and screens show. */
-    public String displayName() {
-        return name.isBlank() ? worldPosition.getX() + ", " + worldPosition.getY() + ", " + worldPosition.getZ() : name;
+    public String displayName() { return displayName(name, worldPosition); }
+
+    private static String displayName(String name, BlockPos pos) {
+        return name.isBlank() ? pos.getX() + ", " + pos.getY() + ", " + pos.getZ() : name;
+    }
+
+    /**
+     * Edits the card in {@code slot}: the label this pad shows for that destination and the colour
+     * its beam takes, never the pad it points at. A blank name falls back to the destination's
+     * coordinates, the way a card written on a nameless pad reads. False for a locked or empty slot.
+     */
+    public boolean editCard(int slot, String name, int colour) {
+        if (slot < 0 || slot >= unlockedCards()) return false;
+        ItemStack card = cards.get(slot);
+        TeleportTarget target = TeleportCardItem.target(card);
+        if (target == null) return false;
+        String trimmed = name.strip();
+        if (trimmed.length() > TeleporterMenu.NAME_LENGTH) trimmed = trimmed.substring(0, TeleporterMenu.NAME_LENGTH);
+        String label = displayName(trimmed, target.pos().pos());
+        int rgb = colour & 0xFFFFFF;
+        if (label.equals(target.name()) && rgb == target.colour()) return false;
+        card.set(ModDataComponents.TELEPORT_TARGET.get(), new TeleportTarget(target.pos(), label, rgb));
+        setChanged();
+        sync();
+        return true;
+    }
+
+    /**
+     * The colour of the beam: the chosen card's, or the default cyan with none. The server reads
+     * the card; the client, which has no cards, reads what the last update said.
+     */
+    public int beamColour() {
+        if (level != null && level.isClientSide()) return beamColour;
+        TeleportTarget target = target();
+        return target == null ? TeleportTarget.DEFAULT_COLOUR : target.colour();
+    }
+
+    /** Sends the client what the beam should look like now: its colour rides on the update packet. */
+    private void sync() {
+        if (level != null && !level.isClientSide()) {
+            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), Block.UPDATE_CLIENTS);
+        }
     }
 
     public void setName(String name) {
@@ -192,12 +238,23 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
         selected = next;
         charging.clear();
         setChanged();
+        sync();
+    }
+
+    /** A card put in or taken out may be the chosen one, and the beam's colour with it. */
+    @Override
+    public void setItem(int slot, ItemStack stack) {
+        super.setItem(slot, stack);
+        sync();
     }
 
     /** Where the pad sends players right now: the chosen card's target, or null with no card there. */
     public @Nullable TeleportTarget target() {
         return selected < 0 ? null : TeleportCardItem.target(cards.get(selected));
     }
+
+    /** Whether the pad would send someone who stepped on: a destination chosen and redstone not holding it. */
+    public boolean armed() { return target() != null && redstone.allowsRunning(); }
 
     /** Whether a level may travel to {@code target} from {@code from}: another dimension takes an MK4. */
     public static boolean reaches(GlobalPos from, TeleportTarget target, int mk) {
@@ -240,7 +297,8 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, TeleporterBlockEntity teleporter) {
         teleporter.energy.beginTick();
-        boolean lit = teleporter.litHold.update(teleporter.tick((ServerLevel) level));
+        // Lit while armed, and for a moment after a trip: the light says the pad is ready to send.
+        boolean lit = teleporter.litHold.update(teleporter.tick((ServerLevel) level)) || teleporter.armed();
         if (state.getValue(TeleporterBlock.LIT) != lit) level.setBlock(pos, state.setValue(TeleporterBlock.LIT, lit), 3);
         teleporter.comparator.update(level, pos, state, EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(teleporter.energy));
     }
@@ -281,6 +339,8 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
     /**
      * The trip itself, once charged: the level has to reach the destination, the buffer has to
      * cover it, and the pad there has to still exist. Whatever stops it is said to the player.
+     * A trip that happens also drops the choice: a pad sends where it was told to once, so the
+     * next player to step on is not sent somewhere someone else picked.
      */
     boolean attempt(ServerLevel level, ServerPlayer player, TeleportTarget target, Trip trip) {
         int mk = MachineLevel.of(getBlockState());
@@ -300,6 +360,9 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
             return false;
         }
         energy.set(energy.getAmountAsInt() - cost);
+        selected = -1;
+        charging.clear();
+        sync();
         level.sendParticles(ParticleTypes.REVERSE_PORTAL, centre.x, centre.y + 1.2, centre.z, 40, 0.3, 0.6, 0.3, 0.2);
         level.playSound(null, worldPosition, SoundEvents.ENDERMAN_TELEPORT, SoundSource.BLOCKS, 1.0F, 1.0F);
         setChanged();
@@ -329,6 +392,7 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
         energy.set(Math.clamp(input.getIntOr("Energy", 0), 0, energy.getCapacityAsInt()));
         name = input.getStringOr("Name", "");
         selected = Math.clamp(input.getIntOr("Selected", -1), -1, MAX_CARDS - 1);
+        beamColour = input.getIntOr("Beam", TeleportTarget.DEFAULT_COLOUR);
         redstone.load(input);
     }
 
@@ -343,13 +407,20 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
         upgrades.save(output);
     }
 
-    /** The name reaches the client with the chunk, so the screen can show it before the menu opens. */
+    /**
+     * The name reaches the client with the chunk, so the screen can show it before the menu opens;
+     * the beam's colour rides along, and again on every update, so the beam is drawn right.
+     */
     @Override
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         var tag = super.getUpdateTag(registries);
         if (!name.isEmpty()) tag.putString("Name", name);
+        tag.putInt("Beam", beamColour());
         return tag;
     }
+
+    @Override
+    public ClientboundBlockEntityDataPacket getUpdatePacket() { return ClientboundBlockEntityDataPacket.create(this); }
 
     @Override
     public boolean canPlaceItem(int slot, ItemStack stack) {

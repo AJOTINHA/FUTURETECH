@@ -65,6 +65,7 @@ public final class FutureTechClient {
         event.registerBlockEntityRenderer(ModBlockEntities.BATTERY.get(), context -> new BatterySphereRenderer());
         event.registerBlockEntityRenderer(ModBlockEntities.ITEM_CABLE.get(), ItemCableRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.FLUID_CABLE.get(), FluidCableRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.TELEPORTER.get(), context -> new TeleporterBeamRenderer());
     }
 
     private static void registerScreens(RegisterMenuScreensEvent event) {
@@ -82,6 +83,7 @@ public final class FutureTechClient {
         event.register(ModMenus.PAINT_MACHINE.get(), PaintMachineScreen::new);
         event.register(ModMenus.WATER_PUMP.get(), WaterPumpScreen::new);
         event.register(ModMenus.TELEPORTER.get(), TeleporterScreen::new);
+        event.register(ModMenus.NETWORK_PANEL.get(), NetworkPanelScreen::new);
         event.register(ModMenus.CABLE_CONNECTOR.get(), CableConnectorScreen::new);
         event.register(ModMenus.ITEM_FILTER.get(), ItemFilterScreen::new);
     }

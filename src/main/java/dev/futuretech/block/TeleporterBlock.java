@@ -29,7 +29,8 @@ import net.neoforged.neoforge.transfer.energy.EnergyHandlerUtil;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The teleporter pad: a machine block whose top lights up while someone on it is charging.
+ * The teleporter pad: a machine block whose top lights up while a destination is chosen and
+ * while someone on it is charging, with a beam above it drawn by the client from the same state.
  * Energy comes in on every face, so it has no side configuration; what it does is set on its
  * screen, with the teleport cards.
  */
