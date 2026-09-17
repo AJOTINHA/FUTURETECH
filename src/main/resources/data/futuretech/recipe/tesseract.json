@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IAI",
+    "CEC",
+    "IAI"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "A": "minecraft:amethyst_shard",
+    "C": "futuretech:chip",
+    "E": "minecraft:ender_pearl"
+  },
+  "result": {
+    "id": "futuretech:tesseract",
+    "count": 1
+  }
+}

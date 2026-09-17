@@ -6,6 +6,8 @@ import dev.futuretech.block.NetworkPanelBlock;
 import dev.futuretech.block.entity.AbstractCableBlockEntity;
 import dev.futuretech.block.entity.StorageCardsBlockEntity;
 import dev.futuretech.block.entity.TeleporterBlockEntity;
+import dev.futuretech.block.entity.TesseractBlockEntity;
+import dev.futuretech.transfer.TesseractChannels;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.LevelReader;
@@ -29,6 +31,8 @@ import java.util.Set;
  *
  * <p>Only a cable's own links are followed, so a side the wrench cut stops the walk exactly the
  * way it stops energy: cutting a cable is how a player splits one panel's pads from another's.
+ * A tesseract on the cables carries the walk to the cables touching every other tesseract on its
+ * channel in the same world, so two runs far apart are one network.
  */
 public final class TeleporterGrid {
     /** How far the walk will go, in cables, so a mistake in the world cannot hang the server. */
@@ -75,6 +79,16 @@ public final class TeleporterGrid {
                 BlockPos neighbour = pos.relative(side);
                 if (!level.hasChunkAt(neighbour.getX(), neighbour.getZ())) continue;
                 BlockEntity entity = level.getBlockEntity(neighbour);
+                if (entity instanceof TesseractBlockEntity tesseract) {
+                    // Through the tesseract: the cables around it and around its peers join the walk.
+                    if (!isCut(level, pos, side)) {
+                        stepThrough(level, tesseract, cables, queue);
+                        for (TesseractBlockEntity peer : TesseractChannels.peersIn(tesseract, level)) {
+                            stepThrough(level, peer, cables, queue);
+                        }
+                    }
+                    continue;
+                }
                 if (entity instanceof TeleporterBlockEntity || entity instanceof StorageCardsBlockEntity) {
                     // Same rule as the panel: the block is reached unless that side was cut.
                     if (!isCut(level, pos, side)) {
@@ -101,6 +115,17 @@ public final class TeleporterGrid {
         result.sort(Comparator.comparingDouble((BlockPos pos) -> pos.distSqr(start))
                 .thenComparingInt(BlockPos::getX).thenComparingInt(BlockPos::getY).thenComparingInt(BlockPos::getZ));
         return result;
+    }
+
+    /** Queues the network cables touching {@code tesseract} on any face, the same way the walk leaves its start. */
+    private static void stepThrough(LevelReader level, TesseractBlockEntity tesseract, Set<BlockPos> cables,
+                                    ArrayDeque<BlockPos> queue) {
+        for (Direction side : Direction.values()) {
+            BlockPos beside = tesseract.getBlockPos().relative(side);
+            if (touches(level, beside, side.getOpposite()) && cables.size() < MAX_CABLES && cables.add(beside)) {
+                queue.add(beside);
+            }
+        }
     }
 
     /**

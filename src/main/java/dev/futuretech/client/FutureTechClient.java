@@ -66,6 +66,7 @@ public final class FutureTechClient {
         event.registerBlockEntityRenderer(ModBlockEntities.ITEM_CABLE.get(), ItemCableRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.FLUID_CABLE.get(), FluidCableRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.TELEPORTER.get(), context -> new TeleporterBeamRenderer());
+        event.registerBlockEntityRenderer(ModBlockEntities.TESSERACT.get(), context -> new TesseractRenderer());
     }
 
     private static void registerScreens(RegisterMenuScreensEvent event) {

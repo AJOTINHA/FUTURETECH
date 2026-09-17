@@ -15,6 +15,7 @@ import dev.futuretech.block.entity.LavaGeneratorBlockEntity;
 import dev.futuretech.block.entity.NetworkCableBlockEntity;
 import dev.futuretech.block.entity.NetworkPanelBlockEntity;
 import dev.futuretech.block.entity.StorageCardsBlockEntity;
+import dev.futuretech.block.entity.TesseractBlockEntity;
 import dev.futuretech.block.LaneMachineKind;
 import dev.futuretech.block.entity.LaneMachineBlockEntity;
 import dev.futuretech.block.entity.MetalPressBlockEntity;
@@ -106,6 +107,9 @@ public final class ModBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<StorageCardsBlockEntity>> STORAGE_CARDS =
             TYPES.register("storage_cards", () -> new BlockEntityType<>(
                     StorageCardsBlockEntity::new, ModBlocks.STORAGE_CARDS.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TesseractBlockEntity>> TESSERACT =
+            TYPES.register("tesseract", () -> new BlockEntityType<>(
+                    TesseractBlockEntity::new, ModBlocks.TESSERACT.get()));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.futuretech.block.entity.AssemblerBlockEntity>> ASSEMBLER =
             TYPES.register("assembler", () -> new BlockEntityType<>(dev.futuretech.block.entity.AssemblerBlockEntity::new,
@@ -172,6 +176,10 @@ public final class ModBlockEntities {
                 SidedItems.view(generator, generator.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Fluid.BLOCK, LAVA_GENERATOR.get(), (generator, side) ->
                 SidedFluids.intake(generator.lava(), generator.sideConfig(), side));
+        // The tesseract takes all three on every face and keeps none: what goes in comes out at its peers.
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, TESSERACT.get(), (tesseract, side) -> tesseract.energy());
+        event.registerBlockEntity(Capabilities.Item.BLOCK, TESSERACT.get(), (tesseract, side) -> tesseract.items());
+        event.registerBlockEntity(Capabilities.Fluid.BLOCK, TESSERACT.get(), (tesseract, side) -> tesseract.fluids());
         event.registerBlockEntity(Capabilities.Energy.BLOCK, CABLE.get(),
                 (cable, side) -> cable.handler(side));
         event.registerBlockEntity(Capabilities.Item.BLOCK, ITEM_CABLE.get(),

@@ -5,7 +5,6 @@ import static dev.futuretech.client.MachineScreenStyle.*;
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.futuretech.menu.TeleporterMenu;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
@@ -35,9 +34,11 @@ public final class CardEditScreen extends Screen {
     private static final int SWATCH_SPACING = 18;
     private static final int SWATCH_X = (WIDTH - SWATCH_COLUMNS * SWATCH_SPACING + 2) / 2;
     private static final int SWATCH_Y = 56;
-    private static final int BUTTON_Y = 96;
-    private static final int BUTTON_WIDTH = 78;
-    private static final int BUTTON_HEIGHT = 20;
+    private static final int BUTTON_Y = 98;
+    private static final int BUTTON_WIDTH = 76;
+    private static final int BUTTON_HEIGHT = 16;
+    private static final int DONE_X = 8;
+    private static final int CANCEL_X = WIDTH - 8 - BUTTON_WIDTH;
     private static final int SWATCH_BORDER = 0xFF56616D;
     private static final int SWATCH_CHOSEN = 0xFFFFFFFF;
 
@@ -77,10 +78,6 @@ public final class CardEditScreen extends Screen {
         nameBox.setMaxLength(TeleporterMenu.NAME_LENGTH);
         nameBox.setValue(typed);
         addRenderableWidget(nameBox);
-        addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> done())
-                .bounds(left + 8, top + BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT).build());
-        addRenderableWidget(Button.builder(CommonComponents.GUI_CANCEL, button -> onClose())
-                .bounds(left + WIDTH - 8 - BUTTON_WIDTH, top + BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT).build());
         setInitialFocus(nameBox);
     }
 
@@ -105,6 +102,10 @@ public final class CardEditScreen extends Screen {
             graphics.fill(x, y, x + SWATCH_SIZE, y + SWATCH_SIZE, 0xFF000000 | PALETTE[index]);
             if (swatchAt(mouseX, mouseY) == index) graphics.fill(x, y, x + SWATCH_SIZE, y + SWATCH_SIZE, 0x40FFFFFF);
         }
+        drawButton(graphics, font, left + DONE_X, top + BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT, CommonComponents.GUI_DONE,
+                overButton(mouseX, mouseY, left + DONE_X, top + BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT));
+        drawButton(graphics, font, left + CANCEL_X, top + BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT, CommonComponents.GUI_CANCEL,
+                overButton(mouseX, mouseY, left + CANCEL_X, top + BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT));
     }
 
     @Override
@@ -131,6 +132,14 @@ public final class CardEditScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (overButton(event.x(), event.y(), left + DONE_X, top + BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
+            done();
+            return true;
+        }
+        if (overButton(event.x(), event.y(), left + CANCEL_X, top + BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT)) {
+            onClose();
+            return true;
+        }
         int swatch = swatchAt(event.x(), event.y());
         if (swatch >= 0) {
             colour = PALETTE[swatch];

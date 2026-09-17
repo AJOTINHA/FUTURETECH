@@ -51,6 +51,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.NETWORK_CABLE.get());
                         output.accept(ModItems.NETWORK_PANEL.get());
                         output.accept(ModItems.STORAGE_CARDS.get());
+                        output.accept(ModItems.TESSERACT.get());
                         output.accept(ModItems.FILTER.get());
                         output.accept(ModItems.SPEED_UPGRADE.get());
                         output.accept(ModItems.CHIP.get());

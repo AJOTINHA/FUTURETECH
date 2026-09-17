@@ -171,6 +171,7 @@ public final class ModItems {
 
     public static final DeferredItem<BlockItem> NETWORK_PANEL = ITEMS.registerSimpleBlockItem(ModBlocks.NETWORK_PANEL);
     public static final DeferredItem<BlockItem> STORAGE_CARDS = ITEMS.registerSimpleBlockItem(ModBlocks.STORAGE_CARDS);
+    public static final DeferredItem<BlockItem> TESSERACT = ITEMS.registerSimpleBlockItem(ModBlocks.TESSERACT);
 
     /** Filter card for item cable connectors; its list and mode live in data components. */
     public static final DeferredItem<ItemFilterItem> FILTER = ITEMS.registerItem(

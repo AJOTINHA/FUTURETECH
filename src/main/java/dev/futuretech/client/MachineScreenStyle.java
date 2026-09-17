@@ -40,6 +40,30 @@ public final class MachineScreenStyle {
         graphics.fillGradient(x + 2, y + 18, x + width - 2, y + 20, 0x18000000, 0x00000000);
     }
 
+    /**
+     * A button in the rows' style: the row's border and face, its label centred in white, and the
+     * face lit while the pointer is on it. The screens that use it do their own hit-testing with
+     * {@link #overButton}, so a button is a rectangle and a label, not a widget.
+     */
+    static void drawButton(GuiGraphicsExtractor graphics, Font font, int x, int y, int width, int height,
+                           Component label, boolean hovered) {
+        drawButton(graphics, font, x, y, width, height, label, hovered, true);
+    }
+
+    /** The same button, greyed out and deaf while {@code enabled} is false. */
+    static void drawButton(GuiGraphicsExtractor graphics, Font font, int x, int y, int width, int height,
+                           Component label, boolean hovered, boolean enabled) {
+        graphics.fill(x - 1, y - 1, x + width + 1, y + height + 1, 0xFF56616D);
+        graphics.fill(x, y, x + width, y + height, enabled ? 0xFF65717D : 0xFF5B6672);
+        if (hovered && enabled) graphics.fill(x, y, x + width, y + height, 0x40FFFFFF);
+        graphics.text(font, label, x + (width - font.width(label)) / 2, y + (height - font.lineHeight) / 2 + 1,
+                enabled ? TITLE : 0xFF8B959F, false);
+    }
+
+    static boolean overButton(double mouseX, double mouseY, int x, int y, int width, int height) {
+        return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
+    }
+
     /** The pencil button beside a card row: a slot-sized square in the row's colours. */
     public static final int PENCIL_WIDTH = 16;
     private static final int PENCIL_ROW_BACK = 0xFF56616D;
