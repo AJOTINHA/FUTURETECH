@@ -2,7 +2,7 @@
   "textures": {
     "side": "futuretech:block/machine/mk2/machine_side",
     "particle": "futuretech:block/machine/mk2/machine_side",
-    "top": "futuretech:block/teleporter/teleporter_top"
+    "top": "futuretech:block/teleporter/mk2/teleporter_top"
   },
   "elements": [
     {
