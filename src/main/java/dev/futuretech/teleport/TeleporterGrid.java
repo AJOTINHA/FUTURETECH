@@ -80,11 +80,14 @@ public final class TeleporterGrid {
                 if (!level.hasChunkAt(neighbour.getX(), neighbour.getZ())) continue;
                 BlockEntity entity = level.getBlockEntity(neighbour);
                 if (entity instanceof TesseractBlockEntity tesseract) {
-                    // Through the tesseract: the cables around it and around its peers join the walk.
-                    if (!isCut(level, pos, side)) {
+                    // Through the tesseract: the cables around it and around its peers join the
+                    // walk. "Sends" is the player's word for the side that offers its pads and
+                    // storages to the channel, so the walk, which comes looking for them, goes
+                    // out through a tesseract that receives and in through the ones that send.
+                    if (!isCut(level, pos, side) && tesseract.receives(TesseractBlockEntity.Kind.TELEPORT)) {
                         stepThrough(level, tesseract, cables, queue);
                         for (TesseractBlockEntity peer : TesseractChannels.peersIn(tesseract, level)) {
-                            stepThrough(level, peer, cables, queue);
+                            if (peer.sends(TesseractBlockEntity.Kind.TELEPORT)) stepThrough(level, peer, cables, queue);
                         }
                     }
                     continue;

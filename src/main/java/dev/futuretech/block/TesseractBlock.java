@@ -1,6 +1,7 @@
 package dev.futuretech.block;
 
 import com.mojang.serialization.MapCodec;
+import dev.futuretech.api.redstone.RedstoneControl;
 import dev.futuretech.block.entity.TesseractBlockEntity;
 import dev.futuretech.transfer.TesseractPayloads;
 import net.minecraft.core.BlockPos;
@@ -9,10 +10,15 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.BlockHitResult;
+import org.jspecify.annotations.Nullable;
 
 /**
  * The tesseract: the battery's steel frame around a cube of the End, with no faces to configure —
@@ -23,9 +29,22 @@ import net.minecraft.world.phys.BlockHitResult;
  */
 public final class TesseractBlock extends BaseEntityBlock {
     public static final MapCodec<TesseractBlock> CODEC = simpleCodec(TesseractBlock::new);
+    /**
+     * Whether the tesseract is on a channel. Off it, there is nothing to link to: the cables do
+     * not join it and it offers no handler, so a fresh one is just a frame until a channel is
+     * picked. In the state, rather than the block entity, so the cables can see it when they
+     * work out their links, and relink the moment it changes.
+     */
+    public static final BooleanProperty CHANNEL = BooleanProperty.create("channel");
 
     public TesseractBlock(Properties properties) {
         super(properties);
+        registerDefaultState(stateDefinition.any().setValue(CHANNEL, false));
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(CHANNEL);
     }
 
     @Override
@@ -38,6 +57,17 @@ public final class TesseractBlock extends BaseEntityBlock {
     /** An open frame: light gets through, and the cube inside is seen from every side. */
     @Override
     protected boolean propagatesSkylightDown(BlockState state) { return true; }
+
+    /** Redstone is sampled on change rather than polled every tick, and the client hears it for the screen. */
+    @Override
+    protected void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, @Nullable Orientation orientation, boolean movedByPiston) {
+        super.neighborChanged(state, level, pos, block, orientation, movedByPiston);
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof TesseractBlockEntity tesseract) {
+            boolean was = tesseract.redstoneControl().isPowered();
+            RedstoneControl.sample(level, pos);
+            if (tesseract.redstoneControl().isPowered() != was) tesseract.sync();
+        }
+    }
 
     /** Like the panel: a cable placed before this block never had a reason to point at one. */
     @Override

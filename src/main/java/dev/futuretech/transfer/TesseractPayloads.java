@@ -1,6 +1,8 @@
 package dev.futuretech.transfer;
 
 import dev.futuretech.FutureTech;
+import dev.futuretech.api.redstone.RedstoneMode;
+import dev.futuretech.api.side.SideMode;
 import dev.futuretech.block.entity.TesseractBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -74,6 +76,31 @@ public final class TesseractPayloads {
         public Type<? extends CustomPacketPayload> type() { return TYPE; }
     }
 
+    /** Client to server: set this tesseract's redstone mode. Checked like a block click. */
+    public record Redstone(BlockPos pos, int mode) implements CustomPacketPayload {
+        public static final Type<Redstone> TYPE = new Type<>(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "tesseract_redstone"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, Redstone> STREAM_CODEC = StreamCodec.composite(
+                BlockPos.STREAM_CODEC, Redstone::pos,
+                ByteBufCodecs.VAR_INT, Redstone::mode,
+                Redstone::new);
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
+
+    /** Client to server: set what this tesseract does with one kind. Checked like a block click. */
+    public record Transfer(BlockPos pos, int kind, int mode) implements CustomPacketPayload {
+        public static final Type<Transfer> TYPE = new Type<>(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "tesseract_transfer"));
+        public static final StreamCodec<RegistryFriendlyByteBuf, Transfer> STREAM_CODEC = StreamCodec.composite(
+                BlockPos.STREAM_CODEC, Transfer::pos,
+                ByteBufCodecs.VAR_INT, Transfer::kind,
+                ByteBufCodecs.VAR_INT, Transfer::mode,
+                Transfer::new);
+
+        @Override
+        public Type<? extends CustomPacketPayload> type() { return TYPE; }
+    }
+
     /** Client to server: make a channel with this name. Everyone hears the list it joins. */
     public record Create(String name) implements CustomPacketPayload {
         public static final Type<Create> TYPE = new Type<>(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "tesseract_create"));
@@ -141,6 +168,22 @@ public final class TesseractPayloads {
             if (!(context.player() instanceof ServerPlayer player)) return;
             var tesseract = clicked(player, payload.pos());
             if (tesseract != null) tesseract.setName(payload.name());
+        });
+        registrar.playToServer(Redstone.TYPE, Redstone.STREAM_CODEC, (payload, context) -> {
+            if (!(context.player() instanceof ServerPlayer player)) return;
+            var tesseract = clicked(player, payload.pos());
+            if (tesseract == null) return;
+            tesseract.redstoneControl().setMode(RedstoneMode.byOrdinal(payload.mode()));
+            tesseract.redstoneControlChanged();
+        });
+        registrar.playToServer(Transfer.TYPE, Transfer.STREAM_CODEC, (payload, context) -> {
+            if (!(context.player() instanceof ServerPlayer player)) return;
+            var tesseract = clicked(player, payload.pos());
+            var kinds = TesseractBlockEntity.Kind.values();
+            var modes = SideMode.values();
+            if (tesseract == null || payload.kind() < 0 || payload.kind() >= kinds.length
+                    || payload.mode() < 0 || payload.mode() >= modes.length) return;
+            tesseract.setMode(kinds[payload.kind()], modes[payload.mode()]);
         });
         registrar.playToServer(Create.TYPE, Create.STREAM_CODEC, (payload, context) -> {
             if (!(context.player() instanceof ServerPlayer player)) return;

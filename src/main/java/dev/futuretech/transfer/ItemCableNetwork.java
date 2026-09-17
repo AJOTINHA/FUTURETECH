@@ -3,6 +3,7 @@ package dev.futuretech.transfer;
 import dev.futuretech.perf.TickProfiler;
 import dev.futuretech.api.side.SideMode;
 import dev.futuretech.block.ItemCableBlock;
+import dev.futuretech.block.TesseractBlock;
 import dev.futuretech.block.ItemCableTier;
 import dev.futuretech.block.entity.ItemCableBlockEntity;
 import net.minecraft.core.BlockPos;
@@ -89,6 +90,14 @@ public final class ItemCableNetwork {
 
         /** Speed upgrades on the connector; each one widens the budget of what enters through it. */
         default int upgrades() { return 0; }
+
+        /**
+         * Whether the block beyond hands over without a pace of its own — a tesseract, whose
+         * channel brings whatever was put in at the other end all at once. What enters through
+         * such a connector is not trickled in one at a time: the budget is the widest a connector
+         * can have. The speed along the cables stays the connector's own.
+         */
+        default boolean unbounded() { return false; }
 
         @Nullable ResourceHandler<ItemResource> handler();
     }
@@ -204,7 +213,9 @@ public final class ItemCableNetwork {
     /** What the connector at {@code index} may let in per interval; the shared entry gets the bare batch. */
     private int allowance(int index) {
         if (index == endpoints.size()) return batch;
-        return Math.min(MAX_PER_INTERVAL, batch + PER_UPGRADE * endpoints.get(index).upgrades());
+        Endpoint endpoint = endpoints.get(index);
+        if (endpoint.unbounded()) return MAX_PER_INTERVAL;
+        return Math.min(MAX_PER_INTERVAL, batch + PER_UPGRADE * endpoint.upgrades());
     }
 
     private void renewBudgets() {
@@ -248,6 +259,7 @@ public final class ItemCableNetwork {
                             () -> cable.connectorActive(side),
                             cable.connectorPriority(side), cable.connectorAccepts(side),
                             cable.connectorColor(side), cable.connectorChannel(side), cable.connectorSpeedUpgrades(side),
+                            level.getBlockState(neighbour).getBlock() instanceof TesseractBlock,
                             BlockCapabilityCache.create(
                                     Capabilities.Item.BLOCK, level, neighbour, side.getOpposite())));
                 }
@@ -668,7 +680,7 @@ public final class ItemCableNetwork {
 
     /** {@code mayDeliver} and {@code mayPull} are the connector's settings; {@code active} is whether redstone lets it work now. */
     private record CachedEndpoint(EndpointKey key, boolean mayDeliver, boolean mayPull, BooleanSupplier active, int priority,
-                                 Predicate<ItemResource> filter, DyeColor color, int channel, int upgrades,
+                                 Predicate<ItemResource> filter, DyeColor color, int channel, int upgrades, boolean unbounded,
                                  BlockCapabilityCache<ResourceHandler<ItemResource>, Direction> cache) implements Endpoint {
         @Override
         public boolean delivers() { return mayDeliver && active.getAsBoolean(); }

@@ -3,7 +3,12 @@ package dev.futuretech.client;
 import static dev.futuretech.client.MachineScreenStyle.*;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.futuretech.api.gui.TabStrip;
+import dev.futuretech.api.redstone.RedstoneMode;
+import dev.futuretech.api.redstone.client.RedstoneControlTab;
+import dev.futuretech.api.side.SideMode;
 import dev.futuretech.block.entity.TesseractBlockEntity;
+import dev.futuretech.block.entity.TesseractBlockEntity.Kind;
 import dev.futuretech.transfer.TesseractPayloads;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -74,6 +79,8 @@ public final class TesseractScreen extends Screen {
     private String chosen;
     private EditBox nameBox;
     private EditBox channelBox;
+    /** The redstone tab, the machines' own, over the block entity the client has and a packet of its own. */
+    private final TabStrip tabs;
     private int scrollRow;
     private boolean draggingKnob;
     private int left;
@@ -85,6 +92,35 @@ public final class TesseractScreen extends Screen {
         this.name = name;
         this.chosen = channel;
         this.channels = channels;
+        this.tabs = new TabStrip(RedstoneControlTab.of(new RedstoneControlTab.Source() {
+            @Override
+            public RedstoneMode redstoneMode() { return TesseractScreen.this.redstoneMode(); }
+
+            @Override
+            public boolean isPowered() { return TesseractScreen.this.isPowered(); }
+
+            @Override
+            public void select(RedstoneMode mode) {
+                var tesseract = tesseract();
+                // Shown at once; the server's update confirms it a moment later.
+                if (tesseract != null) tesseract.redstoneControl().setMode(mode);
+                ClientPacketDistributor.sendToServer(new TesseractPayloads.Redstone(pos, mode.ordinal()));
+            }
+        }, Minecraft.getInstance().font), new TesseractTransferTab(new TesseractTransferTab.Source() {
+            @Override
+            public SideMode mode(Kind kind) {
+                var tesseract = tesseract();
+                return tesseract == null ? SideMode.NONE : tesseract.mode(kind);
+            }
+
+            @Override
+            public void select(Kind kind, SideMode mode) {
+                var tesseract = tesseract();
+                // Shown at once; the server's update confirms it a moment later.
+                if (tesseract != null) tesseract.setMode(kind, mode);
+                ClientPacketDistributor.sendToServer(new TesseractPayloads.Transfer(pos, kind.ordinal(), mode.ordinal()));
+            }
+        }, Minecraft.getInstance().font));
     }
 
     /** Opens the screen the server asked for, on the tesseract the player clicked. */
@@ -214,6 +250,7 @@ public final class TesseractScreen extends Screen {
                 canDelete());
         drawButton(graphics, font, left + CANCEL_X, top + BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT, CommonComponents.GUI_CANCEL,
                 overButton(mouseX, mouseY, left + CANCEL_X, top + BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT));
+        tabs.render(graphics, left, top, WIDTH, mouseX, mouseY);
     }
 
     private void drawScrollbar(GuiGraphicsExtractor graphics) {
@@ -232,6 +269,7 @@ public final class TesseractScreen extends Screen {
         graphics.text(font, title, left + LABEL_X, top + 6, TITLE, false);
         graphics.text(font, Component.translatable("gui.futuretech.teleporter.name"), left + LABEL_X, top + NAME_Y + 2, TEXT, false);
         graphics.text(font, Component.translatable("gui.futuretech.tesseract.channel"), left + LABEL_X, top + CHANNEL_Y + 2, TEXT, false);
+        tabs.extractTooltip(graphics, mouseX, mouseY);
         if (channels.isEmpty()) {
             graphics.text(font, Component.translatable("gui.futuretech.tesseract.none"), left + ROW_X + 4, top + rowY(0) + 5, MUTED, false);
             return;
@@ -245,8 +283,25 @@ public final class TesseractScreen extends Screen {
         }
     }
 
+    /** The block entity as the client has it: the mode and the signal come with its updates. */
+    private TesseractBlockEntity tesseract() {
+        var level = Minecraft.getInstance().level;
+        return level != null && level.getBlockEntity(pos) instanceof TesseractBlockEntity tesseract ? tesseract : null;
+    }
+
+    private RedstoneMode redstoneMode() {
+        var tesseract = tesseract();
+        return tesseract == null ? RedstoneMode.IGNORED : tesseract.redstoneControl().mode();
+    }
+
+    private boolean isPowered() {
+        var tesseract = tesseract();
+        return tesseract != null && tesseract.redstoneControl().isPowered();
+    }
+
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (tabs.mouseClicked(event)) return true;
         if (overButton(event.x(), event.y(), left + PLUS_X, top + PLUS_Y, PLUS_SIZE, PLUS_SIZE)) {
             click();
             create();
