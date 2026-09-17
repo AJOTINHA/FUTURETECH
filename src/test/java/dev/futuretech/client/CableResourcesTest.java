@@ -194,6 +194,51 @@ class CableResourcesTest {
         }
     }
 
+    /**
+     * The network cable is the same recipe once more: children of the energy cable's models with
+     * its own purple core, and the same multipart renamed. It carries nothing yet, so its skin is
+     * opaque throughout — a window would promise something moving inside that is not there.
+     */
+    @Test
+    void networkCableReusesTheCableGeometryWithItsOwnSkin() throws Exception {
+        for (String part : List.of("arm", "cap", "line", "node")) {
+            var model = model("futuretech:block/network_cable_" + part);
+            assertEquals("futuretech:block/cable_mk1_" + part, model.get("parent").getAsString(), part);
+            assertFalse(model.has("elements"), "No geometry of its own: " + part);
+            var textures = model.getAsJsonObject("textures");
+            assertEquals(2, textures.size(), "Only the core changes colour: " + part);
+            for (var texture : textures.entrySet()) {
+                String path = texture.getValue().getAsString();
+                assertTrue(path.startsWith("futuretech:block/network_cable/network_cable"), path);
+                var png = getClass().getResource("/assets/futuretech/textures/"
+                        + path.substring("futuretech:".length()) + ".png");
+                assertNotNull(png, path);
+                var image = javax.imageio.ImageIO.read(png);
+                for (int y = 0; y < image.getHeight(); y++) {
+                    for (int x = 0; x < image.getWidth(); x++) {
+                        assertEquals(255, image.getRGB(x, y) >>> 24, "Opaque throughout: " + path);
+                    }
+                }
+            }
+        }
+        var item = model("futuretech:item/network_cable");
+        assertEquals("futuretech:item/cable_mk1", item.get("parent").getAsString());
+        var energy = resource("blockstates/cable_mk1.json").toString();
+        var network = resource("blockstates/network_cable.json").toString();
+        assertEquals(energy.replace("futuretech:block/cable_mk1_", "futuretech:block/network_cable_"), network);
+    }
+
+    /** The collar's contact ships for every kind, so no cable can pull a missing texture into the atlas. */
+    @Test
+    void everyKindHasItsContactSprite() {
+        for (var kind : dev.futuretech.block.CableKind.values()) {
+            // The same path FutureTechClient asks the atlas for.
+            String folder = kind == dev.futuretech.block.CableKind.ENERGY ? "cable_mk1" : kind.id();
+            assertNotNull(getClass().getResource("/assets/futuretech/textures/block/"
+                    + folder + "/" + kind.id() + "_contact.png"), kind.name());
+        }
+    }
+
     private static final String[] FACE_NAMES = {"west", "east", "down", "up", "north", "south"};
 
     /** Whether another box of the model touches this face over its whole area, hiding it for good. */

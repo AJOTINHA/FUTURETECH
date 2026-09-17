@@ -12,6 +12,7 @@ import dev.futuretech.block.entity.ElectricFurnaceBlockEntity;
 import dev.futuretech.block.entity.FluidCableBlockEntity;
 import dev.futuretech.block.entity.ItemCableBlockEntity;
 import dev.futuretech.block.entity.LavaGeneratorBlockEntity;
+import dev.futuretech.block.entity.NetworkCableBlockEntity;
 import dev.futuretech.block.LaneMachineKind;
 import dev.futuretech.block.entity.LaneMachineBlockEntity;
 import dev.futuretech.block.entity.MetalPressBlockEntity;
@@ -91,6 +92,11 @@ public final class ModBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FluidCableBlockEntity>> FLUID_CABLE =
             TYPES.register("fluid_cable", () -> new BlockEntityType<>(
                     FluidCableBlockEntity::new, ModBlocks.FLUID_CABLE_OPAQUE.get(), ModBlocks.FLUID_CABLE.get()));
+
+    // The network cable has one size, so its type serves the one block.
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<NetworkCableBlockEntity>> NETWORK_CABLE =
+            TYPES.register("network_cable", () -> new BlockEntityType<>(
+                    NetworkCableBlockEntity::new, ModBlocks.NETWORK_CABLE.get()));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.futuretech.block.entity.AssemblerBlockEntity>> ASSEMBLER =
             TYPES.register("assembler", () -> new BlockEntityType<>(dev.futuretech.block.entity.AssemblerBlockEntity::new,

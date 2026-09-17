@@ -167,6 +167,8 @@ public final class ModItems {
     public static final DeferredItem<BlockItem> FLUID_CABLE_OPAQUE = ITEMS.registerSimpleBlockItem(ModBlocks.FLUID_CABLE_OPAQUE);
     public static final DeferredItem<BlockItem> FLUID_CABLE = ITEMS.registerSimpleBlockItem(ModBlocks.FLUID_CABLE);
 
+    public static final DeferredItem<BlockItem> NETWORK_CABLE = ITEMS.registerSimpleBlockItem(ModBlocks.NETWORK_CABLE);
+
     /** Filter card for item cable connectors; its list and mode live in data components. */
     public static final DeferredItem<ItemFilterItem> FILTER = ITEMS.registerItem(
             "filter", ItemFilterItem::new, properties -> properties.stacksTo(1));

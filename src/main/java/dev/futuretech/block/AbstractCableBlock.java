@@ -101,6 +101,14 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
     /** Whether the block at {@code neighbour} offers this cable's resource on {@code face}. */
     protected abstract boolean offers(Level level, BlockPos neighbour, Direction face);
 
+    /**
+     * Whether the cable links to {@code neighbour} on its block state alone. Nothing does by
+     * default: a kind that carries something asks the block for a capability instead, and that
+     * needs a real level. A kind that links by what the block <em>is</em> says so here, and is
+     * then answered the same on a level that only reads.
+     */
+    protected boolean linksTo(BlockState neighbour) { return false; }
+
     protected abstract BlockEntityType<? extends AbstractCableBlockEntity> blockEntityType();
 
     /**
@@ -173,6 +181,7 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
         BlockState beyond = level.getBlockState(neighbour);
         if (joins(beyond)) return true;
         if (beyond.getBlock() instanceof AbstractCableBlock other && other.kind() == kind()) return false;
+        if (linksTo(beyond)) return true;
         return level instanceof Level realLevel && offers(realLevel, neighbour, side.getOpposite());
     }
 

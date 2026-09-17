@@ -25,6 +25,7 @@
   "block.futuretech.item_cable": "Item Cable",
   "block.futuretech.fluid_cable_opaque": "Opaque Fluid Cable",
   "block.futuretech.fluid_cable": "Fluid Cable",
+  "block.futuretech.network_cable": "Network Cable",
   "item.futuretech.filter.mode": "Mode: %s",
   "item.futuretech.filter.empty": "No items listed",
   "gui.futuretech.sides": "Configuration",

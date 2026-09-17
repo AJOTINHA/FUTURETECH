@@ -13,7 +13,14 @@ public enum CableKind {
     /** Items run in the item cable's brass. A fresh connector moves nothing until the player picks a mode. */
     ITEMS("item_cable", 0xFFD9AA3C, true, true, true, true, SideMode.NONE),
     /** Fluids run in the fluid cable's green. A fresh connector moves nothing until the player picks a mode. */
-    FLUID("fluid_cable", 0xFF4EC878, true, false, true, false, SideMode.NONE);
+    FLUID("fluid_cable", 0xFF4EC878, true, false, true, false, SideMode.NONE),
+    /**
+     * The network cable's purple. Nothing runs in it yet: it is the cable itself, with the links,
+     * the wrench and the panels every kind shares, waiting for what it will carry. It links to
+     * other network cables and to the teleporter, and the collar it wears there stays shut — none
+     * of the settings below apply to a cable with nothing to move.
+     */
+    NETWORK("network_cable", 0xFFA855D6, false, false, false, false, SideMode.NONE);
 
     private final String key;
     private final int accent;

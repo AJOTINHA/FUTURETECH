@@ -12,6 +12,7 @@ import dev.futuretech.block.FluidCableTier;
 import dev.futuretech.block.ItemCableBlock;
 import dev.futuretech.block.ItemCableTier;
 import dev.futuretech.block.LavaGeneratorBlock;
+import dev.futuretech.block.NetworkCableBlock;
 import dev.futuretech.block.ChargerBlock;
 import dev.futuretech.block.LaneMachineBlock;
 import dev.futuretech.block.LaneMachineKind;
@@ -147,6 +148,14 @@ public final class ModBlocks {
 
     public static final DeferredBlock<FluidCableBlock> FLUID_CABLE_OPAQUE = registerFluidCable(FluidCableTier.OPAQUE);
     public static final DeferredBlock<FluidCableBlock> FLUID_CABLE = registerFluidCable(FluidCableTier.STANDARD);
+
+    // One size, so no tier to register per: the block is its own entry.
+    public static final DeferredBlock<NetworkCableBlock> NETWORK_CABLE = BLOCKS.registerBlock(
+            "network_cable", NetworkCableBlock::new, properties -> properties
+                    .mapColor(MapColor.COLOR_PURPLE)
+                    .strength(1.0F, 3.0F)
+                    .sound(SoundType.COPPER)
+                    .noOcclusion());
 
     private static DeferredBlock<FluidCableBlock> registerFluidCable(FluidCableTier tier) {
         return BLOCKS.registerBlock(tier.blockName(), properties -> new FluidCableBlock(tier, properties), properties -> properties

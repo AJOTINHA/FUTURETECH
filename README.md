@@ -125,7 +125,24 @@ O **Cabo de Fluido** vem em duas versões, ambas verdes: o **Cabo de Fluido Opac
 
 Receitas: ferro nas linhas de cima e de baixo, corante verde-limão nas laterais e vidro no meio (opaco) ou painel de vidro (de vidro), rendendo 6.
 
-Todos os cabos compartilham `AbstractCableBlock` e `AbstractCableBlockEntity` (forma, conexões, modos, prioridade, cor e canal dos conectores, menu); cada tipo só diz o que emenda e qual capability o vizinho precisa oferecer. O cabo de itens usa os modelos do Cabo MK1 como pai, trocando apenas as texturas do miolo (`item_cable_opaque.png`, `item_cable_opaque_node.png`) e o tampão do colar (`item_cable_contact.png`). A lógica fica em `transfer/ItemCableNetwork`.
+O **Cabo de Rede** (`futuretech:network_cable`) é o quarto cabo, de miolo roxo. Por enquanto ele é só a estrutura: mesma geometria, a chave corta e religa as ligações, os facades cobrem as faces e a água acompanha o bloco como nos outros. **Ainda não transporta nada.**
+
+- Ele se emenda com outros cabos de rede e se liga **só ao Teleportador**, em qualquer das seis faces. Qualquer outra máquina ao lado — bateria, tanque, fornalha, os outros cabos — continua sendo só vizinha, sem braço e sem ligação.
+- Na face do teleportador aparece o colar metálico de sempre, com o tampão roxo. Ele é a ligação aparecendo, não um conector: o cabo não tem modo, prioridade, filtro nem cor para configurar, então o clique passa direto em vez de abrir uma tela vazia.
+- Os outros cabos perguntam ao vizinho por uma capability, o que exige um `Level` de verdade; este pergunta que bloco é o vizinho, e por isso responde por `linksTo(BlockState)`, o gancho novo do `AbstractCableBlock`.
+- Tem tamanho único, sem MK e sem versão opaca, e não é tickado: quando ganhar o que carregar, a rede entra em `NetworkCableBlockEntity`.
+
+A receita usa ferro nas linhas de cima e de baixo e três fragmentos de ametista no meio, rendendo 6:
+
+```text
+Ferro     Ferro      Ferro
+Ametista  Ametista   Ametista
+Ferro     Ferro      Ferro
+```
+
+As três texturas do miolo (`network_cable.png`, `network_cable_node.png` e `network_cable_contact.png`) saem de `python tools/generate_network_cable.py`, que desenha os mesmos padrões do Cabo MK1 com a rampa roxa.
+
+Todos os cabos compartilham `AbstractCableBlock` e `AbstractCableBlockEntity` (forma, conexões, modos, prioridade, cor e canal dos conectores, menu); cada tipo só diz o que emenda e qual capability o vizinho precisa oferecer — ou, no caso do cabo de rede, que bloco o vizinho precisa ser. Todos eles estão na tag `minecraft:mineable/pickaxe`: nenhum exige a ferramenta certa para soltar o item, então a tag só muda a velocidade da quebra, e é por isso que os cabos de itens e de fluidos ficaram tanto tempo de fora sem ninguém notar. `CablePickaxeTagTest` agora percorre o registro e cobra a tag de todo bloco que seja um `AbstractCableBlock`. O cabo de itens usa os modelos do Cabo MK1 como pai, trocando apenas as texturas do miolo (`item_cable_opaque.png`, `item_cable_opaque_node.png`) e o tampão do colar (`item_cable_contact.png`). A lógica fica em `transfer/ItemCableNetwork`.
 
 A **Fornalha Elétrica** (`futuretech:electric_furnace`) é a primeira máquina que consome energia. Ela funde exatamente o que uma fornalha comum funde, sem combustível e no dobro da velocidade.
 

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "III",
+    "AAA",
+    "III"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "A": "minecraft:amethyst_shard"
+  },
+  "result": {
+    "id": "futuretech:network_cable",
+    "count": 6
+  }
+}
