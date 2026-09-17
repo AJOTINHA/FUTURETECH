@@ -28,7 +28,7 @@ public final class TesseractRenderer implements BlockEntityRenderer<TesseractBlo
     private static final float INNER = 2.75F / 16F;
     private static final Vector3fc FROM = new Vector3f(INNER, INNER, INNER);
     private static final Vector3fc TO = new Vector3f(1 - INNER, 1 - INNER, 1 - INNER);
-    private static final List<Vector3fc> VERTICES = vertices();
+    static final List<Vector3fc> VERTICES = vertices();
 
     private static List<Vector3fc> vertices() {
         List<Vector3fc> vertices = new ArrayList<>(24);
@@ -44,6 +44,11 @@ public final class TesseractRenderer implements BlockEntityRenderer<TesseractBlo
 
     @Override
     public void submit(BlockEntityRenderState state, PoseStack pose, SubmitNodeCollector collector, CameraRenderState camera) {
+        submitCore(pose, collector);
+    }
+
+    /** The cube, wherever the pose puts it: the block's renderer and the item's both draw this. */
+    static void submitCore(PoseStack pose, SubmitNodeCollector collector) {
         collector.submitCustomGeometry(pose, RenderTypes.endPortal(), (entry, buffer) -> {
             for (Vector3fc vertex : VERTICES) buffer.addVertex(entry, vertex);
         });

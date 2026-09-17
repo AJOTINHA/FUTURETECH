@@ -16,7 +16,6 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.block.state.BlockState;
@@ -262,12 +261,9 @@ public final class SideConfigTab<M extends AbstractContainerMenu & SideConfigMen
         for (Face face : Face.values()) {
             if (!isOver(mouseX, mouseY, tileX(gridX, face), tileY(contentY, face), TILE, TILE)) continue;
             SideMode mode = menu.sideMode(face.resolve(front));
-            List<FormattedCharSequence> lines = new ArrayList<>(List.of(
+            graphics.setTooltipForNextFrame(List.of(
                     Component.translatable(face.key).getVisualOrderText(),
-                    Component.translatable(mode.translationKey()).getVisualOrderText(),
-                    Component.translatable("gui.futuretech.side.cycle_hint").getVisualOrderText()));
-            if (face == Face.FRONT) lines.add(Component.translatable("gui.futuretech.side.clear_hint").getVisualOrderText());
-            graphics.setTooltipForNextFrame(lines, mouseX, mouseY);
+                    Component.translatable(mode.translationKey()).getVisualOrderText()), mouseX, mouseY);
             return;
         }
     }

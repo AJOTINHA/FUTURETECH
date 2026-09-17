@@ -84,8 +84,6 @@
   "gui.futuretech.direction.west": "West",
   "gui.futuretech.direction.up": "Up",
   "gui.futuretech.direction.down": "Down",
-  "gui.futuretech.side.clear_hint": "Shift + left click: set every side to None",
-  "gui.futuretech.side.cycle_hint": "Left click: next | Right click: previous",
   "gui.futuretech.redstone": "Redstone",
   "gui.futuretech.redstone.ignored": "Ignored",
   "gui.futuretech.redstone.ignored.desc": "Runs regardless of redstone",

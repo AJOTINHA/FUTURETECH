@@ -161,8 +161,7 @@ public final class TesseractTransferTab extends MachineTab {
             if (!isOver(mouseX, mouseY, tileX(contentX, kind), contentY + 1, TILE, TILE)) continue;
             graphics.setTooltipForNextFrame(List.of(
                     Component.translatable(kind.translationKey()).getVisualOrderText(),
-                    Component.translatable(modeKey(source.mode(kind))).getVisualOrderText(),
-                    Component.translatable("gui.futuretech.side.cycle_hint").getVisualOrderText()), mouseX, mouseY);
+                    Component.translatable(modeKey(source.mode(kind))).getVisualOrderText()), mouseX, mouseY);
             return;
         }
     }

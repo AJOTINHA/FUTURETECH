@@ -1,6 +1,18 @@
 {
   "model": {
-    "type": "minecraft:model",
-    "model": "futuretech:item/tesseract"
+    "type": "minecraft:composite",
+    "models": [
+      {
+        "type": "minecraft:model",
+        "model": "futuretech:item/tesseract"
+      },
+      {
+        "type": "minecraft:special",
+        "base": "futuretech:item/tesseract",
+        "model": {
+          "type": "futuretech:tesseract_core"
+        }
+      }
+    ]
   }
 }

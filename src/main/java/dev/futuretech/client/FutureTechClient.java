@@ -42,6 +42,10 @@ public final class FutureTechClient {
         modEventBus.addListener(FutureTechClient::registerScreens);
         modEventBus.addListener(FutureTechClient::configureSideModels);
         modEventBus.addListener(FutureTechClient::registerRenderers);
+        // The tesseract item's core: the End's portal drawn inside the frame, wherever the item is.
+        modEventBus.addListener((net.neoforged.neoforge.client.event.RegisterSpecialModelRendererEvent event) ->
+                event.register(net.minecraft.resources.Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "tesseract_core"),
+                        TesseractCoreRenderer.Unbaked.MAP_CODEC));
         modEventBus.addListener((net.neoforged.neoforge.client.event.RegisterItemModelsEvent event) ->
                 event.register(FacadeItemModel.ID, FacadeItemModel.Unbaked.MAP_CODEC));
         // Items travelling through cables are drawn from journeys the server reports.
