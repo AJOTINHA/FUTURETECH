@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IKI",
+    "BMB",
+    "IRI"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "K": "minecraft:lightning_rod",
+    "B": "futuretech:battery_mk1",
+    "M": "futuretech:machine_casing",
+    "R": "minecraft:redstone"
+  },
+  "result": {
+    "id": "futuretech:weather_controller",
+    "count": 1
+  }
+}

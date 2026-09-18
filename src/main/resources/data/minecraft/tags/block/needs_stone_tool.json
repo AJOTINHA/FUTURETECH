@@ -15,7 +15,8 @@
     "futuretech:paint_machine",
     "futuretech:water_pump",
     "futuretech:teleporter",
-    "futuretech:time_controller"
+    "futuretech:time_controller",
+    "futuretech:weather_controller"
   ],
   "replace": false
 }

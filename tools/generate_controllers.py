@@ -1,12 +1,13 @@
-"""Front textures, models, blockstate, item model and data of the time controller.
+"""Front textures, models, blockstates, item models and data of the controllers.
 
-The front is drawn over the crusher's front: same casing, status light and window frame, with the
-sky behind the glass — a night sky over a strip of ground, the sun low on the left and the moon
-high on the right, the two ends of the day the machine moves between. The lit front is the same
-sky at dusk, with the status light on and the sun and moon bright: the block glows for a moment
-after it moves the clock, and that is the moment this shows.
+Both fronts are drawn over the crusher's front: same casing, status light and window frame, with
+the sky behind the glass. The time controller's is a night sky over a strip of ground, the sun
+low on the left and the moon high on the right, the two ends of the day the machine moves
+between; lit, the same sky at dusk with the sun and moon bright. The weather controller's is a
+cloud over the same ground with rain under it; lit, the cloud has a bolt coming out of it. A
+block glows for a moment after it fires, and that is the moment the lit fronts show.
 
-Run from any directory: python tools/generate_time_controller.py
+Run from any directory: python tools/generate_controllers.py
 """
 import json
 from pathlib import Path
@@ -29,6 +30,10 @@ SUN = (242, 194, 2, 255)
 SUN_RAY = (255, 226, 110, 255)
 MOON = (214, 220, 232, 255)
 MOON_SHADE = (150, 158, 172, 255)
+CLOUD = (196, 204, 214, 255)
+CLOUD_SHADE = (140, 150, 164, 255)
+RAIN = (98, 150, 220, 255)
+BOLT = (255, 226, 110, 255)
 
 INNER_X0, INNER_X1 = 6, 25
 INNER_Y0, INNER_Y1 = 9, 21
@@ -84,21 +89,42 @@ def moon(image, on):
     image.putpixel((MOON_X, MOON_Y + 1), MOON_SHADE if on else GROUND)
 
 
-def front(on):
+def cloud(image, on):
+    # A cloud across the top of the window: a wide body with a bump on it, shaded underneath.
+    fill(image, 9, 12, 22, 14, CLOUD)
+    fill(image, 12, 10, 18, 11, CLOUD)
+    fill(image, 9, 14, 22, 14, CLOUD_SHADE)
+    if on:
+        # The bolt out of the cloud, zigzagging down to the ground.
+        for x, y in ((16, 15), (15, 16), (16, 16), (15, 17), (14, 18)):
+            image.putpixel((x, y), BOLT)
+    else:
+        for x in (10, 13, 19, 22):
+            image.putpixel((x, 16), RAIN)
+        for x in (11, 15, 17, 21):
+            image.putpixel((x, 17), RAIN)
+        for x in (10, 13, 19, 22):
+            image.putpixel((x, 18), RAIN)
+
+
+def front(kind, on):
     image = Image.open(TEXTURES / "crusher/crusher_front.png").convert("RGBA")
     if on:
         status_light(image, Image.open(TEXTURES / "crusher/crusher_front_on.png").convert("RGBA"))
     sky(image, on)
-    sun(image, on)
-    moon(image, on)
+    if kind == "time_controller":
+        sun(image, on)
+        moon(image, on)
+    else:
+        cloud(image, on)
     return image
 
 
-def textures():
-    out = TEXTURES / "time_controller"
+def textures(kind):
+    out = TEXTURES / kind
     out.mkdir(parents=True, exist_ok=True)
-    front(False).save(out / "time_controller_front.png")
-    front(True).save(out / "time_controller_front_on.png")
+    front(kind, False).save(out / f"{kind}_front.png")
+    front(kind, True).save(out / f"{kind}_front_on.png")
     print(f"  {out.relative_to(ROOT)}")
 
 
@@ -116,45 +142,50 @@ def write(path, value):
     print(f"  {path.relative_to(ROOT)}")
 
 
-def models_and_data():
+# What each controller is crafted around: a clock for the time, a lightning rod for the weather.
+CORES = {"time_controller": "minecraft:clock", "weather_controller": "minecraft:lightning_rod"}
+
+
+def models_and_data(kind):
     # One block, one tier: the machine casing on five faces and the window on the front, lit or not.
     for suffix in ("", "_on"):
-        write(ASSETS / f"models/block/time_controller{suffix}.json", {
+        write(ASSETS / f"models/block/{kind}{suffix}.json", {
             "parent": "futuretech:block/machine_base",
-            "textures": {"front": f"futuretech:block/time_controller/time_controller_front{suffix}"},
+            "textures": {"front": f"futuretech:block/{kind}/{kind}_front{suffix}"},
         })
     variants = {}
     for facing, angle in (("north", 0), ("east", 90), ("south", 180), ("west", 270)):
         for lit in (False, True):
-            variant = {"model": "futuretech:block/time_controller" + ("_on" if lit else "")}
+            variant = {"model": f"futuretech:block/{kind}" + ("_on" if lit else "")}
             if angle:
                 variant["y"] = angle
             variants[f"facing={facing},lit={str(lit).lower()}"] = variant
-    write(ASSETS / "blockstates/time_controller.json", {"variants": variants})
-    write(ASSETS / "items/time_controller.json", {
-        "model": {"type": "minecraft:model", "model": "futuretech:block/time_controller"},
+    write(ASSETS / f"blockstates/{kind}.json", {"variants": variants})
+    write(ASSETS / f"items/{kind}.json", {
+        "model": {"type": "minecraft:model", "model": f"futuretech:block/{kind}"},
     })
-    write(RES / "data/futuretech/loot_table/blocks/time_controller.json", {
+    write(RES / f"data/futuretech/loot_table/blocks/{kind}.json", {
         "type": "minecraft:block",
         "pools": [{
             "rolls": 1,
-            "entries": [{"type": "minecraft:item", "name": "futuretech:time_controller"}],
+            "entries": [{"type": "minecraft:item", "name": f"futuretech:{kind}"}],
             "conditions": [{"condition": "minecraft:survives_explosion"}],
         }],
     })
     copy_json("data/futuretech/advancement/recipes/crusher.json",
-              "data/futuretech/advancement/recipes/time_controller.json", "crusher", "time_controller")
-    # A clock over the casing, a battery either side to hold the fare, redstone under it to hear the signal.
-    write(RES / "data/futuretech/recipe/time_controller.json", {
+              f"data/futuretech/advancement/recipes/{kind}.json", "crusher", kind)
+    # The core over the casing, a battery either side to hold the fare, redstone under it to hear the signal.
+    write(RES / f"data/futuretech/recipe/{kind}.json", {
         "type": "minecraft:crafting_shaped", "category": "misc",
         "pattern": ["IKI", "BMB", "IRI"],
-        "key": {"I": "minecraft:iron_ingot", "K": "minecraft:clock", "B": "futuretech:battery_mk1",
+        "key": {"I": "minecraft:iron_ingot", "K": CORES[kind], "B": "futuretech:battery_mk1",
                 "M": "futuretech:machine_casing", "R": "minecraft:redstone"},
-        "result": {"id": "futuretech:time_controller", "count": 1},
+        "result": {"id": f"futuretech:{kind}", "count": 1},
     })
 
 
 if __name__ == "__main__":
-    textures()
-    models_and_data()
-    print("Generated the time controller: textures, models, data and recipe.")
+    for kind in CORES:
+        textures(kind)
+        models_and_data(kind)
+    print("Generated the controllers: textures, models, data and recipes.")

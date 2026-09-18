@@ -1,8 +1,9 @@
 package dev.futuretech.block;
 
 import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.futuretech.api.redstone.RedstoneControl;
-import dev.futuretech.block.entity.TimeControllerBlockEntity;
+import dev.futuretech.block.entity.ControllerBlockEntity;
 import dev.futuretech.perf.TickProfiler;
 import dev.futuretech.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -29,19 +30,28 @@ import net.neoforged.neoforge.transfer.energy.EnergyHandlerUtil;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The time controller: a machine block with the sky in its window, lit while it holds the
- * clock. Energy comes in on every face, so it has no side configuration; whether it works is
- * its redstone control, like any machine's. See {@link TimeControllerBlockEntity}.
+ * The time and weather controllers: one machine block per {@link ControllerKind}, with the sky
+ * in its window and lit for a moment after it fires. Energy comes in on every face, so it has
+ * no side configuration; when it fires is its redstone control, like any machine's. See
+ * {@link ControllerBlockEntity}.
  */
-public final class TimeControllerBlock extends BaseEntityBlock {
-    public static final MapCodec<TimeControllerBlock> CODEC = simpleCodec(TimeControllerBlock::new);
+public final class ControllerBlock extends BaseEntityBlock {
+    public static final MapCodec<ControllerBlock> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+            ControllerKind.CODEC.fieldOf("kind").forGetter(ControllerBlock::kind),
+            propertiesCodec()
+    ).apply(instance, ControllerBlock::new));
     public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
-    public TimeControllerBlock(Properties properties) {
+    private final ControllerKind kind;
+
+    public ControllerBlock(ControllerKind kind, Properties properties) {
         super(properties);
+        this.kind = kind;
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(LIT, false));
     }
+
+    public ControllerKind kind() { return kind; }
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
@@ -49,7 +59,7 @@ public final class TimeControllerBlock extends BaseEntityBlock {
     }
 
     @Override
-    protected MapCodec<TimeControllerBlock> codec() { return CODEC; }
+    protected MapCodec<ControllerBlock> codec() { return CODEC; }
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
@@ -75,19 +85,19 @@ public final class TimeControllerBlock extends BaseEntityBlock {
 
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new TimeControllerBlockEntity(pos, state);
+        return new ControllerBlockEntity(pos, state);
     }
 
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return level.isClientSide() ? null : createTickerHelper(type, ModBlockEntities.TIME_CONTROLLER.get(),
-                TickProfiler.wrap(TimeControllerBlockEntity::serverTick));
+        return level.isClientSide() ? null : createTickerHelper(type, ModBlockEntities.CONTROLLER.get(),
+                TickProfiler.wrap(ControllerBlockEntity::serverTick));
     }
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof TimeControllerBlockEntity controller) {
-            player.openMenu(controller);
+        if (!level.isClientSide() && level.getBlockEntity(pos) instanceof ControllerBlockEntity controller) {
+            player.openMenu(controller, buffer -> buffer.writeEnum(controller.kind()));
         }
         return InteractionResult.SUCCESS;
     }
@@ -97,7 +107,7 @@ public final class TimeControllerBlock extends BaseEntityBlock {
 
     @Override
     protected int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos, Direction direction) {
-        return level.getBlockEntity(pos) instanceof TimeControllerBlockEntity controller
+        return level.getBlockEntity(pos) instanceof ControllerBlockEntity controller
                 ? EnergyHandlerUtil.getRedstoneSignalFromEnergyHandler(controller.energy()) : 0;
     }
 }

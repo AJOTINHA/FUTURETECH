@@ -1,13 +1,14 @@
 package dev.futuretech.menu;
 
-import static dev.futuretech.block.entity.TimeControllerBlockEntity.*;
+import static dev.futuretech.block.entity.ControllerBlockEntity.*;
 
 import dev.futuretech.api.redstone.RedstoneControlMenu;
 import dev.futuretech.api.redstone.RedstoneMode;
-import dev.futuretech.block.DayMoment;
-import dev.futuretech.block.entity.TimeControllerBlockEntity;
+import dev.futuretech.block.ControllerKind;
+import dev.futuretech.block.entity.ControllerBlockEntity;
 import dev.futuretech.energy.EnergySync;
 import dev.futuretech.registry.ModMenus;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -18,27 +19,34 @@ import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The time controller's menu: the moment the block is set to, its redstone mode and the energy
- * it pays with, all as data slots, and the player's inventory under them. Picking a moment is a
- * menu button, one per {@link DayMoment}, past the redstone mode's buttons; the block has no
- * slots of its own.
+ * A controller's menu: the choice the block is set to, its redstone mode and the energy it pays
+ * with, all as data slots, and the player's inventory under them. Which controller it is rides
+ * in the opening packet, so the screen knows its choices before any sync. Picking one is a menu
+ * button, past the redstone mode's buttons; the block has no slots of its own.
  */
-public final class TimeControllerMenu extends MachineMenu implements RedstoneControlMenu {
+public final class ControllerMenu extends MachineMenu implements RedstoneControlMenu {
     public static final int IMAGE_WIDTH = 176;
     public static final int INVENTORY_Y = 112;
-    /** {@code SELECT_BASE + ordinal} sets that moment; past the redstone buttons. */
+    /** {@code SELECT_BASE + choice} sets that choice; past the redstone buttons. */
     public static final int SELECT_BASE = RedstoneControlMenu.BUTTON_BASE + RedstoneMode.values().length;
 
+    private final ControllerKind kind;
     private final ContainerData data;
-    private final @Nullable TimeControllerBlockEntity controller;
+    private final @Nullable ControllerBlockEntity controller;
 
-    public TimeControllerMenu(int id, Inventory inventory) {
-        this(id, inventory, null, new SimpleContainerData(DATA_COUNT));
+    public ControllerMenu(int id, Inventory inventory, RegistryFriendlyByteBuf buffer) {
+        this(id, inventory, buffer.readEnum(ControllerKind.class), null, new SimpleContainerData(DATA_COUNT));
     }
 
-    public TimeControllerMenu(int id, Inventory inventory, @Nullable TimeControllerBlockEntity controller, ContainerData data) {
-        super(ModMenus.TIME_CONTROLLER.get(), id);
+    public ControllerMenu(int id, Inventory inventory, ControllerBlockEntity controller, ContainerData data) {
+        this(id, inventory, controller.kind(), controller, data);
+    }
+
+    private ControllerMenu(int id, Inventory inventory, ControllerKind kind, @Nullable ControllerBlockEntity controller,
+                           ContainerData data) {
+        super(ModMenus.CONTROLLER.get(), id);
         checkContainerDataCount(data, DATA_COUNT);
+        this.kind = kind;
         this.data = data;
         this.controller = controller;
         addStandardInventorySlots(inventory, 8, INVENTORY_Y);
@@ -46,11 +54,13 @@ public final class TimeControllerMenu extends MachineMenu implements RedstoneCon
         if (controller != null) markSynced();
     }
 
+    public ControllerKind kind() { return kind; }
+
     public int energyStored() { return EnergySync.unpack(data.get(DATA_ENERGY_LOW), data.get(DATA_ENERGY_HIGH)); }
 
-    public int energyCapacity() { return CAPACITY; }
+    public int energyCapacity() { return kind.capacity(); }
 
-    public DayMoment moment() { return DayMoment.byOrdinal(data.get(DATA_MOMENT)); }
+    public int choice() { return kind.clampChoice(data.get(DATA_CHOICE)); }
 
     @Override
     public RedstoneMode redstoneMode() { return RedstoneMode.byOrdinal(data.get(DATA_REDSTONE_BASE)); }
@@ -62,8 +72,8 @@ public final class TimeControllerMenu extends MachineMenu implements RedstoneCon
     public boolean clickMenuButton(Player player, int buttonId) {
         if (RedstoneControlMenu.handleButton(controller, buttonId)) return true;
         int pick = buttonId - SELECT_BASE;
-        if (controller == null || pick < 0 || pick >= DayMoment.values().length) return false;
-        controller.setMoment(DayMoment.values()[pick]);
+        if (controller == null || pick < 0 || pick >= kind.choices()) return false;
+        controller.setChoice(pick);
         return true;
     }
 

@@ -2,9 +2,11 @@ package dev.futuretech.energy;
 
 import dev.futuretech.api.redstone.RedstoneMode;
 import dev.futuretech.api.side.SideMode;
+import dev.futuretech.block.ControllerKind;
 import dev.futuretech.block.DayMoment;
+import dev.futuretech.block.WeatherState;
 import dev.futuretech.block.entity.BatteryBlockEntity;
-import dev.futuretech.block.entity.TimeControllerBlockEntity;
+import dev.futuretech.block.entity.ControllerBlockEntity;
 import dev.futuretech.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -20,6 +22,7 @@ import net.minecraft.world.level.block.Blocks;
  * The last cases are the controller's own trigger, one per redstone mode: a signal arriving
  * moves the clock forward and takes the fare, and holding it does nothing more; a signal going
  * does the same on the other setting; and with the redstone ignored, picking a moment fires.
+ * The weather controller is the same machine with the sky to set, so one case sets it.
  */
 @net.neoforged.fml.common.EventBusSubscriber(modid = "futuretech")
 public class EnergyCableGameTests {
@@ -41,10 +44,10 @@ public class EnergyCableGameTests {
         level.setBlock(pos, block.defaultBlockState(), Block.UPDATE_ALL);
     }
 
-    private TimeControllerBlockEntity controller() {
+    private ControllerBlockEntity controller() {
         var entity = level.getBlockEntity(machine);
-        assertTrue(entity instanceof TimeControllerBlockEntity, "a time controller at " + machine);
-        return (TimeControllerBlockEntity) entity;
+        assertTrue(entity instanceof ControllerBlockEntity, "a controller at " + machine);
+        return (ControllerBlockEntity) entity;
     }
 
     /** A full MK1 battery at {@code pos}, giving out through {@code side}. */
@@ -84,13 +87,13 @@ public class EnergyCableGameTests {
 
     private long clock() { return level.getServer().clockManager().getTotalTicks(level.registryAccess().getOrThrow(net.minecraft.world.clock.WorldClocks.OVERWORLD)); }
 
-    /** A full controller set to noon, with the redstone read the given way. */
-    private TimeControllerBlockEntity controller(RedstoneMode mode) {
-        place(machine, ModBlocks.TIME_CONTROLLER.get());
+    /** A full controller of the kind, with the redstone read the given way and, for the time, set to noon. */
+    private ControllerBlockEntity controller(ControllerKind kind, RedstoneMode mode) {
+        place(machine, kind == ControllerKind.TIME ? ModBlocks.TIME_CONTROLLER.get() : ModBlocks.WEATHER_CONTROLLER.get());
         var controller = controller();
-        ((TickLimitedEnergyHandler) controller.energy()).set(TimeControllerBlockEntity.CAPACITY);
+        ((TickLimitedEnergyHandler) controller.energy()).set(kind.capacity());
         controller.redstoneControl().setMode(mode);
-        controller.setMoment(DayMoment.NOON);
+        if (kind == ControllerKind.TIME) controller.setChoice(DayMoment.NOON.ordinal());
         return controller;
     }
 
@@ -102,8 +105,8 @@ public class EnergyCableGameTests {
         assertTrue(now / DayMoment.DAY_TICKS >= before / DayMoment.DAY_TICKS, what + ": the day count did not fall");
         // The world may have lived a tick or two between the reading and the jump, each one less to skip.
         long fare = energyBefore - controller().energy().getAmountAsInt();
-        long expected = TimeControllerBlockEntity.cost(before, DayMoment.NOON);
-        assertTrue(fare <= expected && fare >= expected - TimeControllerBlockEntity.COST_PER_TICK * (WALK + 1),
+        long expected = DayMoment.NOON.skipped(before) * ControllerKind.COST_PER_TICK;
+        assertTrue(fare <= expected && fare >= expected - ControllerKind.COST_PER_TICK * (WALK + 1),
                 what + ": the fare was taken, " + fare + " for " + expected);
     }
 
@@ -112,7 +115,7 @@ public class EnergyCableGameTests {
         long[] before = new long[1];
         int[] energy = new int[1];
         helper.startSequence().thenExecute(() -> {
-            controller(RedstoneMode.HIGH);
+            controller(ControllerKind.TIME, RedstoneMode.HIGH);
         }).thenIdle(WALK).thenExecute(() -> {
             // A signal has to arrive: one already there when the block was placed is not one arriving.
             before[0] = clock();
@@ -126,7 +129,7 @@ public class EnergyCableGameTests {
             level.removeBlock(source, false);
         }).thenIdle(WALK).thenExecute(() -> {
             assertEquals(energy[0], controller().energy().getAmountAsInt(), "nor is the signal going");
-            controller().setMoment(DayMoment.MIDNIGHT);
+            controller().setChoice(DayMoment.MIDNIGHT.ordinal());
         }).thenIdle(WALK).thenExecute(() -> {
             assertEquals(energy[0], controller().energy().getAmountAsInt(), "and picking a moment waits for the signal");
         }).thenSucceed();
@@ -138,7 +141,7 @@ public class EnergyCableGameTests {
         int[] energy = new int[1];
         helper.startSequence().thenExecute(() -> {
             place(source, Blocks.REDSTONE_BLOCK);
-            controller(RedstoneMode.LOW);
+            controller(ControllerKind.TIME, RedstoneMode.LOW);
         }).thenIdle(WALK).thenExecute(() -> {
             before[0] = clock();
             energy[0] = controller().energy().getAmountAsInt();
@@ -152,12 +155,30 @@ public class EnergyCableGameTests {
         helper.startSequence().thenExecute(() -> {
             place(machine, ModBlocks.TIME_CONTROLLER.get());
             var controller = controller();
-            ((TickLimitedEnergyHandler) controller.energy()).set(TimeControllerBlockEntity.CAPACITY);
+            ((TickLimitedEnergyHandler) controller.energy()).set(ControllerKind.TIME.capacity());
             controller.redstoneControl().setMode(RedstoneMode.IGNORED);
             before[0] = clock();
             energy[0] = controller.energy().getAmountAsInt();
-            controller.setMoment(DayMoment.NOON);
+            controller.setChoice(DayMoment.NOON.ordinal());
             assertJumped(before[0], energy[0], "on the pick");
+        }).thenSucceed();
+    }
+
+    private void theWeatherControllerSetsTheSkyForAFlatFareAndNothingForTheSkyItIs(GameTestHelper helper) {
+        helper.startSequence().thenExecute(() -> {
+            var controller = controller(ControllerKind.WEATHER, RedstoneMode.IGNORED);
+            int energy = controller.energy().getAmountAsInt();
+            controller.setChoice(WeatherState.RAIN.ordinal());
+            assertTrue(WeatherState.RAIN.holds(level), "rain");
+            assertEquals(energy - ControllerKind.WEATHER_COST, controller.energy().getAmountAsInt(), "the fare for rain");
+            controller.setChoice(WeatherState.THUNDER.ordinal());
+            assertTrue(WeatherState.THUNDER.holds(level), "thunder");
+            assertEquals(energy - 2 * ControllerKind.WEATHER_COST, controller.energy().getAmountAsInt(), "the fare for thunder");
+            controller.setChoice(WeatherState.THUNDER.ordinal());
+            assertEquals(energy - 2 * ControllerKind.WEATHER_COST, controller.energy().getAmountAsInt(), "the sky already thundering is free");
+            controller.setChoice(WeatherState.CLEAR.ordinal());
+            assertTrue(WeatherState.CLEAR.holds(level), "clear");
+            assertEquals(energy - 3 * ControllerKind.WEATHER_COST, controller.energy().getAmountAsInt(), "the fare for clearing");
         }).thenSucceed();
     }
 
@@ -175,7 +196,8 @@ public class EnergyCableGameTests {
             "cable", EnergyCableGameTests::aBatteryFillsAMachineAlongACable,
             "signal_on", EnergyCableGameTests::aSignalArrivingMovesTheClockForwardAndTakesTheFareOnce,
             "signal_off", EnergyCableGameTests::aSignalGoingFiresOnTheOtherSetting,
-            "ignored", EnergyCableGameTests::withTheRedstoneIgnoredPickingAMomentFires);
+            "ignored", EnergyCableGameTests::withTheRedstoneIgnoredPickingAMomentFires,
+            "weather", EnergyCableGameTests::theWeatherControllerSetsTheSkyForAFlatFareAndNothingForTheSkyItIs);
 
     private static net.minecraft.resources.Identifier id(String name) {
         return net.minecraft.resources.Identifier.fromNamespaceAndPath("futuretech", "energy_" + name);
@@ -188,8 +210,8 @@ public class EnergyCableGameTests {
                         test.accept(new EnergyCableGameTests(helper, helper.absolutePos(new BlockPos(5, 5, 5))), helper))));
     }
 
-    /** The cases that move the clock, which the whole server shares, so each runs in a batch of its own. */
-    private static final java.util.Set<String> CLOCK_CASES = java.util.Set.of("signal_on", "signal_off", "ignored");
+    /** The cases that move the clock or the sky, which the whole server shares, so each runs in a batch of its own. */
+    private static final java.util.Set<String> CLOCK_CASES = java.util.Set.of("signal_on", "signal_off", "ignored", "weather");
 
     @net.neoforged.bus.api.SubscribeEvent
     public static void register(net.neoforged.neoforge.event.RegisterGameTestsEvent event) {
