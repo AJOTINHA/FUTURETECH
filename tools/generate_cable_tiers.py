@@ -20,24 +20,26 @@ ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / 'src/main/resources/assets/futuretech'
 DATA = ROOT / 'src/main/resources/data/futuretech'
 
-# Base, tone, core and light, darkest to brightest. MK1 is white like the battery's lines;
-# MK2 and MK4 ramp around the machines' corner colours (#F2C202, #01FDFE); MK3 is charcoal
-# insulation with a thin lit red line and its dark red halo, a wire rather than a flat red,
-# which keeps it apart from the redstone cable; the item cable is a neutral grey.
+# Base, tone, core and light, darkest to brightest. Every tier is a wire: charcoal insulation
+# with a thin lit line down the middle and its halo, in the MK's colour — white like the lines
+# of the battery MK1, then the machines' corner colours (#F2C202, #D21A1E, #01FDFE). The item
+# cable keeps the plain banded core, in a neutral grey.
+CHARCOAL = (28, 30, 34)
 RAMPS = {
-    'cable_mk1': ((142, 147, 152), (181, 186, 191), (228, 231, 234), (255, 255, 255)),
-    'cable_mk2': ((122, 90, 0), (185, 143, 2), (242, 194, 2), (255, 229, 122)),
-    'cable_mk3': ((28, 30, 34), (92, 14, 14), (200, 20, 20), (255, 60, 60)),
-    'cable_mk4': ((37, 95, 146), (56, 148, 175), (88, 196, 196), (121, 229, 217)),
+    'cable_mk1': (CHARCOAL, (120, 124, 128), (228, 231, 234), (255, 255, 255)),
+    'cable_mk2': (CHARCOAL, (110, 82, 0), (242, 194, 2), (255, 229, 122)),
+    'cable_mk3': (CHARCOAL, (92, 14, 14), (200, 20, 20), (255, 60, 60)),
+    'cable_mk4': (CHARCOAL, (18, 92, 100), (1, 210, 212), (121, 245, 240)),
     'item_cable': ((60, 64, 68), (91, 97, 102), (138, 144, 150), (180, 186, 192)),
 }
 
 # Six texels across the six-unit core, four-texel bands along its length. Thirty-two rows are
-# exactly four periods, so consecutive blocks continue the pattern. MK3 keeps its lit line
-# thin — one or two texels — over the dark core.
+# exactly four periods, so consecutive blocks continue the pattern. The energy cable's wire is
+# two texels — the lit line and its halo, swapping sides every band so it zigzags — with no
+# mid tone at all, over the dark core; the item cable is banded throughout.
 STRIP = ['BTCLTB' if y // 4 % 2 == 0 else 'BBLCBB' for y in range(32)]
-THIN_STRIP = ['BBTLTB' if y // 4 % 2 == 0 else 'BBLTBB' for y in range(32)]
-STRIPS = {'cable_mk3': THIN_STRIP}
+THIN_STRIP = ['BBTLBB' if y // 4 % 2 == 0 else 'BBLTBB' for y in range(32)]
+STRIPS = {tier: THIN_STRIP for tier in ('cable_mk1', 'cable_mk2', 'cable_mk3', 'cable_mk4')}
 # The node's open faces show a small central contact.
 NODE = ['TTTBBB', 'TTTBBB', 'TTCLBB', 'BBLCTT', 'BBBTTT', 'BBBTTT']
 # The same contact at eight texels, for the plate that closes the cable's mouth in a collar.
