@@ -1,6 +1,6 @@
 package dev.futuretech.energy;
 
-import dev.futuretech.block.CableTier;
+import dev.futuretech.block.EnergyCableTier;
 import dev.futuretech.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -23,17 +23,17 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(EphemeralTestServerProvider.class)
-class CableNetworkTest {
-    private static final int THROUGHPUT = CableTier.MK1.throughput();
+class EnergyCableNetworkTest {
+    private static final int THROUGHPUT = EnergyCableTier.MK1.throughput();
     private static final BlockPos CABLE = BlockPos.ZERO;
 
     /**
      * Stand-in for a block next to the cable; {@code handler} may be null for blocks without energy.
      * These connectors all deliver, which is what a cable face does until the player narrows it.
      */
-    private record FakeEndpoint(Direction side, @Nullable EnergyHandler handler) implements CableNetwork.Endpoint {
+    private record FakeEndpoint(Direction side, @Nullable EnergyHandler handler) implements EnergyCableNetwork.Endpoint {
         @Override
-        public CableNetwork.EndpointKey key() { return new CableNetwork.EndpointKey(CABLE, side); }
+        public EnergyCableNetwork.EndpointKey key() { return new EnergyCableNetwork.EndpointKey(CABLE, side); }
 
         @Override
         public boolean delivers() { return true; }
@@ -44,9 +44,9 @@ class CableNetworkTest {
 
     /** A connector the player set to extract only: energy may enter the cable, never leave through it. */
     private record ExtractOnlyEndpoint(Direction side, @Nullable EnergyHandler handler)
-            implements CableNetwork.Endpoint {
+            implements EnergyCableNetwork.Endpoint {
         @Override
-        public CableNetwork.EndpointKey key() { return new CableNetwork.EndpointKey(CABLE, side); }
+        public EnergyCableNetwork.EndpointKey key() { return new EnergyCableNetwork.EndpointKey(CABLE, side); }
 
         @Override
         public boolean delivers() { return false; }
@@ -55,13 +55,13 @@ class CableNetworkTest {
         public boolean pulls() { return true; }
     }
 
-    private static CableNetwork network(CableNetwork.Endpoint... endpoints) {
-        return new CableNetwork(THROUGHPUT, Set.of(CABLE), List.of(endpoints));
+    private static EnergyCableNetwork network(EnergyCableNetwork.Endpoint... endpoints) {
+        return new EnergyCableNetwork(THROUGHPUT, Set.of(CABLE), List.of(endpoints));
     }
 
-    private static int insert(CableNetwork network, Direction side, int amount) {
+    private static int insert(EnergyCableNetwork network, Direction side, int amount) {
         try (var transaction = Transaction.openRoot()) {
-            int inserted = network.handlerFor(new CableNetwork.EndpointKey(CABLE, side)).insert(amount, transaction);
+            int inserted = network.handlerFor(new EnergyCableNetwork.EndpointKey(CABLE, side)).insert(amount, transaction);
             transaction.commit();
             return inserted;
         }
@@ -73,13 +73,13 @@ class CableNetworkTest {
         var small = new SimpleEnergyHandler(40);
         var big = new SimpleEnergyHandler(1_000);
         var full = new SimpleEnergyHandler(10, 10, 10, 10);
-        assertEquals(300, CableNetwork.distribute(source, List.of(small, big, full)));
+        assertEquals(300, EnergyCableNetwork.distribute(source, List.of(small, big, full)));
         // The small sink takes its 40 and the remainder of its share flows on to the big one.
         assertEquals(40, small.getAmountAsInt());
         assertEquals(260, big.getAmountAsInt());
         assertEquals(10, full.getAmountAsInt());
         assertEquals(0, source.getAmountAsInt());
-        assertEquals(0, CableNetwork.distribute(source, List.of(big)));
+        assertEquals(0, EnergyCableNetwork.distribute(source, List.of(big)));
     }
 
     @Test
@@ -97,7 +97,7 @@ class CableNetworkTest {
     }
 
     /** A delivering connector whose redstone switch the test flips between ticks. */
-    private static final class SwitchedEndpoint implements CableNetwork.Endpoint {
+    private static final class SwitchedEndpoint implements EnergyCableNetwork.Endpoint {
         private final Direction side;
         private final EnergyHandler handler;
         boolean active = true;
@@ -108,7 +108,7 @@ class CableNetworkTest {
         }
 
         @Override
-        public CableNetwork.EndpointKey key() { return new CableNetwork.EndpointKey(CABLE, side); }
+        public EnergyCableNetwork.EndpointKey key() { return new EnergyCableNetwork.EndpointKey(CABLE, side); }
 
         @Override
         public boolean delivers() { return active; }
@@ -218,7 +218,7 @@ class CableNetworkTest {
         // buffer filled up and its inserts were rejected, draining and refilling every other tick.
         var battery = new SimpleEnergyHandler(100_000, 200, 200, 50_000);
         var network = network(new FakeEndpoint(Direction.WEST, battery));
-        var face = network.handlerFor(new CableNetwork.EndpointKey(CABLE, Direction.WEST));
+        var face = network.handlerFor(new EnergyCableNetwork.EndpointKey(CABLE, Direction.WEST));
         for (int tick = 1; tick <= 20; tick++) {
             EnergyHandlerUtil.move(battery, face, 200, null);
             network.tick(tick);
@@ -229,8 +229,8 @@ class CableNetworkTest {
     }
 
     /** Endpoint on an explicit cable face, for a network that touches one block from two sides. */
-    private record FakeEndpointAt(CableNetwork.EndpointKey key, @Nullable EnergyHandler handler)
-            implements CableNetwork.Endpoint {
+    private record FakeEndpointAt(EnergyCableNetwork.EndpointKey key, @Nullable EnergyHandler handler)
+            implements EnergyCableNetwork.Endpoint {
         @Override
         public boolean delivers() { return true; }
 
@@ -247,14 +247,14 @@ class CableNetworkTest {
         BlockPos eastCable = battery.east();
         var batteryHandler = new SimpleEnergyHandler(100_000, 200, 200, 50_000);
         var consumer = new SimpleEnergyHandler(1_000);
-        var outputFace = new CableNetwork.EndpointKey(westCable, Direction.EAST);
-        var inputFace = new CableNetwork.EndpointKey(eastCable, Direction.WEST);
+        var outputFace = new EnergyCableNetwork.EndpointKey(westCable, Direction.EAST);
+        var inputFace = new EnergyCableNetwork.EndpointKey(eastCable, Direction.WEST);
         assertEquals(battery, outputFace.cablePos().relative(outputFace.side()));
         assertEquals(battery, inputFace.cablePos().relative(inputFace.side()));
-        var network = new CableNetwork(THROUGHPUT, Set.of(westCable, eastCable),
+        var network = new EnergyCableNetwork(THROUGHPUT, Set.of(westCable, eastCable),
                 List.of(new FakeEndpointAt(outputFace, batteryHandler),
                         new FakeEndpointAt(inputFace, batteryHandler),
-                        new FakeEndpointAt(new CableNetwork.EndpointKey(westCable, Direction.UP), consumer)));
+                        new FakeEndpointAt(new EnergyCableNetwork.EndpointKey(westCable, Direction.UP), consumer)));
         try (var transaction = Transaction.openRoot()) {
             assertEquals(100, network.handlerFor(outputFace).insert(100, transaction));
             transaction.commit();
@@ -290,7 +290,7 @@ class CableNetworkTest {
         var producer = new TickLimitedEnergyHandler(20_000, 0, 80, () -> {});
         var battery = new SimpleEnergyHandler(100_000);
         var network = network(new FakeEndpoint(Direction.EAST, battery));
-        var producerFace = network.handlerFor(new CableNetwork.EndpointKey(CABLE, Direction.WEST));
+        var producerFace = network.handlerFor(new EnergyCableNetwork.EndpointKey(CABLE, Direction.WEST));
         for (int tick = 1; tick <= 50; tick++) {
             producer.beginTick();
             producer.set(producer.getAmountAsInt() + 20);
@@ -305,8 +305,8 @@ class CableNetworkTest {
     @Test
     void cableRecipeIsLoadedByTheServer(MinecraftServer server) {
         assertTrue(server.getRecipeManager().byKey(ResourceKey.create(
-                Registries.RECIPE, Identifier.fromNamespaceAndPath("futuretech", "cable_mk1"))).isPresent());
-        assertEquals("cable_mk1", ModBlocks.CABLE_MK1.getId().getPath());
-        assertEquals(CableTier.MK1, ModBlocks.CABLE_MK1.get().tier());
+                Registries.RECIPE, Identifier.fromNamespaceAndPath("futuretech", "energy_cable_mk1"))).isPresent());
+        assertEquals("energy_cable_mk1", ModBlocks.ENERGY_CABLE_MK1.getId().getPath());
+        assertEquals(EnergyCableTier.MK1, ModBlocks.ENERGY_CABLE_MK1.get().tier());
     }
 }

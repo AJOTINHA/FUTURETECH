@@ -6,11 +6,11 @@ import dev.futuretech.api.side.SideMode;
 public enum CableKind {
     /**
      * Energy runs in the cable's own core, which wears the MK's colour, white through cyan; the
-     * tiers are {@link CableTier}. A fresh connector inserts and extracts at once:
+     * tiers are {@link EnergyCableTier}. A fresh connector inserts and extracts at once:
      * energy only ever leaves the blocks that push it out, so there is nothing to drain by
      * accident, and every generator, battery and machine is wired the moment the cable touches it.
      */
-    ENERGY("cable", 0xFF1676C4, false, false, false, false, false, SideMode.BOTH),
+    ENERGY("energy_cable", 0xFF1676C4, false, false, false, false, false, SideMode.BOTH),
     /** Items run in the item cable's grey. A fresh connector moves nothing until the player picks a mode. */
     ITEMS("item_cable", 0xFF9AA0A6, true, true, true, true, false, SideMode.NONE),
     /** Fluids run in the fluid cable's green. A fresh connector moves nothing until the player picks a mode. */

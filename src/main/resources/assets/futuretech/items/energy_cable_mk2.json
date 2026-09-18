@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "futuretech:item/cable_mk2"
+    "model": "futuretech:item/energy_cable_mk2"
   }
 }

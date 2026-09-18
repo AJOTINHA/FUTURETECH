@@ -1,6 +1,6 @@
 """Draw the network cable's three core sprites: the strip, the node face and the contact.
 
-The patches are the ones art/cable_mk1/Build-Cable.ps1 authors for the energy cable, so every
+The patches are the ones art/energy_cable_mk1/Build-Cable.ps1 authors for the energy cable, so every
 cable in the mod shares one pattern and differs only in its four-step ramp. This one is purple.
 Every patch is edge-padded to the sprite's full size: the padding repeats the nearest real pixel,
 so mipmaps never blend filler into the cable. Requires Pillow.

@@ -64,7 +64,7 @@ class NetworkCableJoinTest {
     void passesEveryOtherMachineAndEveryOtherCableBy(MinecraftServer server) {
         NetworkCableBlock block = ModBlocks.NETWORK_CABLE.get();
         for (BlockState other : new BlockState[]{
-                ModBlocks.CABLE_MK1.get().defaultBlockState(),
+                ModBlocks.ENERGY_CABLE_MK1.get().defaultBlockState(),
                 ModBlocks.ITEM_CABLE.get().defaultBlockState(),
                 ModBlocks.FLUID_CABLE.get().defaultBlockState(),
                 ModBlocks.BATTERY_MK1.get().defaultBlockState(),
@@ -85,7 +85,7 @@ class NetworkCableJoinTest {
         Map<BlockPos, BlockState> states = new HashMap<>(Map.of(
                 BlockPos.ZERO.east(), ModBlocks.TELEPORTER.get().defaultBlockState(),
                 BlockPos.ZERO.west(), network(),
-                BlockPos.ZERO.above(), ModBlocks.CABLE_MK1.get().defaultBlockState(),
+                BlockPos.ZERO.above(), ModBlocks.ENERGY_CABLE_MK1.get().defaultBlockState(),
                 BlockPos.ZERO.below(), Blocks.CHEST.defaultBlockState(),
                 BlockPos.ZERO.north(), ModBlocks.FLUID_TANK.get().defaultBlockState()));
         states.put(BlockPos.ZERO, network());

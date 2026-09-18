@@ -18,7 +18,7 @@ final class TravelCapsule {
     private static final float HALF = SIZE / 2;
     private static final float BAR = 0.5F / 16F;
     private static final Identifier WHITE = Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "textures/entity/battery_sphere_white.png");
-    /** The frame's dark grey, {@code cable_mk1_frame_gray}. */
+    /** The frame's dark grey, {@code energy_cable_mk1_frame_gray}. */
     private static final int EDGE = 0xFF202829;
     private static final int GLASS = 0x48BEDCEB;
 

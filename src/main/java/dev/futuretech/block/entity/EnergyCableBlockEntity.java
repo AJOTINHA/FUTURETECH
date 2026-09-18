@@ -1,9 +1,9 @@
 package dev.futuretech.block.entity;
 
-import dev.futuretech.block.CableBlock;
+import dev.futuretech.block.EnergyCableBlock;
 import dev.futuretech.block.CableKind;
-import dev.futuretech.block.CableTier;
-import dev.futuretech.energy.CableNetwork;
+import dev.futuretech.block.EnergyCableTier;
+import dev.futuretech.energy.EnergyCableNetwork;
 import dev.futuretech.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -13,32 +13,32 @@ import net.neoforged.neoforge.transfer.energy.EnergyHandler;
 import net.neoforged.neoforge.transfer.transaction.TransactionContext;
 import org.jspecify.annotations.Nullable;
 
-/** Holds this cable's share of a {@link CableNetwork}; the network itself carries the energy. */
-public final class CableBlockEntity extends AbstractCableBlockEntity {
-    private final CableTier tier;
-    private @Nullable CableNetwork network;
+/** Holds this cable's share of a {@link EnergyCableNetwork}; the network itself carries the energy. */
+public final class EnergyCableBlockEntity extends AbstractCableBlockEntity {
+    private final EnergyCableTier tier;
+    private @Nullable EnergyCableNetwork network;
 
-    public CableBlockEntity(BlockPos pos, BlockState state) {
+    public EnergyCableBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.CABLE.get(), pos, state, CableKind.ENERGY);
-        this.tier = state.getBlock() instanceof CableBlock block ? block.tier() : CableTier.MK1;
+        this.tier = state.getBlock() instanceof EnergyCableBlock block ? block.tier() : EnergyCableTier.MK1;
     }
 
-    public CableTier tier() { return tier; }
+    public EnergyCableTier tier() { return tier; }
 
     @Override
     public CableKind kind() { return CableKind.ENERGY; }
 
     /** The current network, rebuilt on demand after cables were added or removed nearby. */
-    public CableNetwork network() {
+    public EnergyCableNetwork network() {
         if (network == null || !network.isValid()) {
-            network = CableNetwork.discover((ServerLevel) level, worldPosition);
+            network = EnergyCableNetwork.discover((ServerLevel) level, worldPosition);
         }
         return network;
     }
 
-    public void setNetwork(CableNetwork network) { this.network = network; }
+    public void setNetwork(EnergyCableNetwork network) { this.network = network; }
 
-    public void clearNetwork(CableNetwork stale) {
+    public void clearNetwork(EnergyCableNetwork stale) {
         if (network == stale) network = null;
     }
 
@@ -58,7 +58,7 @@ public final class CableBlockEntity extends AbstractCableBlockEntity {
         return new EnergyHandler() {
             private EnergyHandler current() {
                 return side == null ? network().handlerFor(null)
-                        : network().handlerFor(new CableNetwork.EndpointKey(worldPosition, side));
+                        : network().handlerFor(new EnergyCableNetwork.EndpointKey(worldPosition, side));
             }
 
             @Override

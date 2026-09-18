@@ -155,7 +155,7 @@ class TeleporterGridTest {
     @Test
     void theOtherCablesDoNotConduct(MinecraftServer server) {
         panel();
-        BlockState energy = ModBlocks.CABLE_MK1.get().defaultBlockState()
+        BlockState energy = ModBlocks.ENERGY_CABLE_MK1.get().defaultBlockState()
                 .setValue(AbstractCableBlock.WEST, true).setValue(AbstractCableBlock.EAST, true);
         states.put(PANEL.east(), energy);
         pad(PANEL.east(2));

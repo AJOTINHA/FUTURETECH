@@ -1,0 +1,9 @@
+{
+  "replace": false,
+  "values": [
+    "futuretech:portable_battery",
+    "futuretech:portable_battery_mk2",
+    "futuretech:portable_battery_mk3",
+    "futuretech:portable_battery_mk4"
+  ]
+}

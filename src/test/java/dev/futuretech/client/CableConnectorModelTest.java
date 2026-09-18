@@ -2,7 +2,7 @@ package dev.futuretech.client;
 
 import dev.futuretech.api.side.SideConfigVisuals;
 import dev.futuretech.api.side.SideMode;
-import dev.futuretech.block.CableBlock;
+import dev.futuretech.block.EnergyCableBlock;
 import dev.futuretech.block.CableConnector;
 import dev.futuretech.block.CableKind;
 import dev.futuretech.registry.ModBlocks;
@@ -38,11 +38,11 @@ import static org.junit.jupiter.api.Assertions.*;
 class CableConnectorModelTest {
     @Test
     void approvedNodeAndArmsHaveEightUnitSelectionAndCollision(MinecraftServer server) {
-        var state=ModBlocks.CABLE_MK1.get().defaultBlockState();
+        var state=ModBlocks.ENERGY_CABLE_MK1.get().defaultBlockState();
         var node=net.minecraft.world.level.block.Block.box(4,4,4,12,12,12);
         assertFalse(Shapes.joinIsNotEmpty(node,state.getShape(snapshot(Map.of()),BlockPos.ZERO),BooleanOp.NOT_SAME));
         for (Direction side : Direction.values()) {
-            var connected=state.setValue(CableBlock.PROPERTY_BY_DIRECTION.get(side),true);
+            var connected=state.setValue(EnergyCableBlock.PROPERTY_BY_DIRECTION.get(side),true);
             var a=CableConnector.rotate(new CableConnector.Point(4,4,0),side);
             var b=CableConnector.rotate(new CableConnector.Point(12,12,4),side);
             var expected=Shapes.or(node,net.minecraft.world.level.block.Block.box(
@@ -94,12 +94,12 @@ class CableConnectorModelTest {
 
     @Test
     void connectorsFollowMachineNeighborsInAllSixDirectionsWithoutExtraBlockStates(MinecraftServer server) {
-        var cable=ModBlocks.CABLE_MK1.get().defaultBlockState();
+        var cable=ModBlocks.ENERGY_CABLE_MK1.get().defaultBlockState();
         var model=new CableConnectorModel(BASE,CableKind.ENERGY,uniformParts(CONNECTOR));
         var states=new HashMap<BlockPos,BlockState>();
         var level=snapshot(states);
         for (Direction side : Direction.values()) {
-            var connected=cable.setValue(CableBlock.PROPERTY_BY_DIRECTION.get(side),true);
+            var connected=cable.setValue(EnergyCableBlock.PROPERTY_BY_DIRECTION.get(side),true);
             states.clear();
             states.put(BlockPos.ZERO.relative(side),ModBlocks.SOLID_FUEL_GENERATOR.get().defaultBlockState());
             var output=new ArrayList<BlockStateModelPart>();
@@ -133,10 +133,10 @@ class CableConnectorModelTest {
         // An item cable beside an energy cable is a machine as far as either is concerned: the run
         // ends in a collar there, and only a cable of the same kind continues it.
         var model=new CableConnectorModel(BASE,CableKind.ENERGY,uniformParts(CONNECTOR));
-        var energy=ModBlocks.CABLE_MK1.get().defaultBlockState();
+        var energy=ModBlocks.ENERGY_CABLE_MK1.get().defaultBlockState();
         var items=ModBlocks.ITEM_CABLE_OPAQUE.get().defaultBlockState();
         for (var pair : List.of(List.of(energy,items),List.of(items,energy))) {
-            var connected=pair.get(0).setValue(CableBlock.PROPERTY_BY_DIRECTION.get(Direction.NORTH),true);
+            var connected=pair.get(0).setValue(EnergyCableBlock.PROPERTY_BY_DIRECTION.get(Direction.NORTH),true);
             var output=new ArrayList<BlockStateModelPart>();
             model.collectParts(snapshot(Map.of(BlockPos.ZERO.north(),pair.get(1))),BlockPos.ZERO,connected,RandomSource.create(),output);
             assertEquals(List.of(CONNECTOR),output,"Other kind of cable gets a collar");

@@ -7,11 +7,11 @@
     "CCC"
   ],
   "key": {
-    "C": "futuretech:cable_mk2",
+    "C": "futuretech:energy_cable_mk2",
     "K": "futuretech:upgrade_kit_mk3"
   },
   "result": {
-    "id": "futuretech:cable_mk3",
+    "id": "futuretech:energy_cable_mk3",
     "count": 8
   }
 }

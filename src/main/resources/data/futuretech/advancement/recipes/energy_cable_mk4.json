@@ -14,7 +14,7 @@
     "has_the_recipe": {
       "trigger": "minecraft:recipe_unlocked",
       "conditions": {
-        "recipe": "futuretech:cable_mk4"
+        "recipe": "futuretech:energy_cable_mk4"
       }
     }
   },
@@ -26,7 +26,7 @@
   ],
   "rewards": {
     "recipes": [
-      "futuretech:cable_mk4"
+      "futuretech:energy_cable_mk4"
     ]
   }
 }

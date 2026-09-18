@@ -11,7 +11,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[1]
 TEXTURES = ROOT / 'src/main/resources/assets/futuretech/textures'
 MACHINE = TEXTURES / 'block/machine/machine_side.png'
-CABLE = TEXTURES / 'block/cable_mk1/cable_mk1.png'
+CABLE = TEXTURES / 'block/energy_cable_mk1/energy_cable_mk1.png'
 
 
 def fill(image, x0, y0, x1, y1, colour):

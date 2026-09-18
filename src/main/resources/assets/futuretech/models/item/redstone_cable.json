@@ -1,5 +1,5 @@
 {
-  "parent": "futuretech:item/cable_mk1",
+  "parent": "futuretech:item/energy_cable_mk1",
   "textures": {
     "cable": "futuretech:block/redstone_cable/redstone_cable",
     "node": "futuretech:block/redstone_cable/redstone_cable_node"

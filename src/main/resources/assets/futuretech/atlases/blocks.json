@@ -6,7 +6,27 @@
     },
     {
       "type": "single",
-      "resource": "futuretech:block/cable_mk1/cable_contact"
+      "resource": "futuretech:block/energy_cable_mk1/energy_cable_contact"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/energy_cable_mk2/energy_cable_contact"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/energy_cable_mk3/energy_cable_contact"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/energy_cable_mk4/energy_cable_contact"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/network_cable/network_cable_contact"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/redstone_cable/redstone_cable_contact"
     },
     {
       "type": "single",

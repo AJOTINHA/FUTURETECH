@@ -101,7 +101,7 @@ class RedstoneCableJoinTest {
                 Blocks.OAK_PLANKS.defaultBlockState(),
                 Blocks.CHEST.defaultBlockState(),
                 Blocks.GLASS.defaultBlockState(),
-                ModBlocks.CABLE_MK1.get().defaultBlockState(),
+                ModBlocks.ENERGY_CABLE_MK1.get().defaultBlockState(),
                 ModBlocks.ITEM_CABLE.get().defaultBlockState(),
                 ModBlocks.FLUID_CABLE.get().defaultBlockState(),
                 ModBlocks.NETWORK_CABLE.get().defaultBlockState()}) {
@@ -120,7 +120,7 @@ class RedstoneCableJoinTest {
         Map<BlockPos, BlockState> states = new HashMap<>(Map.of(
                 BlockPos.ZERO.east(), Blocks.LEVER.defaultBlockState(),
                 BlockPos.ZERO.west(), cable(),
-                BlockPos.ZERO.above(), ModBlocks.CABLE_MK1.get().defaultBlockState(),
+                BlockPos.ZERO.above(), ModBlocks.ENERGY_CABLE_MK1.get().defaultBlockState(),
                 BlockPos.ZERO.below(), Blocks.STONE.defaultBlockState(),
                 BlockPos.ZERO.north(), Blocks.REDSTONE_LAMP.defaultBlockState()));
         states.put(BlockPos.ZERO, cable());

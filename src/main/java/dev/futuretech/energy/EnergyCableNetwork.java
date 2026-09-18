@@ -2,8 +2,8 @@ package dev.futuretech.energy;
 
 import dev.futuretech.perf.TickProfiler;
 import dev.futuretech.api.side.SideMode;
-import dev.futuretech.block.CableBlock;
-import dev.futuretech.block.entity.CableBlockEntity;
+import dev.futuretech.block.EnergyCableBlock;
+import dev.futuretech.block.entity.EnergyCableBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -28,7 +28,7 @@ import java.util.function.BooleanSupplier;
  * cable of the group; once per tick the group spreads what it holds over every adjacent block
  * that accepts energy, never handing it straight back to a block that is pushing into it.
  */
-public final class CableNetwork {
+public final class EnergyCableNetwork {
     /** A cable face that borders a non-cable block. */
     public record EndpointKey(BlockPos cablePos, Direction side) {
         /** The bordering block; a network wrapping around one machine reaches it from several faces. */
@@ -81,7 +81,7 @@ public final class CableNetwork {
     private int lastMoved;
     private boolean valid = true;
 
-    public CableNetwork(int throughput, Set<BlockPos> cables, List<Endpoint> endpoints) {
+    public EnergyCableNetwork(int throughput, Set<BlockPos> cables, List<Endpoint> endpoints) {
         this.throughput = throughput;
         // The buffer only ever holds one tick of throughput, so a congested network rejects inserts
         // and the pushing block keeps its energy.
@@ -95,17 +95,17 @@ public final class CableNetwork {
     }
 
     /** Flood-fills the cables touching {@code start} and gives every one of them this network. */
-    public static CableNetwork discover(ServerLevel level, BlockPos start) {
+    public static EnergyCableNetwork discover(ServerLevel level, BlockPos start) {
         Set<BlockPos> cables = new HashSet<>();
         List<Endpoint> endpoints = new ArrayList<>();
-        List<CableBlockEntity> members = new ArrayList<>();
+        List<EnergyCableBlockEntity> members = new ArrayList<>();
         int throughput = Integer.MAX_VALUE;
         ArrayDeque<BlockPos> queue = new ArrayDeque<>();
         queue.add(start.immutable());
         cables.add(start.immutable());
         while (!queue.isEmpty()) {
             BlockPos pos = queue.poll();
-            if (!(level.getBlockEntity(pos) instanceof CableBlockEntity cable)) continue;
+            if (!(level.getBlockEntity(pos) instanceof EnergyCableBlockEntity cable)) continue;
             members.add(cable);
             throughput = Math.min(throughput, cable.tier().throughput());
             for (Direction side : Direction.values()) {
@@ -113,7 +113,7 @@ public final class CableNetwork {
                 if (!cable.getBlockState().getValue(PipeBlock.PROPERTY_BY_DIRECTION.get(side))) continue;
                 BlockPos neighbour = pos.relative(side);
                 if (!level.hasChunkAt(neighbour.getX(), neighbour.getZ())) continue;
-                if (level.getBlockState(neighbour).getBlock() instanceof CableBlock) {
+                if (level.getBlockState(neighbour).getBlock() instanceof EnergyCableBlock) {
                     if (cables.add(neighbour)) queue.add(neighbour);
                 } else {
                     // Captured here rather than read per tick: changing a connector invalidates the
@@ -131,7 +131,7 @@ public final class CableNetwork {
                 }
             }
         }
-        var network = new CableNetwork(throughput == Integer.MAX_VALUE ? 0 : throughput, cables, endpoints);
+        var network = new EnergyCableNetwork(throughput == Integer.MAX_VALUE ? 0 : throughput, cables, endpoints);
         members.forEach(member -> member.setNetwork(network));
         return network;
     }
@@ -152,7 +152,7 @@ public final class CableNetwork {
         valid = false;
         for (BlockPos pos : cables) {
             if (level.hasChunkAt(pos.getX(), pos.getZ())
-                    && level.getBlockEntity(pos) instanceof CableBlockEntity cable) {
+                    && level.getBlockEntity(pos) instanceof EnergyCableBlockEntity cable) {
                 cable.clearNetwork(this);
             }
         }
