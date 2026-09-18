@@ -15,6 +15,7 @@ import dev.futuretech.menu.MelterMenu;
 import dev.futuretech.menu.ExtruderMenu;
 import dev.futuretech.menu.SmelteryMenu;
 import dev.futuretech.menu.TeleporterMenu;
+import dev.futuretech.menu.TimeControllerMenu;
 import dev.futuretech.menu.WaterPumpMenu;
 import dev.futuretech.menu.SolidFuelGeneratorMenu;
 import net.minecraft.core.registries.Registries;
@@ -38,6 +39,8 @@ public final class ModMenus {
 
     public static final DeferredHolder<MenuType<?>, MenuType<BatteryMenu>> BATTERY = TYPES.register(
             "battery", () -> new MenuType<>(BatteryMenu::new, FeatureFlags.DEFAULT_FLAGS));
+    public static final DeferredHolder<MenuType<?>, MenuType<TimeControllerMenu>> TIME_CONTROLLER = TYPES.register(
+            "time_controller", () -> new MenuType<>(TimeControllerMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
     public static final DeferredHolder<MenuType<?>, MenuType<FluidTankMenu>> FLUID_TANK = TYPES.register(
             "fluid_tank", () -> IMenuTypeExtension.create(FluidTankMenu::new));

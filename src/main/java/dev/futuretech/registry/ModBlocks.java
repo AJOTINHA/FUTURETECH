@@ -28,6 +28,7 @@ import dev.futuretech.block.MelterBlock;
 import dev.futuretech.block.ExtruderBlock;
 import dev.futuretech.block.SmelteryBlock;
 import dev.futuretech.block.TeleporterBlock;
+import dev.futuretech.block.TimeControllerBlock;
 import dev.futuretech.block.WaterPumpBlock;
 import dev.futuretech.block.SolidFuelGeneratorBlock;
 import net.minecraft.resources.Identifier;
@@ -137,6 +138,12 @@ public final class ModBlocks {
                     .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
                     .requiresCorrectToolForDrops()
                     .lightLevel(state -> state.getValue(TeleporterBlock.LIT) ? 10 : 0));
+
+    /** Sets the time of day on a redstone edge; energy on every face, no tiers. */
+    public static final DeferredBlock<TimeControllerBlock> TIME_CONTROLLER = BLOCKS.registerBlock(
+            "time_controller", TimeControllerBlock::new, properties -> properties
+                    .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops());
 
     // The panel has no energy and nothing to tick; it is a screen onto the cables beside it.
     public static final DeferredBlock<NetworkPanelBlock> NETWORK_PANEL = BLOCKS.registerBlock(

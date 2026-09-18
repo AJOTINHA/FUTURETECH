@@ -38,6 +38,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.PAINT_MACHINE.get());
                         output.accept(ModItems.WATER_PUMP.get());
                         output.accept(ModItems.TELEPORTER.get());
+                        output.accept(ModItems.TIME_CONTROLLER.get());
                         output.accept(ModItems.TELEPORT_CARD.get());
                         output.accept(ModItems.BATTERY_MK1.get());
                         output.accept(ModItems.PORTABLE_BATTERY.get());

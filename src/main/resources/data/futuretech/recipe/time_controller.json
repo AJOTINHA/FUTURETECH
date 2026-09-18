@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IKI",
+    "BMB",
+    "IRI"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "K": "minecraft:clock",
+    "B": "futuretech:battery_mk1",
+    "M": "futuretech:machine_casing",
+    "R": "minecraft:redstone"
+  },
+  "result": {
+    "id": "futuretech:time_controller",
+    "count": 1
+  }
+}
