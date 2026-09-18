@@ -26,6 +26,7 @@ import dev.futuretech.block.entity.ExtruderBlockEntity;
 import dev.futuretech.block.entity.SmelteryBlockEntity;
 import dev.futuretech.block.entity.TeleporterBlockEntity;
 import dev.futuretech.block.entity.ControllerBlockEntity;
+import dev.futuretech.block.entity.RainSensorBlockEntity;
 import dev.futuretech.block.entity.WaterPumpBlockEntity;
 import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
 import net.minecraft.resources.Identifier;
@@ -80,6 +81,8 @@ public final class ModBlockEntities {
             TYPES.register("water_pump", () -> new BlockEntityType<>(WaterPumpBlockEntity::new, ModBlocks.WATER_PUMP.get()));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TeleporterBlockEntity>> TELEPORTER =
             TYPES.register("teleporter", () -> new BlockEntityType<>(TeleporterBlockEntity::new, ModBlocks.TELEPORTER.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RainSensorBlockEntity>> RAIN_SENSOR =
+            TYPES.register("rain_sensor", () -> new BlockEntityType<>(RainSensorBlockEntity::new, ModBlocks.RAIN_SENSOR.get()));
     // One type for both controllers: past what they set, they keep the same things.
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ControllerBlockEntity>> CONTROLLER =
             TYPES.register("controller", () -> new BlockEntityType<>(ControllerBlockEntity::new,

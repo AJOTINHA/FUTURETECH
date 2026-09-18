@@ -213,6 +213,7 @@
   "gui.futuretech.time_controller.moment.midnight": "Meia-noite",
   "gui.futuretech.time_controller.cost": "Próximo pulo: %s FE",
   "block.futuretech.weather_controller": "Controlador de Clima",
+  "block.futuretech.rain_sensor": "Sensor de Chuva",
   "gui.futuretech.weather_controller.state.clear": "Limpo",
   "gui.futuretech.weather_controller.state.rain": "Chuva",
   "gui.futuretech.weather_controller.state.thunder": "Trovoada",

@@ -213,6 +213,7 @@
   "gui.futuretech.time_controller.moment.midnight": "Midnight",
   "gui.futuretech.time_controller.cost": "Next jump: %s FE",
   "block.futuretech.weather_controller": "Weather Controller",
+  "block.futuretech.rain_sensor": "Rain Sensor",
   "gui.futuretech.weather_controller.state.clear": "Clear",
   "gui.futuretech.weather_controller.state.rain": "Rain",
   "gui.futuretech.weather_controller.state.thunder": "Thunder",

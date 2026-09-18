@@ -30,6 +30,7 @@
     "futuretech:teleporter",
     "futuretech:time_controller",
     "futuretech:weather_controller",
+    "futuretech:rain_sensor",
     "futuretech:melter",
     "futuretech:extruder",
     "futuretech:wireless_transmitter",

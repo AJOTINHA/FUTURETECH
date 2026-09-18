@@ -30,6 +30,7 @@ import dev.futuretech.block.SmelteryBlock;
 import dev.futuretech.block.TeleporterBlock;
 import dev.futuretech.block.ControllerBlock;
 import dev.futuretech.block.ControllerKind;
+import dev.futuretech.block.RainSensorBlock;
 import dev.futuretech.block.WaterPumpBlock;
 import dev.futuretech.block.SolidFuelGeneratorBlock;
 import net.minecraft.resources.Identifier;
@@ -143,6 +144,11 @@ public final class ModBlocks {
     /** The controllers: one block per kind, setting the time of day or the weather; energy on every face, no tiers. */
     public static final DeferredBlock<ControllerBlock> TIME_CONTROLLER = registerController(ControllerKind.TIME);
     public static final DeferredBlock<ControllerBlock> WEATHER_CONTROLLER = registerController(ControllerKind.WEATHER);
+
+    /** A daylight detector for rain: the detector's own slab, stone sound, no tool needed. */
+    public static final DeferredBlock<RainSensorBlock> RAIN_SENSOR = BLOCKS.registerBlock(
+            "rain_sensor", RainSensorBlock::new, properties -> properties
+                    .mapColor(MapColor.STONE).strength(0.5F).sound(SoundType.STONE));
 
     private static DeferredBlock<ControllerBlock> registerController(ControllerKind kind) {
         return BLOCKS.registerBlock(kind.blockName(), properties -> new ControllerBlock(kind, properties), properties -> properties

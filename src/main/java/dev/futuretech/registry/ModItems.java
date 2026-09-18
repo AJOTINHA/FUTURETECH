@@ -130,6 +130,7 @@ public final class ModItems {
             properties -> properties.useBlockDescriptionPrefix());
     public static final DeferredItem<BlockItem> TIME_CONTROLLER = ITEMS.registerSimpleBlockItem(ModBlocks.TIME_CONTROLLER);
     public static final DeferredItem<BlockItem> WEATHER_CONTROLLER = ITEMS.registerSimpleBlockItem(ModBlocks.WEATHER_CONTROLLER);
+    public static final DeferredItem<BlockItem> RAIN_SENSOR = ITEMS.registerSimpleBlockItem(ModBlocks.RAIN_SENSOR);
     /** Remembers one teleporter; in another teleporter's slots it is a destination. */
     public static final DeferredItem<TeleportCardItem> TELEPORT_CARD = ITEMS.registerItem("teleport_card", TeleportCardItem::new);
     public static final DeferredItem<Item> GOLD_POWDER = ITEMS.registerSimpleItem("gold_powder");
