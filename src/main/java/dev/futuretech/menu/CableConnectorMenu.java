@@ -248,7 +248,10 @@ public final class CableConnectorMenu extends AbstractContainerMenu {
                 (id, inventory, viewer) -> ItemFilterMenu.opening(id, inventory, cable, side),
                 Component.translatable("gui.futuretech.filter.title",
                         Component.translatable("gui.futuretech.direction." + side.getName()))),
-                buffer -> buffer.writeEnum(side));
+                buffer -> {
+                    buffer.writeEnum(side);
+                    buffer.writeEnum(ItemFilterItem.tier(cable.connectorFilters().getItem(side.ordinal())));
+                });
     }
 
     @Override

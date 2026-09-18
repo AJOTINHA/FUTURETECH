@@ -196,8 +196,17 @@ public final class ModItems {
     public static final DeferredItem<BlockItem> WIRELESS_RECEIVER = ITEMS.registerSimpleBlockItem(ModBlocks.WIRELESS_RECEIVER);
 
     /** Filter card for item cable connectors; its list and mode live in data components. */
-    public static final DeferredItem<ItemFilterItem> FILTER = ITEMS.registerItem(
-            "filter", ItemFilterItem::new, properties -> properties.stacksTo(1));
+    // One card per MK: the list doubles each time, and from the MK2 up the card carries how
+    // closely it reads what it compares.
+    public static final DeferredItem<ItemFilterItem> FILTER = registerFilter(ItemFilterItem.Tier.MK1);
+    public static final DeferredItem<ItemFilterItem> FILTER_MK2 = registerFilter(ItemFilterItem.Tier.MK2);
+    public static final DeferredItem<ItemFilterItem> FILTER_MK3 = registerFilter(ItemFilterItem.Tier.MK3);
+    public static final DeferredItem<ItemFilterItem> FILTER_MK4 = registerFilter(ItemFilterItem.Tier.MK4);
+
+    private static DeferredItem<ItemFilterItem> registerFilter(ItemFilterItem.Tier tier) {
+        return ITEMS.registerItem(tier.itemName(), properties -> new ItemFilterItem(tier, properties),
+                properties -> properties.stacksTo(1));
+    }
 
     public static final DeferredItem<Item> SPEED_UPGRADE = ITEMS.registerSimpleItem("speed_upgrade");
     public static final DeferredItem<Item> CHIP = ITEMS.registerSimpleItem("chip");

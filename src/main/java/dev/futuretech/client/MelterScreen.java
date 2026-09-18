@@ -5,6 +5,7 @@ import static dev.futuretech.client.MachineScreenStyle.*;
 import net.minecraft.client.renderer.RenderPipelines;
 import dev.futuretech.api.gui.EnergyInfoTab;
 import dev.futuretech.api.gui.TabStrip;
+import dev.futuretech.api.gui.TabbedScreen;
 import dev.futuretech.api.redstone.client.RedstoneControlTab;
 import dev.futuretech.api.side.client.SideConfigTab;
 import dev.futuretech.api.upgrade.client.UpgradeTab;
@@ -22,7 +23,7 @@ import net.neoforged.neoforge.fluids.FluidStack;
  * the progress arrow running from it into the tank, and the tank drawn with its fluid's own
  * texture; the machine tabs beside the window.
  */
-public final class MelterScreen extends AbstractContainerScreen<MelterMenu> {
+public final class MelterScreen extends AbstractContainerScreen<MelterMenu> implements TabbedScreen {
     private static final int ARROW_X = MelterMenu.SLOT_X + 24;
     private static final int ARROW_WIDTH = 24;
     private static final int ARROW_TOP = 2;
@@ -52,6 +53,9 @@ public final class MelterScreen extends AbstractContainerScreen<MelterMenu> {
     private final AnimatedBar fluidBar = new AnimatedBar();
     private final AnimatedBar progressBar = new AnimatedBar();
     private final TabStrip tabs;
+
+    @Override
+    public TabStrip tabs() { return tabs; }
 
     public MelterScreen(MelterMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, MelterMenu.IMAGE_WIDTH, MelterMenu.INVENTORY_Y + 82);

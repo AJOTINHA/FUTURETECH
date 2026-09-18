@@ -4,6 +4,7 @@ import static dev.futuretech.client.MachineScreenStyle.*;
 
 import dev.futuretech.api.gui.EnergyInfoTab;
 import dev.futuretech.api.gui.TabStrip;
+import dev.futuretech.api.gui.TabbedScreen;
 import dev.futuretech.api.redstone.client.RedstoneControlTab;
 import dev.futuretech.api.side.client.SideConfigTab;
 import dev.futuretech.api.upgrade.client.UpgradeTab;
@@ -22,7 +23,7 @@ import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidType;
 
-public final class WaterPumpScreen extends AbstractContainerScreen<WaterPumpMenu> {
+public final class WaterPumpScreen extends AbstractContainerScreen<WaterPumpMenu> implements TabbedScreen {
     /** The water column stands between the bucket slots and the energy readout, spanning both slots. */
     private static final int TANK_X = 34;
     private static final int TANK_Y = WaterPumpMenu.INPUT_Y;
@@ -31,6 +32,9 @@ public final class WaterPumpScreen extends AbstractContainerScreen<WaterPumpMenu
     private final AnimatedBar energyBar = new AnimatedBar();
     private final AnimatedBar waterBar = new AnimatedBar();
     private final TabStrip tabs;
+
+    @Override
+    public TabStrip tabs() { return tabs; }
 
     public WaterPumpScreen(WaterPumpMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, WaterPumpMenu.IMAGE_WIDTH, 184);

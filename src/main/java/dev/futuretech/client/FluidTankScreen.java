@@ -5,6 +5,7 @@ import static dev.futuretech.client.MachineScreenStyle.*;
 import dev.futuretech.block.entity.FluidTankBlockEntity;
 import dev.futuretech.menu.FluidTankMenu;
 import dev.futuretech.api.gui.TabStrip;
+import dev.futuretech.api.gui.TabbedScreen;
 import dev.futuretech.api.upgrade.client.UpgradeTab;
 import dev.futuretech.api.side.client.SideConfigTab;
 import dev.futuretech.api.redstone.client.RedstoneControlTab;
@@ -16,12 +17,15 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
-public final class FluidTankScreen extends AbstractContainerScreen<FluidTankMenu> {
+public final class FluidTankScreen extends AbstractContainerScreen<FluidTankMenu> implements TabbedScreen {
     private static final int BAR_X = 76;
     private static final int BAR_Y = 38;
     private static final int BAR_WIDTH = 24;
     private static final int BAR_HEIGHT = 62;
     private final TabStrip tabs;
+
+    @Override
+    public TabStrip tabs() { return tabs; }
 
     public FluidTankScreen(FluidTankMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, FluidTankMenu.WIDTH, FluidTankMenu.HEIGHT);

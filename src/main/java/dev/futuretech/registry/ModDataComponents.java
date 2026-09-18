@@ -3,6 +3,8 @@ package dev.futuretech.registry;
 import dev.futuretech.teleport.TeleportTarget;
 
 import dev.futuretech.FutureTech;
+import dev.futuretech.item.ItemFilterItem;
+import dev.futuretech.item.ItemFilterMatch;
 import dev.futuretech.item.ItemFilterMode;
 import dev.futuretech.item.StoredTankFluid;
 import net.minecraft.core.component.DataComponentType;
@@ -52,6 +54,20 @@ public final class ModDataComponents {
             TYPES.register("filter_mode", () -> DataComponentType.<ItemFilterMode>builder()
                     .persistent(ItemFilterMode.CODEC)
                     .networkSynchronized(ItemFilterMode.STREAM_CODEC)
+                    .build());
+
+    /** How closely an MK2 or better filter reads what it compares. Absent means the item alone. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemFilterMatch>> FILTER_MATCH =
+            TYPES.register("filter_match", () -> DataComponentType.<ItemFilterMatch>builder()
+                    .persistent(ItemFilterMatch.CODEC)
+                    .networkSynchronized(ItemFilterMatch.STREAM_CODEC.cast())
+                    .build());
+
+    /** The level a counting filter keeps everything it lists at. Absent means zero. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> FILTER_COUNT =
+            TYPES.register("filter_count", () -> DataComponentType.<Integer>builder()
+                    .persistent(com.mojang.serialization.Codec.intRange(0, ItemFilterItem.MAX_COUNT))
+                    .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_INT)
                     .build());
 
     /** The block a facade wears. Absent means a facade that lost its block, which covers nothing. */

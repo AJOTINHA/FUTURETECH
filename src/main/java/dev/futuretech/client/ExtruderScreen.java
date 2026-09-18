@@ -4,6 +4,7 @@ import static dev.futuretech.client.MachineScreenStyle.*;
 
 import dev.futuretech.api.gui.EnergyInfoTab;
 import dev.futuretech.api.gui.TabStrip;
+import dev.futuretech.api.gui.TabbedScreen;
 import dev.futuretech.api.redstone.client.RedstoneControlTab;
 import dev.futuretech.api.side.client.SideConfigTab;
 import dev.futuretech.api.upgrade.client.UpgradeTab;
@@ -36,7 +37,7 @@ import net.neoforged.neoforge.fluids.FluidStack;
  * fluids give cobblestone, stone or obsidian, so clicking it steps through them - backwards on a
  * right click - the way the face buttons step through their modes.
  */
-public final class ExtruderScreen extends AbstractContainerScreen<ExtruderMenu> {
+public final class ExtruderScreen extends AbstractContainerScreen<ExtruderMenu> implements TabbedScreen {
     /**
      * The row reads from both sides into the middle: a tank, its arrow, the slot, then the same
      * again mirrored. Everything hangs off the slot, which is centred on the panel.
@@ -66,6 +67,9 @@ public final class ExtruderScreen extends AbstractContainerScreen<ExtruderMenu> 
     private final AnimatedBar[] fluidBars = {new AnimatedBar(), new AnimatedBar()};
     private final AnimatedBar progressBar = new AnimatedBar();
     private final TabStrip tabs;
+
+    @Override
+    public TabStrip tabs() { return tabs; }
     /**
      * The recipes in the order the machine numbers them, read once: they arrive with the data pack,
      * long before a screen opens, and the server sends its choice as a place in this list.

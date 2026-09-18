@@ -3,6 +3,7 @@ package dev.futuretech.client;
 import static dev.futuretech.client.MachineScreenStyle.*;
 
 import dev.futuretech.api.gui.TabStrip;
+import dev.futuretech.api.gui.TabbedScreen;
 import dev.futuretech.api.redstone.client.RedstoneControlTab;
 import dev.futuretech.api.side.client.SideConfigTab;
 import dev.futuretech.api.upgrade.client.UpgradeTab;
@@ -13,9 +14,12 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
-public final class BatteryScreen extends AbstractContainerScreen<BatteryMenu> {
+public final class BatteryScreen extends AbstractContainerScreen<BatteryMenu> implements TabbedScreen {
     private final AnimatedBar energyBar = new AnimatedBar();
     private final TabStrip tabs;
+
+    @Override
+    public TabStrip tabs() { return tabs; }
 
     public BatteryScreen(BatteryMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, BatteryMenu.IMAGE_WIDTH, 184);

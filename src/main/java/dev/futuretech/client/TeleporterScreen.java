@@ -5,6 +5,7 @@ import static dev.futuretech.client.MachineScreenStyle.*;
 import com.mojang.blaze3d.platform.InputConstants;
 import dev.futuretech.api.gui.EnergyInfoTab;
 import dev.futuretech.api.gui.TabStrip;
+import dev.futuretech.api.gui.TabbedScreen;
 import dev.futuretech.api.redstone.client.RedstoneControlTab;
 import dev.futuretech.api.upgrade.client.UpgradeTab;
 import dev.futuretech.block.entity.TeleporterBlockEntity;
@@ -31,7 +32,7 @@ import java.util.List;
  * the right. The rest of the pad's destinations are on the network and picked from a panel, so
  * a pad sending to one of those shows no row lit here.
  */
-public final class TeleporterScreen extends AbstractContainerScreen<TeleporterMenu> {
+public final class TeleporterScreen extends AbstractContainerScreen<TeleporterMenu> implements TabbedScreen {
     private static final int LABEL_X = 7;
     /** The card's row beside its slot: from the slot's right edge to the energy column. */
     private static final int ROW_X = TeleporterMenu.CARD_X + 24;
@@ -60,6 +61,9 @@ public final class TeleporterScreen extends AbstractContainerScreen<TeleporterMe
 
     private final AnimatedBar energyBar = new AnimatedBar();
     private final TabStrip tabs;
+
+    @Override
+    public TabStrip tabs() { return tabs; }
     private EditBox nameBox;
 
     public TeleporterScreen(TeleporterMenu menu, Inventory inventory, Component title) {

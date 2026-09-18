@@ -1,6 +1,7 @@
 package dev.futuretech.client.jei;
 
 import dev.futuretech.FutureTech;
+import dev.futuretech.api.gui.TabbedScreen;
 import dev.futuretech.block.entity.AssemblerBlockEntity;
 import dev.futuretech.block.entity.LaneMachineBlockEntity;
 import dev.futuretech.block.entity.MelterBlockEntity;
@@ -22,13 +23,17 @@ import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.constants.RecipeTypes;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
+import mezz.jei.api.gui.handlers.IGuiContainerHandler;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.types.IRecipeHolderType;
 import mezz.jei.api.recipe.types.IRecipeType;
+import mezz.jei.api.registration.IGuiHandlerRegistration;
 import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -114,6 +119,21 @@ public final class FutureTechJeiPlugin implements IModPlugin {
         // The electric furnace smelts vanilla recipes; the solid fuel generator burns vanilla fuels.
         registration.addCraftingStation(RecipeTypes.SMELTING, ModBlocks.ELECTRIC_FURNACE.get());
         registration.addCraftingStation(RecipeTypes.SMELTING_FUEL, ModBlocks.SOLID_FUEL_GENERATOR.get());
+    }
+
+    /**
+     * The tabs on a screen's edges stand outside its panel, where JEI's ingredient list would sit
+     * on top of them; telling JEI where they are, every frame, makes the list keep clear of them,
+     * closed or open. One handler for every screen of the mod that has tabs.
+     */
+    @Override
+    public void registerGuiHandlers(IGuiHandlerRegistration registration) {
+        registration.addGenericGuiContainerHandler(AbstractContainerScreen.class, new IGuiContainerHandler<AbstractContainerScreen<?>>() {
+            @Override
+            public List<Rect2i> getGuiExtraAreas(AbstractContainerScreen<?> screen) {
+                return screen instanceof TabbedScreen tabbed ? tabbed.tabs().areas() : List.of();
+            }
+        });
     }
 
     private static void singleItem(IRecipeLayoutBuilder builder, LaneMachineRecipe recipe) {

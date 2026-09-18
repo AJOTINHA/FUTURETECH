@@ -4,6 +4,7 @@ import static dev.futuretech.client.MachineScreenStyle.*;
 
 import dev.futuretech.api.gui.EnergyInfoTab;
 import dev.futuretech.api.gui.TabStrip;
+import dev.futuretech.api.gui.TabbedScreen;
 import dev.futuretech.api.redstone.client.RedstoneControlTab;
 import dev.futuretech.api.side.client.SideConfigTab;
 import dev.futuretech.api.upgrade.client.UpgradeTab;
@@ -14,7 +15,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
-public final class LaneMachineScreen extends AbstractContainerScreen<LaneMachineMenu> {
+public final class LaneMachineScreen extends AbstractContainerScreen<LaneMachineMenu> implements TabbedScreen {
     /** The energy column down the left edge, centred on the slot rows: outer box, with the fill inset by a pixel. */
     private static final int ENERGY_X = 7;
     private static final int ENERGY_HEIGHT = 49;
@@ -38,6 +39,9 @@ public final class LaneMachineScreen extends AbstractContainerScreen<LaneMachine
     private final AnimatedBar energyBar = new AnimatedBar();
     private final AnimatedBar[] progressBars;
     private final TabStrip tabs;
+
+    @Override
+    public TabStrip tabs() { return tabs; }
 
     public LaneMachineScreen(LaneMachineMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, LaneMachineMenu.IMAGE_WIDTH, 184 + menu.extraHeight());

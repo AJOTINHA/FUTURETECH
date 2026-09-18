@@ -3,6 +3,7 @@ package dev.futuretech.client;
 import static dev.futuretech.client.MachineScreenStyle.*;
 
 import dev.futuretech.api.gui.TabStrip;
+import dev.futuretech.api.gui.TabbedScreen;
 import dev.futuretech.api.upgrade.client.UpgradeTab;
 import dev.futuretech.menu.StorageCardsMenu;
 import dev.futuretech.teleport.TeleportTarget;
@@ -23,7 +24,7 @@ import java.util.List;
  * shelf and a pencil past each row to rename the card and colour the beam for it. Nothing here is
  * picked — the pads and the panel do the picking; this is where the cards are put.
  */
-public final class StorageCardsScreen extends AbstractContainerScreen<StorageCardsMenu> {
+public final class StorageCardsScreen extends AbstractContainerScreen<StorageCardsMenu> implements TabbedScreen {
     private static final int LABEL_X = 7;
     /** Each card's row beside its slot: from the slot's right edge to the scrollbar. */
     private static final int ROW_X = StorageCardsMenu.CARD_X + 22;
@@ -44,6 +45,9 @@ public final class StorageCardsScreen extends AbstractContainerScreen<StorageCar
     private static final int MIN_KNOB = 12;
 
     private final TabStrip tabs;
+
+    @Override
+    public TabStrip tabs() { return tabs; }
     private boolean draggingKnob;
 
     public StorageCardsScreen(StorageCardsMenu menu, Inventory inventory, Component title) {
