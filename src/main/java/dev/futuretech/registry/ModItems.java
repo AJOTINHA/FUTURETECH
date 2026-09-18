@@ -166,6 +166,9 @@ public final class ModItems {
 
     public static final DeferredItem<BlockItem> ITEM_CABLE_OPAQUE = ITEMS.registerSimpleBlockItem(ModBlocks.ITEM_CABLE_OPAQUE);
     public static final DeferredItem<BlockItem> ITEM_CABLE = ITEMS.registerSimpleBlockItem(ModBlocks.ITEM_CABLE);
+    public static final DeferredItem<BlockItem> CABLE_MK2 = ITEMS.registerSimpleBlockItem(ModBlocks.CABLE_MK2);
+    public static final DeferredItem<BlockItem> CABLE_MK3 = ITEMS.registerSimpleBlockItem(ModBlocks.CABLE_MK3);
+    public static final DeferredItem<BlockItem> CABLE_MK4 = ITEMS.registerSimpleBlockItem(ModBlocks.CABLE_MK4);
 
     public static final DeferredItem<BlockItem> FLUID_CABLE_OPAQUE = ITEMS.registerSimpleBlockItem(ModBlocks.FLUID_CABLE_OPAQUE);
     public static final DeferredItem<BlockItem> FLUID_CABLE = ITEMS.registerSimpleBlockItem(ModBlocks.FLUID_CABLE);

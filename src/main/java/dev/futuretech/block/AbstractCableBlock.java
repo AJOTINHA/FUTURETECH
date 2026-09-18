@@ -95,6 +95,13 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
 
     public abstract CableKind kind();
 
+    /**
+     * The sprite that plugs the cable's mouth inside a collar, as a path under the block
+     * textures: the kind's own by default, in the kind's folder. A kind with tiers that wear
+     * different colours names the tier's instead.
+     */
+    public String contactTexture() { return "block/" + kind().id() + "/" + kind().id() + "_contact"; }
+
     /** Whether {@code neighbour} is a cable of this same kind, which the run continues through. */
     public abstract boolean joins(BlockState neighbour);
 

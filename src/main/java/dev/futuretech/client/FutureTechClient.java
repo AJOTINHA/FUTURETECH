@@ -132,28 +132,28 @@ public final class FutureTechClient {
         // One collar per connector mode: the band on its rim says what that connector does without
         // the player opening it. A closed connector keeps the plain steel, which reads as no band.
         // The bands mean direction, so they are the same blue and orange on every kind; only the
-        // contact plugging the bore takes the cable's own colour.
-        Map<CableKind, Map<Direction, Map<SideMode, BlockStateModelPart>>> connectorsByKind = new EnumMap<>(CableKind.class);
-        for (CableKind kind : CableKind.values()) {
-            String textureFolder = kind == CableKind.ENERGY ? "cable_mk1" : kind.id();
-            TextureAtlasSprite contact = textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID,
-                    "block/" + textureFolder + "/" + kind.id() + "_contact"));
-            Map<SideMode, String> collarTextures = Map.of(
-                    SideMode.NONE, "block/cable_connector/cable_connector",
-                    SideMode.OUTPUT, "block/cable_connector/cable_connector_insert",
-                    SideMode.INPUT, "block/cable_connector/cable_connector_extract",
-                    SideMode.BOTH, "block/cable_connector/cable_connector_both");
-            Map<SideMode, TextureAtlasSprite> collars = new EnumMap<>(SideMode.class);
-            collarTextures.forEach((mode, path) ->
-                    collars.put(mode, textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, path))));
-            Map<Direction, Map<SideMode, BlockStateModelPart>> connectors = new EnumMap<>(Direction.class);
-            for (Direction side : Direction.values()) {
-                Map<SideMode, BlockStateModelPart> perMode = new EnumMap<>(SideMode.class);
-                collars.forEach((mode, collar) -> perMode.put(mode, new CableConnectorModelPart(side, collar, contact)));
-                connectors.put(side, perMode);
-            }
-            connectorsByKind.put(kind, connectors);
-        }
+        // contact plugging the bore takes the cable's own colour, so the collars are built once
+        // per contact sprite — one per kind, and one per tier of the energy cable.
+        Map<SideMode, String> collarTextures = Map.of(
+                SideMode.NONE, "block/cable_connector/cable_connector",
+                SideMode.OUTPUT, "block/cable_connector/cable_connector_insert",
+                SideMode.INPUT, "block/cable_connector/cable_connector_extract",
+                SideMode.BOTH, "block/cable_connector/cable_connector_both");
+        Map<SideMode, TextureAtlasSprite> collars = new EnumMap<>(SideMode.class);
+        collarTextures.forEach((mode, path) ->
+                collars.put(mode, textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, path))));
+        Map<String, Map<Direction, Map<SideMode, BlockStateModelPart>>> connectorsByContact = new java.util.HashMap<>();
+        Function<AbstractCableBlock, Map<Direction, Map<SideMode, BlockStateModelPart>>> connectorsFor = cable ->
+                connectorsByContact.computeIfAbsent(cable.contactTexture(), path -> {
+                    TextureAtlasSprite contact = textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, path));
+                    Map<Direction, Map<SideMode, BlockStateModelPart>> connectors = new EnumMap<>(Direction.class);
+                    for (Direction side : Direction.values()) {
+                        Map<SideMode, BlockStateModelPart> perMode = new EnumMap<>(SideMode.class);
+                        collars.forEach((mode, collar) -> perMode.put(mode, new CableConnectorModelPart(side, collar, contact)));
+                        connectors.put(side, perMode);
+                    }
+                    return connectors;
+                });
         for (Direction side : Direction.values()) {
             batteryPorts.put(side, Map.of(
                     SideMode.INPUT, new BatteryPortModelPart(side, steel, batterySprites.get(SideMode.INPUT)),
@@ -169,7 +169,7 @@ public final class FutureTechClient {
         FacadeModelPart.clearCache();
         FacadeModelPart.setPinSprite(steel);
         event.getBakingResult().blockStateModels().replaceAll((state, model) -> {
-            if (state.getBlock() instanceof AbstractCableBlock cable) return new CableConnectorModel(model, cable.kind(), connectorsByKind.get(cable.kind()));
+            if (state.getBlock() instanceof AbstractCableBlock cable) return new CableConnectorModel(model, cable.kind(), connectorsFor.apply(cable));
             if (state.getBlock() instanceof BatteryBlock) return new ConfiguredSideModel(model, Map.of(), batteryPreviews, batteryPorts);
             if (state.getBlock() instanceof FluidTankBlock) return new ConfiguredSideModel(model, Map.of(), tankPreviews, tankPorts);
             return state.getBlock() instanceof SideConfigurableBlock

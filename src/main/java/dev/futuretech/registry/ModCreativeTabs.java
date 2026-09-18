@@ -46,6 +46,9 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.FLUID_TANK.get());
                         output.accept(ModItems.CABLE_MK1.get());
                         output.accept(ModItems.ITEM_CABLE_OPAQUE.get());
+                        output.accept(ModItems.CABLE_MK2.get());
+                        output.accept(ModItems.CABLE_MK3.get());
+                        output.accept(ModItems.CABLE_MK4.get());
                         output.accept(ModItems.ITEM_CABLE.get());
                         output.accept(ModItems.FLUID_CABLE_OPAQUE.get());
                         output.accept(ModItems.FLUID_CABLE.get());

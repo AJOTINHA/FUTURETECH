@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "CCC",
+    "CKC",
+    "CCC"
+  ],
+  "key": {
+    "C": "futuretech:cable_mk3",
+    "K": "futuretech:upgrade_kit_mk4"
+  },
+  "result": {
+    "id": "futuretech:cable_mk4",
+    "count": 8
+  }
+}

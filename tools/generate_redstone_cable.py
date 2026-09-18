@@ -13,12 +13,12 @@ ROOT = Path(__file__).resolve().parents[1]
 FOLDER = ROOT / 'src/main/resources/assets/futuretech/textures/block/redstone_cable'
 
 # Base, tone, core and light, darkest to brightest, like the purple of the network cable: the
-# red of redstone dust lit, so a line of it reads as the wire it is.
+# machine red the corners of the MK3 machines wear, in the same bands as every other cable.
 PALETTE = {
-    'B': (96, 18, 14, 255),
-    'T': (150, 30, 22, 255),
-    'C': (224, 58, 46, 255),
-    'L': (255, 150, 130, 255),
+    'B': (94, 11, 13, 255),
+    'T': (150, 18, 22, 255),
+    'C': (210, 26, 30, 255),
+    'L': (255, 122, 110, 255),
 }
 
 # Six texels across the six-unit core, four-texel bands along its length. Thirty-two rows are

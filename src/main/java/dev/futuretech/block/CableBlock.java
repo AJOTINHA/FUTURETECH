@@ -38,6 +38,10 @@ public final class CableBlock extends AbstractCableBlock {
     @Override
     public CableKind kind() { return CableKind.ENERGY; }
 
+    /** Each tier's core has its colour, and the plug in the collar wears the same one. */
+    @Override
+    public String contactTexture() { return "block/" + tier.blockName() + "/cable_contact"; }
+
     @Override
     public boolean joins(BlockState neighbour) {
         return neighbour.getBlock() instanceof CableBlock;

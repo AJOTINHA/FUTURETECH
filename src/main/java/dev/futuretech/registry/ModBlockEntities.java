@@ -88,7 +88,8 @@ public final class ModBlockEntities {
     // One block entity type serves every cable tier; list each tier's block here.
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CableBlockEntity>> CABLE =
             TYPES.register("cable", () -> new BlockEntityType<>(
-                    CableBlockEntity::new, ModBlocks.CABLE_MK1.get()));
+                    CableBlockEntity::new, ModBlocks.CABLE_MK1.get(), ModBlocks.CABLE_MK2.get(),
+                    ModBlocks.CABLE_MK3.get(), ModBlocks.CABLE_MK4.get()));
 
     // One block entity type serves every item cable tier; list each tier's block here.
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ItemCableBlockEntity>> ITEM_CABLE =

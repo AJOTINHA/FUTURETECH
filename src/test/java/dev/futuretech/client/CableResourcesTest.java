@@ -261,14 +261,50 @@ class CableResourcesTest {
         assertEquals(energy.replace("futuretech:block/cable_mk1_", "futuretech:block/redstone_cable_"), redstone);
     }
 
-    /** The collar's contact ships for every kind, so no cable can pull a missing texture into the atlas. */
+    /**
+     * The tiers past MK1 are the MK1 models in the MK's colour — yellow, red, cyan, the colours
+     * of the battery's lines — with the same multipart renamed; only the core changes.
+     */
     @Test
-    void everyKindHasItsContactSprite() {
+    void cableTiersReuseTheCableGeometryInTheirOwnColours() throws Exception {
+        for (String tier : List.of("cable_mk2", "cable_mk3", "cable_mk4")) {
+            for (String part : List.of("arm", "cap", "line", "node")) {
+                var model = model("futuretech:block/" + tier + "_" + part);
+                assertEquals("futuretech:block/cable_mk1_" + part, model.get("parent").getAsString(), part);
+                assertFalse(model.has("elements"), "No geometry of its own: " + part);
+                var textures = model.getAsJsonObject("textures");
+                assertEquals(2, textures.size(), "Only the core changes colour: " + part);
+                for (var texture : textures.entrySet()) {
+                    String path = texture.getValue().getAsString();
+                    assertTrue(path.startsWith("futuretech:block/" + tier + "/" + tier), path);
+                    assertNotNull(getClass().getResource("/assets/futuretech/textures/"
+                            + path.substring("futuretech:".length()) + ".png"), path);
+                }
+            }
+            var item = model("futuretech:item/" + tier);
+            assertEquals("futuretech:item/cable_mk1", item.get("parent").getAsString());
+            var energy = resource("blockstates/cable_mk1.json").toString();
+            var other = resource("blockstates/" + tier + ".json").toString();
+            assertEquals(energy.replace("futuretech:block/cable_mk1_", "futuretech:block/" + tier + "_"), other);
+        }
+    }
+
+    /**
+     * The collar's contact ships for every kind, and for every tier of the energy cable, so no
+     * cable can pull a missing texture into the atlas.
+     */
+    @Test
+    void everyKindAndTierHasItsContactSprite() {
         for (var kind : dev.futuretech.block.CableKind.values()) {
-            // The same path FutureTechClient asks the atlas for.
-            String folder = kind == dev.futuretech.block.CableKind.ENERGY ? "cable_mk1" : kind.id();
+            if (kind == dev.futuretech.block.CableKind.ENERGY) continue;
+            // The same path AbstractCableBlock.contactTexture names.
             assertNotNull(getClass().getResource("/assets/futuretech/textures/block/"
-                    + folder + "/" + kind.id() + "_contact.png"), kind.name());
+                    + kind.id() + "/" + kind.id() + "_contact.png"), kind.name());
+        }
+        for (var tier : dev.futuretech.block.CableTier.values()) {
+            // And the one CableBlock.contactTexture names for its tier.
+            assertNotNull(getClass().getResource("/assets/futuretech/textures/block/"
+                    + tier.blockName() + "/cable_contact.png"), tier.name());
         }
     }
 

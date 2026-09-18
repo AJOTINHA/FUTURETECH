@@ -187,6 +187,9 @@ public final class ModBlocks {
                     .sound(SoundType.COPPER)
                     .noOcclusion());
 
+    public static final DeferredBlock<CableBlock> CABLE_MK2 = registerCable(CableTier.MK2);
+    public static final DeferredBlock<CableBlock> CABLE_MK3 = registerCable(CableTier.MK3);
+    public static final DeferredBlock<CableBlock> CABLE_MK4 = registerCable(CableTier.MK4);
     private static DeferredBlock<FluidCableBlock> registerFluidCable(FluidCableTier tier) {
         return BLOCKS.registerBlock(tier.blockName(), properties -> new FluidCableBlock(tier, properties), properties -> properties
                     .mapColor(MapColor.COLOR_GREEN)
