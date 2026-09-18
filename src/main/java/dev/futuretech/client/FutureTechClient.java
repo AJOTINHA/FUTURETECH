@@ -46,6 +46,9 @@ public final class FutureTechClient {
         modEventBus.addListener((net.neoforged.neoforge.client.event.RegisterSpecialModelRendererEvent event) ->
                 event.register(net.minecraft.resources.Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "tesseract_core"),
                         TesseractCoreRenderer.Unbaked.MAP_CODEC));
+        // The head of a wireless plate on the item: the dish and the hedron, which are not boxes.
+        modEventBus.addListener((net.neoforged.neoforge.client.event.RegisterSpecialModelRendererEvent event) ->
+                event.register(WirelessHeadRenderer.ID, WirelessHeadRenderer.Unbaked.MAP_CODEC));
         modEventBus.addListener((net.neoforged.neoforge.client.event.RegisterItemModelsEvent event) ->
                 event.register(FacadeItemModel.ID, FacadeItemModel.Unbaked.MAP_CODEC));
         // Items travelling through cables are drawn from journeys the server reports.
@@ -71,6 +74,7 @@ public final class FutureTechClient {
         event.registerBlockEntityRenderer(ModBlockEntities.FLUID_CABLE.get(), FluidCableRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.TELEPORTER.get(), context -> new TeleporterBeamRenderer());
         event.registerBlockEntityRenderer(ModBlockEntities.TESSERACT.get(), context -> new TesseractRenderer());
+        event.registerBlockEntityRenderer(ModBlockEntities.WIRELESS_REDSTONE.get(), context -> new WirelessRedstoneRenderer());
     }
 
     private static void registerScreens(RegisterMenuScreensEvent event) {
@@ -86,6 +90,7 @@ public final class FutureTechClient {
         event.register(ModMenus.METAL_PRESS.get(), MetalPressScreen::new);
         event.register(ModMenus.SMELTERY.get(), SmelteryScreen::new);
         event.register(ModMenus.MELTER.get(), MelterScreen::new);
+        event.register(ModMenus.EXTRUDER.get(), ExtruderScreen::new);
         event.register(ModMenus.PAINT_MACHINE.get(), PaintMachineScreen::new);
         event.register(ModMenus.WATER_PUMP.get(), WaterPumpScreen::new);
         event.register(ModMenus.TELEPORTER.get(), TeleporterScreen::new);

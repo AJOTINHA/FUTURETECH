@@ -4,8 +4,8 @@ import dev.futuretech.FutureTech;
 import dev.futuretech.block.BatteryBlock;
 import dev.futuretech.block.FluidTankBlock;
 import dev.futuretech.block.BatteryTier;
-import dev.futuretech.block.CableBlock;
-import dev.futuretech.block.CableTier;
+import dev.futuretech.block.EnergyCableBlock;
+import dev.futuretech.block.EnergyCableTier;
 import dev.futuretech.block.ElectricFurnaceBlock;
 import dev.futuretech.block.FluidCableBlock;
 import dev.futuretech.block.FluidCableTier;
@@ -17,6 +17,7 @@ import dev.futuretech.block.RedstoneCableBlock;
 import dev.futuretech.block.NetworkPanelBlock;
 import dev.futuretech.block.StorageCardsBlock;
 import dev.futuretech.block.TesseractBlock;
+import dev.futuretech.block.WirelessRedstoneBlock;
 import dev.futuretech.block.ChargerBlock;
 import dev.futuretech.block.LaneMachineBlock;
 import dev.futuretech.block.LaneMachineKind;
@@ -24,10 +25,12 @@ import dev.futuretech.block.MetalPressBlock;
 import dev.futuretech.block.MachineCasingBlock;
 import dev.futuretech.block.PaintMachineBlock;
 import dev.futuretech.block.MelterBlock;
+import dev.futuretech.block.ExtruderBlock;
 import dev.futuretech.block.SmelteryBlock;
 import dev.futuretech.block.TeleporterBlock;
 import dev.futuretech.block.WaterPumpBlock;
 import dev.futuretech.block.SolidFuelGeneratorBlock;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.material.MapColor;
@@ -113,6 +116,12 @@ public final class ModBlocks {
                     .requiresCorrectToolForDrops()
                     .lightLevel(state -> state.getValue(MelterBlock.LIT) ? 13 : 0));
 
+    // Stirring is not hot work, so the extruder has no light level; its front lights up on its own.
+    public static final DeferredBlock<ExtruderBlock> EXTRUDER = BLOCKS.registerBlock(
+            "extruder", ExtruderBlock::new, properties -> properties
+                    .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops());
+
     public static final DeferredBlock<PaintMachineBlock> PAINT_MACHINE = BLOCKS.registerBlock(
             "paint_machine", PaintMachineBlock::new, properties -> properties
                     .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
@@ -142,6 +151,21 @@ public final class ModBlocks {
                     .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
                     .requiresCorrectToolForDrops());
 
+    // The wireless plates take no energy and never tick: one reads the redstone around it, the
+    // other gives it back somewhere else, and between them there is only a frequency.
+    public static final DeferredBlock<WirelessRedstoneBlock> WIRELESS_TRANSMITTER =
+            registerWireless("wireless_transmitter", WirelessRedstoneBlock.Kind.TRANSMITTER);
+    public static final DeferredBlock<WirelessRedstoneBlock> WIRELESS_RECEIVER =
+            registerWireless("wireless_receiver", WirelessRedstoneBlock.Kind.RECEIVER);
+
+    private static DeferredBlock<WirelessRedstoneBlock> registerWireless(String name, WirelessRedstoneBlock.Kind kind) {
+        return BLOCKS.registerBlock(name, properties -> new WirelessRedstoneBlock(kind, properties), properties -> properties
+                    .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
+                    .noOcclusion().requiresCorrectToolForDrops()
+                    // The crystal and the dish carry a light of their own while there is a signal.
+                    .lightLevel(state -> state.getValue(WirelessRedstoneBlock.LIT) ? 3 : 0));
+    }
+
     // The tesseract is an open frame: no occlusion, so the cube inside and the light show through.
     public static final DeferredBlock<TesseractBlock> TESSERACT = BLOCKS.registerBlock(
             "tesseract", TesseractBlock::new, properties -> properties
@@ -163,10 +187,13 @@ public final class ModBlocks {
                     .requiresCorrectToolForDrops());
     }
 
-    public static final DeferredBlock<CableBlock> CABLE_MK1 = registerCable(CableTier.MK1);
+    public static final DeferredBlock<EnergyCableBlock> ENERGY_CABLE_MK1 = registerCable(EnergyCableTier.MK1);
+    public static final DeferredBlock<EnergyCableBlock> ENERGY_CABLE_MK2 = registerCable(EnergyCableTier.MK2);
+    public static final DeferredBlock<EnergyCableBlock> ENERGY_CABLE_MK3 = registerCable(EnergyCableTier.MK3);
+    public static final DeferredBlock<EnergyCableBlock> ENERGY_CABLE_MK4 = registerCable(EnergyCableTier.MK4);
 
-    private static DeferredBlock<CableBlock> registerCable(CableTier tier) {
-        return BLOCKS.registerBlock(tier.blockName(), properties -> new CableBlock(tier, properties), properties -> properties
+    private static DeferredBlock<EnergyCableBlock> registerCable(EnergyCableTier tier) {
+        return BLOCKS.registerBlock(tier.blockName(), properties -> new EnergyCableBlock(tier, properties), properties -> properties
                     .mapColor(MapColor.COLOR_ORANGE)
                     .strength(1.0F, 3.0F)
                     .sound(SoundType.COPPER)
@@ -187,9 +214,14 @@ public final class ModBlocks {
                     .sound(SoundType.COPPER)
                     .noOcclusion());
 
-    public static final DeferredBlock<CableBlock> CABLE_MK2 = registerCable(CableTier.MK2);
-    public static final DeferredBlock<CableBlock> CABLE_MK3 = registerCable(CableTier.MK3);
-    public static final DeferredBlock<CableBlock> CABLE_MK4 = registerCable(CableTier.MK4);
+    // One size as well: a wire is a wire.
+    public static final DeferredBlock<RedstoneCableBlock> REDSTONE_CABLE = BLOCKS.registerBlock(
+            "redstone_cable", RedstoneCableBlock::new, properties -> properties
+                    .mapColor(MapColor.COLOR_RED)
+                    .strength(1.0F, 3.0F)
+                    .sound(SoundType.COPPER)
+                    .noOcclusion());
+
     private static DeferredBlock<FluidCableBlock> registerFluidCable(FluidCableTier tier) {
         return BLOCKS.registerBlock(tier.blockName(), properties -> new FluidCableBlock(tier, properties), properties -> properties
                     .mapColor(MapColor.COLOR_GREEN)
@@ -206,13 +238,13 @@ public final class ModBlocks {
                     .noOcclusion());
     }
 
+    static {
+        // The energy cable used to be plain "cable": worlds and chests from before keep theirs.
+        for (var tier : EnergyCableTier.values()) {
+            BLOCKS.addAlias(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "cable_" + tier.getSerializedName()),
+                    Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, tier.blockName()));
+        }
+    }
+
     private ModBlocks() {}
 }
-    // One size as well: a wire is a wire.
-    public static final DeferredBlock<RedstoneCableBlock> REDSTONE_CABLE = BLOCKS.registerBlock(
-            "redstone_cable", RedstoneCableBlock::new, properties -> properties
-                    .mapColor(MapColor.COLOR_RED)
-                    .strength(1.0F, 3.0F)
-                    .sound(SoundType.COPPER)
-                    .noOcclusion());
-

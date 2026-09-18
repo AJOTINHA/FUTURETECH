@@ -6,10 +6,10 @@
     "futuretech:electric_furnace",
     "futuretech:crusher",
     "futuretech:battery_mk1",
-    "futuretech:cable_mk1",
-    "futuretech:cable_mk2",
-    "futuretech:cable_mk3",
-    "futuretech:cable_mk4",
+    "futuretech:energy_cable_mk1",
+    "futuretech:energy_cable_mk2",
+    "futuretech:energy_cable_mk3",
+    "futuretech:energy_cable_mk4",
     "futuretech:item_cable_opaque",
     "futuretech:item_cable",
     "futuretech:fluid_cable_opaque",
@@ -28,7 +28,10 @@
     "futuretech:paint_machine",
     "futuretech:water_pump",
     "futuretech:teleporter",
-    "futuretech:melter"
+    "futuretech:melter",
+    "futuretech:extruder",
+    "futuretech:wireless_transmitter",
+    "futuretech:wireless_receiver"
   ],
   "replace": false
 }

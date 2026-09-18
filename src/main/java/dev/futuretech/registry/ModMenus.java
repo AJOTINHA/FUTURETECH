@@ -12,6 +12,7 @@ import dev.futuretech.menu.LaneMachineMenu;
 import dev.futuretech.menu.MetalPressMenu;
 import dev.futuretech.menu.PaintMachineMenu;
 import dev.futuretech.menu.MelterMenu;
+import dev.futuretech.menu.ExtruderMenu;
 import dev.futuretech.menu.SmelteryMenu;
 import dev.futuretech.menu.TeleporterMenu;
 import dev.futuretech.menu.WaterPumpMenu;
@@ -54,6 +55,8 @@ public final class ModMenus {
 
     public static final DeferredHolder<MenuType<?>, MenuType<MelterMenu>> MELTER = TYPES.register(
             "melter", () -> IMenuTypeExtension.create(MelterMenu::new));
+    public static final DeferredHolder<MenuType<?>, MenuType<ExtruderMenu>> EXTRUDER = TYPES.register(
+            "extruder", () -> IMenuTypeExtension.create(ExtruderMenu::new));
     public static final DeferredHolder<MenuType<?>, MenuType<SmelteryMenu>> SMELTERY = TYPES.register(
             "smeltery", () -> IMenuTypeExtension.create(SmelteryMenu::new));
     public static final DeferredHolder<MenuType<?>, MenuType<PaintMachineMenu>> PAINT_MACHINE = TYPES.register(

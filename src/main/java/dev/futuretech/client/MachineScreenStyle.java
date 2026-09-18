@@ -173,11 +173,79 @@ public final class MachineScreenStyle {
         };
     }
 
+    /** Width of the progress arrow, and the scale a screen animates its fill against. */
+    static final int ARROW_WIDTH = 24;
+    private static final int ARROW_TOP = 2;
+    private static final int ARROW_BOTTOM = 15;
+    private static final int ARROW_SHAFT_TOP = 6;
+    private static final int ARROW_SHAFT_BOTTOM = 11;
+    /** Columns of the head; it loses a row off each side per step, ending in a single pixel. */
+    private static final int ARROW_HEAD = 7;
+    private static final int ARROW_BACK = 0xFF56616D;
+
     /**
      * Draws the arrow a column at a time, so the fill follows the head's taper instead of stopping
      * at a straight edge. The last column is scaled to the leftover fraction, keeping the animation
      * off whole-pixel steps the way the gradient bars do.
+     *
+     * @param x , rowY the arrow's left edge and the top of the slot row it runs along, in screen coordinates
+     * @param filled how many of the {@link #ARROW_WIDTH} columns are covered, fraction included
      */
+    static void drawProgressArrow(GuiGraphicsExtractor graphics, int x, int rowY, float filled,
+                                  int startColour, int endColour) {
+        drawProgressArrow(graphics, x, rowY, filled, startColour, endColour, false);
+    }
+
+    /**
+     * The same arrow, pointing left when {@code mirrored}: the tail is then at the right edge of the
+     * box and the fill runs towards it, for a machine whose flow arrives from that side.
+     */
+    static void drawProgressArrow(GuiGraphicsExtractor graphics, int x, int rowY, float filled,
+                                  int startColour, int endColour, boolean mirrored) {
+        for (int column = 0; column < ARROW_WIDTH; column++) {
+            // The column is counted from the tail either way; only where it lands on screen flips.
+            int left = mirrored ? x + ARROW_WIDTH - 1 - column : x + column;
+            int top = rowY + arrowTop(column);
+            int bottom = rowY + arrowBottom(column);
+            float covered = Math.clamp(filled - column, 0.0F, 1.0F);
+            graphics.fill(left, top, left + 1, bottom, ARROW_BACK);
+            if (covered <= 0) continue;
+            int colour = lerpColour(startColour, endColour, column / (float) (ARROW_WIDTH - 1));
+            if (covered >= 1) {
+                graphics.fill(left, top, left + 1, bottom, colour);
+                continue;
+            }
+            graphics.pose().pushMatrix();
+            // A part column grows away from the tail, so mirrored it hangs off the cell's right edge.
+            graphics.pose().translate(mirrored ? left + 1 - covered : left, 0);
+            graphics.pose().scale(covered, 1.0F);
+            graphics.fill(0, top, 1, bottom, colour);
+            graphics.pose().popMatrix();
+        }
+    }
+
+    /** Top of one arrow column: the shaft holds its height until the head starts tapering. */
+    private static int arrowTop(int column) {
+        int intoHead = column - (ARROW_WIDTH - ARROW_HEAD);
+        return intoHead < 0 ? ARROW_SHAFT_TOP : ARROW_TOP + intoHead;
+    }
+
+    private static int arrowBottom(int column) {
+        int intoHead = column - (ARROW_WIDTH - ARROW_HEAD);
+        return intoHead < 0 ? ARROW_SHAFT_BOTTOM : ARROW_BOTTOM - intoHead;
+    }
+
+    /** The arrow is drawn per column, so its gradient has to be sampled rather than filled. */
+    private static int lerpColour(int from, int to, float t) {
+        int alpha = lerpChannel(from >>> 24, to >>> 24, t);
+        int red = lerpChannel(from >> 16 & 0xFF, to >> 16 & 0xFF, t);
+        int green = lerpChannel(from >> 8 & 0xFF, to >> 8 & 0xFF, t);
+        int blue = lerpChannel(from & 0xFF, to & 0xFF, t);
+        return alpha << 24 | red << 16 | green << 8 | blue;
+    }
+
+    private static int lerpChannel(int from, int to, float t) { return Math.round(from + (to - from) * t); }
+
     /** Draws the panel's own slots; upgrade slots are drawn by their tab instead. */
     static void drawSlots(GuiGraphicsExtractor graphics, int x, int y, Iterable<Slot> slots) {
         for (Slot slot : slots) {

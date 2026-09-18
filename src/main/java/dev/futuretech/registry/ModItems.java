@@ -1,8 +1,11 @@
 package dev.futuretech.registry;
 
+import dev.futuretech.block.EnergyCableTier;
 import dev.futuretech.FutureTech;
 import dev.futuretech.block.BatteryBlock;
+import dev.futuretech.block.EnergyCableBlock;
 import dev.futuretech.item.BatteryBlockItem;
+import dev.futuretech.item.EnergyCableBlockItem;
 import dev.futuretech.item.FacadeItem;
 import dev.futuretech.item.FluidTankBlockItem;
 import dev.futuretech.item.ItemFilterItem;
@@ -12,6 +15,7 @@ import dev.futuretech.item.MachineUpgradeKitItem;
 import dev.futuretech.item.PortableBatteryItem;
 import dev.futuretech.item.TeleportCardItem;
 import dev.futuretech.item.TieredMachineBlockItem;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ToolMaterial;
@@ -109,6 +113,9 @@ public final class ModItems {
     public static final DeferredItem<TieredMachineBlockItem> MELTER = ITEMS.registerItem(
             "melter", properties -> new TieredMachineBlockItem(ModBlocks.MELTER.get(), properties),
             properties -> properties.useBlockDescriptionPrefix());
+    public static final DeferredItem<TieredMachineBlockItem> EXTRUDER = ITEMS.registerItem(
+            "extruder", properties -> new TieredMachineBlockItem(ModBlocks.EXTRUDER.get(), properties),
+            properties -> properties.useBlockDescriptionPrefix());
     public static final DeferredItem<TieredMachineBlockItem> SMELTERY = ITEMS.registerItem(
             "smeltery", properties -> new TieredMachineBlockItem(ModBlocks.SMELTERY.get(), properties),
             properties -> properties.useBlockDescriptionPrefix());
@@ -162,23 +169,31 @@ public final class ModItems {
                 properties -> properties.useBlockDescriptionPrefix());
     }
 
-    public static final DeferredItem<BlockItem> CABLE_MK1 = ITEMS.registerSimpleBlockItem(ModBlocks.CABLE_MK1);
+    public static final DeferredItem<EnergyCableBlockItem> ENERGY_CABLE_MK1 = registerCable(ModBlocks.ENERGY_CABLE_MK1);
+    public static final DeferredItem<EnergyCableBlockItem> ENERGY_CABLE_MK2 = registerCable(ModBlocks.ENERGY_CABLE_MK2);
+    public static final DeferredItem<EnergyCableBlockItem> ENERGY_CABLE_MK3 = registerCable(ModBlocks.ENERGY_CABLE_MK3);
+    public static final DeferredItem<EnergyCableBlockItem> ENERGY_CABLE_MK4 = registerCable(ModBlocks.ENERGY_CABLE_MK4);
+
+    /** The energy cable's item says what its tier moves, so every tier gets the same block item. */
+    private static DeferredItem<EnergyCableBlockItem> registerCable(DeferredBlock<EnergyCableBlock> block) {
+        return ITEMS.registerItem(block.getId().getPath(), properties -> new EnergyCableBlockItem(block.get(), properties),
+                properties -> properties.useBlockDescriptionPrefix());
+    }
 
     public static final DeferredItem<BlockItem> ITEM_CABLE_OPAQUE = ITEMS.registerSimpleBlockItem(ModBlocks.ITEM_CABLE_OPAQUE);
     public static final DeferredItem<BlockItem> ITEM_CABLE = ITEMS.registerSimpleBlockItem(ModBlocks.ITEM_CABLE);
-    public static final DeferredItem<BlockItem> CABLE_MK2 = ITEMS.registerSimpleBlockItem(ModBlocks.CABLE_MK2);
-    public static final DeferredItem<BlockItem> CABLE_MK3 = ITEMS.registerSimpleBlockItem(ModBlocks.CABLE_MK3);
-    public static final DeferredItem<BlockItem> CABLE_MK4 = ITEMS.registerSimpleBlockItem(ModBlocks.CABLE_MK4);
 
     public static final DeferredItem<BlockItem> FLUID_CABLE_OPAQUE = ITEMS.registerSimpleBlockItem(ModBlocks.FLUID_CABLE_OPAQUE);
     public static final DeferredItem<BlockItem> FLUID_CABLE = ITEMS.registerSimpleBlockItem(ModBlocks.FLUID_CABLE);
 
     public static final DeferredItem<BlockItem> NETWORK_CABLE = ITEMS.registerSimpleBlockItem(ModBlocks.NETWORK_CABLE);
+    public static final DeferredItem<BlockItem> REDSTONE_CABLE = ITEMS.registerSimpleBlockItem(ModBlocks.REDSTONE_CABLE);
 
     public static final DeferredItem<BlockItem> NETWORK_PANEL = ITEMS.registerSimpleBlockItem(ModBlocks.NETWORK_PANEL);
     public static final DeferredItem<BlockItem> STORAGE_CARDS = ITEMS.registerSimpleBlockItem(ModBlocks.STORAGE_CARDS);
-    public static final DeferredItem<BlockItem> REDSTONE_CABLE = ITEMS.registerSimpleBlockItem(ModBlocks.REDSTONE_CABLE);
     public static final DeferredItem<BlockItem> TESSERACT = ITEMS.registerSimpleBlockItem(ModBlocks.TESSERACT);
+    public static final DeferredItem<BlockItem> WIRELESS_TRANSMITTER = ITEMS.registerSimpleBlockItem(ModBlocks.WIRELESS_TRANSMITTER);
+    public static final DeferredItem<BlockItem> WIRELESS_RECEIVER = ITEMS.registerSimpleBlockItem(ModBlocks.WIRELESS_RECEIVER);
 
     /** Filter card for item cable connectors; its list and mode live in data components. */
     public static final DeferredItem<ItemFilterItem> FILTER = ITEMS.registerItem(
@@ -205,6 +220,14 @@ public final class ModItems {
     public static final DeferredItem<BlockItem> TRANSPORT_ARM = ITEMS.registerSimpleBlockItem(ModBlocks.TRANSPORT_ARM);
     public static final DeferredItem<BlockItem> ASSEMBLY_ARM = ITEMS.registerSimpleBlockItem(ModBlocks.ASSEMBLY_ARM);
     public static final DeferredItem<BlockItem> ASSEMBLER_TERMINAL = ITEMS.registerSimpleBlockItem(ModBlocks.ASSEMBLER_TERMINAL);
+
+    static {
+        // The energy cable used to be plain "cable": worlds and chests from before keep theirs.
+        for (var tier : EnergyCableTier.values()) {
+            ITEMS.addAlias(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "cable_" + tier.getSerializedName()),
+                    Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, tier.blockName()));
+        }
+    }
 
     private ModItems() {}
 }

@@ -5,6 +5,7 @@ import dev.futuretech.recipe.AlloyingRecipe;
 import dev.futuretech.block.LaneMachineKind;
 import dev.futuretech.recipe.LaneMachineRecipe;
 import dev.futuretech.recipe.MeltingRecipe;
+import dev.futuretech.recipe.ExtrudingRecipe;
 import dev.futuretech.recipe.PressingRecipe;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.crafting.RecipeBookCategory;
@@ -49,7 +50,9 @@ public final class ModRecipes {
 
     /** Vanilla only syncs recipe displays; the machine recipes go to every client for the recipe viewer. */
     public static void syncToClients(net.neoforged.neoforge.event.OnDatapackSyncEvent event) {
-        event.sendRecipes(CRUSHING.get(), SAWING.get(), PRESSING.get(), ALLOYING.get(), ASSEMBLING.get(), MELTING.get());
+        dev.futuretech.recipe.ExtrudingRecipes.invalidate();
+        event.sendRecipes(CRUSHING.get(), SAWING.get(), PRESSING.get(), ALLOYING.get(), ASSEMBLING.get(),
+                MELTING.get(), EXTRUDING.get());
     }
     public static final DeferredHolder<RecipeType<?>, RecipeType<PressingRecipe>> PRESSING = TYPES.register("pressing", () -> new RecipeType<>() {
         @Override public String toString() { return "futuretech:pressing"; }
@@ -69,4 +72,10 @@ public final class ModRecipes {
     public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<MeltingRecipe>> MELTING_SERIALIZER =
             SERIALIZERS.register("melting", () -> new RecipeSerializer<>(MeltingRecipe.CODEC, MeltingRecipe.STREAM_CODEC));
     public static final DeferredHolder<RecipeBookCategory, RecipeBookCategory> MELTER_BOOK = BOOKS.register("melter", RecipeBookCategory::new);
+    public static final DeferredHolder<RecipeType<?>, RecipeType<ExtrudingRecipe>> EXTRUDING = TYPES.register("extruding", () -> new RecipeType<>() {
+        @Override public String toString() { return "futuretech:extruding"; }
+    });
+    public static final DeferredHolder<RecipeSerializer<?>, RecipeSerializer<ExtrudingRecipe>> EXTRUDING_SERIALIZER =
+            SERIALIZERS.register("extruding", () -> new RecipeSerializer<>(ExtrudingRecipe.CODEC, ExtrudingRecipe.STREAM_CODEC));
+    public static final DeferredHolder<RecipeBookCategory, RecipeBookCategory> EXTRUDER_BOOK = BOOKS.register("extruder", RecipeBookCategory::new);
 }

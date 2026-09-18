@@ -34,7 +34,9 @@ public final class FutureTech {
         modEventBus.addListener(dev.futuretech.teleport.NetworkPanelPayloads::register);
         modEventBus.addListener(dev.futuretech.teleport.StorageCardsEditPayload::register);
         modEventBus.addListener(dev.futuretech.transfer.TesseractPayloads::register);
+        modEventBus.addListener(dev.futuretech.redstone.WirelessRedstonePayloads::register);
         NeoForge.EVENT_BUS.addListener(dev.futuretech.transfer.TesseractChannels::onServerStopped);
+        NeoForge.EVENT_BUS.addListener(dev.futuretech.redstone.WirelessRedstone::onServerStopped);
         NeoForge.EVENT_BUS.addListener(PerfProfiling::registerCommands);
         NeoForge.EVENT_BUS.addListener(PerfProfiling::onServerTick);
         NeoForge.EVENT_BUS.addListener(AreaMining::onBreak);
