@@ -228,6 +228,39 @@ class CableResourcesTest {
         assertEquals(energy.replace("futuretech:block/cable_mk1_", "futuretech:block/network_cable_"), network);
     }
 
+    /**
+     * The redstone cable, the same again in red: the energy cable's models with their own core,
+     * opaque throughout since nothing moves inside a wire, and the same multipart renamed.
+     */
+    @Test
+    void redstoneCableReusesTheCableGeometryWithItsOwnSkin() throws Exception {
+        for (String part : List.of("arm", "cap", "line", "node")) {
+            var model = model("futuretech:block/redstone_cable_" + part);
+            assertEquals("futuretech:block/cable_mk1_" + part, model.get("parent").getAsString(), part);
+            assertFalse(model.has("elements"), "No geometry of its own: " + part);
+            var textures = model.getAsJsonObject("textures");
+            assertEquals(2, textures.size(), "Only the core changes colour: " + part);
+            for (var texture : textures.entrySet()) {
+                String path = texture.getValue().getAsString();
+                assertTrue(path.startsWith("futuretech:block/redstone_cable/redstone_cable"), path);
+                var png = getClass().getResource("/assets/futuretech/textures/"
+                        + path.substring("futuretech:".length()) + ".png");
+                assertNotNull(png, path);
+                var image = javax.imageio.ImageIO.read(png);
+                for (int y = 0; y < image.getHeight(); y++) {
+                    for (int x = 0; x < image.getWidth(); x++) {
+                        assertEquals(255, image.getRGB(x, y) >>> 24, "Opaque throughout: " + path);
+                    }
+                }
+            }
+        }
+        var item = model("futuretech:item/redstone_cable");
+        assertEquals("futuretech:item/cable_mk1", item.get("parent").getAsString());
+        var energy = resource("blockstates/cable_mk1.json").toString();
+        var redstone = resource("blockstates/redstone_cable.json").toString();
+        assertEquals(energy.replace("futuretech:block/cable_mk1_", "futuretech:block/redstone_cable_"), redstone);
+    }
+
     /** The collar's contact ships for every kind, so no cable can pull a missing texture into the atlas. */
     @Test
     void everyKindHasItsContactSprite() {

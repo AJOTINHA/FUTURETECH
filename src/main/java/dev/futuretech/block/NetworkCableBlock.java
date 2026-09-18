@@ -8,6 +8,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -51,7 +52,7 @@ public final class NetworkCableBlock extends AbstractCableBlock {
      * cable to go.
      */
     @Override
-    protected boolean linksTo(BlockState neighbour, Direction side) {
+    protected boolean linksTo(LevelReader level, BlockPos neighbourPos, BlockState neighbour, Direction side) {
         if (neighbour.getBlock() instanceof TeleporterBlock || neighbour.getBlock() instanceof StorageCardsBlock
                 || neighbour.getBlock() instanceof TesseractBlock) return true;
         // The panel lies `side` of this cable, so the cable is on the panel's `side.getOpposite()`

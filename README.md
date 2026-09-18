@@ -129,7 +129,7 @@ O **Cabo de Rede** (`futuretech:network_cable`) é o quarto cabo, de miolo roxo.
 
 - Ele se emenda com outros cabos de rede e se liga **só ao Teleportador**, em qualquer das seis faces. Qualquer outra máquina ao lado — bateria, tanque, fornalha, os outros cabos — continua sendo só vizinha, sem braço e sem ligação.
 - Na face do teleportador aparece o colar metálico de sempre, com o tampão roxo. Ele é a ligação aparecendo, não um conector: o cabo não tem modo, prioridade, filtro nem cor para configurar, então o clique passa direto em vez de abrir uma tela vazia.
-- Os outros cabos perguntam ao vizinho por uma capability, o que exige um `Level` de verdade; este pergunta que bloco é o vizinho, e por isso responde por `linksTo(BlockState)`, o gancho novo do `AbstractCableBlock`.
+- Os outros cabos perguntam ao vizinho por uma capability, o que exige um `Level` de verdade; este pergunta que bloco é o vizinho, e por isso responde por `linksTo(LevelReader, BlockPos, BlockState, Direction)`, o gancho do `AbstractCableBlock` para ligações decididas pelo estado do bloco.
 - Tem tamanho único, sem MK e sem versão opaca, e não é tickado: quando ganhar o que carregar, a rede entra em `NetworkCableBlockEntity`.
 
 A receita usa ferro nas linhas de cima e de baixo e três fragmentos de ametista no meio, rendendo 6:
@@ -141,6 +141,26 @@ Ferro     Ferro      Ferro
 ```
 
 As três texturas do miolo (`network_cable.png`, `network_cable_node.png` e `network_cable_contact.png`) saem de `python tools/generate_network_cable.py`, que desenha os mesmos padrões do Cabo MK1 com a rampa roxa.
+
+O **Cabo de Redstone** (`futuretech:redstone_cable`) é o quinto cabo, de miolo vermelho: um fio na forma dos outros cabos, com as mesmas ligações, chave, facades e conectores. Não tem MK, não tem versão opaca e não é tickado — como a redstone, ele é avisado.
+
+- Aqui as palavras são do cabo, não do vizinho (nos outros cabos "inserir" é *no baú*; o sinal mora no fio): **Inserir** lê o sinal (0–15) do bloco ao lado para dentro do cabo — a alavanca insere; **Extrair** dá o sinal do cabo para o bloco ao lado — a lâmpada extrai —, com força forte como a de um repetidor, então um bloco sólido (ou uma lâmpada acesa) passa o sinal adiante. Um conector novo começa em **nenhum**: um cabo que devolvesse o que lê entraria em laço no primeiro bloco de pedra que tocasse.
+- Cada conector tem **cor e canal**, e cada par cor-canal é uma linha própria: a linha carrega o **maior** sinal lido pelos conectores que extraem nela, e é isso que os conectores que inserem nela dão. Dezesseis fios num cabo só (e mais cem canais por cor). Não há prioridade nem filtro; a tela do conector agora monta as linhas por tipo, e o cabo de itens e o de fluido ficam exatamente onde estavam.
+- Ele se liga sozinho ao que o pó de redstone se ligaria (`canRedstoneConnectTo`: pó, alavanca, botão, tocha, bloco de redstone, repetidor e comparador pelas pontas, observador pelas costas, o receptor e o transmissor wireless pela frente), às máquinas do mod (`SideConfigurableBlock`) e aos blocos da tag `#futuretech:redstone_cable_links` — lâmpada, pistões, portas, alçapões, portões, dispensador, ejetor, funil, crafter, bloco de notas, TNT, sino, trilhos, blocos de comando, lâmpadas de cobre, teleportador e tesseract. Pedra, baú e os outros cabos continuam vizinhos, para o cabo não ganhar colar em toda parede por onde passa.
+- A rede (`redstone/RedstoneCableNetwork`) não tem buffer: quando um vizinho de um cabo muda, o cabo relê os conectores que extraem nele; se a força de uma linha mudou, os blocos ao lado dos conectores que a inserem são avisados e releem o cabo. Enquanto a rede lê, os conectores dela respondem zero, para um bloco em que ela insere não voltar como sinal dela mesma — e o mesmo silêncio vale quando o cabo lê a redstone na própria porta (o modo redstone do conector), senão um conector em "só sem sinal" se desligaria e religaria para sempre. Um conector em ambos ao lado de pó de redstone é o único laço que sobra, porque o pó guarda a própria força no estado.
+- Cada conector tem dois interruptores a mais, na linha logo abaixo de Inserir/Extrair, acesos na cor do cabo: **Sensor** (num conector que insere) lê o bloco como um comparador — quão cheio está o baú, o tanque, a bateria, a máquina — em vez do sinal dele, e acompanha o que entra e sai (`onNeighborChange`, o mesmo aviso que o comparador recebe); **Forte** (num conector que extrai, ligado por padrão) diz se o sinal atravessa o bloco ao lado como o de um repetidor ou só o acorda, como o pó — desligue para uma lâmpada não acender a vizinha.
+- A **chave num lado sem ligação** força a ligação a qualquer bloco que esteja ali (pedra, baú, o que for), e a chave de novo desfaz; um cabo que não teria ligado sozinho passa a ter colar ali, com conector para configurar. A ligação forçada fica guardada (`Forced`, como `Cut`) e espera o ar: se o bloco some ela dorme, se outro entra ela volta. Só o cabo de redstone permite (`forces()` do `AbstractCableBlock`); nos outros, a chave num lado sem ligação continua passando direto.
+- A rede é refeita num **block tick agendado** (um tick depois), como o repetidor dá o passo dele, nunca de dentro da mudança de bloco que pediu: até lá o cabo continua respondendo pela rede aposentada, então a lâmpada na ponta não pisca enquanto a linha é percorrida de novo. A rede aposentada, depois disso, avisa os blocos em que costumava inserir, para quem perdeu o cabo ou o conector ler zero.
+
+A receita usa ferro nas linhas de cima e de baixo e três pós de redstone no meio, rendendo 6:
+
+```text
+Ferro     Ferro      Ferro
+Redstone  Redstone   Redstone
+Ferro     Ferro      Ferro
+```
+
+As texturas do miolo (`redstone_cable.png`, `redstone_cable_node.png` e `redstone_cable_contact.png`) saem de `python tools/generate_redstone_cable.py`, a mesma rampa de quatro tons dos outros cabos em vermelho. Os testes: `RedstoneCableNetworkTest` (a rede sobre um mundo de mentira), `RedstoneCableJoinTest` (a que ele se liga) e `RedstoneCableGameTests` (alavanca, força, cores, passagem por bloco, corte, modo redstone, ligação forçada, sensor num baú e sinal fraco num servidor de verdade, com `./gradlew runGameTestServer`).
 
 Todos os cabos compartilham `AbstractCableBlock` e `AbstractCableBlockEntity` (forma, conexões, modos, prioridade, cor e canal dos conectores, menu); cada tipo só diz o que emenda e qual capability o vizinho precisa oferecer — ou, no caso do cabo de rede, que bloco o vizinho precisa ser. Todos eles estão na tag `minecraft:mineable/pickaxe`: nenhum exige a ferramenta certa para soltar o item, então a tag só muda a velocidade da quebra, e é por isso que os cabos de itens e de fluidos ficaram tanto tempo de fora sem ninguém notar. `CablePickaxeTagTest` agora percorre o registro e cobra a tag de todo bloco que seja um `AbstractCableBlock`. O cabo de itens usa os modelos do Cabo MK1 como pai, trocando apenas as texturas do miolo (`item_cable_opaque.png`, `item_cable_opaque_node.png`) e o tampão do colar (`item_cable_contact.png`). A lógica fica em `transfer/ItemCableNetwork`.
 

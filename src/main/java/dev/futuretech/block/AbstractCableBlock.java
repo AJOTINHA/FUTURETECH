@@ -102,13 +102,17 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
     protected abstract boolean offers(Level level, BlockPos neighbour, Direction face);
 
     /**
-     * Whether the cable links to {@code neighbour}, which lies {@code side} of it, on their block
-     * states alone. Nothing does by default: a kind that carries something asks the block for a
-     * capability instead, and that needs a real level. A kind that links by what the block
-     * <em>is</em> says so here, and is then answered the same on a level that only reads. The side
-     * comes along because a neighbour may take a cable on one face and not on another.
+     * Whether the cable links to {@code neighbour}, the block at {@code neighbourPos}, which lies
+     * {@code side} of it, by what the block <em>is</em>. Nothing does by default: a kind that
+     * carries something asks the block for a capability instead, and that needs a real level. A
+     * kind that links by the block's state says so here, and is then answered the same on a level
+     * that only reads. The side comes along because a neighbour may take a cable on one face and
+     * not on another, and the level and position with it for the blocks that answer by their
+     * surroundings, the way redstone dust does.
      */
-    protected boolean linksTo(BlockState neighbour, Direction side) { return false; }
+    protected boolean linksTo(LevelReader level, BlockPos neighbourPos, BlockState neighbour, Direction side) {
+        return false;
+    }
 
     protected abstract BlockEntityType<? extends AbstractCableBlockEntity> blockEntityType();
 
@@ -118,6 +122,14 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
      * that must not mix says otherwise.
      */
     protected boolean placesCut(LevelReader level, BlockPos neighbour) { return false; }
+
+    /**
+     * Whether the wrench may join this cable to a block it would not link to on its own. Nothing
+     * allows it by default: a cable that carries a capability has nothing to say to a block
+     * without one. A kind whose links are decided by what the block is may leave the last word
+     * to the player.
+     */
+    protected boolean forces() { return false; }
 
     @Override
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
@@ -182,12 +194,18 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
         BlockState beyond = level.getBlockState(neighbour);
         if (joins(beyond)) return true;
         if (beyond.getBlock() instanceof AbstractCableBlock other && other.kind() == kind()) return false;
-        if (linksTo(beyond, side)) return true;
+        // A forced link holds as long as there is a block to hold it to; it waits out the air.
+        if (isForced(level, pos, side)) return !beyond.isAir();
+        if (linksTo(level, neighbour, beyond, side)) return true;
         return level instanceof Level realLevel && offers(realLevel, neighbour, side.getOpposite());
     }
 
     private static boolean isCut(LevelReader level, BlockPos pos, Direction side) {
         return level.getBlockEntity(pos) instanceof AbstractCableBlockEntity cable && cable.isCut(side);
+    }
+
+    private static boolean isForced(LevelReader level, BlockPos pos, Direction side) {
+        return level.getBlockEntity(pos) instanceof AbstractCableBlockEntity cable && cable.isForced(side);
     }
 
     /**
@@ -215,8 +233,11 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
 
     /**
      * The wrench on a cable: cuts the link on the side the player hit, or restores a cut one. A
-     * side that is neither linked nor cut is left alone, so the click falls through to the block.
-     * Both cables of a run carry the cut, so either end restores it; both rebuild their networks.
+     * side that is neither linked nor cut is left alone, so the click falls through to the block
+     * — unless the kind lets the player force a link there, in which case the wrench joins the
+     * cable to whatever block stands on that side, and the next wrench takes that joint off
+     * again. Both cables of a run carry the cut, so either end restores it; both rebuild their
+     * networks.
      */
     public InteractionResult toggleLink(Level level, BlockPos pos, BlockState state, Vec3 hitLocation, Direction clickedFace) {
         Direction side = hitSide(pos, hitLocation, clickedFace);
@@ -226,8 +247,13 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
         AbstractCableBlockEntity beyond = level.getBlockEntity(neighbourPos) instanceof AbstractCableBlockEntity other
                 && other.kind() == kind() ? other : null;
         if (cable == null) return InteractionResult.PASS;
+        if (cable.isForced(side)) return force(level, pos, state, cable, side, false);
         boolean cut = cable.isCut(side) || (beyond != null && beyond.isCut(side.getOpposite()));
-        if (!linked && !cut) return InteractionResult.PASS;
+        if (!linked && !cut) {
+            BlockState beyondState = level.getBlockState(neighbourPos);
+            if (!forces() || beyondState.isAir() || beyondState.getBlock() instanceof AbstractCableBlock) return InteractionResult.PASS;
+            return force(level, pos, state, cable, side, true);
+        }
         if (level.isClientSide()) return InteractionResult.SUCCESS;
         cable.setCut(side, linked);
         if (beyond != null) beyond.setCut(side.getOpposite(), linked);
@@ -239,6 +265,17 @@ public abstract class AbstractCableBlock extends PipeBlock implements EntityBloc
         cable.invalidateNetwork();
         if (beyond != null) beyond.invalidateNetwork();
         level.playSound(null, pos, linked ? SoundEvents.CHAIN_BREAK : SoundEvents.CHAIN_PLACE, SoundSource.BLOCKS, 0.6F, 1.4F);
+        return InteractionResult.SUCCESS;
+    }
+
+    /** Joins the cable to the block on {@code side} by hand, or takes that joint off; the network is rebuilt either way. */
+    private InteractionResult force(Level level, BlockPos pos, BlockState state, AbstractCableBlockEntity cable,
+                                    Direction side, boolean forced) {
+        if (level.isClientSide()) return InteractionResult.SUCCESS;
+        cable.setForced(side, forced);
+        level.setBlock(pos, state.setValue(PROPERTY_BY_DIRECTION.get(side), forced), UPDATE_ALL);
+        cable.invalidateNetwork();
+        level.playSound(null, pos, forced ? SoundEvents.CHAIN_PLACE : SoundEvents.CHAIN_BREAK, SoundSource.BLOCKS, 0.6F, 1.4F);
         return InteractionResult.SUCCESS;
     }
 

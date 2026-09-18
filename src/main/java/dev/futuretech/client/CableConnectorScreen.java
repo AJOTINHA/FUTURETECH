@@ -5,6 +5,7 @@ import static dev.futuretech.client.MachineScreenStyle.*;
 import dev.futuretech.FutureTech;
 import dev.futuretech.api.redstone.RedstoneMode;
 import dev.futuretech.api.redstone.client.RedstoneModeIcons;
+import dev.futuretech.block.CableKind;
 import dev.futuretech.menu.CableConnectorMenu;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -26,11 +27,17 @@ import java.util.List;
  * The buttons borrow the side configuration's toggle look, in the palette the mod already uses
  * for energy: blue on one direction, orange on the other. Cables whose connectors carry a
  * priority get a third row under them, with the value between a minus and a plus; cables whose
- * connectors carry a colour get a row with a swatch of it that unfolds a picker of the sixteen
- * dyes below. Every kind gets a redstone row, under the channel where there is one, with the
- * mode's icon unfolding a picker of the three modes the same way. Cables
- * whose connectors take a filter card get a row with the card's slot, a gear that opens the card
- * once one is in, and the player's inventory below to take the card from.
+ * connectors carry a colour get a channel row like it, and a row with a swatch of the colour that
+ * unfolds a picker of the sixteen dyes below. Every kind gets a redstone row, under the channel
+ * where there is one, with the mode's icon unfolding a picker of the three modes the same way.
+ * Cables whose connectors take a filter card get a row with the card's slot, a gear that opens
+ * the card once one is in, and the player's inventory below to take the card from.
+ *
+ * <p>The rows stack in that order, each kind keeping only the ones it has, so a kind with a
+ * colour and no priority — the redstone cable — starts its channel where the priority would be.
+ * A kind that carries a signal gets a row of two switches right under the directions: the
+ * sensor, which reads the block as a comparator would, and strong, which powers the block
+ * through instead of only waking it; they light in the cable's own colour when on.
  */
 public final class CableConnectorScreen extends AbstractContainerScreen<CableConnectorMenu> {
     /** A rectangle in panel coordinates. */
@@ -46,14 +53,11 @@ public final class CableConnectorScreen extends AbstractContainerScreen<CableCon
     private static final int BUTTON_WIDTH = (WIDTH - MARGIN * 2 - GAP) / 2;
     private static final int BUTTON_HEIGHT = 30;
     private static final int BUTTON_TOP = 26;
-    private static final int PRIORITY_TOP = BUTTON_TOP + BUTTON_HEIGHT + GAP;
     private static final int STEP_SIZE = 18;
     private static final int VALUE_WIDTH = 26;
     private static final int STEP_GAP = 4;
-    private static final int CHANNEL_TOP = PRIORITY_TOP + STEP_SIZE + GAP;
-    /** The redstone row sits under the channel on kinds that have one, else where the priority would be. */
-    private static final int REDSTONE_TOP = CHANNEL_TOP + STEP_SIZE + GAP;
-    private static final int COLOR_TOP = REDSTONE_TOP + 18 + GAP;
+    private static final int SWATCH_SIZE = 18;
+    private static final int SWITCH_HEIGHT = 18;
     private static final int REDSTONE_TILE = RedstoneModeIcons.SIZE;
     private static final int REDSTONE_PITCH = REDSTONE_TILE + 4;
     private static final int REDSTONE_PADDING = 3;
@@ -75,32 +79,87 @@ public final class CableConnectorScreen extends AbstractContainerScreen<CableCon
 
     private static final Box INSERT = new Box(MARGIN, BUTTON_TOP, BUTTON_WIDTH, BUTTON_HEIGHT);
     private static final Box EXTRACT = new Box(MARGIN + BUTTON_WIDTH + GAP, BUTTON_TOP, BUTTON_WIDTH, BUTTON_HEIGHT);
-    private static final Box RAISE = new Box(WIDTH - MARGIN - STEP_SIZE, PRIORITY_TOP, STEP_SIZE, STEP_SIZE);
-    private static final Box VALUE = new Box(RAISE.x() - STEP_GAP - VALUE_WIDTH, PRIORITY_TOP, VALUE_WIDTH, STEP_SIZE);
-    private static final Box LOWER = new Box(VALUE.x() - STEP_GAP - STEP_SIZE, PRIORITY_TOP, STEP_SIZE, STEP_SIZE);
-    /** The channel row repeats the priority row's controls one row down. */
-    private static final Box RAISE_CHANNEL = new Box(RAISE.x(), CHANNEL_TOP, STEP_SIZE, STEP_SIZE);
-    private static final Box CHANNEL_VALUE = new Box(VALUE.x(), CHANNEL_TOP, VALUE_WIDTH, STEP_SIZE);
-    private static final Box LOWER_CHANNEL = new Box(LOWER.x(), CHANNEL_TOP, STEP_SIZE, STEP_SIZE);
-    /** The swatch sits in the same column as the filter slot, one row above it, drawn like a slot. */
-    private static final Box COLOR = new Box(CableConnectorMenu.FILTER_SLOT_X - 1, COLOR_TOP, 18, 18);
+    /** The stepper's columns, shared by the priority row and the channel row. */
+    private static final int RAISE_X = WIDTH - MARGIN - STEP_SIZE;
+    private static final int VALUE_X = RAISE_X - STEP_GAP - VALUE_WIDTH;
+    private static final int LOWER_X = VALUE_X - STEP_GAP - STEP_SIZE;
+    /** The swatches sit in the same column as the filter slot, drawn like a slot. */
+    private static final int SWATCH_X = CableConnectorMenu.FILTER_SLOT_X - 1;
     private static final Box UPGRADE = new Box(CableConnectorMenu.UPGRADE_SLOT_X - 1, CableConnectorMenu.UPGRADE_SLOT_Y - 1, 18, 18);
     private static final Box FILTER = new Box(CableConnectorMenu.FILTER_SLOT_X - 1, CableConnectorMenu.FILTER_SLOT_Y - 1, 18, 18);
-    /** The picker hangs off the swatch's bottom edge and covers whatever is under it while open. */
-    private static final Box PICKER = new Box(COLOR.x(), COLOR.y() + COLOR.height() + 1, PICKER_SIZE, PICKER_SIZE);
+    private static final Box GEAR_BOX = new Box(FILTER.x() + FILTER.width() + GAP, CableConnectorMenu.FILTER_SLOT_Y, GEAR_SIZE, GEAR_SIZE);
+
+    /**
+     * Where each row a kind has starts, from the top of the panel; a row the kind lacks is left
+     * out and the ones below it move up. The bottom is where the panel ends when nothing else
+     * follows the last row.
+     */
+    private record Rows(int switches, int priority, int channel, int redstone, int color, int bottom) {
+        static Rows of(CableKind kind) {
+            int next = BUTTON_TOP + BUTTON_HEIGHT + GAP;
+            int switches = -1;
+            int priority = -1;
+            int channel = -1;
+            int color = -1;
+            if (kind.signalled()) {
+                switches = next;
+                next += SWITCH_HEIGHT + GAP;
+            }
+            if (kind.prioritised()) {
+                priority = next;
+                next += STEP_SIZE + GAP;
+            }
+            if (kind.coloured()) {
+                channel = next;
+                next += STEP_SIZE + GAP;
+            }
+            int redstone = next;
+            next += SWATCH_SIZE + GAP;
+            if (kind.coloured()) {
+                color = next;
+                next += SWATCH_SIZE + GAP;
+            }
+            return new Rows(switches, priority, channel, redstone, color, next - GAP + MARGIN);
+        }
+    }
 
     private boolean pickerOpen;
     private boolean redstonePickerOpen;
+    /** The sensor and strong switches, under the directions; only a signalled kind has them. */
+    private final Box sensor;
+    private final Box strong;
+    /** The priority row: a minus, the value and a plus; only a prioritised kind has it. */
+    private final Box raise;
+    private final Box value;
+    private final Box lower;
+    /** The channel row repeats the priority row's controls; only a coloured kind has it. */
+    private final Box raiseChannel;
+    private final Box channelValue;
+    private final Box lowerChannel;
+    /** The colour swatch; only a coloured kind has it. */
+    private final Box color;
+    /** The picker hangs off the swatch's bottom edge and covers whatever is under it while open. */
+    private final Box picker;
     /** The redstone swatch, in the colour's column; where it sits depends on the kind's rows. */
     private final Box redstone;
     /** The redstone picker hangs off its swatch's bottom edge, like the colour's. */
     private final Box redstonePicker;
-    private static final Box GEAR_BOX = new Box(FILTER.x() + FILTER.width() + GAP, CableConnectorMenu.FILTER_SLOT_Y, GEAR_SIZE, GEAR_SIZE);
 
     public CableConnectorScreen(CableConnectorMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, WIDTH, height(menu));
         titleLabelX = MARGIN;
-        redstone = new Box(COLOR.x(), menu.kind().coloured() ? REDSTONE_TOP : PRIORITY_TOP, 18, 18);
+        Rows rows = Rows.of(menu.kind());
+        sensor = new Box(INSERT.x(), rows.switches(), BUTTON_WIDTH, SWITCH_HEIGHT);
+        strong = new Box(EXTRACT.x(), rows.switches(), BUTTON_WIDTH, SWITCH_HEIGHT);
+        raise = new Box(RAISE_X, rows.priority(), STEP_SIZE, STEP_SIZE);
+        value = new Box(VALUE_X, rows.priority(), VALUE_WIDTH, STEP_SIZE);
+        lower = new Box(LOWER_X, rows.priority(), STEP_SIZE, STEP_SIZE);
+        raiseChannel = new Box(RAISE_X, rows.channel(), STEP_SIZE, STEP_SIZE);
+        channelValue = new Box(VALUE_X, rows.channel(), VALUE_WIDTH, STEP_SIZE);
+        lowerChannel = new Box(LOWER_X, rows.channel(), STEP_SIZE, STEP_SIZE);
+        color = new Box(SWATCH_X, rows.color(), SWATCH_SIZE, SWATCH_SIZE);
+        picker = new Box(color.x(), color.y() + color.height() + 1, PICKER_SIZE, PICKER_SIZE);
+        redstone = new Box(SWATCH_X, rows.redstone(), SWATCH_SIZE, SWATCH_SIZE);
         redstonePicker = new Box(redstone.x(), redstone.y() + redstone.height() + 1, REDSTONE_PICKER_WIDTH, REDSTONE_PICKER_HEIGHT);
         // Without a filter row there are no slots and no player inventory, so no inventory label either.
         inventoryLabelY = menu.kind().filtered() ? CableConnectorMenu.INVENTORY_TOP - 12 : Integer.MIN_VALUE;
@@ -109,18 +168,16 @@ public final class CableConnectorScreen extends AbstractContainerScreen<CableCon
     /** Each row a kind has adds to the panel; a filtered kind ends with the player's inventory. */
     private static int height(CableConnectorMenu menu) {
         if (menu.kind().filtered()) return CableConnectorMenu.INVENTORY_TOP + 82;
-        if (menu.kind().coloured()) return COLOR_TOP + 18 + MARGIN;
-        // Every kind ends with the redstone row; without a priority it takes that row's place.
-        return PRIORITY_TOP + 18 + MARGIN;
+        return Rows.of(menu.kind()).bottom();
     }
 
     private boolean isOver(Box box, int mouseX, int mouseY) {
         return box.contains(mouseX - leftPos, mouseY - topPos);
     }
 
-    private static Box pickerSwatch(DyeColor color) {
-        return new Box(PICKER.x() + PICKER_PADDING + color.getId() % PICKER_COLUMNS * PICKER_PITCH,
-                PICKER.y() + PICKER_PADDING + color.getId() / PICKER_COLUMNS * PICKER_PITCH, PICKER_SWATCH, PICKER_SWATCH);
+    private Box pickerSwatch(DyeColor color) {
+        return new Box(picker.x() + PICKER_PADDING + color.getId() % PICKER_COLUMNS * PICKER_PITCH,
+                picker.y() + PICKER_PADDING + color.getId() / PICKER_COLUMNS * PICKER_PITCH, PICKER_SWATCH, PICKER_SWATCH);
     }
 
     /** The dye under the pointer while the picker is open, if any. */
@@ -170,10 +227,10 @@ public final class CableConnectorScreen extends AbstractContainerScreen<CableCon
         }
         if (!pickerOpen) return;
         graphics.nextStratum();
-        int x = leftPos + PICKER.x();
-        int y = topPos + PICKER.y();
-        graphics.fill(x - 1, y - 1, x + PICKER.width() + 1, y + PICKER.height() + 1, 0xFF111820);
-        graphics.fill(x, y, x + PICKER.width(), y + PICKER.height(), 0xFF65717D);
+        int x = leftPos + picker.x();
+        int y = topPos + picker.y();
+        graphics.fill(x - 1, y - 1, x + picker.width() + 1, y + picker.height() + 1, 0xFF111820);
+        graphics.fill(x, y, x + picker.width(), y + picker.height(), 0xFF65717D);
         for (DyeColor color : DyeColor.values()) {
             Box box = pickerSwatch(color);
             int sx = leftPos + box.x();
@@ -191,22 +248,26 @@ public final class CableConnectorScreen extends AbstractContainerScreen<CableCon
         drawPanel(graphics, leftPos, topPos, imageWidth, imageHeight);
         drawButton(graphics, INSERT, menu.inserts() ? INSERT_COLOR : OFF_COLOR, mouseX, mouseY);
         drawButton(graphics, EXTRACT, menu.extracts() ? EXTRACT_COLOR : OFF_COLOR, mouseX, mouseY);
+        if (menu.kind().signalled()) {
+            int accent = menu.kind().accent();
+            drawButton(graphics, sensor, menu.sensor() ? accent : OFF_COLOR, mouseX, mouseY);
+            drawButton(graphics, strong, menu.strong() ? accent : OFF_COLOR, mouseX, mouseY);
+        }
         // A slot frame holding the mode's icon, like the colour swatch, so it reads as one more setting.
         int rx = leftPos + redstone.x() + 1;
         int ry = topPos + redstone.y() + 1;
         drawSlot(graphics, rx, ry);
         RedstoneModeIcons.draw(graphics, menu.redstone(), true, rx, ry);
         if (isOver(redstone, mouseX, mouseY)) graphics.fill(rx, ry, rx + 16, ry + 16, 0x40FFFFFF);
-        if (!menu.kind().prioritised()) return;
-        drawStepper(graphics, LOWER, VALUE, RAISE, mouseX, mouseY);
+        if (menu.kind().prioritised()) drawStepper(graphics, lower, value, raise, mouseX, mouseY);
         if (menu.kind().coloured()) {
-            drawStepper(graphics, LOWER_CHANNEL, CHANNEL_VALUE, RAISE_CHANNEL, mouseX, mouseY);
+            drawStepper(graphics, lowerChannel, channelValue, raiseChannel, mouseX, mouseY);
             // A slot frame holding the dye, so it reads as one more thing set on this row.
-            int sx = leftPos + COLOR.x() + 1;
-            int sy = topPos + COLOR.y() + 1;
+            int sx = leftPos + color.x() + 1;
+            int sy = topPos + color.y() + 1;
             drawSlot(graphics, sx, sy);
             graphics.fill(sx + 1, sy + 1, sx + 15, sy + 15, menu.color().getTextureDiffuseColor());
-            if (isOver(COLOR, mouseX, mouseY)) graphics.fill(sx, sy, sx + 16, sy + 16, 0x40FFFFFF);
+            if (isOver(color, mouseX, mouseY)) graphics.fill(sx, sy, sx + 16, sy + 16, 0x40FFFFFF);
         }
         if (!menu.kind().filtered()) return;
         drawSlots(graphics, leftPos, topPos, menu.slots);
@@ -247,24 +308,30 @@ public final class CableConnectorScreen extends AbstractContainerScreen<CableCon
         graphics.text(font, title, titleLabelX, titleLabelY, TITLE, false);
         drawCentred(graphics, INSERT, Component.translatable("gui.futuretech.cable.insert"), menu.inserts() ? TITLE : 0xFFC6CED6);
         drawCentred(graphics, EXTRACT, Component.translatable("gui.futuretech.cable.extract"), menu.extracts() ? TITLE : 0xFFC6CED6);
+        if (menu.kind().signalled()) {
+            String keys = menu.kind().translationKey();
+            drawCentred(graphics, sensor, Component.translatable(keys + ".sensor"), menu.sensor() ? TITLE : 0xFFC6CED6);
+            drawCentred(graphics, strong, Component.translatable(keys + ".strong"), menu.strong() ? TITLE : 0xFFC6CED6);
+        }
         graphics.text(font, Component.translatable("gui.futuretech.redstone"), MARGIN,
                 redstone.y() + (redstone.height() - font.lineHeight) / 2, TITLE, false);
-        if (!menu.kind().prioritised()) return;
-        int baseline = PRIORITY_TOP + (STEP_SIZE - font.lineHeight) / 2;
         String keys = menu.kind().translationKey();
-        graphics.text(font, Component.translatable(keys + ".priority"), MARGIN, baseline, TITLE, false);
-        drawStepSymbol(graphics, LOWER, false);
-        drawStepSymbol(graphics, RAISE, true);
-        int priority = menu.priority();
-        drawCentred(graphics, VALUE, Component.literal(priority > 0 ? "+" + priority : Integer.toString(priority)), TITLE);
+        if (menu.kind().prioritised()) {
+            graphics.text(font, Component.translatable(keys + ".priority"), MARGIN,
+                    value.y() + (STEP_SIZE - font.lineHeight) / 2, TITLE, false);
+            drawStepSymbol(graphics, lower, false);
+            drawStepSymbol(graphics, raise, true);
+            int priority = menu.priority();
+            drawCentred(graphics, value, Component.literal(priority > 0 ? "+" + priority : Integer.toString(priority)), TITLE);
+        }
         if (menu.kind().coloured()) {
             graphics.text(font, Component.translatable(keys + ".channel"), MARGIN,
-                    CHANNEL_TOP + (STEP_SIZE - font.lineHeight) / 2, TITLE, false);
-            drawStepSymbol(graphics, LOWER_CHANNEL, false);
-            drawStepSymbol(graphics, RAISE_CHANNEL, true);
-            drawCentred(graphics, CHANNEL_VALUE, Component.literal(Integer.toString(menu.channel())), TITLE);
+                    channelValue.y() + (STEP_SIZE - font.lineHeight) / 2, TITLE, false);
+            drawStepSymbol(graphics, lowerChannel, false);
+            drawStepSymbol(graphics, raiseChannel, true);
+            drawCentred(graphics, channelValue, Component.literal(Integer.toString(menu.channel())), TITLE);
             graphics.text(font, Component.translatable(keys + ".color"), MARGIN,
-                    COLOR.y() + (COLOR.height() - font.lineHeight) / 2, TITLE, false);
+                    color.y() + (color.height() - font.lineHeight) / 2, TITLE, false);
         }
         if (menu.kind().upgradable()) {
             graphics.text(font, Component.translatable("gui.futuretech.item_cable.upgrade"), MARGIN,
@@ -314,8 +381,16 @@ public final class CableConnectorScreen extends AbstractContainerScreen<CableCon
                     mouseX, mouseY);
             return;
         }
-        if (menu.kind().coloured() && isOver(COLOR, mouseX, mouseY)) {
+        if (menu.kind().coloured() && isOver(color, mouseX, mouseY)) {
             graphics.setTooltipForNextFrame(colorName(menu.color()), mouseX, mouseY);
+            return;
+        }
+        if (!menu.kind().signalled()) return;
+        String keys = menu.kind().translationKey();
+        if (isOver(sensor, mouseX, mouseY)) {
+            graphics.setTooltipForNextFrame(Component.translatable(keys + ".sensor.tooltip"), mouseX, mouseY);
+        } else if (isOver(strong, mouseX, mouseY)) {
+            graphics.setTooltipForNextFrame(Component.translatable(keys + ".strong.tooltip"), mouseX, mouseY);
         }
     }
 
@@ -352,24 +427,26 @@ public final class CableConnectorScreen extends AbstractContainerScreen<CableCon
         int button = -1;
         if (isOver(INSERT, mouseX, mouseY)) button = CableConnectorMenu.TOGGLE_INSERT;
         else if (isOver(EXTRACT, mouseX, mouseY)) button = CableConnectorMenu.TOGGLE_EXTRACT;
+        else if (menu.kind().signalled() && isOver(sensor, mouseX, mouseY)) button = CableConnectorMenu.TOGGLE_SENSOR;
+        else if (menu.kind().signalled() && isOver(strong, mouseX, mouseY)) button = CableConnectorMenu.TOGGLE_STRONG;
         else if (isOver(redstone, mouseX, mouseY)) {
             redstonePickerOpen = true;
             Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
             return true;
-        } else if (menu.kind().prioritised()) {
+        } else {
             // Shift takes the bigger step, so reaching the ends of the range is a few clicks.
             boolean fast = event.hasShiftDown();
-            if (isOver(RAISE, mouseX, mouseY)) {
+            if (menu.kind().prioritised() && isOver(raise, mouseX, mouseY)) {
                 button = fast ? CableConnectorMenu.RAISE_PRIORITY_FAST : CableConnectorMenu.RAISE_PRIORITY;
-            } else if (isOver(LOWER, mouseX, mouseY)) {
+            } else if (menu.kind().prioritised() && isOver(lower, mouseX, mouseY)) {
                 button = fast ? CableConnectorMenu.LOWER_PRIORITY_FAST : CableConnectorMenu.LOWER_PRIORITY;
             } else if (menu.kind().filtered() && menu.hasFilter() && isOver(GEAR_BOX, mouseX, mouseY)) {
                 button = CableConnectorMenu.OPEN_FILTER;
-            } else if (menu.kind().coloured() && isOver(RAISE_CHANNEL, mouseX, mouseY)) {
+            } else if (menu.kind().coloured() && isOver(raiseChannel, mouseX, mouseY)) {
                 button = fast ? CableConnectorMenu.RAISE_CHANNEL_FAST : CableConnectorMenu.RAISE_CHANNEL;
-            } else if (menu.kind().coloured() && isOver(LOWER_CHANNEL, mouseX, mouseY)) {
+            } else if (menu.kind().coloured() && isOver(lowerChannel, mouseX, mouseY)) {
                 button = fast ? CableConnectorMenu.LOWER_CHANNEL_FAST : CableConnectorMenu.LOWER_CHANNEL;
-            } else if (menu.kind().coloured() && isOver(COLOR, mouseX, mouseY)) {
+            } else if (menu.kind().coloured() && isOver(color, mouseX, mouseY)) {
                 pickerOpen = true;
                 Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
                 return true;

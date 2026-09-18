@@ -13,6 +13,7 @@ import dev.futuretech.block.ItemCableBlock;
 import dev.futuretech.block.ItemCableTier;
 import dev.futuretech.block.LavaGeneratorBlock;
 import dev.futuretech.block.NetworkCableBlock;
+import dev.futuretech.block.RedstoneCableBlock;
 import dev.futuretech.block.NetworkPanelBlock;
 import dev.futuretech.block.StorageCardsBlock;
 import dev.futuretech.block.TesseractBlock;
@@ -204,3 +205,11 @@ public final class ModBlocks {
 
     private ModBlocks() {}
 }
+    // One size as well: a wire is a wire.
+    public static final DeferredBlock<RedstoneCableBlock> REDSTONE_CABLE = BLOCKS.registerBlock(
+            "redstone_cable", RedstoneCableBlock::new, properties -> properties
+                    .mapColor(MapColor.COLOR_RED)
+                    .strength(1.0F, 3.0F)
+                    .sound(SoundType.COPPER)
+                    .noOcclusion());
+

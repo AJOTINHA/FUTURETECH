@@ -6,6 +6,7 @@ import dev.futuretech.api.upgrade.UpgradeInventory;
 import dev.futuretech.block.CableKind;
 import dev.futuretech.block.entity.AbstractCableBlockEntity;
 import dev.futuretech.block.entity.ItemCableBlockEntity;
+import dev.futuretech.block.entity.RedstoneCableBlockEntity;
 import dev.futuretech.item.ItemFilterItem;
 import dev.futuretech.registry.ModMenus;
 import net.minecraft.core.Direction;
@@ -37,7 +38,7 @@ import org.jspecify.annotations.Nullable;
  * resource enters the cable there, which is the face allowing input.
  */
 public final class CableConnectorMenu extends AbstractContainerMenu {
-    public static final int DATA_COUNT = 6;
+    public static final int DATA_COUNT = 8;
     public static final int TOGGLE_INSERT = 0;
     public static final int TOGGLE_EXTRACT = 1;
     public static final int RAISE_PRIORITY = 2;
@@ -56,6 +57,9 @@ public final class CableConnectorMenu extends AbstractContainerMenu {
     public static final int FAST_STEP = 10;
     /** {@code SET_REDSTONE + mode.ordinal()} picks how the connector answers to redstone. */
     public static final int SET_REDSTONE = 40;
+    /** On a signalled kind: whether the connector reads as a comparator, and whether it gives strong power. */
+    public static final int TOGGLE_SENSOR = 50;
+    public static final int TOGGLE_STRONG = 51;
     /** Where the module's and the card's slots sit on the panel, in line with the minus buttons above; the screen draws the rows around them. */
     public static final int UPGRADE_SLOT_X = 97;
     public static final int UPGRADE_SLOT_Y = 168;
@@ -68,6 +72,8 @@ public final class CableConnectorMenu extends AbstractContainerMenu {
     private static final int CHANNEL = 3;
     private static final int REDSTONE = 4;
     private static final int POWERED = 5;
+    private static final int SENSOR = 6;
+    private static final int STRONG = 7;
     private static final int FILTER_SLOT = 0;
     private static final int UPGRADE_SLOT = 1;
     private static final int INVENTORY_START = 2;
@@ -140,7 +146,10 @@ public final class CableConnectorMenu extends AbstractContainerMenu {
                     case COLOR -> cable.connectorColor(side).ordinal();
                     case CHANNEL -> cable.connectorChannel(side);
                     case REDSTONE -> cable.connectorRedstone(side).ordinal();
-                    default -> cable.isPowered() ? 1 : 0;
+                    case POWERED -> cable.isPowered() ? 1 : 0;
+                    case SENSOR -> cable instanceof RedstoneCableBlockEntity wire && wire.isSensor(side) ? 1 : 0;
+                    // A kind without the switch gives strong power, which is what every block does.
+                    default -> !(cable instanceof RedstoneCableBlockEntity wire) || wire.isStrong(side) ? 1 : 0;
                 };
             }
 
@@ -171,6 +180,12 @@ public final class CableConnectorMenu extends AbstractContainerMenu {
     /** Whether the cable has a signal right now; every connector on it reads the same one. */
     public boolean isPowered() { return data.get(POWERED) != 0; }
 
+    /** Whether the connector reads the block beside it as a comparator would; signalled kinds only. */
+    public boolean sensor() { return data.get(SENSOR) != 0; }
+
+    /** Whether the connector gives strong power, through the block, rather than only waking it. */
+    public boolean strong() { return data.get(STRONG) != 0; }
+
     /** Whether a filter card sits in the connector's slot; the screen shows the gear only then. */
     public boolean hasFilter() { return filterSlot != null && filterSlot.hasItem(); }
 
@@ -197,6 +212,12 @@ public final class CableConnectorMenu extends AbstractContainerMenu {
             }
             case OPEN_FILTER -> {
                 openFilter(player);
+                return true;
+            }
+            case TOGGLE_SENSOR, TOGGLE_STRONG -> {
+                if (!kind.signalled() || !(cable instanceof RedstoneCableBlockEntity wire)) return false;
+                if (id == TOGGLE_SENSOR) wire.setSensor(side, !wire.isSensor(side));
+                else wire.setStrong(side, !wire.isStrong(side));
                 return true;
             }
             case RAISE_CHANNEL, LOWER_CHANNEL, RAISE_CHANNEL_FAST, LOWER_CHANNEL_FAST -> {

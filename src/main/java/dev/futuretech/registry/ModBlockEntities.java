@@ -13,6 +13,7 @@ import dev.futuretech.block.entity.FluidCableBlockEntity;
 import dev.futuretech.block.entity.ItemCableBlockEntity;
 import dev.futuretech.block.entity.LavaGeneratorBlockEntity;
 import dev.futuretech.block.entity.NetworkCableBlockEntity;
+import dev.futuretech.block.entity.RedstoneCableBlockEntity;
 import dev.futuretech.block.entity.NetworkPanelBlockEntity;
 import dev.futuretech.block.entity.StorageCardsBlockEntity;
 import dev.futuretech.block.entity.TesseractBlockEntity;
@@ -107,6 +108,11 @@ public final class ModBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<NetworkPanelBlockEntity>> NETWORK_PANEL =
             TYPES.register("network_panel", () -> new BlockEntityType<>(
                     NetworkPanelBlockEntity::new, ModBlocks.NETWORK_PANEL.get()));
+    // The redstone cable has one size too.
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RedstoneCableBlockEntity>> REDSTONE_CABLE =
+            TYPES.register("redstone_cable", () -> new BlockEntityType<>(
+                    RedstoneCableBlockEntity::new, ModBlocks.REDSTONE_CABLE.get()));
+
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<StorageCardsBlockEntity>> STORAGE_CARDS =
             TYPES.register("storage_cards", () -> new BlockEntityType<>(
                     StorageCardsBlockEntity::new, ModBlocks.STORAGE_CARDS.get()));

@@ -46,6 +46,7 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
             Set.of(SideMode.NONE, SideMode.INPUT, SideMode.OUTPUT, SideMode.BOTH);
     private static final String PRIORITIES_TAG = "Priorities";
     private static final String CUT_TAG = "Cut";
+    private static final String FORCED_TAG = "Forced";
     private static final String CHANNELS_TAG = "Channels";
     private static final String COLORS_TAG = "Colors";
     private static final String FACADES_TAG = "Facades";
@@ -69,6 +70,12 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
      * bit, so either end restores it. Reaches the client, whose shape updates must agree.
      */
     private int cutSides;
+    /**
+     * Sides the player joined with the wrench to a block the cable would not link to on its own,
+     * one bit per {@code Direction.ordinal()}; only a kind that allows it ever sets one. Reaches
+     * the client like the cuts, for the same reason.
+     */
+    private int forcedSides;
     /**
      * The block each covered face wears. Only covered faces are kept, so a bare cable saves
      * nothing extra, and the map reaches the client because the panel is drawn from it.
@@ -105,6 +112,17 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
         int updated = cut ? cutSides | bit : cutSides & ~bit;
         if (updated == cutSides) return;
         cutSides = updated;
+        setChanged();
+    }
+
+    /** Whether the wrench forced the link on {@code side} to a block the cable would not link to itself. */
+    public boolean isForced(Direction side) { return (forcedSides & (1 << side.ordinal())) != 0; }
+
+    public void setForced(Direction side, boolean forced) {
+        int bit = 1 << side.ordinal();
+        int updated = forced ? forcedSides | bit : forcedSides & ~bit;
+        if (updated == forcedSides) return;
+        forcedSides = updated;
         setChanged();
     }
 
@@ -223,6 +241,7 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
     public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = SideConfigVisuals.updateTag(connectors);
         if (cutSides != 0) tag.putInt(CUT_TAG, cutSides);
+        if (forcedSides != 0) tag.putInt(FORCED_TAG, forcedSides);
         if (!facades.isEmpty()) {
             FACADES_CODEC.encodeStart(NbtOps.INSTANCE, Map.copyOf(facades)).result()
                     .ifPresent(encoded -> tag.put(FACADES_TAG, encoded));
@@ -239,6 +258,7 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
         var previousFacades = Map.copyOf(facades);
         connectors.load(input);
         cutSides = input.getIntOr(CUT_TAG, 0);
+        forcedSides = input.getIntOr(FORCED_TAG, 0);
         loadFacades(input);
         if (previous != SideConfigVisuals.faceModes(connectors) || !previousFacades.equals(facades)) {
             SideConfigVisuals.refresh(this);
@@ -253,6 +273,7 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
         super.loadAdditional(input);
         connectors.load(input);
         cutSides = input.getIntOr(CUT_TAG, 0);
+        forcedSides = input.getIntOr(FORCED_TAG, 0);
         loadFacades(input);
         colors.clear();
         input.read(COLORS_TAG, COLORS_CODEC).ifPresent(colors::putAll);
@@ -277,6 +298,7 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
         super.saveAdditional(output);
         connectors.save(output);
         if (cutSides != 0) output.putInt(CUT_TAG, cutSides);
+        if (forcedSides != 0) output.putInt(FORCED_TAG, forcedSides);
         if (!facades.isEmpty()) output.store(FACADES_TAG, FACADES_CODEC, Map.copyOf(facades));
         if (!colors.isEmpty()) output.store(COLORS_TAG, COLORS_CODEC, Map.copyOf(colors));
         if (!channels.isEmpty()) output.store(CHANNELS_TAG, INTS_CODEC, Map.copyOf(channels));
