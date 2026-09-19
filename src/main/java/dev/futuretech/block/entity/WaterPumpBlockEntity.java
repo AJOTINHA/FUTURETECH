@@ -348,7 +348,7 @@ public final class WaterPumpBlockEntity extends BaseContainerBlockEntity
         pumping = false;
         int rate = ratePerTick();
         if (rate == 0) return;
-        int perTick = MachineLevel.consumption(ENERGY_PER_TICK, MachineLevel.of(getBlockState()));
+        int perTick = upgrades.consumption(ENERGY_PER_TICK, MachineLevel.of(getBlockState()));
         if (energy.getAmountAsInt() < perTick) return;
         int amount = waterAmount();
         int capacity = tankCapacity();

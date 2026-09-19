@@ -68,6 +68,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.FILTER_MK3.get());
                         output.accept(ModItems.FILTER_MK4.get());
                         output.accept(ModItems.SPEED_UPGRADE.get());
+                        output.accept(ModItems.EFFICIENCY_UPGRADE.get());
                         output.accept(ModItems.CHIP.get());
                         output.accept(ModItems.UPGRADE_KIT_MK2.get());
                         output.accept(ModItems.UPGRADE_KIT_MK3.get());

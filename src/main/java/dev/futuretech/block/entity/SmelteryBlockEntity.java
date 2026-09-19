@@ -264,7 +264,7 @@ public final class SmelteryBlockEntity extends BaseContainerBlockEntity
     /** Advances one tick on every open lane; false when none had anything to do or energy to do it with. */
     boolean melt(AlloyingLookup recipes) {
         int mk = MachineLevel.of(getBlockState());
-        int perTick = MachineLevel.consumption(ENERGY_PER_TICK, mk);
+        int perTick = upgrades.consumption(ENERGY_PER_TICK, mk);
         workingLanes = 0;
         for (int lane = 0; lane < lanes(); lane++) {
             if (meltLane(lane, recipes, perTick)) workingLanes |= 1 << lane;
@@ -306,7 +306,7 @@ public final class SmelteryBlockEntity extends BaseContainerBlockEntity
         }
         ItemStack result = workResult[lane];
         if (result.isEmpty() || !canAccept(lane, result)) return false;
-        progressTotal[lane] = MachineLevel.duration(recipe.value().duration(), MachineLevel.of(getBlockState()));
+        progressTotal[lane] = upgrades.duration(recipe.value().duration(), MachineLevel.of(getBlockState()));
         energy.set(energy.getAmountAsInt() - perTick);
         progress[lane]++;
         if (progress[lane] >= progressTotal[lane]) {

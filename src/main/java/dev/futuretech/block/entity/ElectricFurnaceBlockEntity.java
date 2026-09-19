@@ -265,7 +265,7 @@ public final class ElectricFurnaceBlockEntity extends BaseContainerBlockEntity
     /** Advances one tick on every open lane; false when none had anything to do or energy to do it with. */
     boolean smelt(SmeltingLookup recipes) {
         int mk = MachineLevel.of(getBlockState());
-        int perTick = MachineLevel.consumption(ENERGY_PER_TICK, mk);
+        int perTick = upgrades.consumption(ENERGY_PER_TICK, mk);
         workingLanes = 0;
         for (int lane = 0; lane < lanes(); lane++) {
             if (smeltLane(lane, recipes, perTick, mk)) workingLanes |= 1 << lane;
@@ -299,7 +299,7 @@ public final class ElectricFurnaceBlockEntity extends BaseContainerBlockEntity
         RecipeHolder<SmeltingRecipe> recipe = jobRecipe[lane];
         ItemStack result = jobResult[lane];
         if (result.isEmpty() || !canAccept(lane, result)) return false;
-        progressTotal[lane] = MachineLevel.duration(Math.max(1, recipe.value().cookingTime() / 2), mk);
+        progressTotal[lane] = upgrades.duration(Math.max(1, recipe.value().cookingTime() / 2), mk);
         energy.set(energy.getAmountAsInt() - perTick);
         progress[lane]++;
         if (progress[lane] >= progressTotal[lane]) {

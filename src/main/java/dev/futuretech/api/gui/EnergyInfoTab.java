@@ -33,15 +33,16 @@ public final class EnergyInfoTab extends MachineTab {
 
     public EnergyInfoTab(EnergyInfoMenu menu, Font font) {
         super(font, Side.LEFT);
-        // Rates and the capacity are fixed per machine, so the rows are built once.
+        // The rate is read every frame: the upgrade slots that lower it fill in only after the
+        // screen opens. What it is now, before they arrive, is the most it can ever be.
         boolean generator = menu.kind() == EnergyInfoMenu.Kind.GENERATOR;
         int rate = menu.energyRatePerTick();
         int output = menu.energyOutputPerTick();
         rows = new ArrayList<>(4);
         rows.add(new Row(label(generator ? "generation" : "usage"), rate(rate),
                 // Idle machines move nothing, so this line drops to zero while the maximum stays put.
-                () -> rate(menu.isWorking() ? rate : 0)));
-        rows.add(new Row(label(generator ? "maximum_generation" : "maximum"), rate(rate), () -> rate(rate)));
+                () -> rate(menu.energyUsagePerTick())));
+        rows.add(new Row(label(generator ? "maximum_generation" : "maximum"), rate(rate), () -> rate(menu.energyRatePerTick())));
         if (output > 0) rows.add(new Row(label("maximum_output"), rate(output), () -> rate(output)));
         rows.add(new Row(label("stored"), amount(menu.energyCapacity()), () -> amount(menu.energyStored())));
     }

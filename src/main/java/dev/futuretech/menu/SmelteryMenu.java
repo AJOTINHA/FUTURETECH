@@ -38,6 +38,7 @@ import java.util.Set;
  */
 public final class SmelteryMenu extends MachineMenu implements SideConfigMenu, RedstoneControlMenu, EnergyInfoMenu {
     private final Container contents;
+    private final UpgradeInventory upgrades;
     private final ContainerData data;
     private final int lanes;
     private final int inventoryStart;
@@ -79,6 +80,7 @@ public final class SmelteryMenu extends MachineMenu implements SideConfigMenu, R
         checkContainerSize(contents, INVENTORY_SIZE);
         checkContainerDataCount(data, DATA_COUNT);
         this.contents = contents;
+        this.upgrades = upgrades;
         this.data = data;
         this.lanes = Math.clamp(mk, 1, LANES);
         this.inventoryStart = 3 * lanes;
@@ -123,7 +125,12 @@ public final class SmelteryMenu extends MachineMenu implements SideConfigMenu, R
     public int energyCapacity() { return MachineLevel.capacity(CAPACITY, mk()); }
 
     @Override
-    public int energyRatePerTick() { return MachineLevel.consumption(ENERGY_PER_TICK, mk()) * lanes; }
+    public int energyRatePerTick() { return upgrades.consumption(ENERGY_PER_TICK, mk()) * lanes; }
+
+    @Override
+    public int energyUsagePerTick() {
+        return upgrades.consumption(ENERGY_PER_TICK, mk()) * Integer.bitCount(data.get(DATA_WORKING));
+    }
 
     @Override
     public EnergyInfoMenu.Kind kind() { return EnergyInfoMenu.Kind.CONSUMER; }

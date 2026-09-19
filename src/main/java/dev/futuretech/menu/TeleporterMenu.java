@@ -51,6 +51,7 @@ public final class TeleporterMenu extends MachineMenu implements RedstoneControl
     public static final int SELECT_BASE = RedstoneControlMenu.BUTTON_BASE + RedstoneMode.values().length + 10;
 
     private final Container contents;
+    private final UpgradeInventory upgrades;
     private final ContainerData data;
     private final int mk;
     private final GlobalPos pos;
@@ -80,6 +81,7 @@ public final class TeleporterMenu extends MachineMenu implements RedstoneControl
         checkContainerSize(contents, 1);
         checkContainerDataCount(data, DATA_COUNT);
         this.contents = contents;
+        this.upgrades = upgrades;
         this.data = data;
         this.mk = Math.clamp(mk, 1, MachineLevel.MAX);
         this.pos = pos;
@@ -118,7 +120,7 @@ public final class TeleporterMenu extends MachineMenu implements RedstoneControl
     /** What a trip to the pad's own card would cost from here, at this level. */
     public int cost() {
         TeleportTarget target = card();
-        return target == null ? 0 : TeleporterBlockEntity.cost(pos, target, mk);
+        return target == null ? 0 : upgrades.cost(TeleporterBlockEntity.cost(pos, target, mk));
     }
 
     /** Whether this level can go where the pad's own card points. */

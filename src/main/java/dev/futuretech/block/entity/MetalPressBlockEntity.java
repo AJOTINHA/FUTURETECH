@@ -305,7 +305,7 @@ public final class MetalPressBlockEntity extends BaseContainerBlockEntity
     /** Advances one tick on every open lane; false when none had anything to do or energy to do it with. */
     boolean press(PressingLookup recipes) {
         int mk = MachineLevel.of(getBlockState());
-        int perTick = MachineLevel.consumption(ENERGY_PER_TICK, mk);
+        int perTick = upgrades.consumption(ENERGY_PER_TICK, mk);
         workingLanes = 0;
         if (!isMold(getItem(SLOT_MOLD))) {
             for (int lane = 0; lane < LANES; lane++) resetWork(lane);
@@ -348,7 +348,7 @@ public final class MetalPressBlockEntity extends BaseContainerBlockEntity
         }
         ItemStack result = workResult[lane];
         if (result.isEmpty() || !canAccept(lane, result)) return false;
-        progressTotal[lane] = MachineLevel.duration(workRecipe[lane].value().duration(), MachineLevel.of(getBlockState()));
+        progressTotal[lane] = upgrades.duration(workRecipe[lane].value().duration(), MachineLevel.of(getBlockState()));
         energy.set(energy.getAmountAsInt() - perTick);
         progress[lane]++;
         if (progress[lane] >= progressTotal[lane]) {

@@ -376,7 +376,7 @@ public final class ExtruderBlockEntity extends BaseContainerBlockEntity
         chosen = recipes.get(index);
         choiceId = chosen.id().identifier();
         chosenResult = chosen.value().result().create();
-        progressTotal = MachineLevel.duration(chosen.value().duration(), MachineLevel.of(getBlockState()));
+        progressTotal = upgrades.duration(chosen.value().duration(), MachineLevel.of(getBlockState()));
     }
 
     /** Finds the chosen recipe among the loaded ones; the first one stands in for a choice that is gone. */
@@ -411,10 +411,10 @@ public final class ExtruderBlockEntity extends BaseContainerBlockEntity
         boolean ordered = recipe.matchesOrdered(a, amountA, b, amountB);
         if (!ordered && !recipe.matchesOrdered(b, amountB, a, amountA)) return false;
         int mk = MachineLevel.of(getBlockState());
-        int perTick = MachineLevel.consumption(ENERGY_PER_TICK, mk);
+        int perTick = upgrades.consumption(ENERGY_PER_TICK, mk);
         if (energy.getAmountAsInt() < perTick) return false;
         if (!hasRoomFor(chosenResult)) return false;
-        progressTotal = MachineLevel.duration(recipe.duration(), mk);
+        progressTotal = upgrades.duration(recipe.duration(), mk);
         energy.set(energy.getAmountAsInt() - perTick);
         progress++;
         if (progress >= progressTotal) {

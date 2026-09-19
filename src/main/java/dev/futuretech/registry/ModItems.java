@@ -212,6 +212,8 @@ public final class ModItems {
     }
 
     public static final DeferredItem<Item> SPEED_UPGRADE = ITEMS.registerSimpleItem("speed_upgrade");
+    /** Cuts a machine's energy draw; see {@link dev.futuretech.api.upgrade.UpgradeInventory#EFFICIENCY_PERCENT}. */
+    public static final DeferredItem<Item> EFFICIENCY_UPGRADE = ITEMS.registerSimpleItem("efficiency_upgrade");
     public static final DeferredItem<Item> CHIP = ITEMS.registerSimpleItem("chip");
 
     public static final DeferredItem<MachineUpgradeKitItem> UPGRADE_KIT_MK2 = ITEMS.registerItem(

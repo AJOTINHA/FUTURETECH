@@ -50,6 +50,7 @@ public final class MelterMenu extends MachineMenu implements SideConfigMenu, Red
     private static final int PLAYER_END = HOTBAR_START + 9;
 
     private final Container contents;
+    private final UpgradeInventory upgrades;
     private final ContainerData data;
     private final @Nullable MelterBlockEntity melter;
 
@@ -73,6 +74,7 @@ public final class MelterMenu extends MachineMenu implements SideConfigMenu, Red
         checkContainerSize(contents, INVENTORY_SIZE);
         checkContainerDataCount(data, DATA_COUNT);
         this.contents = contents;
+        this.upgrades = upgrades;
         this.data = data;
         this.melter = melter;
         addSlot(new Slot(contents, SLOT_INPUT, SLOT_X, SLOT_Y));
@@ -95,7 +97,7 @@ public final class MelterMenu extends MachineMenu implements SideConfigMenu, Red
     public int energyCapacity() { return MachineLevel.capacity(CAPACITY, mk()); }
 
     @Override
-    public int energyRatePerTick() { return MachineLevel.consumption(ENERGY_PER_TICK, mk()); }
+    public int energyRatePerTick() { return upgrades.consumption(ENERGY_PER_TICK, mk()); }
 
     @Override
     public EnergyInfoMenu.Kind kind() { return EnergyInfoMenu.Kind.CONSUMER; }

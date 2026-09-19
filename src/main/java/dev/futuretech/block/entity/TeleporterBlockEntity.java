@@ -130,7 +130,7 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
                 case DATA_CHARGING -> active ? 1 : 0;
                 case DATA_COST -> {
                     TeleportTarget target = target();
-                    yield target == null ? 0 : cost(globalPos(), target, MachineLevel.of(getBlockState()));
+                    yield target == null ? 0 : upgrades.cost(cost(globalPos(), target, MachineLevel.of(getBlockState())));
                 }
                 case DATA_MK -> MachineLevel.of(getBlockState());
                 default -> {
@@ -360,7 +360,7 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
         active = true;
         var centre = net.minecraft.world.phys.Vec3.atCenterOf(worldPosition);
         level.sendParticles(ParticleTypes.PORTAL, centre.x, centre.y + 1.2, centre.z, 4, 0.3, 0.5, 0.3, 0.05);
-        if (ticks < chargeTicks(MachineLevel.of(getBlockState()))) return;
+        if (ticks < upgrades.duration(CHARGE_TICKS, MachineLevel.of(getBlockState()))) return;
         charging.remove(player.getUUID());
         attempt(level, player, target, (traveller, destination) -> travel(level, traveller, destination));
     }
@@ -385,7 +385,7 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
             player.sendOverlayMessage(Component.translatable("message.futuretech.teleporter.dimension", CROSS_DIMENSION_LEVEL));
             return false;
         }
-        int cost = cost(from, target, mk);
+        int cost = upgrades.cost(cost(from, target, mk));
         if (energy.getAmountAsInt() < cost) {
             player.sendOverlayMessage(Component.translatable("message.futuretech.teleporter.energy", cost));
             return false;

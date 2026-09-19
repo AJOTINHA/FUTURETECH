@@ -53,6 +53,7 @@ public final class ExtruderMenu extends MachineMenu implements SideConfigMenu, R
     private static final int PLAYER_END = HOTBAR_START + 9;
 
     private final Container contents;
+    private final UpgradeInventory upgrades;
     private final ContainerData data;
     private final @Nullable ExtruderBlockEntity extruder;
 
@@ -76,6 +77,7 @@ public final class ExtruderMenu extends MachineMenu implements SideConfigMenu, R
         checkContainerSize(contents, INVENTORY_SIZE);
         checkContainerDataCount(data, DATA_COUNT);
         this.contents = contents;
+        this.upgrades = upgrades;
         this.data = data;
         this.extruder = extruder;
         addSlot(new Slot(contents, SLOT_OUTPUT, SLOT_X, SLOT_Y) {
@@ -101,7 +103,7 @@ public final class ExtruderMenu extends MachineMenu implements SideConfigMenu, R
     public int energyCapacity() { return MachineLevel.capacity(CAPACITY, mk()); }
 
     @Override
-    public int energyRatePerTick() { return MachineLevel.consumption(ENERGY_PER_TICK, mk()); }
+    public int energyRatePerTick() { return upgrades.consumption(ENERGY_PER_TICK, mk()); }
 
     @Override
     public EnergyInfoMenu.Kind kind() { return EnergyInfoMenu.Kind.CONSUMER; }

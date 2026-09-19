@@ -258,8 +258,8 @@ class BatteryTest {
             battery.beginTick();
             EnergyHandlerUtil.move(generator.energy(), battery.energy(), Integer.MAX_VALUE, null);
         }
-        // 20 FE/t generated, drained fully each tick because 80 FE/t output exceeds it.
-        assertEquals(2_000, battery.energy().getAmountAsInt());
+        // 40 FE/t generated, drained fully each tick because 80 FE/t output exceeds it.
+        assertEquals(100 * SolidFuelGeneratorBlockEntity.GENERATION_PER_TICK, battery.energy().getAmountAsInt());
         assertEquals(0, generator.energy().getAmountAsInt());
     }
 

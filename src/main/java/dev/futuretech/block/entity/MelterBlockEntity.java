@@ -324,7 +324,7 @@ public final class MelterBlockEntity extends BaseContainerBlockEntity
         ItemStack ingredient = items.get(SLOT_INPUT);
         if (ingredient.isEmpty()) return false;
         int mk = MachineLevel.of(getBlockState());
-        int perTick = MachineLevel.consumption(ENERGY_PER_TICK, mk);
+        int perTick = upgrades.consumption(ENERGY_PER_TICK, mk);
         // Without energy nothing below matters, so the recipe book is not touched.
         if (energy.getAmountAsInt() < perTick) return false;
         boolean sameJob = jobRecipe != null && ItemStack.isSameItemSameComponents(jobInput, ingredient)
@@ -340,7 +340,7 @@ public final class MelterBlockEntity extends BaseContainerBlockEntity
         MeltingRecipe recipe = jobRecipe.value();
         FluidStack made = recipe.made();
         if (!hasRoomFor(made)) return false;
-        progressTotal = MachineLevel.duration(recipe.duration(), mk);
+        progressTotal = upgrades.duration(recipe.duration(), mk);
         energy.set(energy.getAmountAsInt() - perTick);
         progress++;
         if (progress >= progressTotal) {

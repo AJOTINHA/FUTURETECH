@@ -261,8 +261,8 @@ public final class LaneMachineBlockEntity extends BaseContainerBlockEntity
     /** Advances one tick on every open lane; false when none had anything to do or energy to do it with. */
     boolean work(RecipeLookup recipes) {
         int mk = MachineLevel.of(getBlockState());
-        int perTick = MachineLevel.consumption(ENERGY_PER_TICK, mk);
-        int total = MachineLevel.duration(WORK_TICKS, mk);
+        int perTick = upgrades.consumption(ENERGY_PER_TICK, mk);
+        int total = upgrades.duration(WORK_TICKS, mk);
         workingLanes = 0;
         for (int lane = 0; lane < lanes(); lane++) {
             if (workLane(lane, recipes, perTick, total)) workingLanes |= 1 << lane;

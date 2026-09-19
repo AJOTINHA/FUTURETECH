@@ -32,6 +32,7 @@ import java.util.Set;
 
 public final class WaterPumpMenu extends MachineMenu implements SideConfigMenu, RedstoneControlMenu, EnergyInfoMenu {
     private final Container buckets;
+    private final UpgradeInventory upgrades;
     private final ContainerData data;
 
     /** Width of the pump screen; upgrade slots sit in the tab beside it. */
@@ -58,6 +59,7 @@ public final class WaterPumpMenu extends MachineMenu implements SideConfigMenu, 
         checkContainerSize(buckets, INVENTORY_SIZE);
         checkContainerDataCount(data, DATA_COUNT);
         this.buckets = buckets;
+        this.upgrades = upgrades;
         this.data = data;
         addSlot(new Slot(buckets, SLOT_INPUT, SLOT_X, INPUT_Y) {
             @Override
@@ -82,7 +84,7 @@ public final class WaterPumpMenu extends MachineMenu implements SideConfigMenu, 
     public int mk() { return Math.clamp(data.get(DATA_MK), 1, 4); }
 
     @Override
-    public int energyRatePerTick() { return MachineLevel.consumption(ENERGY_PER_TICK, mk()); }
+    public int energyRatePerTick() { return upgrades.consumption(ENERGY_PER_TICK, mk()); }
 
     @Override
     public EnergyInfoMenu.Kind kind() { return EnergyInfoMenu.Kind.CONSUMER; }

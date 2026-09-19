@@ -258,7 +258,7 @@ public final class PaintMachineBlockEntity extends BaseContainerBlockEntity
     /** Advances one tick on every open lane; false when none had anything to do or energy to do it with. */
     boolean paint() {
         int mk = MachineLevel.of(getBlockState());
-        int perTick = MachineLevel.consumption(ENERGY_PER_TICK, mk);
+        int perTick = upgrades.consumption(ENERGY_PER_TICK, mk);
         workingLanes = 0;
         for (int lane = 0; lane < lanes(); lane++) {
             if (paintLane(lane, perTick)) workingLanes |= 1 << lane;
@@ -281,7 +281,7 @@ public final class PaintMachineBlockEntity extends BaseContainerBlockEntity
         ItemStack result = FacadeItem.of(facade);
         result.setCount(YIELD);
         if (!canAccept(lane, result)) return false;
-        progressTotal[lane] = MachineLevel.duration(PAINT_TICKS, MachineLevel.of(getBlockState()));
+        progressTotal[lane] = upgrades.duration(PAINT_TICKS, MachineLevel.of(getBlockState()));
         energy.set(energy.getAmountAsInt() - perTick);
         progress[lane]++;
         if (progress[lane] >= progressTotal[lane]) {
