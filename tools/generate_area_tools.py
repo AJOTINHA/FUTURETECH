@@ -126,41 +126,51 @@ def excavator():
     # plus the dark outline pixel of the shovel handle.
     m = Model({'metal': (12, 3), 'facet': (11, 4), 'light': (10, 3), 'shade': (9, 4), 'dark': (14, 4),
                'wood': (7, 9), 'wood_light': (8, 8), 'wood_dark': (7, 8), 'wood_edge': (8, 9)})
-    # A D-grip at the bottom, a short shaft, then a metal ferrule where the blade's socket takes the shaft.
-    m.box('grip_bar', [6, .5, 7.25], [10, 1.5, 8.75], 'wood_dark', 'wood', 'wood_edge')
-    m.box('grip_left', [6, 1.5, 7.25], [7, 2.75, 8.75], 'wood', 'wood_light', 'wood_dark')
-    m.box('grip_right', [9, 1.5, 7.25], [10, 2.75, 8.75], 'wood', 'wood_light', 'wood_dark')
-    m.box('handle', [7, 1.5, 7], [9, 7, 9], 'wood', 'wood_light', 'wood_dark')
-    m.box('handle_highlight', [7, 2.75, 6.9], [7.5, 6.5, 7], 'wood_light')
-    m.box('ferrule', [6.5, 6.5, 6.5], [9.5, 9, 9.5], 'shade', 'light', 'dark')
-    m.box('ferrule_ring', [6.4, 8.25, 6.4], [9.6, 8.75, 9.6], 'light', 'light', 'facet')
-    # The blade is taller than wide and scooped: a flat centre, two wings angled back and a tip that
-    # rounds off in steps, the way a shovel's silhouette does in pixel art.
+    # An open D-grip: the shaft starts above the opening instead of filling it.
+    m.box('grip_bar', [5.75, .25, 7.25], [10.25, 1.25, 8.75], 'wood', 'wood_light', 'wood_edge')
+    m.box('grip_left', [5.75, 1.25, 7.5], [6.5, 3.25, 8.5], 'shade', 'light', 'dark')
+    m.box('grip_right', [9.5, 1.25, 7.5], [10.25, 3.25, 8.5], 'shade', 'light', 'dark')
+    m.box('grip_bridge', [6.5, 2.75, 7.5], [9.5, 3.5, 8.5], 'shade', 'light', 'dark')
+    m.box('handle', [7.25, 3.5, 7.25], [8.75, 9.25, 8.75], 'wood', 'wood_light', 'wood_edge')
+    m.box('socket', [7, 8, 7], [9, 10.5, 9], 'shade', 'light', 'dark')
+    m.box('socket_ring', [6.75, 8, 6.75], [9.25, 8.5, 9.25], 'facet', 'light', 'shade')
+
+    # Broad, shallow scoop with folded wings and a stepped cutting edge. Each wing's
+    # edge and shading use the same pivot, so the surfaces stay attached in every view.
     left = {'angle': 22.5, 'axis': 'y', 'origin': [6, 12, 8]}
     right = {'angle': -22.5, 'axis': 'y', 'origin': [10, 12, 8]}
-    m.box('blade_centre', [6, 8, 7.25], [10, 15.25, 8.75], 'metal', 'light', 'shade')
-    m.box('blade_point', [7, 15.25, 7.25], [9, 16, 8.75], 'metal', 'light', 'shade')
-    m.box('left_wing', [3.5, 8.5, 7.5], [6, 14, 8.5], 'metal', 'light', 'shade', rotation=left)
-    m.box('right_wing', [10, 8.5, 7.5], [12.5, 14, 8.5], 'metal', 'light', 'shade', rotation=right)
-    m.box('left_shoulder', [2.75, 9, 7.6], [3.5, 12.5, 8.4], 'metal', 'light', 'shade', rotation=left)
-    m.box('right_shoulder', [12.5, 9, 7.6], [13.25, 12.5, 8.4], 'metal', 'light', 'shade', rotation=right)
-    m.box('back_rib', [7.5, 9, 8.75], [8.5, 14.5, 9.1], 'facet', 'light', 'shade')
+    m.box('blade_centre', [6, 9.5, 7.5], [10, 15.25, 8.5], 'metal', 'light', 'shade')
+    m.box('cutting_tip', [6.5, 15.25, 7.625], [9.5, 15.75, 8.375], 'light', 'light', 'shade')
+    for side, x0, x1, tip0, tip1, rotation in [
+        ('left', 2.5, 6, 3.5, 6, left), ('right', 10, 13.5, 10, 12.5, right)
+    ]:
+        m.box(f'{side}_wing', [x0, 9.5, 7.5], [x1, 14.25, 8.5], 'metal', 'light', 'shade', rotation)
+        m.box(f'{side}_cutting_step', [tip0, 14.25, 7.625], [tip1, 15.25, 8.375], 'facet', 'light', 'shade', rotation)
+        m.box(f'{side}_foot_rest', [x0, 9.25, 7.25], [x1, 10, 9], 'shade', 'light', 'dark', rotation)
+    m.box('back_rib', [7.5, 10.5, 8.5], [8.5, 13.75, 9], 'facet', 'light', 'shade')
 
-    # Restrained shading: a bright bevel along the cutting edge, one broad facet per panel and a
-    # shadow where the blade meets the socket.
+    # Broad vanilla-palette highlights read at inventory size. All patches sit on
+    # their own surface, including the narrower shaft and the two sides of the scoop.
     for back in (False, True):
         label = 'back' if back else 'front'
-        z = 8.765 if back else 7.235
-        m.face_patch(f'{label}_centre_bevel', 6, 14.85, 10, 15.25, z, 'light', back)
-        m.face_patch(f'{label}_point_bevel', 7, 15.6, 9, 16, z, 'light', back)
-        m.face_patch(f'{label}_centre_facet', 6.25, 12.25, 9.75, 14.35, z, 'facet', back)
-        m.face_patch(f'{label}_centre_shadow', 6, 8.5, 10, 9.75, z, 'shade', back)
-        zw = 8.515 if back else 7.485
-        for side, x0, x1, rotation in [('left', 3.5, 6, left), ('right', 10, 12.5, right)]:
-            m.face_patch(f'{label}_{side}_wing_bevel', x0, 13.6, x1, 14, zw, 'light', back, rotation)
-            m.face_patch(f'{label}_{side}_wing_facet', x0 + .25, 11.5, x1 - .25, 13.1, zw, 'facet', back, rotation)
-            m.face_patch(f'{label}_{side}_wing_shadow', x0, 8.5, x1, 9.5, zw, 'shade', back, rotation)
-    m.grip(6.5, (3.4, 5), edge='wood_edge')
+        z = 8.515 if back else 7.485
+        m.face_patch(f'{label}_centre_bevel', 6, 14.75, 10, 15.25, z, 'light', back)
+        m.face_patch(f'{label}_centre_facet', 6.5, 12.75, 9.5, 14.25, z, 'facet', back)
+        m.face_patch(f'{label}_centre_shadow', 6, 9.5, 10, 10.5, z, 'shade', back)
+        for side, x0, x1, tip0, tip1, rotation in [
+            ('left', 2.5, 6, 3.5, 6, left), ('right', 10, 13.5, 10, 12.5, right)
+        ]:
+            m.face_patch(f'{label}_{side}_wing_facet', x0 + .5, 12, x1 - .25, 13.75, z, 'facet', back, rotation)
+            m.face_patch(f'{label}_{side}_wing_shadow', x0, 10, x1, 10.75, z, 'shade', back, rotation)
+            ze = 8.39 if back else 7.61
+            m.face_patch(f'{label}_{side}_edge', tip0, 14.75, tip1, 15.25, ze, 'light', back, rotation)
+        zh = 8.765 if back else 7.235
+        m.face_patch(f'{label}_handle_light', 7.25, 3.5, 7.625, 8, zh, 'wood_light', back)
+        m.face_patch(f'{label}_handle_edge', 8.375, 3.5, 8.75, 8, zh, 'wood_dark', back)
+        for i, y in enumerate((4.25, 5.75, 7.25)):
+            m.face_patch(f'{label}_handle_grain_{i}', 7.625, y, 8.125, y + .25, zh, 'wood_dark', back)
+        zs = 9.015 if back else 6.985
+        m.face_patch(f'{label}_socket_pin', 7.625, 8.875, 8.375, 9.625, zs, 'light', back)
     return m
 
 
@@ -169,39 +179,57 @@ def lumber_axe():
     # plus the dark outline pixel of the axe handle.
     m = Model({'metal': (9, 4), 'facet': (10, 3), 'light': (9, 2), 'shade': (9, 1), 'dark': (7, 6),
                'wood': (7, 9), 'wood_light': (8, 8), 'wood_dark': (7, 8), 'wood_edge': (8, 9)})
-    m.box('handle', [7, 1, 7], [9, 15.25, 9], 'wood', 'wood_light', 'wood_dark')
-    m.box('handle_highlight', [7, 1.5, 6.9], [7.5, 9.5, 7], 'wood_light')
-    m.box('heel', [6.75, .5, 6.75], [9.25, 1.5, 9.25], 'wood_dark', 'wood')
-    m.box('handle_wedge', [7.25, 15.25, 7.25], [8.75, 15.6, 8.75], 'dark', 'facet')
-    # A single broad bit to the left, a squared poll to the right and a thick eye around the handle.
-    m.box('eye', [6, 10, 6.4], [10, 14.75, 9.6], 'metal', 'light', 'shade')
-    m.box('poll', [10, 10.5, 6.75], [12.25, 14.25, 9.25], 'metal', 'light', 'shade')
-    m.box('poll_face', [12.25, 10.75, 7], [12.5, 14, 9], 'shade', 'light', 'facet')
-    m.box('blade_body', [3.5, 9.5, 7], [6, 15.25, 9], 'metal', 'light', 'shade')
-    m.box('blade_flare', [1.75, 8.5, 7.4], [3.5, 16, 8.6], 'metal', 'light', 'shade')
-    m.box('cutting_edge', [1.25, 8.75, 7.75], [1.75, 15.75, 8.25], 'light', 'light', 'light')
-    m.box('front_pin', [7.6, 11.75, 6.3], [8.4, 12.75, 6.4], 'light')
-    m.box('back_pin', [7.6, 11.75, 9.6], [8.4, 12.75, 9.7], 'light')
+    # Long haft with a flared heel and raised grip bands. A narrow neck leaves open
+    # space behind the beard, making the silhouette readable even at inventory size.
+    m.box('haft', [7.5, 3.5, 7.25], [9, 14.75, 8.75], 'wood', 'wood_light', 'wood_edge')
+    m.box('lower_grip', [7.25, 1, 7.125], [9, 4.5, 8.875], 'wood', 'wood_light', 'wood_dark')
+    m.box('heel', [6.75, .5, 7], [9.25, 1.5, 9], 'wood_dark', 'wood_light', 'wood_edge')
+    for i, y in enumerate((2, 3.5)):
+        m.box(f'grip_band_{i}', [7.125, y, 7], [9.125, y + .375, 9], 'wood_dark', 'wood', 'wood_edge')
+    m.box('neck_guard', [7.25, 8.75, 7], [9.25, 11.5, 9], 'shade', 'light', 'dark')
+    m.box('guard_ring', [7, 8.75, 6.875], [9.5, 9.25, 9.125], 'facet', 'light', 'shade')
+    m.box('eye', [6.75, 11, 6.5], [9.75, 14.75, 9.5], 'metal', 'light', 'shade')
+    m.box('haft_end', [7.5, 14.75, 7.25], [9, 15.25, 8.75], 'wood', 'wood_light', 'wood_dark')
+    m.box('head_wedge', [8, 15.25, 7.375], [8.375, 15.5, 8.625], 'shade', 'light', 'dark')
+    m.box('poll', [9.75, 11.75, 6.875], [11.5, 14.25, 9.125], 'metal', 'light', 'shade')
+    m.box('poll_cap', [11.5, 11.5, 6.75], [12, 14.5, 9.25], 'shade', 'light', 'facet')
 
-    # Shading on both faces: bevel toward the edge, a broad forged facet on the bit and shadows where the
-    # bit leaves the eye and under the poll.
+    # Bearded single-bit head: thick at the eye, thinning in steps toward a bright
+    # convex cutting edge. The lower beard extends below the head, away from the haft.
+    m.box('blade_root', [4.75, 11.25, 6.875], [6.75, 14.75, 9.125], 'metal', 'light', 'shade')
+    m.box('blade_cheek', [2.75, 9, 7.25], [4.75, 15.25, 8.75], 'metal', 'light', 'shade')
+    m.box('blade_beard', [3.5, 8.5, 7.375], [5.25, 11.25, 8.625], 'metal', 'facet', 'shade')
+    m.box('edge_bevel', [1.75, 9.5, 7.5], [2.75, 14.75, 8.5], 'facet', 'light', 'shade')
+    m.box('cutting_edge', [1.25, 10, 7.75], [1.75, 14.25, 8.25], 'light')
+    m.box('upper_edge_step', [1.75, 14.25, 7.75], [2.75, 15.25, 8.25], 'light')
+    m.box('blade_toe', [2.25, 15.25, 7.5], [3.75, 15.75, 8.5], 'facet', 'light', 'shade')
+    m.box('lower_edge_step', [1.75, 9, 7.75], [2.75, 10, 8.25], 'light')
+    m.box('blade_heel', [2.25, 8, 7.5], [3.5, 9.5, 8.5], 'facet', 'light', 'shade')
+
+    # Matched front/back bevels, grain and raised socket pins, all from the vanilla
+    # axe palette. Patches are placed just outside their supporting cuboid faces.
     for back in (False, True):
         label = 'back' if back else 'front'
-        zb = 9.015 if back else 6.985
-        m.face_patch(f'{label}_blade_facet', 3.75, 12, 5.75, 14.5, zb, 'facet', back)
-        m.face_patch(f'{label}_blade_shadow', 3.5, 9.5, 6, 10.5, zb, 'shade', back)
-        m.face_patch(f'{label}_blade_top_bevel', 3.5, 14.9, 6, 15.25, zb, 'light', back)
-        zf = 8.615 if back else 7.385
-        m.face_patch(f'{label}_flare_bevel', 1.75, 9, 2.5, 15.5, zf, 'light', back)
-        m.face_patch(f'{label}_flare_facet', 2.5, 11.5, 3.5, 14.5, zf, 'facet', back)
-        m.face_patch(f'{label}_flare_shadow', 1.75, 8.5, 3.5, 9.25, zf, 'shade', back)
-        ze = 9.615 if back else 6.385
-        m.face_patch(f'{label}_eye_top_bevel', 6, 14.35, 10, 14.75, ze, 'light', back)
-        m.face_patch(f'{label}_eye_shadow', 6, 10, 10, 10.75, ze, 'shade', back)
-        zp = 9.265 if back else 6.735
-        m.face_patch(f'{label}_poll_bevel', 10, 13.85, 12.25, 14.25, zp, 'light', back)
-        m.face_patch(f'{label}_poll_shadow', 10, 10.5, 12.25, 11.1, zp, 'shade', back)
-    m.grip(9.5, (2.1, 3.8, 5.5, 7.2, 8.9), edge='wood_edge')
+        zr = 9.14 if back else 6.86
+        m.face_patch(f'{label}_root_bevel', 4.75, 14.25, 6.75, 14.75, zr, 'light', back)
+        m.face_patch(f'{label}_root_shadow', 4.75, 11.25, 6.75, 12, zr, 'shade', back)
+        zc = 8.765 if back else 7.235
+        m.face_patch(f'{label}_cheek_facet', 2.75, 12.75, 4.25, 15.25, zc, 'facet', back)
+        m.face_patch(f'{label}_cheek_bevel', 2.75, 14.875, 4.75, 15.25, zc + (.005 if back else -.005), 'light', back)
+        m.face_patch(f'{label}_cheek_shadow', 3.25, 9, 4.75, 10, zc, 'shade', back)
+        zb = 8.64 if back else 7.36
+        m.face_patch(f'{label}_beard_shadow', 3.5, 8.5, 5.25, 9.125, zb, 'shade', back)
+        m.face_patch(f'{label}_beard_edge', 4.875, 9.125, 5.25, 11.25, zb, 'dark', back)
+        ze = 9.515 if back else 6.485
+        m.face_patch(f'{label}_eye_bevel', 6.75, 14.25, 9.75, 14.75, ze, 'light', back)
+        m.face_patch(f'{label}_eye_shadow', 6.75, 11, 9.75, 11.75, ze, 'shade', back)
+        z0, z1 = (9.5, 9.625) if back else (6.375, 6.5)
+        m.box(f'{label}_socket_pin', [7.875, 12.25, z0], [8.625, 13, z1], 'light', 'light', 'facet')
+        zh = 8.765 if back else 7.235
+        m.face_patch(f'{label}_haft_light', 7.5, 4.5, 7.875, 8.75, zh, 'wood_light', back)
+        m.face_patch(f'{label}_haft_edge', 8.625, 4.5, 9, 8.75, zh, 'wood_dark', back)
+        for i, y in enumerate((5, 6.75)):
+            m.face_patch(f'{label}_grain_{i}', 8, y, 8.25, y + .75, zh, 'wood_dark', back)
     return m
 
 
