@@ -2,7 +2,11 @@ package dev.futuretech.redstone;
 
 import dev.futuretech.block.WirelessRedstoneBlock.Kind;
 import dev.futuretech.block.entity.WirelessRedstoneBlockEntity;
+import net.minecraft.core.GlobalPos;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,15 +17,16 @@ import java.util.Set;
 
 /**
  * Which transmitters and receivers are on which frequency, server-wide. A plate signs in when its
- * chunk loads and out when it unloads or it is broken, so a frequency only ever lists plates that
- * are there to answer: a transmitter in an unloaded chunk sends nothing, the way a machine in one
- * does nothing. The frequency crosses dimensions — the whole point of the thing is that the two
- * plates never have to see each other.
+ * chunk loads and out when it unloads or it is broken, so these lists only ever hold plates that
+ * are there to answer. What a frequency carries, though, is not read off the lists but off the
+ * {@link WirelessEther}: every transmitter's last signal, saved, so a transmitter in an unloaded
+ * chunk goes on being heard until it is broken. That is what lets the frequency cross dimensions
+ * — a signal put on in the overworld comes out in the nether, whose chunks are the only ones
+ * loaded while anyone is there — which is the whole point of the thing.
  *
- * <p>Nothing is saved: the frequency a plate is on is the plate's own to save, and these lists
- * rebuild themselves as the world loads. Every change goes out at once rather than being polled;
- * a signal that did not change tells nobody, which is also what stops two plates wired into each
- * other from going round for ever.
+ * <p>The lists rebuild themselves as the world loads; the ether is the world's. Every change goes
+ * out at once rather than being polled; a signal that did not change tells nobody, which is also
+ * what stops two plates wired into each other from going round for ever.
  */
 public final class WirelessRedstone {
     private static final Map<Integer, Set<WirelessRedstoneBlockEntity>> TRANSMITTERS = new HashMap<>();
@@ -33,37 +38,57 @@ public final class WirelessRedstone {
         return plate.kind() == Kind.TRANSMITTER ? TRANSMITTERS : RECEIVERS;
     }
 
-    /** Signs a plate in: a transmitter's signal reaches the frequency at once, a receiver takes what is on it. */
+    /**
+     * Signs a plate in: a transmitter writes its signal into the ether and the frequency hears at
+     * once, a receiver takes what is on it.
+     */
     public static void join(WirelessRedstoneBlockEntity plate) {
+        MinecraftServer server = serverOf(plate);
+        if (server == null) return;
         lists(plate).computeIfAbsent(plate.frequency(), key -> new LinkedHashSet<>()).add(plate);
-        if (plate.kind() == Kind.TRANSMITTER) broadcast(plate.frequency());
-        else plate.receive(strength(plate.frequency()));
+        if (plate.kind() == Kind.TRANSMITTER) send(server, plate);
+        else plate.receive(strength(server, plate.frequency()));
     }
 
-    /** Signs a plate out; a transmitter that leaves takes its signal off the frequency with it. */
+    /** A transmitter's signal, as it now reads it, into the ether; the frequency hears when that is news. */
+    public static void send(MinecraftServer server, WirelessRedstoneBlockEntity transmitter) {
+        if (WirelessEther.of(server).put(transmitter.globalPos(), transmitter.frequency(), transmitter.power())) {
+            broadcast(server, transmitter.frequency());
+        }
+    }
+
+    /**
+     * Signs a plate out of the lists, as its chunk unloads or it is broken. A transmitter's signal
+     * stays in the ether: a chunk going away is not the plate going away. {@link #forget} is for
+     * a plate that is.
+     */
     public static void leave(WirelessRedstoneBlockEntity plate) {
         Map<Integer, Set<WirelessRedstoneBlockEntity>> lists = lists(plate);
         Set<WirelessRedstoneBlockEntity> members = lists.get(plate.frequency());
         if (members == null) return;
         members.remove(plate);
         if (members.isEmpty()) lists.remove(plate.frequency());
-        if (plate.kind() == Kind.TRANSMITTER) broadcast(plate.frequency());
     }
 
-    /** The strongest signal any loaded transmitter puts on {@code frequency}, 0 to 15. */
-    public static int strength(int frequency) {
-        int best = 0;
-        for (WirelessRedstoneBlockEntity transmitter : listening(TRANSMITTERS, frequency)) {
-            best = Math.max(best, transmitter.power());
-            if (best >= 15) return 15;
-        }
-        return best;
+    /** Takes the transmitter that stood at {@code pos} out of the ether, and tells its frequency it is gone. */
+    public static void forget(MinecraftServer server, GlobalPos pos) {
+        WirelessEther.Entry entry = WirelessEther.of(server).remove(pos);
+        if (entry != null) broadcast(server, entry.frequency());
     }
 
-    /** Hands every receiver on {@code frequency} what the transmitters on it now add up to. */
-    public static void broadcast(int frequency) {
-        int signal = strength(frequency);
+    /** The strongest signal any transmitter, loaded or not, last put on {@code frequency}, 0 to 15. */
+    public static int strength(MinecraftServer server, int frequency) {
+        return WirelessEther.of(server).strength(frequency);
+    }
+
+    /** Hands every loaded receiver on {@code frequency} what the transmitters on it now add up to. */
+    public static void broadcast(MinecraftServer server, int frequency) {
+        int signal = strength(server, frequency);
         for (WirelessRedstoneBlockEntity receiver : listening(RECEIVERS, frequency)) receiver.receive(signal);
+    }
+
+    private static @Nullable MinecraftServer serverOf(WirelessRedstoneBlockEntity plate) {
+        return plate.getLevel() instanceof ServerLevel level ? level.getServer() : null;
     }
 
     /** How many plates of both kinds are on {@code frequency} right now: the loaded ones, which are the ones that answer. */

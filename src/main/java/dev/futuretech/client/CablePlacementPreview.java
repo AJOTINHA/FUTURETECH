@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.QuadInstance;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.futuretech.block.AbstractCableBlock;
 import dev.futuretech.block.NetworkPanelBlock;
+import dev.futuretech.block.WirelessRedstoneBlock;
 import dev.futuretech.block.entity.AbstractCableBlockEntity;
 import dev.futuretech.item.FacadeItem;
 import net.minecraft.client.Minecraft;
@@ -38,9 +39,10 @@ import java.util.List;
 
 /**
  * A ghost of where a click would land. With a cable in hand it is the cable's bare core at the
- * spot it would take; with a network panel it is the plate on the face it would mount on; with a
- * facade it is the panel on the face the click would cover. All are the real models drawn
- * see-through, so the ghost looks like the block it stands for.
+ * spot it would take; with a network panel or a wireless redstone plate it is the plate on the
+ * face it would mount on, turned the way it would be; with a facade it is the panel on the face
+ * the click would cover. All are the real models drawn see-through, so the ghost looks like the
+ * block it stands for.
  *
  * <p>Nothing here changes the world: the state is worked out the way placing does, on the client's
  * copy, and thrown away with the frame.
@@ -83,7 +85,7 @@ public final class CablePlacementPreview {
 
     /** The blocks that get a ghost when held: the ones whose place is hard to tell from the crosshair alone. */
     private static boolean previews(Block block) {
-        return block instanceof AbstractCableBlock || block instanceof NetworkPanelBlock;
+        return block instanceof AbstractCableBlock || block instanceof NetworkPanelBlock || block instanceof WirelessRedstoneBlock;
     }
 
     private static void submitBlock(SubmitCustomGeometryEvent event, ClientLevel level, LocalPlayer player,
@@ -104,6 +106,16 @@ public final class CablePlacementPreview {
         Minecraft.getInstance().getModelManager().getBlockStateModelSet().get(shown)
                 .collectParts(level, pos, shown, RandomSource.create(42), parts);
         submitParts(event, level, pos, parts, camera);
+        // The plate's dish and hedron are not in its model; the ghost gets them the way the block does.
+        if (block instanceof WirelessRedstoneBlock plate) {
+            PoseStack pose = event.getPoseStack();
+            pose.pushPose();
+            pose.translate(pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z);
+            WirelessRedstoneRenderer.submitGhostHead(pose, event.getSubmitNodeCollector(), state.getValue(WirelessRedstoneBlock.FACING),
+                    state.getValue(WirelessRedstoneBlock.SPIN), plate.kind == WirelessRedstoneBlock.Kind.RECEIVER,
+                    LightCoordsUtil.getLightCoords(level, pos), GHOST);
+            pose.popPose();
+        }
     }
 
     private static void submitFacade(SubmitCustomGeometryEvent event, ClientLevel level, ItemStack stack,

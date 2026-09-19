@@ -86,11 +86,22 @@ public final class WirelessRedstoneRenderer implements BlockEntityRenderer<Wirel
      */
     static void submitHead(PoseStack pose, SubmitNodeCollector collector, Direction facing, int turned,
                            boolean receiver, float spin, int light) {
+        submitHead(pose, collector, facing, turned, receiver, spin, light, 0xFFFFFFFF, false);
+    }
+
+    /** The head as a placement ghost: the same shapes, see-through, in the ghost's colour. */
+    static void submitGhostHead(PoseStack pose, SubmitNodeCollector collector, Direction facing, int turned,
+                                boolean receiver, int light, int colour) {
+        submitHead(pose, collector, facing, turned, receiver, 0, light, colour, true);
+    }
+
+    private static void submitHead(PoseStack pose, SubmitNodeCollector collector, Direction facing, int turned,
+                                   boolean receiver, float spin, int light, int colour, boolean translucent) {
         pose.pushPose();
         turn(pose, facing, turned);
         if (receiver) {
-            collector.submitCustomGeometry(pose, RenderTypes.entitySolid(DISH),
-                    (entry, buffer) -> draw(WirelessHeadMesh.DISH, entry, buffer, light));
+            collector.submitCustomGeometry(pose, translucent ? RenderTypes.entityTranslucent(DISH) : RenderTypes.entitySolid(DISH),
+                    (entry, buffer) -> draw(WirelessHeadMesh.DISH, entry, buffer, light, colour));
         }
         float[] centre = receiver ? WirelessHeadMesh.RECEIVER_HEDRON : WirelessHeadMesh.TRANSMITTER_HEDRON;
         pose.pushPose();
@@ -100,23 +111,24 @@ public final class WirelessRedstoneRenderer implements BlockEntityRenderer<Wirel
         pose.mulPose(Axis.XP.rotationDegrees(receiver ? WirelessHeadMesh.RECEIVER_HEDRON_LEAN
                 : WirelessHeadMesh.TRANSMITTER_HEDRON_LEAN));
         pose.mulPose(Axis.YP.rotationDegrees(spin));
-        collector.submitCustomGeometry(pose, RenderTypes.entitySolid(HEDRON),
-                (entry, buffer) -> draw(WirelessHeadMesh.HEDRON, entry, buffer, FULL_BRIGHT));
+        collector.submitCustomGeometry(pose, translucent ? RenderTypes.entityTranslucent(HEDRON) : RenderTypes.entitySolid(HEDRON),
+                (entry, buffer) -> draw(WirelessHeadMesh.HEDRON, entry, buffer, FULL_BRIGHT, colour));
         pose.popPose();
         pose.popPose();
     }
 
     /**
      * The turn the blockstate gives the model, as a pose: the block's own angles, about the middle
-     * of the block, the y first and then the x — which is what a model's {@code x} and {@code y}
-     * come to once they are applied.
+     * of the block, the y first, then the x, then the quarter baked into the model — which is what
+     * those come to once they are applied.
      */
     private static void turn(PoseStack pose, Direction facing, int turned) {
         int[] angles = WirelessRedstoneBlock.angles(facing, turned);
         pose.translate(0.5F, 0.5F, 0.5F);
         // A model's turns go clockwise, which is the other way round from a pose's.
-        pose.mulPose(Axis.YP.rotationDegrees(-angles[1]));
-        pose.mulPose(Axis.XP.rotationDegrees(-angles[0]));
+        pose.mulPose(Axis.YP.rotationDegrees(-angles[2]));
+        pose.mulPose(Axis.XP.rotationDegrees(-angles[1]));
+        pose.mulPose(Axis.YP.rotationDegrees(-angles[0]));
         pose.translate(-0.5F, -0.5F, -0.5F);
     }
 

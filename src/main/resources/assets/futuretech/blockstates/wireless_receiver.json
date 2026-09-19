@@ -77,27 +77,31 @@
       "x": 90
     },
     "facing=north,lit=false,spin=1": {
-      "model": "futuretech:block/wireless/receiver",
-      "x": 90
+      "model": "futuretech:block/wireless/receiver_turned",
+      "x": 270,
+      "y": 180
     },
     "facing=north,lit=true,spin=1": {
-      "model": "futuretech:block/wireless/receiver_on",
-      "x": 90
+      "model": "futuretech:block/wireless/receiver_turned_on",
+      "x": 270,
+      "y": 180
     },
     "facing=north,lit=false,spin=2": {
       "model": "futuretech:block/wireless/receiver",
-      "x": 90
+      "x": 270,
+      "y": 180
     },
     "facing=north,lit=true,spin=2": {
       "model": "futuretech:block/wireless/receiver_on",
-      "x": 90
+      "x": 270,
+      "y": 180
     },
     "facing=north,lit=false,spin=3": {
-      "model": "futuretech:block/wireless/receiver",
+      "model": "futuretech:block/wireless/receiver_turned",
       "x": 90
     },
     "facing=north,lit=true,spin=3": {
-      "model": "futuretech:block/wireless/receiver_on",
+      "model": "futuretech:block/wireless/receiver_turned_on",
       "x": 90
     },
     "facing=east,lit=false,spin=0": {
@@ -111,32 +115,32 @@
       "y": 90
     },
     "facing=east,lit=false,spin=1": {
-      "model": "futuretech:block/wireless/receiver",
-      "x": 90,
-      "y": 90
+      "model": "futuretech:block/wireless/receiver_turned",
+      "x": 270,
+      "y": 270
     },
     "facing=east,lit=true,spin=1": {
-      "model": "futuretech:block/wireless/receiver_on",
-      "x": 90,
-      "y": 90
+      "model": "futuretech:block/wireless/receiver_turned_on",
+      "x": 270,
+      "y": 270
     },
     "facing=east,lit=false,spin=2": {
       "model": "futuretech:block/wireless/receiver",
-      "x": 90,
-      "y": 90
+      "x": 270,
+      "y": 270
     },
     "facing=east,lit=true,spin=2": {
       "model": "futuretech:block/wireless/receiver_on",
-      "x": 90,
-      "y": 90
+      "x": 270,
+      "y": 270
     },
     "facing=east,lit=false,spin=3": {
-      "model": "futuretech:block/wireless/receiver",
+      "model": "futuretech:block/wireless/receiver_turned",
       "x": 90,
       "y": 90
     },
     "facing=east,lit=true,spin=3": {
-      "model": "futuretech:block/wireless/receiver_on",
+      "model": "futuretech:block/wireless/receiver_turned_on",
       "x": 90,
       "y": 90
     },
@@ -151,32 +155,28 @@
       "y": 180
     },
     "facing=south,lit=false,spin=1": {
-      "model": "futuretech:block/wireless/receiver",
-      "x": 90,
-      "y": 180
+      "model": "futuretech:block/wireless/receiver_turned",
+      "x": 270
     },
     "facing=south,lit=true,spin=1": {
-      "model": "futuretech:block/wireless/receiver_on",
-      "x": 90,
-      "y": 180
+      "model": "futuretech:block/wireless/receiver_turned_on",
+      "x": 270
     },
     "facing=south,lit=false,spin=2": {
       "model": "futuretech:block/wireless/receiver",
-      "x": 90,
-      "y": 180
+      "x": 270
     },
     "facing=south,lit=true,spin=2": {
       "model": "futuretech:block/wireless/receiver_on",
-      "x": 90,
-      "y": 180
+      "x": 270
     },
     "facing=south,lit=false,spin=3": {
-      "model": "futuretech:block/wireless/receiver",
+      "model": "futuretech:block/wireless/receiver_turned",
       "x": 90,
       "y": 180
     },
     "facing=south,lit=true,spin=3": {
-      "model": "futuretech:block/wireless/receiver_on",
+      "model": "futuretech:block/wireless/receiver_turned_on",
       "x": 90,
       "y": 180
     },
@@ -191,32 +191,32 @@
       "y": 270
     },
     "facing=west,lit=false,spin=1": {
-      "model": "futuretech:block/wireless/receiver",
-      "x": 90,
-      "y": 270
+      "model": "futuretech:block/wireless/receiver_turned",
+      "x": 270,
+      "y": 90
     },
     "facing=west,lit=true,spin=1": {
-      "model": "futuretech:block/wireless/receiver_on",
-      "x": 90,
-      "y": 270
+      "model": "futuretech:block/wireless/receiver_turned_on",
+      "x": 270,
+      "y": 90
     },
     "facing=west,lit=false,spin=2": {
       "model": "futuretech:block/wireless/receiver",
-      "x": 90,
-      "y": 270
+      "x": 270,
+      "y": 90
     },
     "facing=west,lit=true,spin=2": {
       "model": "futuretech:block/wireless/receiver_on",
-      "x": 90,
-      "y": 270
+      "x": 270,
+      "y": 90
     },
     "facing=west,lit=false,spin=3": {
-      "model": "futuretech:block/wireless/receiver",
+      "model": "futuretech:block/wireless/receiver_turned",
       "x": 90,
       "y": 270
     },
     "facing=west,lit=true,spin=3": {
-      "model": "futuretech:block/wireless/receiver_on",
+      "model": "futuretech:block/wireless/receiver_turned_on",
       "x": 90,
       "y": 270
     }

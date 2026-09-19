@@ -161,7 +161,7 @@ public final class NetworkPanelScreen extends AbstractContainerScreen<NetworkPan
     private void drawCardRow(GuiGraphicsExtractor graphics, PanelView.Card card, int textY, int width) {
         String cost = String.format("%,d FE", card.cost());
         int costWidth = font.width(cost);
-        int colour = card.reaches() ? TITLE : UNREACHABLE;
+        int colour = card.selectable() ? TITLE : UNREACHABLE;
         graphics.text(font, font.plainSubstrByWidth(card.name(), width - costWidth - 12), ROW_X + 4, textY, colour, false);
         graphics.text(font, cost, ROW_X + width - 4 - costWidth, textY, colour, false);
     }
@@ -183,6 +183,7 @@ public final class NetworkPanelScreen extends AbstractContainerScreen<NetworkPan
         }
         int index = rowAt(event.x(), event.y());
         if (index >= 0) {
+            if (!cards().get(index).present()) return true;
             NetworkPanelMenu.sendPick(cards().get(index));
             Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
             return true;

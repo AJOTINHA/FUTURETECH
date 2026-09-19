@@ -6,10 +6,12 @@ import dev.futuretech.redstone.WirelessRedstone;
 import dev.futuretech.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -56,8 +58,12 @@ public final class WirelessRedstoneBlockEntity extends BlockEntity {
     public void setFrequency(int wanted) {
         int frequency = Math.clamp(wanted, 0, MAX_FREQUENCY);
         if (frequency == this.frequency) return;
-        boolean listed = level != null && !level.isClientSide();
-        if (listed) WirelessRedstone.leave(this);
+        boolean listed = level instanceof ServerLevel;
+        if (listed) {
+            WirelessRedstone.leave(this);
+            // A transmitter's signal comes off the old frequency with it.
+            if (kind() == Kind.TRANSMITTER) WirelessRedstone.forget(((ServerLevel) level).getServer(), globalPos());
+        }
         this.frequency = frequency;
         setChanged();
         if (!listed) return;
@@ -78,7 +84,12 @@ public final class WirelessRedstoneBlockEntity extends BlockEntity {
         power = read;
         setChanged();
         showLamp();
-        WirelessRedstone.broadcast(frequency);
+        if (level instanceof ServerLevel serverLevel) WirelessRedstone.send(serverLevel.getServer(), this);
+    }
+
+    /** Where the plate is, dimension and all: how the ether knows it. */
+    public GlobalPos globalPos() {
+        return GlobalPos.of(level == null ? Level.OVERWORLD : level.dimension(), worldPosition.immutable());
     }
 
     /** A receiver takes what is on its frequency and gives out the same; the blocks around it hear at once. */

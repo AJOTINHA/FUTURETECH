@@ -67,6 +67,16 @@ public final class StorageCardsBlockEntity extends BaseContainerBlockEntity impl
         return slot < 0 || slot >= unlockedCards() ? null : TeleportCardItem.target(cards.get(slot));
     }
 
+    /** Bit {@code n} set for every card {@code half * 16 + n} pointing where no pad stands any more. */
+    public int missingBits(int half) {
+        int bits = 0;
+        for (int n = 0; n < 16; n++) {
+            TeleportTarget target = target(half * 16 + n);
+            if (target != null && !TeleporterBlockEntity.padStands(level, target)) bits |= 1 << n;
+        }
+        return bits;
+    }
+
     /**
      * Edits the card in {@code slot}: the label the pads and the panel show for that destination
      * and the colour a pad's beam takes for it, never the pad it points at. The same rule as the

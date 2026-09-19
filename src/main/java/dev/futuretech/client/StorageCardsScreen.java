@@ -39,6 +39,7 @@ public final class StorageCardsScreen extends AbstractContainerScreen<StorageCar
     private static final int ROW_BACK = 0xFF56616D;
     private static final int ROW_FACE = 0xFF65717D;
     private static final int MUTED = 0xFF8B959F;
+    private static final int UNREACHABLE = 0xFFB03A2E;
     private static final int SCROLL_TRACK = 0xFF3E4752;
     private static final int SCROLL_KNOB = 0xFF8B959F;
     private static final int SCROLL_KNOB_HELD = 0xFFB8C2CC;
@@ -156,7 +157,8 @@ public final class StorageCardsScreen extends AbstractContainerScreen<StorageCar
             var pos = target.pos().pos();
             String where = pos.getX() + ", " + pos.getY() + ", " + pos.getZ();
             int whereWidth = font.width(where);
-            graphics.text(font, font.plainSubstrByWidth(target.name(), ROW_WIDTH - whereWidth - 12), ROW_X + 4, textY, TITLE, false);
+            graphics.text(font, font.plainSubstrByWidth(target.name(), ROW_WIDTH - whereWidth - 12), ROW_X + 4, textY,
+                    menu.rowMissing(row) ? UNREACHABLE : TITLE, false);
             graphics.text(font, where, ROW_X + ROW_WIDTH - 4 - whereWidth, textY, MUTED, false);
         }
     }

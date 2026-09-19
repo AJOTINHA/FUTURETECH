@@ -124,6 +124,9 @@ public final class TeleporterMenu extends MachineMenu implements RedstoneControl
     }
 
     /** Whether this level can go where the pad's own card points. */
+    /** Whether the pad's own card points where no pad stands any more; such a card cannot be chosen. */
+    public boolean cardMissing() { return data.get(DATA_CARD_MISSING) != 0; }
+
     public boolean reaches() {
         TeleportTarget target = card();
         return target != null && TeleporterBlockEntity.reaches(pos, target, mk);

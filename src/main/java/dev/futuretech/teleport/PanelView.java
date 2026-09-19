@@ -61,7 +61,7 @@ public record PanelView(Optional<Pad> pad, int cables) {
      * and the slot there. Empty slots are not sent — the panel lists destinations, not slots, so
      * a row is a place to go and its source and slot are what a click names.
      */
-    public record Card(BlockPos source, int slot, String name, int colour, int cost, boolean reaches) {
+    public record Card(BlockPos source, int slot, String name, int colour, int cost, boolean reaches, boolean present) {
         public static final StreamCodec<RegistryFriendlyByteBuf, Card> STREAM_CODEC = StreamCodec.composite(
                 BlockPos.STREAM_CODEC, Card::source,
                 ByteBufCodecs.VAR_INT, Card::slot,
@@ -69,7 +69,11 @@ public record PanelView(Optional<Pad> pad, int cables) {
                 ByteBufCodecs.INT, Card::colour,
                 ByteBufCodecs.VAR_INT, Card::cost,
                 ByteBufCodecs.BOOL, Card::reaches,
+                ByteBufCodecs.BOOL, Card::present,
                 Card::new);
+
+        /** Whether the pad may send there: a pad still stands at the other end and this level reaches it. */
+        public boolean selectable() { return present && reaches; }
     }
 
     /**
@@ -97,6 +101,7 @@ public record PanelView(Optional<Pad> pad, int cables) {
         // the player will be standing, which is the pad, however far the panel or the storage is.
         // So are the upgrades that price it: the pad charges the fare its own slots discount.
         cards.add(new Card(source, slot, target.name(), target.colour(),
-                pad.upgrades().cost(TeleporterBlockEntity.cost(from, target, mk)), TeleporterBlockEntity.reaches(from, target, mk)));
+                pad.upgrades().cost(TeleporterBlockEntity.cost(from, target, mk)), TeleporterBlockEntity.reaches(from, target, mk),
+                TeleporterBlockEntity.padStands(pad.getLevel(), target)));
     }
 }

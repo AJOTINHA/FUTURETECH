@@ -60,36 +60,29 @@ class WirelessRedstoneResourcesTest {
                         assertNotNull(variant, plate + " is missing " + key);
                         String path = variant.get("model").getAsString().replace("futuretech:", "");
                         assertTrue(path.endsWith("_on") == lit, key + " points at " + path);
+                        assertEquals(angles[0] == 90, path.contains(WirelessRedstoneBlock.TURNED), key + " points at " + path);
                         assertNotNull(model(path), path);
-                        assertEquals(angles[0], variant.has("x") ? variant.get("x").getAsInt() : 0, key + " x");
-                        assertEquals(angles[1], variant.has("y") ? variant.get("y").getAsInt() : 0, key + " y");
+                        assertEquals(angles[1], variant.has("x") ? variant.get("x").getAsInt() : 0, key + " x");
+                        assertEquals(angles[2], variant.has("y") ? variant.get("y").getAsInt() : 0, key + " y");
                     }
                 }
             }
         }
     }
 
-    /** Placed on the floor or the ceiling, the plate's front follows the player; on a wall it cannot. */
+    /** On every face the four turns look four different ways, none of them into or out of the face. */
     @Test
-    void theFrontGoesRoundWithTheTurnAndOnlyOnAFloorOrACeiling(MinecraftServer server) {
-        for (Direction facing : new Direction[]{Direction.UP, Direction.DOWN}) {
+    void theFrontGoesRoundWithTheTurnOnEveryFace(MinecraftServer server) {
+        for (Direction facing : Direction.values()) {
             var seen = new java.util.HashSet<Direction>();
             for (int spin : WirelessRedstoneBlock.SPIN.getPossibleValues()) {
                 Direction front = WirelessRedstoneBlock.front(facing, spin);
-                assertTrue(front.getAxis().isHorizontal(), facing + " spin " + spin + " points " + front);
+                assertNotEquals(facing.getAxis(), front.getAxis(), facing + " spin " + spin + " points " + front);
                 assertTrue(seen.add(front), "two turns face " + front);
             }
             assertEquals(4, seen.size(), facing + " should reach every side");
-        }
-        // A wall plate keeps the one way up: the blockstate cannot roll it, so nothing else may
-        // claim it can, and its front — the side its redstone uses — is the way its dish points.
-        for (Direction facing : Direction.Plane.HORIZONTAL) {
-            assertEquals(Direction.UP, WirelessRedstoneBlock.front(facing, 0), facing + " looks up");
-            for (int spin : WirelessRedstoneBlock.SPIN.getPossibleValues()) {
-                assertArrayEquals(WirelessRedstoneBlock.angles(facing, 0), WirelessRedstoneBlock.angles(facing, spin),
-                        facing + " must not turn");
-                assertEquals(Direction.UP, WirelessRedstoneBlock.front(facing, spin), facing + " keeps looking up");
-            }
+            // A wall plate placed before it could turn keeps looking up, so old worlds do not change.
+            if (facing.getAxis().isHorizontal()) assertEquals(Direction.UP, WirelessRedstoneBlock.front(facing, 0));
         }
     }
 
@@ -97,7 +90,8 @@ class WirelessRedstoneResourcesTest {
     void everySpriteTheModelsAskForIsThere() throws Exception {
         for (String plate : PLATES) {
             String kind = plate.replace("wireless_", "");
-            for (String path : new String[]{"block/wireless/" + kind, "block/wireless/" + kind + "_on", "item/" + plate}) {
+            for (String path : new String[]{"block/wireless/" + kind, "block/wireless/" + kind + "_on",
+                    "block/wireless/" + kind + "_turned", "block/wireless/" + kind + "_turned_on", "item/" + plate}) {
                 JsonObject model = model(path);
                 if (!model.has("textures")) continue;
                 for (var entry : model.getAsJsonObject("textures").entrySet()) {

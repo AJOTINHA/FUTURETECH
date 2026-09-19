@@ -1,6 +1,7 @@
 package dev.futuretech.item;
 
 import dev.futuretech.FutureTech;
+import dev.futuretech.block.WirelessRedstoneBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -89,6 +90,8 @@ public final class WrenchItem extends Item {
 
     /** The state after one turn, or null when the block has nothing to rotate. */
     private static @Nullable BlockState rotated(BlockState state, Level level, BlockPos pos) {
+        // A plate hangs on its face; the wrench turns it on that face rather than off it.
+        if (state.hasProperty(WirelessRedstoneBlock.SPIN)) return state.cycle(WirelessRedstoneBlock.SPIN);
         for (Property<?> property : state.getProperties()) {
             Class<?> type = property.getValueClass();
             if (type == Direction.class) {

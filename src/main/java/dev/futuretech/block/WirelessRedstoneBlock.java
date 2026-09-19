@@ -4,9 +4,11 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.futuretech.block.entity.WirelessRedstoneBlockEntity;
+import dev.futuretech.redstone.WirelessRedstone;
 import dev.futuretech.redstone.WirelessRedstonePayloads;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -28,6 +30,7 @@ import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.redstone.ExperimentalRedstoneUtils;
 import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -60,13 +63,17 @@ public final class WirelessRedstoneBlock extends BaseEntityBlock {
     /**
      * Quarter turns of the plate on the face it hangs on, so its front — the side the lamp is on
      * and the dish opens towards — can be pointed at whatever the plate is wired to. It is set by
-     * where the player stands when placing, the way WR-CBE's own part turns.
+     * the edge of the face the crosshair was nearest when placing.
      *
-     * <p>Only a plate on the floor or the ceiling turns. A blockstate turns a model by an x and
-     * then a y, which reaches sixteen of the twenty-four ways round a cube, and rolling a plate on
-     * a wall is one of the eight it cannot reach; a wall plate keeps its dish pointing up.
+     * <p>A blockstate turns a model by an x and then a y, which reaches sixteen of the twenty-four
+     * ways round a cube, and rolling a plate on a wall sideways is one of the eight it cannot
+     * reach. So there are two models of each plate: the one drawn, and the same one turned a
+     * quarter on the floor before anything else; between them the blockstate reaches every way a
+     * plate can hang. {@link #angles} says which, and how far.
      */
     public static final IntegerProperty SPIN = IntegerProperty.create("spin", 0, 3);
+    /** Suffix of the model turned a quarter on the floor; {@link #angles} says when it is the one to draw. */
+    public static final String TURNED = "_turned";
 
     /**
      * The parts of the plate, in pixels, given the way the model draws them: lying on the floor,
@@ -79,8 +86,6 @@ public final class WirelessRedstoneBlock extends BaseEntityBlock {
     private static final double[] RECEIVER_MAST = {7, 2, 4, 9, 9, 6};
     private static final double[] RECEIVER_DISH = {3.2, 5.6, 2.2, 12.8, 13.2, 9.7};
 
-    private static final VoxelShape[][] TRANSMITTER_SHAPES = shapes(PLATE, TRANSMITTER_MAST);
-    private static final VoxelShape[][] RECEIVER_SHAPES = shapes(PLATE, RECEIVER_MAST, RECEIVER_DISH);
 
     public final Kind kind;
 
@@ -112,21 +117,55 @@ public final class WirelessRedstoneBlock extends BaseEntityBlock {
     }
 
     /**
-     * The turn the blockstate gives the model for a face and a quarter turn on it: an x and then a
-     * y, in the model's own clockwise. One table serves the shapes here, the blockstate written by
+     * The turn that takes the model as drawn — the plate on the floor, looking up, front to the
+     * south — to a face and a quarter turn on it: first the quarter baked into the model (0, or 90
+     * for the {@link #TURNED} one), then the blockstate's x, then its y, all in the model's own
+     * clockwise. One table serves the shapes here, the blockstate written by
      * {@code tools/generate_wireless_redstone.py} and the pose in the renderer, so the box, the
      * model and the dish drawn over it can never point three different ways.
+     *
+     * <p>On the floor and the ceiling the y is the turn. On a wall the table is searched once for
+     * the way round that stands the mast off the wall and points the front where {@link #front}
+     * says: an x of 90 or 270 with the plain model reaches up and down, and the turned model the
+     * two sides.
      */
     public static int[] angles(Direction facing, int spin) {
-        return switch (facing) {
-            case UP -> new int[]{0, 90 * spin};
-            case DOWN -> new int[]{180, 90 * spin};
-            // A wall plate does not turn: those ways round are the ones a blockstate cannot say.
-            case NORTH -> new int[]{90, 0};
-            case EAST -> new int[]{90, 90};
-            case SOUTH -> new int[]{90, 180};
-            case WEST -> new int[]{90, 270};
-        };
+        return WALL_ANGLES[facing.ordinal()][spin];
+    }
+
+    private static final int[][][] WALL_ANGLES = new int[Direction.values().length][SPIN.getPossibleValues().size()][];
+
+    static {
+        for (Direction facing : Direction.values()) {
+            for (int spin : SPIN.getPossibleValues()) {
+                WALL_ANGLES[facing.ordinal()][spin] = findAngles(facing, spin);
+            }
+        }
+    }
+
+    // Built after the table of angles above, which the shapes are turned by.
+    private static final VoxelShape[][] TRANSMITTER_SHAPES = shapes(PLATE, TRANSMITTER_MAST);
+    private static final VoxelShape[][] RECEIVER_SHAPES = shapes(PLATE, RECEIVER_MAST, RECEIVER_DISH);
+
+    private static int[] findAngles(Direction facing, int spin) {
+        if (facing == Direction.UP) return new int[]{0, 0, 90 * spin};
+        if (facing == Direction.DOWN) return new int[]{0, 180, 90 * spin};
+        Direction front = front(facing, spin);
+        for (int base : new int[]{0, 90}) {
+            for (int x : new int[]{90, 270}) {
+                for (int y = 0; y < 360; y += 90) {
+                    int[] angles = {base, x, y};
+                    if (turnedAxis(angles, 0, 1, 0) == facing && turnedAxis(angles, 0, 0, 1) == front) return angles;
+                }
+            }
+        }
+        throw new IllegalStateException("no turn hangs a plate on " + facing + " looking " + front);
+    }
+
+    /** Where a direction of the model as drawn points once turned by {@code angles}. */
+    private static Direction turnedAxis(int[] angles, int x, int y, int z) {
+        double[] end = turn(angles, 8 + x, 8 + y, 8 + z);
+        return Direction.getApproximateNearest(end[0] - 8, end[1] - 8, end[2] - 8);
     }
 
     /** A box of the model under those angles: both corners are turned and squared up again. */
@@ -140,18 +179,23 @@ public final class WirelessRedstoneBlock extends BaseEntityBlock {
     /**
      * One corner, from the frame the model is drawn in — the plate on the floor, looking up — to
      * the one it stands in. Measured from the middle of the block, turned a quarter at a time the
-     * way a blockstate turns a model, and put back.
+     * way a blockstate turns a model: the quarter baked into the model, the x, then the y.
      */
     private static double[] turn(int[] angles, double x, double y, double z) {
         double a = x - 8;
         double b = y - 8;
         double c = z - 8;
         for (int quarter = 0; quarter < angles[0] / 90; quarter++) {
+            double turned = -c;
+            c = a;
+            a = turned;
+        }
+        for (int quarter = 0; quarter < angles[1] / 90; quarter++) {
             double turned = c;
             c = -b;
             b = turned;
         }
-        for (int quarter = 0; quarter < angles[1] / 90; quarter++) {
+        for (int quarter = 0; quarter < angles[2] / 90; quarter++) {
             double turned = -c;
             c = a;
             a = turned;
@@ -163,10 +207,18 @@ public final class WirelessRedstoneBlock extends BaseEntityBlock {
      * The way the plate's front points: the side its lamp is on and its dish opens towards, which
      * is the one side its redstone uses. On the floor it starts out looking south and turns
      * clockwise from there; on the ceiling it starts looking north, because getting there turns
-     * the model over; on a wall it looks up, which is where that plate's dish points.
+     * the model over; on a wall it starts looking up and turns clockwise as seen by whoever faces
+     * the wall.
      */
     public static Direction front(Direction facing, int spin) {
-        if (facing.getAxis().isHorizontal()) return Direction.UP;
+        if (facing.getAxis().isHorizontal()) {
+            return switch (spin) {
+                case 1 -> facing.getClockWise();
+                case 2 -> Direction.DOWN;
+                case 3 -> facing.getCounterClockWise();
+                default -> Direction.UP;
+            };
+        }
         Direction front = facing == Direction.DOWN ? Direction.NORTH : Direction.SOUTH;
         for (int quarter = 0; quarter < spin; quarter++) front = front.getClockWise();
         return front;
@@ -200,21 +252,40 @@ public final class WirelessRedstoneBlock extends BaseEntityBlock {
     }
 
     /**
-     * Mounts on the face that was clicked, looking away from it. On the floor and the ceiling it
-     * also turns on that face so its front — the lamp and the dish — faces the player who placed
-     * it, which is the side they were wiring from; a wall plate has only the one way up.
+     * Mounts on the face that was clicked, looking away from it, and turns on that face so its
+     * front — the lamp and the dish — points at the edge of the face the crosshair was nearest,
+     * so aiming at the corner by the wire is what points the plate at the wire.
      */
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         Direction facing = context.getClickedFace();
-        int spin = facing.getAxis().isVertical()
-                ? spinFor(facing, context.getHorizontalDirection().getOpposite()) : 0;
-        return defaultBlockState().setValue(FACING, facing).setValue(SPIN, spin);
+        return defaultBlockState().setValue(FACING, facing)
+                .setValue(SPIN, spinFor(facing, edgeAimedAt(context.getClickLocation(), context.getClickedPos(), facing)));
+    }
+
+    /**
+     * The edge of the face the point {@code hit} is nearest: the face of the block at {@code pos}
+     * that looks {@code facing}, whose middle is the block's. On a wall the edges are up, down and
+     * the two sides.
+     */
+    public static Direction edgeAimedAt(Vec3 hit, BlockPos pos, Direction facing) {
+        double dx = hit.x - (pos.getX() + 0.5);
+        double dy = hit.y - (pos.getY() + 0.5);
+        double dz = hit.z - (pos.getZ() + 0.5);
+        if (facing.getAxis().isVertical()) {
+            if (Math.abs(dx) > Math.abs(dz)) return dx > 0 ? Direction.EAST : Direction.WEST;
+            return dz > 0 ? Direction.SOUTH : Direction.NORTH;
+        }
+        Direction side = facing.getClockWise();
+        double along = dx * side.getStepX() + dz * side.getStepZ();
+        if (Math.abs(dy) > Math.abs(along)) return dy > 0 ? Direction.UP : Direction.DOWN;
+        return along > 0 ? side : side.getOpposite();
     }
 
     @Override
     protected BlockState rotate(BlockState state, Rotation rotation) {
         Direction facing = state.getValue(FACING);
+        // A wall plate goes round with its wall and keeps its turn on it, which turns its front along.
         if (facing.getAxis().isHorizontal()) return state.setValue(FACING, rotation.rotate(facing));
         // On the floor and the ceiling the plate keeps its face and turns on it instead.
         return state.setValue(SPIN, spinFor(facing, rotation.rotate(front(facing, state.getValue(SPIN)))));
@@ -223,7 +294,12 @@ public final class WirelessRedstoneBlock extends BaseEntityBlock {
     @Override
     protected BlockState mirror(BlockState state, Mirror mirror) {
         Direction facing = state.getValue(FACING);
-        if (facing.getAxis().isHorizontal()) return state.rotate(mirror.getRotation(facing));
+        if (facing.getAxis().isHorizontal()) {
+            // Mirrored, a plate turned to one side is turned to the other.
+            BlockState turned = state.rotate(mirror.getRotation(facing));
+            int spin = turned.getValue(SPIN);
+            return turned.setValue(SPIN, spin == 1 ? 3 : spin == 3 ? 1 : spin);
+        }
         return state.rotate(mirror.getRotation(front(facing, state.getValue(SPIN))));
     }
 
@@ -289,10 +365,15 @@ public final class WirelessRedstoneBlock extends BaseEntityBlock {
         return getSignal(state, level, pos, direction);
     }
 
-    /** A receiver taken down while it was giving out a signal leaves blocks that still believe in it. */
+    /**
+     * A receiver taken down while it was giving out a signal leaves blocks that still believe in
+     * it. A transmitter taken down comes out of the ether: this is the block going, not its chunk,
+     * which is the one time its signal is really gone.
+     */
     @Override
     protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel level, BlockPos pos, boolean movedByPiston) {
         if (kind == Kind.RECEIVER && !movedByPiston && state.getValue(LIT)) updateNeighbours(level, state, pos);
+        if (kind == Kind.TRANSMITTER) WirelessRedstone.forget(level.getServer(), GlobalPos.of(level.dimension(), pos.immutable()));
     }
 
     /**

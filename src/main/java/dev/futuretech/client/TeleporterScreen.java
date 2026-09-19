@@ -133,7 +133,7 @@ public final class TeleporterScreen extends AbstractContainerScreen<TeleporterMe
         String cost = String.format("%,d FE", menu.cost());
         int costWidth = font.width(cost);
         String name = font.plainSubstrByWidth(target.name(), ROW_WIDTH - costWidth - 12);
-        int colour = menu.reaches() ? TITLE : UNREACHABLE;
+        int colour = menu.reaches() && !menu.cardMissing() ? TITLE : UNREACHABLE;
         graphics.text(font, name, ROW_X + 4, textY, colour, false);
         graphics.text(font, cost, ROW_X + ROW_WIDTH - 4 - costWidth, textY, colour, false);
     }
@@ -162,6 +162,7 @@ public final class TeleporterScreen extends AbstractContainerScreen<TeleporterMe
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         if (tabs.mouseClicked(event)) return true;
         if (menu.card() != null && isOverRow((int) event.x(), (int) event.y())) {
+            if (menu.cardMissing()) return true;
             var gameMode = Minecraft.getInstance().gameMode;
             if (gameMode != null) {
                 gameMode.handleInventoryButtonClick(menu.containerId, TeleporterMenu.SELECT_BASE + TeleporterBlockEntity.CARD_SLOT);

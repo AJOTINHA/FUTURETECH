@@ -13,6 +13,8 @@ import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.Nullable;
@@ -43,6 +45,8 @@ public final class StorageCardsMenu extends MachineMenu {
     private final int mk;
     /** Card slots this level opened; what the window scrolls through. */
     private final int cards;
+    /** Two 16-bit halves of the mask of cards pointing where no pad stands; see {@link StorageCardsBlockEntity#missingBits}. */
+    private final ContainerData missing;
     /** The card showing in the window's top row. Both sides keep it, and clamp it the same way. */
     private int scrollRow;
     private final int inventoryStart;
@@ -55,17 +59,29 @@ public final class StorageCardsMenu extends MachineMenu {
 
     /** Client side: the upgrade slots lock by the same MK, so the tab draws them right before any sync. */
     private StorageCardsMenu(int id, Inventory inventory, int mk) {
-        this(id, inventory, new SimpleContainer(StorageCardsBlockEntity.SLOTS), new UpgradeInventory(() -> mk, () -> {}), mk);
+        this(id, inventory, new SimpleContainer(StorageCardsBlockEntity.SLOTS), new UpgradeInventory(() -> mk, () -> {}),
+                new SimpleContainerData(2), mk);
     }
 
     public StorageCardsMenu(int id, Inventory inventory, StorageCardsBlockEntity storage, UpgradeInventory upgrades) {
-        this(id, inventory, storage, upgrades, MachineLevel.of(storage.getBlockState()));
+        this(id, inventory, storage, upgrades, new ContainerData() {
+            @Override
+            public int get(int index) { return storage.missingBits(index); }
+
+            @Override
+            public void set(int index, int value) {}
+
+            @Override
+            public int getCount() { return 2; }
+        }, MachineLevel.of(storage.getBlockState()));
     }
 
-    private StorageCardsMenu(int id, Inventory inventory, Container contents, UpgradeInventory upgrades, int mk) {
+    private StorageCardsMenu(int id, Inventory inventory, Container contents, UpgradeInventory upgrades, ContainerData missing, int mk) {
         super(ModMenus.STORAGE_CARDS.get(), id);
         checkContainerSize(contents, StorageCardsBlockEntity.SLOTS);
+        checkContainerDataCount(missing, 2);
         this.contents = contents;
+        this.missing = missing;
         this.mk = Math.clamp(mk, 1, MachineLevel.MAX);
         this.cards = StorageCardsBlockEntity.cards(this.mk);
         // One Slot per visible row, never per card: the row is the fixed thing and the card behind
@@ -76,6 +92,7 @@ public final class StorageCardsMenu extends MachineMenu {
         for (int row = 0; row < VISIBLE; row++) addSlot(new CardSlot(contents, row));
         addStandardInventorySlots(inventory, INVENTORY_X, INVENTORY_Y);
         UpgradeSlots.addSlots(upgrades, IMAGE_WIDTH, this::addSlot);
+        addDataSlots(missing);
         if (contents instanceof StorageCardsBlockEntity) markSynced();
     }
 
@@ -114,6 +131,12 @@ public final class StorageCardsMenu extends MachineMenu {
      */
     public @Nullable TeleportTarget rowCard(int row) {
         return TeleportCardItem.target(slots.get(row).getItem());
+    }
+
+    /** Whether the card showing in {@code row} points where no pad stands any more. */
+    public boolean rowMissing(int row) {
+        int card = cardAt(row);
+        return (missing.get(card / 16) >> (card % 16) & 1) != 0;
     }
 
     /** The server's side of a card's edit: only from a player who has this menu open, which is who sends it. */

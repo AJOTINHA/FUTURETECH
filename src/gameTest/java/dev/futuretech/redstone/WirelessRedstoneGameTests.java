@@ -180,7 +180,7 @@ public class WirelessRedstoneGameTests {
         level.setBlock(sending, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
         assertTrue(transmitter.isRemoved(), "the block entity went with the block");
         assertEquals(0, receiver.power(), "nobody is sending any more");
-        assertEquals(0, WirelessRedstone.strength(44));
+        assertEquals(0, WirelessRedstone.strength(level.getServer(), 44));
         assertEquals(1, WirelessRedstone.count(44), "only the receiver is left on the frequency");
         assertEquals(0, level.getSignal(listening, FRONT.getOpposite()));
         clear();

@@ -86,7 +86,9 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
     public static final int DATA_CHARGING = 3;
     /** What the chosen trip costs, wherever its card is; zero with nothing chosen. */
     public static final int DATA_COST = 4;
-    public static final int DATA_REDSTONE_BASE = 5;
+    /** 1 while the pad's own card points where no pad stands any more. */
+    public static final int DATA_CARD_MISSING = 5;
+    public static final int DATA_REDSTONE_BASE = 6;
     public static final int DATA_MK = DATA_REDSTONE_BASE + RedstoneControl.DATA_COUNT;
     public static final int DATA_COUNT = DATA_MK + 1;
 
@@ -131,6 +133,10 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
                 case DATA_COST -> {
                     TeleportTarget target = target();
                     yield target == null ? 0 : upgrades.cost(cost(globalPos(), target, MachineLevel.of(getBlockState())));
+                }
+                case DATA_CARD_MISSING -> {
+                    TeleportTarget card = TeleportCardItem.target(cards.get(CARD_SLOT));
+                    yield card != null && !padStands(level, card) ? 1 : 0;
                 }
                 case DATA_MK -> MachineLevel.of(getBlockState());
                 default -> {
@@ -254,6 +260,11 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
     public void select(@Nullable BlockPos source, int slot) {
         boolean exists = source == null ? slot == CARD_SLOT : slot >= 0 && slot < StorageCardsBlockEntity.SLOTS;
         boolean same = slot == selected && Objects.equals(source, selectedSource);
+        // A card pointing where no pad stands any more cannot be chosen; the screens show it in red.
+        if (exists && !same) {
+            TeleportTarget target = targetOf(source, slot);
+            if (target != null && !padStands(level, target)) return;
+        }
         if (!exists || same) {
             source = null;
             slot = -1;
@@ -270,11 +281,27 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
      * there. A network card is read off its storage on the spot, so it is gone the moment the
      * card or the storage is.
      */
-    public @Nullable TeleportTarget target() {
-        if (selected < 0) return null;
-        if (selectedSource == null) return TeleportCardItem.target(cards.get(selected));
-        return level != null && level.getBlockEntity(selectedSource) instanceof StorageCardsBlockEntity storage
-                ? storage.target(selected) : null;
+    public @Nullable TeleportTarget target() { return selected < 0 ? null : targetOf(selectedSource, selected); }
+
+    /** The target of the card in {@code slot} of the pad ({@code source} null) or of the storage at {@code source}. */
+    private @Nullable TeleportTarget targetOf(@Nullable BlockPos source, int slot) {
+        if (source == null) return slot == CARD_SLOT ? TeleportCardItem.target(cards.get(slot)) : null;
+        return level != null && level.getBlockEntity(source) instanceof StorageCardsBlockEntity storage
+                ? storage.target(slot) : null;
+    }
+
+    /**
+     * Whether a pad still stands where {@code target} points. Only the server can look, and only
+     * in a loaded chunk: anywhere it cannot look, the pad is taken to be there, and the trip itself
+     * is what finds out otherwise.
+     */
+    public static boolean padStands(@Nullable Level level, TeleportTarget target) {
+        if (!(level instanceof ServerLevel from)) return true;
+        ServerLevel destination = from.getServer().getLevel(target.dimension());
+        if (destination == null) return false;
+        BlockPos pos = target.pos().pos();
+        if (!destination.hasChunkAt(pos)) return true;
+        return destination.getBlockEntity(pos) instanceof TeleporterBlockEntity;
     }
 
     /** Whether the pad would send someone who stepped on: a destination chosen and redstone not holding it. */
