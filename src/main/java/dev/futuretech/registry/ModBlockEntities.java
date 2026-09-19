@@ -150,6 +150,9 @@ public final class ModBlockEntities {
         }
         event.registerItem(Capabilities.Energy.ITEM, (stack, access) -> new ItemAccessEnergyHandler(access,
                 ModDataComponents.ENERGY.get(), ModItems.BATTERY_MK1.get().tier(stack).capacity()), ModItems.BATTERY_MK1.get());
+        // The portable teleporter charges the same way, so the charger fills it.
+        event.registerItem(Capabilities.Energy.ITEM, (stack, access) -> ModItems.PORTABLE_TELEPORTER.get().handler(access),
+                ModItems.PORTABLE_TELEPORTER.get());
         event.registerBlockEntity(Capabilities.Energy.BLOCK, METAL_PRESS.get(), (press, side) ->
                 SidedEnergy.view(press.energy(), press.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Item.BLOCK, METAL_PRESS.get(), (press, side) ->

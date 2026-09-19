@@ -433,7 +433,7 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
     }
 
     /** Moves the player onto the pad at {@code target}, if that pad is still there, and tells it who arrived. */
-    private static boolean travel(ServerLevel from, ServerPlayer player, TeleportTarget target) {
+    public static boolean travel(ServerLevel from, ServerPlayer player, TeleportTarget target) {
         ServerLevel destination = from.getServer().getLevel(target.dimension());
         if (destination == null) return false;
         BlockPos pad = target.pos().pos();

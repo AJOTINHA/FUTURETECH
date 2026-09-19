@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "PEP",
+    "DCD",
+    "SBS"
+  ],
+  "key": {
+    "P": "futuretech:steel_plate",
+    "E": "minecraft:ender_pearl",
+    "D": "minecraft:diamond",
+    "C": "futuretech:chip",
+    "S": "futuretech:steel_ingot",
+    "B": "futuretech:portable_battery"
+  },
+  "result": {
+    "id": "futuretech:portable_teleporter",
+    "count": 1
+  }
+}

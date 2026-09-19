@@ -8,6 +8,7 @@ import dev.futuretech.item.ItemFilterMatch;
 import dev.futuretech.item.ItemFilterMode;
 import dev.futuretech.item.StoredTankFluid;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.util.ExtraCodecs;
@@ -16,6 +17,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
+
+import java.util.List;
 
 public final class ModDataComponents {
     public static final DeferredRegister<DataComponentType<?>> TYPES = DeferredRegister.create(
@@ -82,6 +85,20 @@ public final class ModDataComponents {
             TYPES.register("teleport_target", () -> DataComponentType.<TeleportTarget>builder()
                     .persistent(TeleportTarget.CODEC)
                     .networkSynchronized(TeleportTarget.STREAM_CODEC)
+                    .build());
+
+    /** The network panel a portable teleporter reads its destinations through. Absent means unlinked. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<GlobalPos>> TELEPORT_LINK =
+            TYPES.register("teleport_link", () -> DataComponentType.<GlobalPos>builder()
+                    .persistent(GlobalPos.CODEC)
+                    .networkSynchronized(GlobalPos.STREAM_CODEC)
+                    .build());
+
+    /** The pads a portable teleporter saved by itself, in the order they were saved. Absent means none. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<List<TeleportTarget>>> TELEPORT_TARGETS =
+            TYPES.register("teleport_targets", () -> DataComponentType.<List<TeleportTarget>>builder()
+                    .persistent(TeleportTarget.CODEC.listOf())
+                    .networkSynchronized(TeleportTarget.STREAM_CODEC.apply(ByteBufCodecs.list()))
                     .build());
 
     private ModDataComponents() {}

@@ -2,6 +2,8 @@ package dev.futuretech.menu;
 
 import dev.futuretech.block.entity.NetworkPanelBlockEntity;
 import dev.futuretech.registry.ModMenus;
+import dev.futuretech.item.PortableTeleporterItem;
+import dev.futuretech.teleport.LinkSlots;
 import dev.futuretech.teleport.NetworkPanelPayloads;
 import dev.futuretech.teleport.PanelView;
 import net.minecraft.core.BlockPos;
@@ -11,14 +13,16 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.Container;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.inventory.Slot;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jspecify.annotations.Nullable;
 
 /**
- * The panel's menu holds no slots but the player's own: what it shows lives in other blocks, and
- * arrives as a {@link PanelView} over its own packet. The server rebuilds that view now and then
- * while the screen is open and sends it when it changed, so a card moved in a storage a hundred
- * blocks away shows up here without the player closing anything.
+ * The panel's menu holds the player's slots and the two link slots of the link tab: what it shows
+ * lives in other blocks, and arrives as a {@link PanelView} over its own packet. The server
+ * rebuilds that view now and then while the screen is open and sends it when it changed, so a
+ * card moved in a storage a hundred blocks away shows up here without the player closing anything.
  */
 public final class NetworkPanelMenu extends MachineMenu {
     /** Wider than the machines by a slot: the rename button past each row is one, and the margin stays the rows' own. */
@@ -36,6 +40,8 @@ public final class NetworkPanelMenu extends MachineMenu {
 
     private final @Nullable NetworkPanelBlockEntity panel;
     private final BlockPos pos;
+    private final int inventoryStart;
+    private final int inventoryEnd;
     private PanelView view;
     private int untilRefresh = REFRESH_TICKS;
 
@@ -45,20 +51,23 @@ public final class NetworkPanelMenu extends MachineMenu {
      * what the server really found, not what has not arrived yet.
      */
     public NetworkPanelMenu(int id, Inventory inventory, RegistryFriendlyByteBuf buffer) {
-        this(id, inventory, null, buffer.readBlockPos(), PanelView.STREAM_CODEC.decode(buffer));
+        this(id, inventory, null, new SimpleContainer(LinkSlots.SLOTS), buffer.readBlockPos(), PanelView.STREAM_CODEC.decode(buffer));
     }
 
     public NetworkPanelMenu(int id, Inventory inventory, NetworkPanelBlockEntity panel) {
-        this(id, inventory, panel, panel.getBlockPos(), panel.view());
+        this(id, inventory, panel, panel.link(), panel.getBlockPos(), panel.view());
     }
 
-    private NetworkPanelMenu(int id, Inventory inventory, @Nullable NetworkPanelBlockEntity panel, BlockPos pos,
-                             PanelView view) {
+    private NetworkPanelMenu(int id, Inventory inventory, @Nullable NetworkPanelBlockEntity panel, Container link,
+                             BlockPos pos, PanelView view) {
         super(ModMenus.NETWORK_PANEL.get(), id);
         this.panel = panel;
         this.pos = pos;
         this.view = view;
+        this.inventoryStart = 0;
+        this.inventoryEnd = 36;
         addStandardInventorySlots(inventory, INVENTORY_X, INVENTORY_Y);
+        LinkSlots.addSlots(link, IMAGE_WIDTH, this::addSlot);
         if (panel != null) markSynced();
     }
 
@@ -130,7 +139,22 @@ public final class NetworkPanelMenu extends MachineMenu {
         return panel == null || Container.stillValidBlockEntity(panel, player);
     }
 
-    /** No slots but the player's own, so nothing here has anywhere else to go. */
+    /** A portable teleporter shift-clicked from the inventory goes into the link's in slot; the link slots empty into the inventory. */
     @Override
-    public ItemStack quickMoveStack(Player player, int index) { return ItemStack.EMPTY; }
+    public ItemStack quickMoveStack(Player player, int index) {
+        if (index < 0 || index >= slots.size()) return ItemStack.EMPTY;
+        Slot slot = slots.get(index);
+        if (!slot.hasItem()) return ItemStack.EMPTY;
+        ItemStack stack = slot.getItem();
+        ItemStack original = stack.copy();
+        if (index >= inventoryEnd) {
+            if (!moveItemStackTo(stack, inventoryStart, inventoryEnd, true)) return ItemStack.EMPTY;
+        } else if (!(stack.getItem() instanceof PortableTeleporterItem)
+                || !moveItemStackTo(stack, inventoryEnd + LinkSlots.IN, inventoryEnd + LinkSlots.IN + 1, false)) {
+            return ItemStack.EMPTY;
+        }
+        if (stack.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
+        else slot.setChanged();
+        return original;
+    }
 }

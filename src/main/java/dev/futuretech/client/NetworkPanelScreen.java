@@ -2,6 +2,8 @@ package dev.futuretech.client;
 
 import static dev.futuretech.client.MachineScreenStyle.*;
 
+import dev.futuretech.api.gui.TabStrip;
+import dev.futuretech.api.gui.TabbedScreen;
 import dev.futuretech.menu.NetworkPanelMenu;
 import dev.futuretech.teleport.PanelView;
 import net.minecraft.client.Minecraft;
@@ -25,7 +27,7 @@ import java.util.List;
  * <p>Nothing here is a slot, so the list scrolls freely: what the rows stand for lives in a block
  * far away and arrives as a view, not as container contents.
  */
-public final class NetworkPanelScreen extends AbstractContainerScreen<NetworkPanelMenu> {
+public final class NetworkPanelScreen extends AbstractContainerScreen<NetworkPanelMenu> implements TabbedScreen {
     private static final int LABEL_X = 7;
     private static final int ROW_X = NetworkPanelMenu.ROW_X;
     private static final int ROW_WIDTH = 152;
@@ -45,6 +47,10 @@ public final class NetworkPanelScreen extends AbstractContainerScreen<NetworkPan
 
     private int scrollRow;
     private boolean draggingKnob;
+    private final TabStrip tabs;
+
+    @Override
+    public TabStrip tabs() { return tabs; }
 
     public NetworkPanelScreen(NetworkPanelMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, NetworkPanelMenu.IMAGE_WIDTH, NetworkPanelMenu.INVENTORY_Y + 82);
@@ -52,6 +58,7 @@ public final class NetworkPanelScreen extends AbstractContainerScreen<NetworkPan
         titleLabelY = 6;
         inventoryLabelX = NetworkPanelMenu.INVENTORY_X - 1;
         inventoryLabelY = NetworkPanelMenu.INVENTORY_Y - 12;
+        tabs = new TabStrip(new LinkTab(menu, font));
     }
 
     private PanelView.@org.jspecify.annotations.Nullable Pad pad() { return menu.view().padOrNull(); }
@@ -120,6 +127,7 @@ public final class NetworkPanelScreen extends AbstractContainerScreen<NetworkPan
             drawPencil(graphics, x + PENCIL_X, top, index == hoveredPencil);
         }
         if (maxScroll() > 0) drawScrollbar(graphics, x, y);
+        tabs.render(graphics, x, y, imageWidth, mouseX, mouseY);
     }
 
     private void drawScrollbar(GuiGraphicsExtractor graphics, int x, int y) {
@@ -167,7 +175,14 @@ public final class NetworkPanelScreen extends AbstractContainerScreen<NetworkPan
     }
 
     @Override
+    protected void extractTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
+        super.extractTooltip(graphics, mouseX, mouseY);
+        tabs.extractTooltip(graphics, mouseX, mouseY);
+    }
+
+    @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (tabs.mouseClicked(event)) return true;
         if (maxScroll() > 0 && isOverScrollbar(event.x(), event.y())) {
             draggingKnob = true;
             dragTo(event.y());

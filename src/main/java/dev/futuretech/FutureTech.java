@@ -32,6 +32,7 @@ public final class FutureTech {
         modEventBus.addListener(PerfProfiling::registerPayloads);
         modEventBus.addListener(dev.futuretech.teleport.TeleporterRenamePayload::register);
         modEventBus.addListener(dev.futuretech.teleport.NetworkPanelPayloads::register);
+        modEventBus.addListener(dev.futuretech.teleport.PortableTeleporterPayloads::register);
         modEventBus.addListener(dev.futuretech.teleport.StorageCardsEditPayload::register);
         modEventBus.addListener(dev.futuretech.transfer.TesseractPayloads::register);
         modEventBus.addListener(dev.futuretech.redstone.WirelessRedstonePayloads::register);

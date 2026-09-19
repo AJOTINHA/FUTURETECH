@@ -13,6 +13,7 @@ import dev.futuretech.item.WrenchItem;
 import dev.futuretech.item.AreaToolItem;
 import dev.futuretech.item.MachineUpgradeKitItem;
 import dev.futuretech.item.PortableBatteryItem;
+import dev.futuretech.item.PortableTeleporterItem;
 import dev.futuretech.item.TeleportCardItem;
 import dev.futuretech.item.TieredMachineBlockItem;
 import net.minecraft.resources.Identifier;
@@ -133,6 +134,9 @@ public final class ModItems {
     public static final DeferredItem<BlockItem> RAIN_SENSOR = ITEMS.registerSimpleBlockItem(ModBlocks.RAIN_SENSOR);
     /** Remembers one teleporter; in another teleporter's slots it is a destination. */
     public static final DeferredItem<TeleportCardItem> TELEPORT_CARD = ITEMS.registerItem("teleport_card", TeleportCardItem::new);
+    /** A teleporter to carry: linked through a network panel, it sends the player anywhere that panel's pad can. */
+    public static final DeferredItem<PortableTeleporterItem> PORTABLE_TELEPORTER = ITEMS.registerItem(
+            "portable_teleporter", PortableTeleporterItem::new, properties -> properties.stacksTo(1));
     public static final DeferredItem<Item> GOLD_POWDER = ITEMS.registerSimpleItem("gold_powder");
     public static final DeferredItem<Item> COPPER_POWDER = ITEMS.registerSimpleItem("copper_powder");
     public static final DeferredItem<Item> STEEL_INGOT = ITEMS.registerSimpleItem("steel_ingot");

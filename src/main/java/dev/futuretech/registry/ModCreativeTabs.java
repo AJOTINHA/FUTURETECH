@@ -42,6 +42,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.WEATHER_CONTROLLER.get());
                         output.accept(ModItems.RAIN_SENSOR.get());
                         output.accept(ModItems.TELEPORT_CARD.get());
+                        output.accept(ModItems.PORTABLE_TELEPORTER.get());
                         output.accept(ModItems.BATTERY_MK1.get());
                         output.accept(ModItems.PORTABLE_BATTERY.get());
                         output.accept(ModItems.PORTABLE_BATTERY_MK2.get());
