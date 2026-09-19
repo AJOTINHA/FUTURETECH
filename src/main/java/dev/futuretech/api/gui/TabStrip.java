@@ -30,6 +30,7 @@ public final class TabStrip {
     public void render(GuiGraphicsExtractor graphics, int leftPos, int topPos, int imageWidth, int mouseX, int mouseY) {
         int leftY = topPos + TOP_OFFSET;
         int rightY = topPos + TOP_OFFSET;
+        for (MachineTab tab : tabs) tab.drawPanelOverlay(graphics, leftPos, topPos);
         for (MachineTab tab : tabs) {
             boolean left = tab.side() == MachineTab.Side.LEFT;
             tab.render(graphics, left ? leftPos + 2 : leftPos + imageWidth - 2, left ? leftY : rightY, mouseX, mouseY);

@@ -7,6 +7,7 @@ import dev.futuretech.api.gui.TabStrip;
 import dev.futuretech.api.gui.TabbedScreen;
 import dev.futuretech.api.redstone.client.RedstoneControlTab;
 import dev.futuretech.api.side.client.SideConfigTab;
+import dev.futuretech.api.side.client.SortToggle;
 import dev.futuretech.api.upgrade.client.UpgradeTab;
 import dev.futuretech.menu.PaintMachineMenu;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -82,6 +83,7 @@ public final class PaintMachineScreen extends AbstractContainerScreen<PaintMachi
             drawProgressArrow(graphics, x, y + menu.rowY(lane), meltWidth);
         }
         drawNozzle(graphics, x + NOZZLE_X, y + menu.rowY(menu.lanes() - 1) + NOZZLE_BELOW_ROW, menu.isWorking());
+        SortToggle.draw(graphics, menu, x + SortToggle.X, y + sortY(), mouseX, mouseY);
         tabs.render(graphics, x, y, imageWidth, mouseX, mouseY);
     }
 
@@ -171,13 +173,18 @@ public final class PaintMachineScreen extends AbstractContainerScreen<PaintMachi
         energyTooltip(graphics, mouseX, mouseY, leftPos + ENERGY_X, topPos + energyTop(),
                 ENERGY_WIDTH, ENERGY_HEIGHT,
                 menu.energyStored(), menu.energyCapacity());
+        SortToggle.tooltip(graphics, menu, leftPos + SortToggle.X, topPos + sortY(), mouseX, mouseY);
         tabs.extractTooltip(graphics, mouseX, mouseY);
     }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        return tabs.mouseClicked(event) || super.mouseClicked(event, doubleClick);
+        return tabs.mouseClicked(event) || SortToggle.click(menu, leftPos + SortToggle.X, topPos + sortY(), event)
+                || super.mouseClicked(event, doubleClick);
     }
+
+    /** The sorting button's top, relative to the panel: centred on the block of lane rows. */
+    private int sortY() { return SortToggle.y(menu.rowY(0), menu.lanes()); }
 
     @Override
     protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {

@@ -80,21 +80,23 @@ public record PanelView(Optional<Pad> pad, int cables) {
         int mk = MachineLevel.of(pad.getBlockState());
         GlobalPos from = pad.globalPos();
         List<Card> cards = new ArrayList<>();
-        add(cards, pos, TeleporterBlockEntity.CARD_SLOT, TeleportCardItem.target(pad.getItem(TeleporterBlockEntity.CARD_SLOT)), from, mk);
+        add(cards, pos, TeleporterBlockEntity.CARD_SLOT, TeleportCardItem.target(pad.getItem(TeleporterBlockEntity.CARD_SLOT)), pad, from, mk);
         for (StorageCardsBlockEntity storage : storages) {
             for (int slot = 0; slot < storage.unlockedCards() && cards.size() < MAX_CARDS; slot++) {
-                add(cards, storage.getBlockPos(), slot, storage.target(slot), from, mk);
+                add(cards, storage.getBlockPos(), slot, storage.target(slot), pad, from, mk);
             }
         }
         BlockPos chosenSource = pad.selectedSource() == null ? pos : pad.selectedSource();
         return new Pad(pos, pad.displayName(), mk, chosenSource, pad.selectedSlot(), cards);
     }
 
-    private static void add(List<Card> cards, BlockPos source, int slot, @Nullable TeleportTarget target, GlobalPos from, int mk) {
+    private static void add(List<Card> cards, BlockPos source, int slot, @Nullable TeleportTarget target,
+                            TeleporterBlockEntity pad, GlobalPos from, int mk) {
         if (target == null) return;
         // The cost and the reach are the pad's, wherever the card is kept: the trip starts where
         // the player will be standing, which is the pad, however far the panel or the storage is.
+        // So are the upgrades that price it: the pad charges the fare its own slots discount.
         cards.add(new Card(source, slot, target.name(), target.colour(),
-                TeleporterBlockEntity.cost(from, target, mk), TeleporterBlockEntity.reaches(from, target, mk)));
+                pad.upgrades().cost(TeleporterBlockEntity.cost(from, target, mk)), TeleporterBlockEntity.reaches(from, target, mk)));
     }
 }

@@ -286,6 +286,7 @@ public final class MetalPressBlockEntity extends BaseContainerBlockEntity
         metal_press.beginTick();
         if (metal_press.auto.isPulling()) metal_press.transfer.pullFromNeighbours(level, pos, metal_press, metal_press.sides);
         if (metal_press.auto.isPushing()) metal_press.transfer.pushToNeighbours(level, pos, metal_press, metal_press.sides);
+        if (metal_press.auto.isSorting() && (AutoTransfer.balance(metal_press.items, SLOT_INPUT, metal_press.lanes()))) metal_press.setChanged();
         int wasWorking = metal_press.workingLanes;
         metal_press.workingLanes = 0;
         boolean working = metal_press.redstone.allowsRunning() && level instanceof ServerLevel server

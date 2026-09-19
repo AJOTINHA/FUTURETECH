@@ -242,6 +242,7 @@ public final class ElectricFurnaceBlockEntity extends BaseContainerBlockEntity
         furnace.beginTick();
         if (furnace.auto.isPulling()) furnace.transfer.pullFromNeighbours(level, pos, furnace, furnace.sides);
         if (furnace.auto.isPushing()) furnace.transfer.pushToNeighbours(level, pos, furnace, furnace.sides);
+        if (furnace.auto.isSorting() && (AutoTransfer.balance(furnace.items, SLOT_INPUT, furnace.lanes()))) furnace.setChanged();
         int wasWorking = furnace.workingLanes;
         boolean working = furnace.redstone.allowsRunning() && level instanceof ServerLevel server
                 && furnace.smelt(input -> furnace.quickCheck.getRecipeFor(input, server).orElse(null));

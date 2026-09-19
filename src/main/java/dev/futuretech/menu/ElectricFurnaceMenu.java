@@ -10,6 +10,7 @@ import dev.futuretech.api.side.SideConfigMenu;
 import dev.futuretech.api.side.SideConfigurable;
 import dev.futuretech.api.side.SideConfigurableBlock;
 import dev.futuretech.api.side.SideMode;
+import dev.futuretech.api.side.SlotRole;
 import dev.futuretech.api.upgrade.UpgradeInventory;
 import dev.futuretech.api.upgrade.MachineLevel;
 import dev.futuretech.api.upgrade.UpgradeSlots;
@@ -166,6 +167,15 @@ public final class ElectricFurnaceMenu extends MachineMenu implements SideConfig
 
     @Override
     public boolean isAutoPushing() { return data.get(DATA_AUTO_BASE + 1) != 0; }
+
+    @Override
+    public SlotRole slotRole(int index) { return index < lanes ? SlotRole.INPUT : index < 2 * lanes ? SlotRole.OUTPUT : SlotRole.NONE; }
+
+    @Override
+    public boolean supportsSorting() { return lanes > 1; }
+
+    @Override
+    public boolean isSorting() { return data.get(DATA_AUTO_BASE + 2) != 0; }
 
     @Override
     public RedstoneMode redstoneMode() { return RedstoneMode.byOrdinal(data.get(DATA_REDSTONE_BASE)); }

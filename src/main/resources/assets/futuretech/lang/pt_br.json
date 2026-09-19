@@ -127,6 +127,7 @@
   "gui.futuretech.auto.pull.desc": "Tira itens do que estiver encostado numa face de Entrada",
   "gui.futuretech.auto.push": "Empurrar itens",
   "gui.futuretech.auto.push.desc": "Entrega o resultado ao que estiver encostado numa face de Saída",
+  "gui.futuretech.auto.sort": "Distribuir entradas",
   "gui.futuretech.auto.on": "Ligado",
   "gui.futuretech.auto.off": "Desligado",
   "gui.futuretech.info": "Informações",

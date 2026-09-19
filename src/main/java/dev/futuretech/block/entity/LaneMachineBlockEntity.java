@@ -243,6 +243,7 @@ public final class LaneMachineBlockEntity extends BaseContainerBlockEntity
         machine.beginTick();
         if (machine.auto.isPulling()) machine.transfer.pullFromNeighbours(level, pos, machine, machine.sides);
         if (machine.auto.isPushing()) machine.transfer.pushToNeighbours(level, pos, machine, machine.sides);
+        if (machine.auto.isSorting() && (AutoTransfer.balance(machine.items, SLOT_INPUT, machine.lanes()))) machine.setChanged();
         int wasWorking = machine.workingLanes;
         boolean working = machine.redstone.allowsRunning() && level instanceof ServerLevel server
                 && machine.work(input -> machine.quickCheck.getRecipeFor(input, server).orElse(null));

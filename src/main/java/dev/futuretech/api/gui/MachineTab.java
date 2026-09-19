@@ -74,6 +74,9 @@ public abstract class MachineTab {
 
     public boolean isFullyOpen() { return open && slide >= 1; }
 
+    /** Drawn over the screen's panel every frame, before the tabs themselves; for marks a tab puts on the panel while open. */
+    public void drawPanelOverlay(GuiGraphicsExtractor graphics, int leftPos, int topPos) {}
+
     /** Current height, including the part still sliding; the strip stacks the next tab under it. */
     public int height() { return height; }
 

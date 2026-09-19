@@ -241,6 +241,8 @@ public final class PaintMachineBlockEntity extends BaseContainerBlockEntity
         painter.beginTick();
         if (painter.auto.isPulling()) painter.transfer.pullFromNeighbours(level, pos, painter, painter.sides);
         if (painter.auto.isPushing()) painter.transfer.pushToNeighbours(level, pos, painter, painter.sides);
+        if (painter.auto.isSorting() && (AutoTransfer.balance(painter.items, SLOT_BLOCK, painter.lanes())
+                | AutoTransfer.balance(painter.items, SLOT_PLATES, painter.lanes()))) painter.setChanged();
         int wasWorking = painter.workingLanes;
         boolean working = painter.redstone.allowsRunning() && painter.paint();
         // Pausing preserves the current jobs.

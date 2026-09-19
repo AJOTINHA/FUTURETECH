@@ -127,6 +127,7 @@
   "gui.futuretech.auto.pull.desc": "Takes items from whatever sits against an Input face",
   "gui.futuretech.auto.push": "Push items",
   "gui.futuretech.auto.push.desc": "Hands results to whatever sits against an Output face",
+  "gui.futuretech.auto.sort": "Sort inputs",
   "gui.futuretech.auto.on": "On",
   "gui.futuretech.auto.off": "Off",
   "gui.futuretech.info": "Information",

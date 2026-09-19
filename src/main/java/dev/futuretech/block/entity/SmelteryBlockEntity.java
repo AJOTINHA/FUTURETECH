@@ -246,6 +246,8 @@ public final class SmelteryBlockEntity extends BaseContainerBlockEntity
         smeltery.beginTick();
         if (smeltery.auto.isPulling()) smeltery.transfer.pullFromNeighbours(level, pos, smeltery, smeltery.sides);
         if (smeltery.auto.isPushing()) smeltery.transfer.pushToNeighbours(level, pos, smeltery, smeltery.sides);
+        if (smeltery.auto.isSorting() && (AutoTransfer.balance(smeltery.items, SLOT_INPUT_A, smeltery.lanes())
+                | AutoTransfer.balance(smeltery.items, SLOT_INPUT_B, smeltery.lanes()))) smeltery.setChanged();
         int wasWorking = smeltery.workingLanes;
         boolean working = smeltery.redstone.allowsRunning() && level instanceof ServerLevel server
                 && smeltery.melt(input -> smeltery.quickCheck.getRecipeFor(input, server).orElse(null));

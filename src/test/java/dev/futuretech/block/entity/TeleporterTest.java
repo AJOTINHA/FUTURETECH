@@ -8,12 +8,15 @@ import dev.futuretech.item.TeleportCardItem;
 import dev.futuretech.registry.ModBlocks;
 import dev.futuretech.registry.ModDataComponents;
 import dev.futuretech.registry.ModItems;
+import dev.futuretech.teleport.PanelView;
 import dev.futuretech.teleport.TeleportTarget;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+
+import java.util.List;
 import net.neoforged.testframework.junit.EphemeralTestServerProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -99,6 +102,22 @@ class TeleporterTest {
         pad.select(storage, 3);
         assertNull(pad.selectedSource(), "the same pick again unpicks it");
         assertEquals(-1, pad.selectedSlot());
+    }
+
+    /** The panel prices a trip the way the pad charges it: the pad's upgrades count wherever the card is kept. */
+    @Test
+    void thePanelShowsTheFareThePadChargesUpgradesIncluded(MinecraftServer server) {
+        var pad = pad(1);
+        var there = target(GlobalPos.of(Level.OVERWORLD, new BlockPos(100, 64, 0)));
+        var written = new ItemStack(ModItems.TELEPORT_CARD.get());
+        written.set(ModDataComponents.TELEPORT_TARGET.get(), there);
+        pad.setItem(CARD_SLOT, written);
+        int fare = cost(pad.globalPos(), there, 1);
+        assertEquals(fare, PanelView.of(BlockPos.ZERO, pad, List.of()).cards().getFirst().cost());
+        pad.upgrades().setItem(0, new ItemStack(ModItems.EFFICIENCY_UPGRADE.get()));
+        int discounted = pad.upgrades().cost(fare);
+        assertTrue(discounted < fare);
+        assertEquals(discounted, PanelView.of(BlockPos.ZERO, pad, List.of()).cards().getFirst().cost());
     }
 
     /** What an upgrade does to the card: nothing, it keeps the card and the choice. */

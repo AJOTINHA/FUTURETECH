@@ -5,6 +5,7 @@ import dev.futuretech.registry.ModMenus;
 import dev.futuretech.registry.ModBlocks;
 import dev.futuretech.api.side.SideConfigMenu;
 import dev.futuretech.api.side.SideMode;
+import dev.futuretech.api.side.SlotRole;
 import dev.futuretech.api.redstone.RedstoneControlMenu;
 import dev.futuretech.api.redstone.RedstoneMode;
 import dev.futuretech.api.upgrade.MachineLevel;
@@ -102,6 +103,9 @@ public final class FluidTankMenu extends AbstractContainerMenu implements SideCo
     public boolean isAutoPulling() { return false; }
     @Override
     public boolean isAutoPushing() { return false; }
+
+    @Override
+    public SlotRole slotRole(int index) { return index == 0 ? SlotRole.INPUT : index == 1 ? SlotRole.OUTPUT : SlotRole.NONE; }
     @Override
     public RedstoneMode redstoneMode() { return RedstoneMode.byOrdinal(data.get(FluidTankBlockEntity.DATA_REDSTONE)); }
     @Override
