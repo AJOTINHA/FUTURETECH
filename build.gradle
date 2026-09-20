@@ -249,14 +249,17 @@ tasks.named('compileJava') {
 
 // Install only after packaging and checks succeed. Keep a stable installed name
 // so version bumps replace this mod instead of leaving duplicate versions behind.
-if (System.getProperty('os.name').startsWith('Windows')) {
+// The destination is opt-in: set prism_mods_dir in ~/.gradle/gradle.properties.
+// Without it, `build` stops at build/libs instead of failing on a missing path.
+def prismModsDir = providers.gradleProperty('prism_mods_dir')
+if (System.getProperty('os.name').startsWith('Windows') && prismModsDir.isPresent()) {
     def installedJarName = "${mod_id}.jar".toString()
     def copyModToPrism = tasks.register('copyModToPrism', Copy) {
         group = 'build'
         description = 'Copies the verified mod JAR to the local FUTURETECH PrismLauncher instance.'
         dependsOn tasks.named('assemble'), tasks.named('check')
         from(tasks.named('jar', Jar).flatMap { it.archiveFile })
-        into(providers.gradleProperty('prism_mods_dir'))
+        into(prismModsDir)
         rename { installedJarName }
     }
 
