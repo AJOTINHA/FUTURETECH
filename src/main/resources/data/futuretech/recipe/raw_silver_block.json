@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "RRR",
+    "RRR",
+    "RRR"
+  ],
+  "key": {
+    "R": "#c:raw_materials/silver"
+  },
+  "result": {
+    "id": "futuretech:raw_silver_block",
+    "count": 1
+  }
+}

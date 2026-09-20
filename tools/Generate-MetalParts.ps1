@@ -75,8 +75,13 @@ $palettes = @{
     gold = @{ dark = @(15,2); mid = @(0,1); light = @(14,3); peak = @(8,1) }
     copper = @{ dark = @(6,15); mid = @(14,13); light = @(10,14); peak = @(0,12) }
     netherite = @{ dark = @(15,15); mid = @(6,10); light = @(14,11); peak = @(8,5) }
+    tin = @{ dark = @(12,15); mid = @(8,6); light = @(8,4); peak = @(4,4) }
+    lead = @{ dark = @(12,15); mid = @(8,6); light = @(8,4); peak = @(4,4) }
+    silver = @{ dark = @(12,15); mid = @(8,6); light = @(8,4); peak = @(4,4) }
 }
-foreach ($metal in @('iron','gold','copper','netherite','steel')) {
+# Metals drawn as iron tinted: the item model multiplies the texture by this ARGB.
+$tints = @{ steel = -6380890; tin = -3547930; lead = -8681832; silver = -856088 }
+foreach ($metal in @('iron','gold','copper','netherite','steel','tin','lead','silver')) {
     foreach ($kind in @('plate','gear')) {
         $id = "${metal}_$kind"
         if ($kind -eq 'plate') {
@@ -90,8 +95,8 @@ foreach ($metal in @('iron','gold','copper','netherite','steel')) {
             $elements = @(New-GearElements $palettes[$metal])
             $rotation = @(15,-20,0)
         }
-        $textureMetal = if ($metal -eq 'steel') { 'iron' } else { $metal }
-        if ($metal -eq 'steel') {
+        $textureMetal = if ($tints.ContainsKey($metal)) { 'iron' } else { $metal }
+        if ($tints.ContainsKey($metal)) {
             foreach ($element in $elements) { foreach ($face in $element.faces.Values) { $face.tintindex = 0 } }
         }
         Write-Json (Join-Path $assets "models/item/metal_parts/$id.json") @{
@@ -109,13 +114,13 @@ foreach ($metal in @('iron','gold','copper','netherite','steel')) {
             }
         }
         $itemModel = @{ type = 'minecraft:model'; model = "futuretech:item/metal_parts/$id" }
-        if ($metal -eq 'steel') { $itemModel.tints = @(@{ type='minecraft:constant'; value=-6312257 }) }
+        if ($tints.ContainsKey($metal)) { $itemModel.tints = @(@{ type='minecraft:constant'; value=$tints[$metal] }) }
         Write-Json (Join-Path $assets "items/$id.json") @{ model = $itemModel }
         Write-Json (Join-Path $root "data/c/tags/item/${kind}s/$metal.json") @{ replace = $false; values = @("futuretech:$id") }
     }
 }
 foreach ($kind in @('plate','gear')) {
     Write-Json (Join-Path $root "data/c/tags/item/${kind}s.json") @{
-        replace = $false; values = @('iron','gold','copper','netherite','steel' | ForEach-Object { "#c:${kind}s/$_" })
+        replace = $false; values = @('iron','gold','copper','netherite','steel','tin','lead','silver' | ForEach-Object { "#c:${kind}s/$_" })
     }
 }

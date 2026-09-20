@@ -110,6 +110,17 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.GOLD_GEAR.get());
                         output.accept(ModItems.COPPER_GEAR.get());
                         output.accept(ModItems.NETHERITE_GEAR.get());
+                        for (var metal : java.util.List.of(
+                                java.util.List.of(ModItems.TIN_ORE, ModItems.DEEPSLATE_TIN_ORE, ModItems.TIN_BLOCK, ModItems.RAW_TIN_BLOCK, ModItems.RAW_TIN,
+                                        ModItems.TIN_INGOT, ModItems.TIN_POWDER, ModItems.TIN_PLATE, ModItems.TIN_GEAR),
+                                java.util.List.of(ModItems.LEAD_ORE, ModItems.DEEPSLATE_LEAD_ORE, ModItems.LEAD_BLOCK, ModItems.RAW_LEAD_BLOCK, ModItems.RAW_LEAD,
+                                        ModItems.LEAD_INGOT, ModItems.LEAD_POWDER, ModItems.LEAD_PLATE, ModItems.LEAD_GEAR),
+                                java.util.List.of(ModItems.SILVER_ORE, ModItems.DEEPSLATE_SILVER_ORE, ModItems.SILVER_BLOCK, ModItems.RAW_SILVER_BLOCK, ModItems.RAW_SILVER,
+                                        ModItems.SILVER_INGOT, ModItems.SILVER_POWDER, ModItems.SILVER_PLATE, ModItems.SILVER_GEAR))) {
+                            for (var item : metal) output.accept(item.get());
+                        }
+                        output.accept(ModItems.ELECTRUM_INGOT.get());
+                        output.accept(ModItems.ELECTRUM_POWDER.get());
                     })
                     .build());
 

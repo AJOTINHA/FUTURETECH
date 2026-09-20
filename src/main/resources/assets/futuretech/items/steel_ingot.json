@@ -3,7 +3,7 @@
     "type": "minecraft:model",
     "model": "futuretech:item/steel_ingot",
     "tints": [
-      {"type": "minecraft:constant", "value": -6312257}
+      {"type": "minecraft:constant", "value": -6380890}
     ]
   }
 }

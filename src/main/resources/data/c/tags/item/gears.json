@@ -4,7 +4,10 @@
     "#c:gears/gold",
     "#c:gears/copper",
     "#c:gears/netherite",
-    "#c:gears/steel"
+    "#c:gears/steel",
+    "#c:gears/tin",
+    "#c:gears/lead",
+    "#c:gears/silver"
   ],
   "replace": false
 }

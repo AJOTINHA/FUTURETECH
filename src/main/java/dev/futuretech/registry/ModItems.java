@@ -137,6 +137,37 @@ public final class ModItems {
     /** A teleporter to carry: linked through a network panel, it sends the player anywhere that panel's pad can. */
     public static final DeferredItem<PortableTeleporterItem> PORTABLE_TELEPORTER = ITEMS.registerItem(
             "portable_teleporter", PortableTeleporterItem::new, properties -> properties.stacksTo(1));
+    // Tin, lead and silver, from the ore to the parts.
+    public static final DeferredItem<BlockItem> TIN_ORE = ITEMS.registerSimpleBlockItem("tin_ore", ModBlocks.TIN_ORE);
+    public static final DeferredItem<BlockItem> DEEPSLATE_TIN_ORE = ITEMS.registerSimpleBlockItem("deepslate_tin_ore", ModBlocks.DEEPSLATE_TIN_ORE);
+    public static final DeferredItem<BlockItem> TIN_BLOCK = ITEMS.registerSimpleBlockItem("tin_block", ModBlocks.TIN_BLOCK);
+    public static final DeferredItem<BlockItem> RAW_TIN_BLOCK = ITEMS.registerSimpleBlockItem("raw_tin_block", ModBlocks.RAW_TIN_BLOCK);
+    public static final DeferredItem<Item> RAW_TIN = ITEMS.registerSimpleItem("raw_tin");
+    public static final DeferredItem<Item> TIN_INGOT = ITEMS.registerSimpleItem("tin_ingot");
+    public static final DeferredItem<Item> TIN_POWDER = ITEMS.registerSimpleItem("tin_powder");
+    public static final DeferredItem<Item> TIN_PLATE = ITEMS.registerSimpleItem("tin_plate");
+    public static final DeferredItem<Item> TIN_GEAR = ITEMS.registerSimpleItem("tin_gear");
+    public static final DeferredItem<BlockItem> LEAD_ORE = ITEMS.registerSimpleBlockItem("lead_ore", ModBlocks.LEAD_ORE);
+    public static final DeferredItem<BlockItem> DEEPSLATE_LEAD_ORE = ITEMS.registerSimpleBlockItem("deepslate_lead_ore", ModBlocks.DEEPSLATE_LEAD_ORE);
+    public static final DeferredItem<BlockItem> LEAD_BLOCK = ITEMS.registerSimpleBlockItem("lead_block", ModBlocks.LEAD_BLOCK);
+    public static final DeferredItem<BlockItem> RAW_LEAD_BLOCK = ITEMS.registerSimpleBlockItem("raw_lead_block", ModBlocks.RAW_LEAD_BLOCK);
+    public static final DeferredItem<Item> RAW_LEAD = ITEMS.registerSimpleItem("raw_lead");
+    public static final DeferredItem<Item> LEAD_INGOT = ITEMS.registerSimpleItem("lead_ingot");
+    public static final DeferredItem<Item> LEAD_POWDER = ITEMS.registerSimpleItem("lead_powder");
+    public static final DeferredItem<Item> LEAD_PLATE = ITEMS.registerSimpleItem("lead_plate");
+    public static final DeferredItem<Item> LEAD_GEAR = ITEMS.registerSimpleItem("lead_gear");
+    public static final DeferredItem<BlockItem> SILVER_ORE = ITEMS.registerSimpleBlockItem("silver_ore", ModBlocks.SILVER_ORE);
+    public static final DeferredItem<BlockItem> DEEPSLATE_SILVER_ORE = ITEMS.registerSimpleBlockItem("deepslate_silver_ore", ModBlocks.DEEPSLATE_SILVER_ORE);
+    public static final DeferredItem<BlockItem> SILVER_BLOCK = ITEMS.registerSimpleBlockItem("silver_block", ModBlocks.SILVER_BLOCK);
+    public static final DeferredItem<BlockItem> RAW_SILVER_BLOCK = ITEMS.registerSimpleBlockItem("raw_silver_block", ModBlocks.RAW_SILVER_BLOCK);
+    public static final DeferredItem<Item> RAW_SILVER = ITEMS.registerSimpleItem("raw_silver");
+    public static final DeferredItem<Item> SILVER_INGOT = ITEMS.registerSimpleItem("silver_ingot");
+    public static final DeferredItem<Item> SILVER_POWDER = ITEMS.registerSimpleItem("silver_powder");
+    public static final DeferredItem<Item> SILVER_PLATE = ITEMS.registerSimpleItem("silver_plate");
+    public static final DeferredItem<Item> SILVER_GEAR = ITEMS.registerSimpleItem("silver_gear");
+    /** Alloyed in the smeltery: a silver and a gold ingot make two. */
+    public static final DeferredItem<Item> ELECTRUM_INGOT = ITEMS.registerSimpleItem("electrum_ingot");
+    public static final DeferredItem<Item> ELECTRUM_POWDER = ITEMS.registerSimpleItem("electrum_powder");
     public static final DeferredItem<Item> GOLD_POWDER = ITEMS.registerSimpleItem("gold_powder");
     public static final DeferredItem<Item> COPPER_POWDER = ITEMS.registerSimpleItem("copper_powder");
     public static final DeferredItem<Item> STEEL_INGOT = ITEMS.registerSimpleItem("steel_ingot");

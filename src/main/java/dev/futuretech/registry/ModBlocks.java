@@ -1,6 +1,9 @@
 package dev.futuretech.registry;
 
 import dev.futuretech.FutureTech;
+import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
+import net.minecraft.util.valueproviders.UniformInt;
+import net.minecraft.world.level.block.DropExperienceBlock;
 import dev.futuretech.block.BatteryBlock;
 import dev.futuretech.block.FluidTankBlock;
 import dev.futuretech.block.BatteryTier;
@@ -51,6 +54,47 @@ public final class ModBlocks {
     private static DeferredBlock<dev.futuretech.block.AssemblerBlock> assembler(String name, dev.futuretech.block.AssemblerBlock.Kind kind) {
         return BLOCKS.registerBlock(name, properties -> new dev.futuretech.block.AssemblerBlock(kind, properties),
                 properties -> properties.mapColor(MapColor.METAL).noOcclusion().strength(3.5F, 6).sound(SoundType.METAL).requiresCorrectToolForDrops());
+    }
+
+    // Tin, lead and silver: the ore in stone and in deepslate, the way vanilla's metals are, and a block of nine ingots.
+    public static final DeferredBlock<Block> TIN_ORE = registerOre("tin_ore", false);
+    public static final DeferredBlock<Block> DEEPSLATE_TIN_ORE = registerOre("deepslate_tin_ore", true);
+    public static final DeferredBlock<Block> TIN_BLOCK = registerMetalBlock("tin_block");
+    public static final DeferredBlock<Block> RAW_TIN_BLOCK = registerRawBlock("raw_tin_block");
+    public static final DeferredBlock<Block> LEAD_ORE = registerOre("lead_ore", false);
+    public static final DeferredBlock<Block> DEEPSLATE_LEAD_ORE = registerOre("deepslate_lead_ore", true);
+    public static final DeferredBlock<Block> LEAD_BLOCK = registerMetalBlock("lead_block");
+    public static final DeferredBlock<Block> RAW_LEAD_BLOCK = registerRawBlock("raw_lead_block");
+    public static final DeferredBlock<Block> SILVER_ORE = registerOre("silver_ore", false);
+    public static final DeferredBlock<Block> DEEPSLATE_SILVER_ORE = registerOre("deepslate_silver_ore", true);
+    public static final DeferredBlock<Block> SILVER_BLOCK = registerMetalBlock("silver_block");
+    public static final DeferredBlock<Block> RAW_SILVER_BLOCK = registerRawBlock("raw_silver_block");
+
+    private static DeferredBlock<Block> registerOre(String name, boolean deepslate) {
+        return BLOCKS.registerBlock(name, properties -> new DropExperienceBlock(UniformInt.of(0, 2), properties), properties -> properties
+                .mapColor(deepslate ? MapColor.DEEPSLATE : MapColor.STONE)
+                .instrument(NoteBlockInstrument.BASEDRUM)
+                .strength(deepslate ? 4.5F : 3.0F, 3.0F)
+                .sound(deepslate ? SoundType.DEEPSLATE : SoundType.STONE)
+                .requiresCorrectToolForDrops());
+    }
+
+    /** Nine raw lumps: stone to the ear and the pick, like vanilla's raw blocks. */
+    private static DeferredBlock<Block> registerRawBlock(String name) {
+        return BLOCKS.registerSimpleBlock(name, properties -> properties
+                .mapColor(MapColor.RAW_IRON)
+                .instrument(NoteBlockInstrument.BASEDRUM)
+                .strength(5.0F, 6.0F)
+                .requiresCorrectToolForDrops());
+    }
+
+    private static DeferredBlock<Block> registerMetalBlock(String name) {
+        return BLOCKS.registerSimpleBlock(name, properties -> properties
+                .mapColor(MapColor.METAL)
+                .instrument(NoteBlockInstrument.IRON_XYLOPHONE)
+                .strength(5.0F, 6.0F)
+                .sound(SoundType.METAL)
+                .requiresCorrectToolForDrops());
     }
 
     public static final DeferredBlock<MachineCasingBlock> MACHINE_CASING = BLOCKS.registerBlock(

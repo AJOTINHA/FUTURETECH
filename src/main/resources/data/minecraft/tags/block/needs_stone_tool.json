@@ -16,7 +16,19 @@
     "futuretech:water_pump",
     "futuretech:teleporter",
     "futuretech:time_controller",
-    "futuretech:weather_controller"
+    "futuretech:weather_controller",
+    "futuretech:tin_ore",
+    "futuretech:deepslate_tin_ore",
+    "futuretech:tin_block",
+    "futuretech:lead_ore",
+    "futuretech:deepslate_lead_ore",
+    "futuretech:lead_block",
+    "futuretech:raw_tin_block",
+    "futuretech:raw_lead_block",
+    "futuretech:silver_ore",
+    "futuretech:deepslate_silver_ore",
+    "futuretech:silver_block",
+    "futuretech:raw_silver_block"
   ],
   "replace": false
 }

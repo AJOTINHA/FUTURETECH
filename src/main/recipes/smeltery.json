@@ -60,6 +60,36 @@
         "id": "minecraft:netherite_ingot"
       },
       "duration": 400
+    },
+    "electrum_ingot": {
+      "first": {
+        "ingredient": "#c:ingots/silver",
+        "count": 1
+      },
+      "second": {
+        "ingredient": "#c:ingots/gold",
+        "count": 1
+      },
+      "result": {
+        "count": 2,
+        "id": "futuretech:electrum_ingot"
+      },
+      "duration": 200
+    },
+    "electrum_ingot_from_powder": {
+      "first": {
+        "ingredient": "#c:dusts/silver",
+        "count": 1
+      },
+      "second": {
+        "ingredient": "#c:dusts/gold",
+        "count": 1
+      },
+      "result": {
+        "count": 2,
+        "id": "futuretech:electrum_ingot"
+      },
+      "duration": 200
     }
   }
 }

@@ -1,0 +1,12 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "futuretech:item/metal_parts/lead_gear",
+    "tints": [
+      {
+        "type": "minecraft:constant",
+        "value": -8681832
+      }
+    ]
+  }
+}

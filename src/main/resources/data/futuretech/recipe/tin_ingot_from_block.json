@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "futuretech:tin_block"
+  ],
+  "result": {
+    "id": "futuretech:tin_ingot",
+    "count": 9
+  }
+}
