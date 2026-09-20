@@ -170,13 +170,18 @@ public final class ItemCableNetwork {
 
         @Override
         protected void onRootCommit(Integer originalState) {
+            long now = now();
             for (ItemFlight flight : departing) {
+                stagger(flight, now);
                 flights.add(flight);
                 announce(flight);
             }
             departing.clear();
         }
     };
+    /** Where the last item to enter through each connector was, so the next one keeps behind it; see {@link #stagger}. */
+    private final Map<EndpointKey, Departure> departures = new HashMap<>();
+    private record Departure(long tick, int travelled) {}
     private final Map<PathKey, List<BlockPos>> paths = new HashMap<>();
     /**
      * Connectors that had no room for a resource earlier this tick. Nothing the network does within
@@ -654,11 +659,34 @@ public final class ItemCableNetwork {
                 flight.from = flight.to;
                 flight.to = endpoint.key().side();
                 flight.waiting = false;
+                // Several may turn back from the same face in one tick, when a chest beyond it opens up.
+                stagger(flight, now());
                 announce(flight);
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * Keeps a flight half a cable behind the one that entered through the same connector before
+     * it. A tesseract, or a chest that was waiting on a full line, hands over several items in one
+     * tick; set off together they would travel as one heap, drawn on top of each other. So each
+     * starts that much further back, at a negative count of ticks: still inside the block it came
+     * from, and drawn only once it crosses the entry face.
+     */
+    /** The tick being played; a network without a level, as the tests build, counts its own ticks from zero. */
+    private long now() { return level == null ? Math.max(lastTick, 0) : level.getGameTime(); }
+
+    private void stagger(ItemFlight flight, long now) {
+        EndpointKey entry = new EndpointKey(flight.path.getFirst(), flight.from);
+        Departure last = departures.get(entry);
+        if (last != null) {
+            long ahead = last.travelled + (now - last.tick);
+            int gap = Math.max(1, flight.ticksPerBlock / 2);
+            flight.travelled = (int) Math.min(flight.travelled, ahead - gap);
+        }
+        departures.put(entry, new Departure(now, flight.travelled));
     }
 
     /** Tells the players watching the flight's cable where it is and where it is going. */

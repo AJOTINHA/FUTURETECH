@@ -24,8 +24,9 @@ import java.util.List;
 public final class TesseractPayloads {
     private static final StreamCodec<RegistryFriendlyByteBuf, String> NAME =
             ByteBufCodecs.stringUtf8(TesseractBlockEntity.CHANNEL_LENGTH).cast();
-    /** Enough channels for any sane world, and a cap the packet cannot be pushed past. */
-    private static final StreamCodec<RegistryFriendlyByteBuf, List<String>> NAMES = NAME.apply(ByteBufCodecs.list(1024));
+    /** The book stops at the same count, so the list always fits the packet. */
+    private static final StreamCodec<RegistryFriendlyByteBuf, List<String>> NAMES =
+            NAME.apply(ByteBufCodecs.list(TesseractChannelBook.MAX_CHANNELS));
 
     private TesseractPayloads() {}
 

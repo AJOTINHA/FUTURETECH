@@ -51,7 +51,10 @@
     "futuretech:wind_generator",
     "futuretech:wind_turbine_part",
     "futuretech:boiler",
-    "futuretech:steam_turbine"
+    "futuretech:steam_turbine",
+    "futuretech:charger",
+    "futuretech:sawmill",
+    "futuretech:smeltery"
   ],
   "replace": false
 }

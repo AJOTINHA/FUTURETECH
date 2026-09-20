@@ -107,12 +107,17 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
     /** Whether the wrench cut the link on {@code side}. */
     public boolean isCut(Direction side) { return (cutSides & (1 << side.ordinal())) != 0; }
 
+    /**
+     * The neighbours are told: a cut side offers no handler, and a machine holding the old one
+     * would keep pushing through a link that is no longer there.
+     */
     public void setCut(Direction side, boolean cut) {
         int bit = 1 << side.ordinal();
         int updated = cut ? cutSides | bit : cutSides & ~bit;
         if (updated == cutSides) return;
         cutSides = updated;
         setChanged();
+        invalidateCapabilities();
     }
 
     /** Whether the wrench forced the link on {@code side} to a block the cable would not link to itself. */
@@ -124,6 +129,7 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
         if (updated == forcedSides) return;
         forcedSides = updated;
         setChanged();
+        invalidateCapabilities();
     }
 
     /** The block covering {@code side}, or null while that face shows the bare cable. */
@@ -220,12 +226,17 @@ public abstract class AbstractCableBlockEntity extends BlockEntity {
     /** Samples the signal at the cable; called on load and from the block's {@code neighborChanged}. */
     public void samplePower(Level level) { powered = level.hasNeighborSignal(worldPosition); }
 
-    /** Applies a connector's new mode and rebuilds the network, which caches what each face allows. */
+    /**
+     * Applies a connector's new mode and rebuilds the network, which caches what each face allows.
+     * The handlers the neighbours see capture the mode too, so their caches are dropped, the way
+     * a machine drops them when a face of its own changes.
+     */
     public void setConnectorMode(Direction side, SideMode mode) {
         if (connectors.mode(side) == mode) return;
         connectors.set(side, mode);
         setChanged();
         invalidateNetwork();
+        invalidateCapabilities();
         SideConfigVisuals.refresh(this);
     }
 

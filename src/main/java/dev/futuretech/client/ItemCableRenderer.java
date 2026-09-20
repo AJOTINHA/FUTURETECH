@@ -53,6 +53,8 @@ public final class ItemCableRenderer implements BlockEntityRenderer<ItemCableBlo
         state.spin = (float) (now * 3.0);
         BlockPos here = cable.getBlockPos();
         for (ItemTravel.Journey journey : ItemTravel.journeys()) {
+            // Not yet through the entry face: still inside the block it is coming from.
+            if (now < journey.start()) continue;
             Vec3 position = journey.position(now - journey.start());
             if (!BlockPos.containing(position).equals(here)) continue;
             var item = new ItemStackRenderState();

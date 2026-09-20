@@ -185,6 +185,42 @@ class ItemCableNetworkTest {
         run(network, after, after + TRIP);
     }
 
+    /** A connector with speed upgrades on it, wide enough to let several items in within one tick. */
+    private record UpgradedEndpoint(Direction side, int upgrades, @Nullable ResourceHandler<ItemResource> handler)
+            implements ItemCableNetwork.Endpoint {
+        @Override
+        public ItemCableNetwork.EndpointKey key() { return new ItemCableNetwork.EndpointKey(CABLE, side); }
+
+        @Override
+        public boolean delivers() { return true; }
+
+        @Override
+        public boolean pulls() { return false; }
+
+        @Override
+        public int priority() { return 0; }
+    }
+
+    @Test
+    void itemsEnteringTogetherSetOffHalfACableApart(MinecraftServer server) {
+        var chest = chest(0);
+        var network = network(new FakeEndpoint(Direction.NORTH, chest), new UpgradedEndpoint(Direction.SOUTH, 4, null));
+        network.tick(0);
+        for (int item = 0; item < 3; item++) assertEquals(1, push(network, Direction.SOUTH, 1));
+        var flights = network.flights();
+        assertEquals(3, flights.size());
+        int gap = TRIP / 2;
+        assertEquals(List.of(0, -gap, -2 * gap), flights.stream().map(flight -> flight.travelled).toList(),
+                "Each one starts half a cable behind the one before it, not on top of it");
+        run(network, 0, TRIP);
+        assertEquals(1, count(chest), "The first arrives on its own");
+        run(network, TRIP, TRIP + gap);
+        assertEquals(2, count(chest), "The second half a cable later");
+        run(network, TRIP + gap, TRIP + 2 * gap);
+        assertEquals(3, count(chest));
+        assertTrue(network.flights().isEmpty());
+    }
+
     @Test
     void pushedItemsSetOffAtOnceAndArriveAfterCrossingTheCable(MinecraftServer server) {
         var chest = chest(0);

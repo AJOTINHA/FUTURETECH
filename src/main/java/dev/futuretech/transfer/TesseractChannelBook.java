@@ -18,6 +18,8 @@ import java.util.List;
  * tesseracts are on it is theirs to say, and {@link TesseractChannels} to keep.
  */
 public final class TesseractChannelBook extends SavedData {
+    /** As many channels as the screen's packet carries; a book cannot be pushed past what the clients can hear. */
+    public static final int MAX_CHANNELS = 1024;
     public static final SavedDataType<TesseractChannelBook> TYPE = new SavedDataType<>(
             Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "tesseract_channels"),
             TesseractChannelBook::new,
@@ -47,13 +49,13 @@ public final class TesseractChannelBook extends SavedData {
     }
 
     /**
-     * Adds a channel, trimmed to what a tesseract can hold; false for a blank name or one already
-     * in the book, which changes nothing.
+     * Adds a channel, trimmed to what a tesseract can hold; false for a blank name, one already
+     * in the book or a book that is full, which changes nothing.
      */
     public boolean create(String name) {
         String trimmed = name.strip();
         if (trimmed.length() > TesseractBlockEntity.CHANNEL_LENGTH) trimmed = trimmed.substring(0, TesseractBlockEntity.CHANNEL_LENGTH);
-        if (trimmed.isEmpty() || channels.contains(trimmed)) return false;
+        if (trimmed.isEmpty() || channels.contains(trimmed) || channels.size() >= MAX_CHANNELS) return false;
         channels.add(trimmed);
         setDirty();
         return true;

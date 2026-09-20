@@ -39,7 +39,8 @@ def main():
         d.rectangle((0,0,0,31),fill='#f1f4ef'); d.rectangle((6,0,7,31),fill='#617d8c')
         d.rectangle((1,0,5,2),fill=accent); d.line((1,3,5,3),fill='#81939a')
         d.line((2,8,2,29),fill='#dce6e6'); d.rectangle((1,29,5,31),fill='#7c97a4')
-        blade.save(folder/f'blade_mk{mk}.png')
+        # Drawn at 8x32 and doubled: a sprite narrower than 16 px would cap the whole block atlas at mip level 3.
+        blade.resize((16,64),Image.NEAREST).save(folder/f'blade_mk{mk}.png')
         lid=Image.new('RGBA',(32,32),'#394b59'); d=ImageDraw.Draw(lid)
         d.rectangle((1,1,30,30),outline='#8b9daa'); d.rectangle((4,4,27,27),outline='#263340')
         for x,y in ((3,3),(27,3),(3,27),(27,27)): d.rectangle((x,y,x+1,y+1),fill='#becbd0')

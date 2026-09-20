@@ -51,6 +51,8 @@ public final class EnergyCableBlockEntity extends AbstractCableBlockEntity {
     /** Energy handler seen by the neighbour beyond {@code side}; resolves the network on every call. */
     public @Nullable EnergyHandler handler(@Nullable Direction side) {
         if (!(level instanceof ServerLevel)) return null;
+        // A side the wrench cut joins nothing: no machine, so no handler for one to push into.
+        if (side != null && isCut(side)) return null;
         // A connector the player closed to incoming energy refuses what the neighbour pushes,
         // and so does one redstone has switched off; that one is asked as it goes, so it needs no
         // new handler when the signal changes.

@@ -6,7 +6,14 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "futuretech:storage_cards"
+          "name": "futuretech:storage_cards",
+          "functions": [
+            {
+              "function": "minecraft:copy_state",
+              "properties": ["mk"],
+              "block": "futuretech:storage_cards"
+            }
+          ]
         }
       ],
       "conditions": [

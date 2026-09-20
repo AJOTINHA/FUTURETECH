@@ -33,7 +33,18 @@
     "futuretech:wind_generator",
     "futuretech:wind_turbine_part",
     "futuretech:boiler",
-    "futuretech:steam_turbine"
+    "futuretech:steam_turbine",
+    "futuretech:charger",
+    "futuretech:extruder",
+    "futuretech:melter",
+    "futuretech:network_panel",
+    "futuretech:rain_sensor",
+    "futuretech:sawmill",
+    "futuretech:smeltery",
+    "futuretech:storage_cards",
+    "futuretech:tesseract",
+    "futuretech:wireless_transmitter",
+    "futuretech:wireless_receiver"
   ],
   "replace": false
 }

@@ -248,7 +248,10 @@ public final class ModItems {
     public static final DeferredItem<BlockItem> REDSTONE_CABLE = ITEMS.registerSimpleBlockItem(ModBlocks.REDSTONE_CABLE);
 
     public static final DeferredItem<BlockItem> NETWORK_PANEL = ITEMS.registerSimpleBlockItem(ModBlocks.NETWORK_PANEL);
-    public static final DeferredItem<BlockItem> STORAGE_CARDS = ITEMS.registerSimpleBlockItem(ModBlocks.STORAGE_CARDS);
+    // Takes the upgrade kits like a machine, so the item carries the MK the way the machines' items do.
+    public static final DeferredItem<TieredMachineBlockItem> STORAGE_CARDS = ITEMS.registerItem(
+            "storage_cards", properties -> new TieredMachineBlockItem(ModBlocks.STORAGE_CARDS.get(), properties),
+            properties -> properties.useBlockDescriptionPrefix());
     public static final DeferredItem<BlockItem> TESSERACT = ITEMS.registerSimpleBlockItem(ModBlocks.TESSERACT);
     public static final DeferredItem<BlockItem> WIRELESS_TRANSMITTER = ITEMS.registerSimpleBlockItem(ModBlocks.WIRELESS_TRANSMITTER);
     public static final DeferredItem<BlockItem> WIRELESS_RECEIVER = ITEMS.registerSimpleBlockItem(ModBlocks.WIRELESS_RECEIVER);
