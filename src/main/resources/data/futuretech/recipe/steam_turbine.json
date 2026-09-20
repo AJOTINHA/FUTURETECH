@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IRI",
+    "CMC",
+    "IRI"
+  ],
+  "key": {
+    "I": "#c:ingots/iron",
+    "C": "#c:ingots/copper",
+    "R": "futuretech:transmission_coil",
+    "M": "futuretech:machine_casing"
+  },
+  "result": {
+    "id": "futuretech:steam_turbine",
+    "count": 1
+  }
+}

@@ -1,4 +1,9 @@
 {
   "replace": false,
-  "values": ["futuretech:speed_upgrade", "futuretech:efficiency_upgrade"]
+  "values": [
+    "futuretech:speed_upgrade",
+    "futuretech:efficiency_upgrade",
+    "futuretech:lava_upgrade",
+    "futuretech:energy_upgrade"
+  ]
 }

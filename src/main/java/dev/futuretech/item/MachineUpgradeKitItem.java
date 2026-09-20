@@ -36,6 +36,11 @@ public final class MachineUpgradeKitItem extends Item {
         if (!player.mayBuild() || !level.mayInteract(player, pos)
                 || !player.mayUseItemAt(pos, context.getClickedFace(), stack)) return InteractionResult.FAIL;
         var state = level.getBlockState(pos);
+        if (state.getBlock() instanceof dev.futuretech.block.WindTurbinePartBlock) {
+            pos = dev.futuretech.block.WindTurbineStructure.base(pos, state);
+            state = level.getBlockState(pos);
+            if (!level.mayInteract(player, pos) || !player.mayUseItemAt(pos, context.getClickedFace(), stack)) return InteractionResult.FAIL;
+        }
         if (!state.hasProperty(MachineLevel.MK)) {
             if (!level.isClientSide()) player.sendOverlayMessage(
                     Component.translatable("message.futuretech.upgrade_kit.unsupported"));

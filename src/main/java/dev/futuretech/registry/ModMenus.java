@@ -7,6 +7,10 @@ import dev.futuretech.menu.CableConnectorMenu;
 import dev.futuretech.menu.ElectricFurnaceMenu;
 import dev.futuretech.menu.ItemFilterMenu;
 import dev.futuretech.menu.LavaGeneratorMenu;
+import dev.futuretech.menu.BoilerMenu;
+import dev.futuretech.menu.SolarGeneratorMenu;
+import dev.futuretech.menu.SteamTurbineMenu;
+import dev.futuretech.menu.WindGeneratorMenu;
 import dev.futuretech.menu.ChargerMenu;
 import dev.futuretech.menu.LaneMachineMenu;
 import dev.futuretech.menu.MetalPressMenu;
@@ -31,8 +35,20 @@ public final class ModMenus {
     public static final DeferredHolder<MenuType<?>, MenuType<SolidFuelGeneratorMenu>> SOLID_FUEL_GENERATOR = TYPES.register(
             "solid_fuel_generator", () -> new MenuType<>(SolidFuelGeneratorMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
+    public static final DeferredHolder<MenuType<?>, MenuType<SolarGeneratorMenu>> SOLAR_GENERATOR = TYPES.register(
+            "solar_generator", () -> new MenuType<>(SolarGeneratorMenu::new, FeatureFlags.DEFAULT_FLAGS));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<SteamTurbineMenu>> STEAM_TURBINE = TYPES.register(
+            "steam_turbine", () -> new MenuType<>(SteamTurbineMenu::new, FeatureFlags.DEFAULT_FLAGS));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<WindGeneratorMenu>> WIND_GENERATOR = TYPES.register(
+            "wind_generator", () -> new MenuType<>(WindGeneratorMenu::new, FeatureFlags.DEFAULT_FLAGS));
+
     public static final DeferredHolder<MenuType<?>, MenuType<LavaGeneratorMenu>> LAVA_GENERATOR = TYPES.register(
             "lava_generator", () -> new MenuType<>(LavaGeneratorMenu::new, FeatureFlags.DEFAULT_FLAGS));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<BoilerMenu>> BOILER = TYPES.register(
+            "boiler", () -> new MenuType<>(BoilerMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
     public static final DeferredHolder<MenuType<?>, MenuType<ElectricFurnaceMenu>> ELECTRIC_FURNACE = TYPES.register(
             "electric_furnace", () -> IMenuTypeExtension.create(ElectricFurnaceMenu::new));

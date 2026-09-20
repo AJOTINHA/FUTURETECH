@@ -63,7 +63,10 @@ public final class EnergyInfoTab extends MachineTab {
     protected int contentHeight() { return pairY(rows.size() - 1) + VALUE_DROP + font.lineHeight; }
 
     @Override
-    protected void drawIcon(GuiGraphicsExtractor graphics, int x, int y) {
+    protected void drawIcon(GuiGraphicsExtractor graphics, int x, int y) { drawBolt(graphics, x, y); }
+
+    /** The tab's lightning bolt, shared with readouts that are not about energy alone. */
+    public static void drawBolt(GuiGraphicsExtractor graphics, int x, int y) {
         // A lightning bolt, one row per scanline: the upper wedge descends to the left, steps
         // sideways at the notch, and the tail picks up to the right of it. Traced from the
         // U+26A1 glyph, because hand-drawn strips of constant width just read as a slash.

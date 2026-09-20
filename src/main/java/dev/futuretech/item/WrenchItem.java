@@ -42,6 +42,10 @@ public final class WrenchItem extends Item {
         Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();
         BlockState state = level.getBlockState(pos);
+        if (state.getBlock() instanceof dev.futuretech.block.WindTurbinePartBlock) {
+            pos = dev.futuretech.block.WindTurbineStructure.base(pos, state);
+            state = level.getBlockState(pos);
+        }
         if (context.isSecondaryUseActive()) return dismantle(state, level, pos, context.getPlayer());
         // A cable has nothing to turn; the wrench cuts and restores its links instead.
         if (state.getBlock() instanceof dev.futuretech.block.AbstractCableBlock cable) {

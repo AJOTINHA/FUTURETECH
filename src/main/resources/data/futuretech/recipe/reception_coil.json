@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "  R",
+    " G ",
+    "R  "
+  ],
+  "key": {
+    "R": "minecraft:redstone",
+    "G": "#c:ingots/gold"
+  },
+  "result": {
+    "id": "futuretech:reception_coil",
+    "count": 1
+  }
+}

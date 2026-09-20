@@ -40,6 +40,12 @@ public final class FutureTechClient {
 
     public FutureTechClient(IEventBus modEventBus) {
         modEventBus.addListener(FutureTechClient::registerScreens);
+        modEventBus.addListener((net.neoforged.neoforge.client.event.RegisterFluidModelsEvent event) -> {
+            var material = new net.minecraft.client.resources.model.sprite.Material(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "block/steam"));
+            event.register(new net.minecraft.client.renderer.block.FluidModel.Unbaked(material, material, null, null), dev.futuretech.registry.ModFluids.STEAM);
+        });
+        modEventBus.addListener((net.neoforged.neoforge.client.event.RegisterSpecialModelRendererEvent event) ->
+                event.register(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "wind_turbine"), WindGeneratorItemRenderer.Unbaked.MAP_CODEC));
         modEventBus.addListener(FutureTechClient::configureSideModels);
         modEventBus.addListener(FutureTechClient::registerRenderers);
         // The tesseract item's core: the End's portal drawn inside the frame, wherever the item is.
@@ -75,6 +81,8 @@ public final class FutureTechClient {
         event.registerBlockEntityRenderer(ModBlockEntities.TELEPORTER.get(), context -> new TeleporterBeamRenderer());
         event.registerBlockEntityRenderer(ModBlockEntities.TESSERACT.get(), context -> new TesseractRenderer());
         event.registerBlockEntityRenderer(ModBlockEntities.WIRELESS_REDSTONE.get(), context -> new WirelessRedstoneRenderer());
+        event.registerBlockEntityRenderer(ModBlockEntities.SOLAR_GENERATOR.get(), context -> new SolarPanelRenderer());
+        event.registerBlockEntityRenderer(ModBlockEntities.WIND_GENERATOR.get(), context -> new WindRotorRenderer());
     }
 
     private static void registerScreens(RegisterMenuScreensEvent event) {
@@ -82,6 +90,10 @@ public final class FutureTechClient {
         event.register(ModMenus.FLUID_TANK.get(), FluidTankScreen::new);
         event.register(ModMenus.SOLID_FUEL_GENERATOR.get(), SolidFuelGeneratorScreen::new);
         event.register(ModMenus.LAVA_GENERATOR.get(), LavaGeneratorScreen::new);
+        event.register(ModMenus.BOILER.get(), BoilerScreen::new);
+        event.register(ModMenus.STEAM_TURBINE.get(), SteamTurbineScreen::new);
+        event.register(ModMenus.SOLAR_GENERATOR.get(), SolarGeneratorScreen::new);
+        event.register(ModMenus.WIND_GENERATOR.get(), WindGeneratorScreen::new);
         event.register(ModMenus.BATTERY.get(), BatteryScreen::new);
         event.register(ModMenus.ELECTRIC_FURNACE.get(), ElectricFurnaceScreen::new);
         event.register(ModMenus.CRUSHER.get(), LaneMachineScreen::new);
@@ -103,6 +115,23 @@ public final class FutureTechClient {
 
     private static void configureSideModels(ModelEvent.ModifyBakingResult event) {
         Function<Identifier, TextureAtlasSprite> textures = event.getTextureGetter();
+        // The solar panel's renderer draws with the block models' own sprites: the panel top of each level and its side sheet.
+        for (int mk = 1; mk <= MachineLevel.MAX; mk++) {
+            WindRotorRenderer.setSprites(mk,
+                    textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "block/wind_generator/blade_mk" + mk)),
+                    textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "block/wind_generator/steel")),
+                    textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "block/wind_generator/tower")),
+                    textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "block/wind_generator/housing_mk" + mk)),
+                    textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "block/wind_generator/housing_bottom")),
+                    textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "block/wind_generator/mk" + mk)),
+                    textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "block/wind_generator/lid_mk" + mk)));
+            String panel = "block/solar_generator/panel" + (mk == 1 ? "" : "_mk" + mk);
+            String side = "block/solar_generator/frame_mk" + mk;
+            SolarPanelRenderer.setSprites(mk, textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, panel)),
+                    textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, side)),
+                    textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "block/solar_generator/back_mk" + mk)),
+                    textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "block/solar_generator/mast_mk" + mk)));
+        }
         Map<SideMode, TextureAtlasSprite> sprites = new EnumMap<>(SideMode.class);
         SIDE_TEXTURES.forEach((mode, path) ->
                 sprites.put(mode, textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, path))));
@@ -178,6 +207,11 @@ public final class FutureTechClient {
             if (state.getBlock() instanceof AbstractCableBlock cable) return new CableConnectorModel(model, cable.kind(), connectorsFor.apply(cable));
             if (state.getBlock() instanceof BatteryBlock) return new ConfiguredSideModel(model, Map.of(), batteryPreviews, batteryPorts);
             if (state.getBlock() instanceof FluidTankBlock) return new ConfiguredSideModel(model, Map.of(), tankPreviews, tankPorts);
+            // Keep dedicated generator faces visible; the side tab still shows the configured modes.
+            if (state.getBlock() instanceof dev.futuretech.block.SolarGeneratorBlock
+                    || state.getBlock() instanceof dev.futuretech.block.WindGeneratorBlock) {
+                return new ConfiguredSideModel(model, Map.of(), tierSprites.get(MachineLevel.of(state)), Map.of());
+            }
             return state.getBlock() instanceof SideConfigurableBlock
                     ? new ConfiguredSideModel(model, tierSprites.get(MachineLevel.of(state))) : model;
         });

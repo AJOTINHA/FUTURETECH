@@ -87,8 +87,24 @@ public final class ModItems {
             "solid_fuel_generator", properties -> new TieredMachineBlockItem(ModBlocks.SOLID_FUEL_GENERATOR.get(), properties),
             properties -> properties.useBlockDescriptionPrefix());
 
+    public static final DeferredItem<TieredMachineBlockItem> SOLAR_GENERATOR = ITEMS.registerItem(
+            "solar_generator", properties -> new TieredMachineBlockItem(ModBlocks.SOLAR_GENERATOR.get(), properties),
+            properties -> properties.useBlockDescriptionPrefix());
+
+    public static final DeferredItem<TieredMachineBlockItem> STEAM_TURBINE = ITEMS.registerItem(
+            "steam_turbine", properties -> new TieredMachineBlockItem(ModBlocks.STEAM_TURBINE.get(), properties),
+            properties -> properties.useBlockDescriptionPrefix());
+
+    public static final DeferredItem<TieredMachineBlockItem> WIND_GENERATOR = ITEMS.registerItem(
+            "wind_generator", properties -> new TieredMachineBlockItem(ModBlocks.WIND_GENERATOR.get(), properties),
+            properties -> properties.useBlockDescriptionPrefix());
+
     public static final DeferredItem<TieredMachineBlockItem> LAVA_GENERATOR = ITEMS.registerItem(
             "lava_generator", properties -> new TieredMachineBlockItem(ModBlocks.LAVA_GENERATOR.get(), properties),
+            properties -> properties.useBlockDescriptionPrefix());
+
+    public static final DeferredItem<TieredMachineBlockItem> BOILER = ITEMS.registerItem(
+            "boiler", properties -> new TieredMachineBlockItem(ModBlocks.BOILER.get(), properties),
             properties -> properties.useBlockDescriptionPrefix());
 
     public static final DeferredItem<TieredMachineBlockItem> ELECTRIC_FURNACE = ITEMS.registerItem(
@@ -168,6 +184,10 @@ public final class ModItems {
     /** Alloyed in the smeltery: a silver and a gold ingot make two. */
     public static final DeferredItem<Item> ELECTRUM_INGOT = ITEMS.registerSimpleItem("electrum_ingot");
     public static final DeferredItem<Item> ELECTRUM_POWDER = ITEMS.registerSimpleItem("electrum_powder");
+    /** Thermal's three redstone coils: an ingot wound with a diagonal of redstone; gold, silver and electrum. */
+    public static final DeferredItem<Item> RECEPTION_COIL = ITEMS.registerSimpleItem("reception_coil");
+    public static final DeferredItem<Item> TRANSMISSION_COIL = ITEMS.registerSimpleItem("transmission_coil");
+    public static final DeferredItem<Item> CONDUCTANCE_COIL = ITEMS.registerSimpleItem("conductance_coil");
     public static final DeferredItem<Item> GOLD_POWDER = ITEMS.registerSimpleItem("gold_powder");
     public static final DeferredItem<Item> COPPER_POWDER = ITEMS.registerSimpleItem("copper_powder");
     public static final DeferredItem<Item> STEEL_INGOT = ITEMS.registerSimpleItem("steel_ingot");
@@ -249,6 +269,10 @@ public final class ModItems {
     public static final DeferredItem<Item> SPEED_UPGRADE = ITEMS.registerSimpleItem("speed_upgrade");
     /** Cuts a machine's energy draw; see {@link dev.futuretech.api.upgrade.UpgradeInventory#EFFICIENCY_PERCENT}. */
     public static final DeferredItem<Item> EFFICIENCY_UPGRADE = ITEMS.registerSimpleItem("efficiency_upgrade");
+    /** In a boiler, swaps the fuel slot for a lava tank; see {@link dev.futuretech.block.entity.BoilerBlockEntity#HEAT_PER_LAVA_MB}. */
+    public static final DeferredItem<Item> LAVA_UPGRADE = ITEMS.registerSimpleItem("lava_upgrade");
+    /** In a boiler, swaps the fuel slot for an energy buffer; see {@link dev.futuretech.block.entity.BoilerBlockEntity#FE_PER_HEAT}. */
+    public static final DeferredItem<Item> ENERGY_UPGRADE = ITEMS.registerSimpleItem("energy_upgrade");
     public static final DeferredItem<Item> CHIP = ITEMS.registerSimpleItem("chip");
 
     public static final DeferredItem<MachineUpgradeKitItem> UPGRADE_KIT_MK2 = ITEMS.registerItem(

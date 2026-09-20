@@ -15,6 +15,10 @@ import dev.futuretech.block.FluidCableTier;
 import dev.futuretech.block.ItemCableBlock;
 import dev.futuretech.block.ItemCableTier;
 import dev.futuretech.block.LavaGeneratorBlock;
+import dev.futuretech.block.BoilerBlock;
+import dev.futuretech.block.SolarGeneratorBlock;
+import dev.futuretech.block.SteamTurbineBlock;
+import dev.futuretech.block.WindGeneratorBlock;
 import dev.futuretech.block.NetworkCableBlock;
 import dev.futuretech.block.RedstoneCableBlock;
 import dev.futuretech.block.NetworkPanelBlock;
@@ -113,6 +117,24 @@ public final class ModBlocks {
                     .requiresCorrectToolForDrops()
                     .lightLevel(state -> state.getValue(SolidFuelGeneratorBlock.LIT) ? 10 : 0));
 
+    public static final DeferredBlock<SolarGeneratorBlock> SOLAR_GENERATOR = BLOCKS.registerBlock(
+            "solar_generator", SolarGeneratorBlock::new, properties -> properties.mapColor(MapColor.METAL)
+                    .noOcclusion().strength(3.5F, 6.0F).sound(SoundType.METAL).requiresCorrectToolForDrops());
+
+    public static final DeferredBlock<SteamTurbineBlock> STEAM_TURBINE = BLOCKS.registerBlock(
+            "steam_turbine", SteamTurbineBlock::new, properties -> properties.mapColor(MapColor.METAL)
+                    .noOcclusion().strength(3.5F, 6.0F).sound(SoundType.METAL).requiresCorrectToolForDrops());
+
+    public static final DeferredBlock<dev.futuretech.block.WindTurbinePartBlock> WIND_TURBINE_PART = BLOCKS.registerBlock(
+            "wind_turbine_part", dev.futuretech.block.WindTurbinePartBlock::new, properties -> properties
+                    .mapColor(MapColor.METAL).noOcclusion().strength(3.5F, 6.0F).sound(SoundType.METAL)
+                    .pushReaction(net.minecraft.world.level.material.PushReaction.BLOCK).noLootTable());
+
+    public static final DeferredBlock<WindGeneratorBlock> WIND_GENERATOR = BLOCKS.registerBlock(
+            "wind_generator", WindGeneratorBlock::new, properties -> properties.mapColor(MapColor.METAL)
+                    .pushReaction(net.minecraft.world.level.material.PushReaction.BLOCK)
+                    .noOcclusion().strength(3.5F, 6.0F).sound(SoundType.METAL).requiresCorrectToolForDrops());
+
     public static final DeferredBlock<LavaGeneratorBlock> LAVA_GENERATOR = BLOCKS.registerBlock(
             "lava_generator", LavaGeneratorBlock::new, properties -> properties
                     .mapColor(MapColor.METAL)
@@ -120,6 +142,14 @@ public final class ModBlocks {
                     .sound(SoundType.METAL)
                     .requiresCorrectToolForDrops()
                     .lightLevel(state -> state.getValue(LavaGeneratorBlock.LIT) ? 13 : 0));
+
+    public static final DeferredBlock<BoilerBlock> BOILER = BLOCKS.registerBlock(
+            "boiler", BoilerBlock::new, properties -> properties
+                    .mapColor(MapColor.METAL)
+                    .strength(3.5F, 6.0F)
+                    .sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops()
+                    .lightLevel(state -> state.getValue(BoilerBlock.LIT) ? 13 : 0));
 
     public static final DeferredBlock<ElectricFurnaceBlock> ELECTRIC_FURNACE = BLOCKS.registerBlock(
             "electric_furnace", ElectricFurnaceBlock::new, properties -> properties

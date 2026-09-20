@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " I ",
+    "IRI",
+    "CMC"
+  ],
+  "key": {
+    "I": "#c:ingots/iron",
+    "R": "futuretech:reception_coil",
+    "C": "#c:ingots/copper",
+    "M": "futuretech:machine_casing"
+  },
+  "result": {
+    "id": "futuretech:wind_generator",
+    "count": 1
+  }
+}

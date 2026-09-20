@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IGI",
+    "SCS",
+    "IGI"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "G": "minecraft:gold_ingot",
+    "S": "futuretech:reception_coil",
+    "C": "futuretech:chip"
+  },
+  "result": {
+    "id": "futuretech:energy_upgrade",
+    "count": 1
+  }
+}

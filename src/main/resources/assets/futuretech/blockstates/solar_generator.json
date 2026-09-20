@@ -1,0 +1,132 @@
+{
+  "variants": {
+    "facing=north,lit=false,mk=1": {
+      "model": "futuretech:block/solar_generator/mk1",
+      "y": 0
+    },
+    "facing=north,lit=true,mk=1": {
+      "model": "futuretech:block/solar_generator/mk1_on",
+      "y": 0
+    },
+    "facing=north,lit=false,mk=2": {
+      "model": "futuretech:block/solar_generator/mk2",
+      "y": 0
+    },
+    "facing=north,lit=true,mk=2": {
+      "model": "futuretech:block/solar_generator/mk2_on",
+      "y": 0
+    },
+    "facing=north,lit=false,mk=3": {
+      "model": "futuretech:block/solar_generator/mk3",
+      "y": 0
+    },
+    "facing=north,lit=true,mk=3": {
+      "model": "futuretech:block/solar_generator/mk3_on",
+      "y": 0
+    },
+    "facing=north,lit=false,mk=4": {
+      "model": "futuretech:block/solar_generator/mk4",
+      "y": 0
+    },
+    "facing=north,lit=true,mk=4": {
+      "model": "futuretech:block/solar_generator/mk4_on",
+      "y": 0
+    },
+    "facing=east,lit=false,mk=1": {
+      "model": "futuretech:block/solar_generator/mk1",
+      "y": 90
+    },
+    "facing=east,lit=true,mk=1": {
+      "model": "futuretech:block/solar_generator/mk1_on",
+      "y": 90
+    },
+    "facing=east,lit=false,mk=2": {
+      "model": "futuretech:block/solar_generator/mk2",
+      "y": 90
+    },
+    "facing=east,lit=true,mk=2": {
+      "model": "futuretech:block/solar_generator/mk2_on",
+      "y": 90
+    },
+    "facing=east,lit=false,mk=3": {
+      "model": "futuretech:block/solar_generator/mk3",
+      "y": 90
+    },
+    "facing=east,lit=true,mk=3": {
+      "model": "futuretech:block/solar_generator/mk3_on",
+      "y": 90
+    },
+    "facing=east,lit=false,mk=4": {
+      "model": "futuretech:block/solar_generator/mk4",
+      "y": 90
+    },
+    "facing=east,lit=true,mk=4": {
+      "model": "futuretech:block/solar_generator/mk4_on",
+      "y": 90
+    },
+    "facing=south,lit=false,mk=1": {
+      "model": "futuretech:block/solar_generator/mk1",
+      "y": 180
+    },
+    "facing=south,lit=true,mk=1": {
+      "model": "futuretech:block/solar_generator/mk1_on",
+      "y": 180
+    },
+    "facing=south,lit=false,mk=2": {
+      "model": "futuretech:block/solar_generator/mk2",
+      "y": 180
+    },
+    "facing=south,lit=true,mk=2": {
+      "model": "futuretech:block/solar_generator/mk2_on",
+      "y": 180
+    },
+    "facing=south,lit=false,mk=3": {
+      "model": "futuretech:block/solar_generator/mk3",
+      "y": 180
+    },
+    "facing=south,lit=true,mk=3": {
+      "model": "futuretech:block/solar_generator/mk3_on",
+      "y": 180
+    },
+    "facing=south,lit=false,mk=4": {
+      "model": "futuretech:block/solar_generator/mk4",
+      "y": 180
+    },
+    "facing=south,lit=true,mk=4": {
+      "model": "futuretech:block/solar_generator/mk4_on",
+      "y": 180
+    },
+    "facing=west,lit=false,mk=1": {
+      "model": "futuretech:block/solar_generator/mk1",
+      "y": 270
+    },
+    "facing=west,lit=true,mk=1": {
+      "model": "futuretech:block/solar_generator/mk1_on",
+      "y": 270
+    },
+    "facing=west,lit=false,mk=2": {
+      "model": "futuretech:block/solar_generator/mk2",
+      "y": 270
+    },
+    "facing=west,lit=true,mk=2": {
+      "model": "futuretech:block/solar_generator/mk2_on",
+      "y": 270
+    },
+    "facing=west,lit=false,mk=3": {
+      "model": "futuretech:block/solar_generator/mk3",
+      "y": 270
+    },
+    "facing=west,lit=true,mk=3": {
+      "model": "futuretech:block/solar_generator/mk3_on",
+      "y": 270
+    },
+    "facing=west,lit=false,mk=4": {
+      "model": "futuretech:block/solar_generator/mk4",
+      "y": 270
+    },
+    "facing=west,lit=true,mk=4": {
+      "model": "futuretech:block/solar_generator/mk4_on",
+      "y": 270
+    }
+  }
+}

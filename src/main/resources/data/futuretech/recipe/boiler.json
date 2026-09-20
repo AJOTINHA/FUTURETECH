@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "CGC",
+    "CFC",
+    "CMC"
+  ],
+  "key": {
+    "C": "#c:ingots/copper",
+    "G": "minecraft:glass",
+    "F": "minecraft:furnace",
+    "M": "futuretech:machine_casing"
+  },
+  "result": {
+    "id": "futuretech:boiler",
+    "count": 1
+  }
+}

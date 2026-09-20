@@ -461,3 +461,80 @@ Material Graveto  Material    Material Graveto  Material    Material Graveto
 Os de netherita são uma melhoria da versão de diamante na mesa de ferraria, com um molde de melhoria de netherita e um lingote de netherita. Os modelos 3D reutilizam diretamente as cores das texturas das picaretas, pás e machados vanilla, acompanhando também resource packs. `python tools/generate_area_tools.py` regenera modelos, receitas, desbloqueios, tags e nomes.
 
 O teste `AreaToolItemTest` valida materiais e carregamento das receitas das três ferramentas. `./gradlew.bat runGameTestServer` executa os testes de mineração em um mundo separado em `build/gametest-run`, cobrindo as três orientações, Shift, criativo, desgaste, proteção, limites do material, a separação entre blocos de picareta e de pá, a derrubada de uma árvore com galho, o limite de troncos e o botão direito (descascar, caminho). O código em `src/gameTest` só é usado no desenvolvimento e não entra no JAR distribuído.
+
+
+## Gerador Solar
+
+O **Gerador Solar** (`futuretech:solar_generator`) gera energia sem combustível quando seu painel tem acesso ao céu. O rendimento acompanha a altura do sol: o pico reforçado ocorre ao meio-dia, diminui gradualmente com o quadrado da altura solar perto do amanhecer/entardecer e é zero à noite. Qualquer bloco acima do painel, inclusive vidro, folhas e lajes, interrompe a produção; dimensões sem iluminação celeste também não geram. Chuva reduz o pico pela metade; tempestade completa reduz para 20%.
+
+| Nível | Pico em céu limpo | Reserva |
+| --- | --- | --- |
+| MK1 | 40 FE/t | 20.000 FE |
+| MK2 | 60 FE/t | 30.000 FE |
+| MK3 | 80 FE/t | 40.000 FE |
+| MK4 | 120 FE/t | 60.000 FE |
+
+Use os kits MK2–MK4 em sequência com Shift + botão direito. A energia armazenada é mantida na melhoria. O solar não tem slots de combustível nem de melhorias avulsas.
+
+**Todas as faces começam fechadas**, como nas outras máquinas: abra a que quiser na aba de lados (Saída ou Nenhum) e coloque um cabo de energia ou consumidor ali. O limite de saída é 200 FE/t compartilhado por todas as faces, sem aceitar energia externa. A energia já guardada continua saindo à noite ou com a geração pausada por redstone. Um comparador mede a reserva. Energia, lados e controle de redstone são salvos no mundo; ao quebrar o bloco, o item mantém o MK, mas não a carga, como os outros geradores.
+
+A interface mostra energia, geração atual, porcentagem de luz solar e o motivo de parada. O modelo tem base metálica, suporte central e painel azul com células fotovoltaicas; o símbolo de sol da frente acende durante a produção. A configuração de saídas preserva a textura das células. O painel acompanha o sol com inclinação visual limitada a 30° e articulação sob as células, mantendo todo o movimento dentro do bloco. Moldura, verso, suporte e tampa usam materiais próprios; as quinas amarelas/vermelhas/ciano acompanham o MK.
+
+Receita na bancada:
+
+```text
+Vidro   Vidro                 Vidro
+Lápis   Carcaça de máquina    Lápis
+Cobre   Bobina de Recepção    Cobre
+```
+
+`python -B tools/generate_solar_generator.py` regenera os recursos. `SolarGeneratorTest` cobre produção, clima, redstone, limites, kits, salvamento e receita. O GameTest `solar_generator_sky_and_cable` cobre céu aberto, cobertura, noite, sinal de redstone e uma bateria alimentada por cabo em um mundo separado.
+
+
+## Gerador Eólico
+
+O **Gerador Eólico** (`futuretech:wind_generator`) usa uma torre clara de cinco blocos de altura e uma hélice animada de três pás afuniladas. O formato segue a referência visual do [gerador do Mekanism](https://wiki.aidancbrady.com/wiki/Wind_Turbine), com texturas próprias do FUTURETECH e detalhes MK2 amarelos, MK3 vermelhos e MK4 ciano.
+
+Um único item coloca a estrutura completa, reservando somente uma coluna de 1 × 5 × 1 blocos. As pás são visuais e não têm hitboxes nem reservam os espaços laterais, permitindo geradores lado a lado. A colisão e a seleção acompanham a base, a haste e o motor. As antigas células invisíveis laterais são removidas automaticamente ao carregar os geradores, sem perder energia ou upgrades. Clique na torre para abrir a interface; a chave e os kits também reconhecem a torre. Quebrar uma parte remove a estrutura inteira e entrega um único gerador, preservando o MK. Pistões não movem a estrutura.
+
+A geração funciona igualmente de dia e de noite. O rendimento depende da altura do motor (três blocos acima da base): 25% em Y64 ou menos, crescendo até 100% em Y192. Obstáculos nos quatro eixos horizontais, até quatro blocos do motor, reduzem a eficiência. Cobertura acima da torre ou um bloco nos dois espaços à frente do motor interrompe a geração. A avaliação é atualizada uma vez por segundo, sem carregar chunks vizinhos.
+
+| Nível | Pico | Reserva |
+|---|---:|---:|
+| MK1 | 24 FE/t | 20.000 FE |
+| MK2 | 36 FE/t | 30.000 FE |
+| MK3 | 48 FE/t | 40.000 FE |
+| MK4 | 72 FE/t | 60.000 FE |
+
+Todas as faces da base começam fechadas; abra as saídas que quiser na aba de lados. O limite de exportação é 200 FE/t compartilhado. Redstone pode pausar a geração, mas a energia armazenada continua disponível. A interface informa energia, produção, vento e motivo de parada.
+
+Receita: ` I ` / `IRI` / `CMC`, com I = lingote de ferro, R = bobina de recepção, C = lingote de cobre e M = carcaça de máquina. `python -B tools/generate_wind_generator.py` regenera texturas, modelos, receita, traduções e registros de recursos.
+
+
+## Vapor: Boiler e Turbina a Vapor
+
+O vapor é um circuito de duas máquinas. O **Boiler** (`futuretech:boiler`) aquece água e produz **Vapor** (`futuretech:steam`, fluido próprio que passa por cabos e tanques de fluido); a **Turbina a Vapor** (`futuretech:steam_turbine`) consome o vapor e gera energia. O boiler não tem saída elétrica; a turbina não aceita água nem outro fluido.
+
+O boiler tem um tanque de água (8.000 mB), um tanque de vapor (16.000 mB), um slot de combustível e o par de slots de balde (entra balde de água, sai balde vazio). Cada mB de água vira 10 mB de vapor e custa **uma unidade de calor** no MK1; um carvão vale 1.600 unidades, como na fornalha. O boiler pausa sem água, sem calor, com o tanque de vapor cheio ou por redstone, e não gasta combustível parado. O vapor sai pelas faces de saída (1.000 mB a cada 4 ticks) e um comparador mede o tanque de vapor.
+
+| Nível | Água → vapor | Calor por mB de água | Turbina |
+| --- | --- | --- | --- |
+| MK1 | 2 → 20 mB/t | 100 % | 200 FE/t |
+| MK2 | 3 → 30 mB/t | 90 % | 300 FE/t |
+| MK3 | 4 → 40 mB/t | 80 % | 400 FE/t |
+| MK4 | 6 → 60 mB/t | 70 % | 600 FE/t |
+
+Cada MK acelera as duas máquinas e ainda **barateia o calor**: a coluna do meio é o que cada mB de água custa (`BoilerBlockEntity.MK_HEAT_PERCENT`), então o mesmo carvão ferve 1.600 mB no MK1 e 2.285 no MK4. A turbina devolve 10 FE por mB de vapor (`FE_PER_MB`), guarda 40.000 FE (+25 % por MK) e entrega até 1.200 FE/t; um carvão no MK1 rende 160.000 FE, dez vezes o gerador de carvão. A conta é feita em centésimos de unidade (`heatDebt`), então 70 % de 2 mB fecha certinho ao longo dos ticks.
+
+As duas máquinas têm a aba de **Melhorias** (slots liberados pelo MK, como as outras), e os itens fazem diferença:
+
+- **Speed Upgrade** (`futuretech:speed_upgrade`): a regra das outras máquinas. No boiler cada um soma **mais uma vez o vapor do nível** (MK1: 20 → 40 → 60 → 80 mB/t) e cobra **+10 % de calor por mB** por item. Na turbina cada um soma mais uma vez o vapor consumido por tick, e por isso a energia, mas devolve **−10 % de FE por mB** por item (`SPEED_LOSS_PERCENT`: 10 → 9 → 8 → 7 FE/mB). Vale nos três modos de calor.
+- **Upgrade de Eficiência** (`futuretech:efficiency_upgrade`): só no boiler, cada um tira 15 % da conta de calor, por cima do desconto do MK e do acréscimo do Speed. Um MK4 com três deles paga 38 % por mB.
+- **Upgrade de Lava** (`futuretech:lava_upgrade`, tag `upgrades/lava`): o boiler passa a aquecer com lava. O slot de combustível some da tela e no lugar dele aparece um tanque de lava (8.000 mB), que enche pelas faces de entrada ou por balde de lava clicado no bloco. Cada mB de lava compra 5 unidades de calor (`HEAT_PER_LAVA_MB`): um balde aquece 5.000 mB de água no MK1, dez vezes o que o Gerador de Lava tira dele. Receita: a do Upgrade de Eficiência com blocos de magma no lugar da redstone.
+- **Upgrade de Energia** (`futuretech:energy_upgrade`, tag `upgrades/energy`): o boiler passa a aquecer com FE. O slot de combustível dá lugar a uma coluna de energia: uma reserva de 20.000 FE (entra 2.000 FE/t) que só aparece para os cabos enquanto o upgrade está instalado, e só nas faces de entrada. Cada unidade de calor custa 300 FE (`FE_PER_HEAT`), comprada em lotes de 10. É de propósito um conversor com perda: no MK1 entram 600 FE/t para a turbina devolver 200, e mesmo um MK4 com três upgrades de eficiência paga 11,55 FE por mB de vapor contra os 10 que a turbina devolve, então não há moto-contínuo. Receita: a do Upgrade de Eficiência com bobinas de recepção no lugar da redstone.
+
+Com lava e energia instalados ao mesmo tempo, a lava vale. Trocar de modo avisa os cabos vizinhos (a face passa a oferecer ou esconder o buffer de energia). Com combustível sólido, a barra debaixo do slot mostra o calor que resta no item aceso; o rótulo acima da coluna acompanha o modo (Combustível, Lava, Energia).
+
+As duas máquinas nascem com **todas as faces fechadas**; as faces do boiler governam também a energia. Os modelos seguem o padrão das outras máquinas (laterais compartilhadas, quinas coloridas por MK) e só a frente muda: o boiler mostra o tambor de cobre com visor de água sobre a fornalha, cujas chamas se animam em produção; a turbina mostra as quatro pás girando atrás do aro.
+
+Receitas na bancada: Boiler = `CGC` / `CFC` / `CMC` (C = cobre, G = vidro, F = fornalha, M = carcaça de máquina); Turbina = `IRI` / `CMC` / `IRI` (I = ferro, R = bobina de transmissão). `python -B tools/generate_steam_machines.py` regenera texturas, modelos, receitas e traduções das máquinas e do vapor; `python -B tools/generate_boiler_upgrades.py` gera os dois upgrades. `SteamMachinesTest` cobre rendimento por MK, eficiência, os três modos de calor, baldes, redstone, kits e salvamento; os GameTests `water_boiler_steam_turbine_battery` (tanque → cabo → boiler → cabo → turbina → cabo → bateria, com pausas por redstone) e `boiler_lava_and_energy_upgrades` (lava por cabo de fluido e FE por cabo de energia) rodam num servidor de verdade.

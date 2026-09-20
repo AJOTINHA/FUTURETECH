@@ -12,6 +12,10 @@ import dev.futuretech.block.entity.ElectricFurnaceBlockEntity;
 import dev.futuretech.block.entity.FluidCableBlockEntity;
 import dev.futuretech.block.entity.ItemCableBlockEntity;
 import dev.futuretech.block.entity.LavaGeneratorBlockEntity;
+import dev.futuretech.block.entity.BoilerBlockEntity;
+import dev.futuretech.block.entity.SolarGeneratorBlockEntity;
+import dev.futuretech.block.entity.SteamTurbineBlockEntity;
+import dev.futuretech.block.entity.WindGeneratorBlockEntity;
 import dev.futuretech.block.entity.NetworkCableBlockEntity;
 import dev.futuretech.block.entity.RedstoneCableBlockEntity;
 import dev.futuretech.block.entity.NetworkPanelBlockEntity;
@@ -48,9 +52,25 @@ public final class ModBlockEntities {
             TYPES.register("solid_fuel_generator", () -> new BlockEntityType<>(
                     SolidFuelGeneratorBlockEntity::new, ModBlocks.SOLID_FUEL_GENERATOR.get()));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SolarGeneratorBlockEntity>> SOLAR_GENERATOR =
+            TYPES.register("solar_generator", () -> new BlockEntityType<>(
+                    SolarGeneratorBlockEntity::new, ModBlocks.SOLAR_GENERATOR.get()));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SteamTurbineBlockEntity>> STEAM_TURBINE =
+            TYPES.register("steam_turbine", () -> new BlockEntityType<>(
+                    SteamTurbineBlockEntity::new, ModBlocks.STEAM_TURBINE.get()));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<WindGeneratorBlockEntity>> WIND_GENERATOR =
+            TYPES.register("wind_generator", () -> new BlockEntityType<>(
+                    WindGeneratorBlockEntity::new, ModBlocks.WIND_GENERATOR.get()));
+
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LavaGeneratorBlockEntity>> LAVA_GENERATOR =
             TYPES.register("lava_generator", () -> new BlockEntityType<>(
                     LavaGeneratorBlockEntity::new, ModBlocks.LAVA_GENERATOR.get()));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BoilerBlockEntity>> BOILER =
+            TYPES.register("boiler", () -> new BlockEntityType<>(
+                    BoilerBlockEntity::new, ModBlocks.BOILER.get()));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ElectricFurnaceBlockEntity>> ELECTRIC_FURNACE =
             TYPES.register("electric_furnace", () -> new BlockEntityType<>(
@@ -208,6 +228,10 @@ public final class ModBlockEntities {
                 SidedEnergy.view(generator.energy(), generator.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, ELECTRIC_FURNACE.get(), (furnace, side) ->
                 SidedEnergy.view(furnace.energy(), furnace.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, SOLAR_GENERATOR.get(), (generator, side) ->
+                SidedEnergy.view(generator.energy(), generator.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, WIND_GENERATOR.get(), (generator, side) ->
+                SidedEnergy.view(generator.energy(), generator.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, LAVA_GENERATOR.get(), (generator, side) ->
                 SidedEnergy.view(generator.energy(), generator.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, BATTERY.get(), (battery, side) ->
@@ -223,6 +247,12 @@ public final class ModBlockEntities {
                 SidedItems.view(generator, generator.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Fluid.BLOCK, LAVA_GENERATOR.get(), (generator, side) ->
                 SidedFluids.intake(generator.lava(), generator.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Item.BLOCK, BOILER.get(), (boiler,side) -> SidedItems.view(boiler,boiler.sideConfig(),side));
+        event.registerBlockEntity(Capabilities.Fluid.BLOCK, BOILER.get(), (boiler,side) -> boiler.handler(side));
+        // The boiler only takes FE while its energy upgrade is installed; it never hands any out.
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, BOILER.get(), (boiler,side) -> boiler.energyHandler(side));
+        event.registerBlockEntity(Capabilities.Fluid.BLOCK, STEAM_TURBINE.get(), (turbine,side) -> SidedFluids.intake(turbine.steam(),turbine.sideConfig(),side));
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, STEAM_TURBINE.get(), (turbine,side) -> SidedEnergy.view(turbine.energy(),turbine.sideConfig(),side));
         // The tesseract takes all three on every face and keeps none: what goes in comes out at its peers.
         event.registerBlockEntity(Capabilities.Energy.BLOCK, TESSERACT.get(), (tesseract, side) -> tesseract.energy());
         event.registerBlockEntity(Capabilities.Item.BLOCK, TESSERACT.get(), (tesseract, side) -> tesseract.items());

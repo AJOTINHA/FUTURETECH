@@ -28,7 +28,12 @@
     "futuretech:silver_ore",
     "futuretech:deepslate_silver_ore",
     "futuretech:silver_block",
-    "futuretech:raw_silver_block"
+    "futuretech:raw_silver_block",
+    "futuretech:solar_generator",
+    "futuretech:wind_generator",
+    "futuretech:wind_turbine_part",
+    "futuretech:boiler",
+    "futuretech:steam_turbine"
   ],
   "replace": false
 }

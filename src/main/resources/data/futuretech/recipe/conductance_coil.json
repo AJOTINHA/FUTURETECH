@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "R  ",
+    " G ",
+    "  R"
+  ],
+  "key": {
+    "R": "minecraft:redstone",
+    "G": "#c:ingots/electrum"
+  },
+  "result": {
+    "id": "futuretech:conductance_coil",
+    "count": 1
+  }
+}

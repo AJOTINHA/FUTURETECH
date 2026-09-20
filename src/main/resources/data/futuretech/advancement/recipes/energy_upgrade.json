@@ -1,0 +1,21 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_chip": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [{ "items": "futuretech:chip" }]
+      }
+    },
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "futuretech:energy_upgrade"
+      }
+    }
+  },
+  "requirements": [["has_chip", "has_the_recipe"]],
+  "rewards": {
+    "recipes": ["futuretech:energy_upgrade"]
+  }
+}

@@ -25,6 +25,10 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.ASSEMBLER_TERMINAL.get());
                         output.accept(ModItems.SOLID_FUEL_GENERATOR.get());
                         output.accept(ModItems.LAVA_GENERATOR.get());
+                        output.accept(ModItems.BOILER.get());
+                        output.accept(ModItems.SOLAR_GENERATOR.get());
+                        output.accept(ModItems.STEAM_TURBINE.get());
+                        output.accept(ModItems.WIND_GENERATOR.get());
                         output.accept(ModItems.ELECTRIC_FURNACE.get());
                         output.accept(ModItems.CRUSHER.get());
                         output.accept(ModItems.SAWMILL.get());
@@ -70,6 +74,8 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.FILTER_MK4.get());
                         output.accept(ModItems.SPEED_UPGRADE.get());
                         output.accept(ModItems.EFFICIENCY_UPGRADE.get());
+                        output.accept(ModItems.LAVA_UPGRADE.get());
+                        output.accept(ModItems.ENERGY_UPGRADE.get());
                         output.accept(ModItems.CHIP.get());
                         output.accept(ModItems.UPGRADE_KIT_MK2.get());
                         output.accept(ModItems.UPGRADE_KIT_MK3.get());
@@ -121,6 +127,9 @@ public final class ModCreativeTabs {
                         }
                         output.accept(ModItems.ELECTRUM_INGOT.get());
                         output.accept(ModItems.ELECTRUM_POWDER.get());
+                        output.accept(ModItems.RECEPTION_COIL.get());
+                        output.accept(ModItems.TRANSMISSION_COIL.get());
+                        output.accept(ModItems.CONDUCTANCE_COIL.get());
                     })
                     .build());
 

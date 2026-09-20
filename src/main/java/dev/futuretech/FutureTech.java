@@ -20,6 +20,8 @@ public final class FutureTech {
 
     public FutureTech(IEventBus modEventBus) {
         ModDataComponents.TYPES.register(modEventBus);
+        dev.futuretech.registry.ModFluids.TYPES.register(modEventBus);
+        dev.futuretech.registry.ModFluids.FLUIDS.register(modEventBus);
         ModBlocks.BLOCKS.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
         ModBlockEntities.TYPES.register(modEventBus);
