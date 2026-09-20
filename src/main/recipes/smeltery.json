@@ -60,6 +60,66 @@
         "id": "minecraft:netherite_ingot"
       },
       "duration": 400
+    },
+    "electrum_ingot": {
+      "first": {
+        "ingredient": "#c:ingots/silver",
+        "count": 1
+      },
+      "second": {
+        "ingredient": "#c:ingots/gold",
+        "count": 1
+      },
+      "result": {
+        "count": 2,
+        "id": "futuretech:electrum_ingot"
+      },
+      "duration": 200
+    },
+    "electrum_ingot_from_powder": {
+      "first": {
+        "ingredient": "#c:dusts/silver",
+        "count": 1
+      },
+      "second": {
+        "ingredient": "#c:dusts/gold",
+        "count": 1
+      },
+      "result": {
+        "count": 2,
+        "id": "futuretech:electrum_ingot"
+      },
+      "duration": 200
+    },
+    "red_alloy_ingot": {
+      "first": {
+        "ingredient": "#c:ingots/iron",
+        "count": 1
+      },
+      "second": {
+        "ingredient": "minecraft:redstone",
+        "count": 2
+      },
+      "result": {
+        "count": 1,
+        "id": "futuretech:red_alloy_ingot"
+      },
+      "duration": 200
+    },
+    "ender_alloy_ingot": {
+      "first": {
+        "ingredient": "#c:ingots/gold",
+        "count": 1
+      },
+      "second": {
+        "ingredient": "minecraft:ender_pearl",
+        "count": 2
+      },
+      "result": {
+        "count": 1,
+        "id": "futuretech:ender_alloy_ingot"
+      },
+      "duration": 200
     }
   }
 }

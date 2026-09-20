@@ -6,7 +6,27 @@
     },
     {
       "type": "single",
-      "resource": "futuretech:block/cable_mk1/cable_contact"
+      "resource": "futuretech:block/energy_cable_mk1/energy_cable_contact"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/energy_cable_mk2/energy_cable_contact"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/energy_cable_mk3/energy_cable_contact"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/energy_cable_mk4/energy_cable_contact"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/network_cable/network_cable_contact"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/redstone_cable/redstone_cable_contact"
     },
     {
       "type": "single",
@@ -95,6 +115,102 @@
     {
       "resource": "futuretech:block/machine/mk4/machine_side_input_output",
       "type": "single"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/wind_generator/blade_mk1"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/wind_generator/blade_mk2"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/wind_generator/blade_mk3"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/wind_generator/blade_mk4"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/wind_generator/housing_mk1"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/wind_generator/housing_mk2"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/wind_generator/housing_mk3"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/wind_generator/housing_mk4"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/wind_generator/lid_mk1"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/wind_generator/lid_mk2"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/wind_generator/lid_mk3"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/wind_generator/lid_mk4"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/wind_generator/mk1"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/wind_generator/mk1_on"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/wind_generator/mk2"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/wind_generator/mk2_on"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/wind_generator/mk3"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/wind_generator/mk3_on"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/wind_generator/mk4"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/wind_generator/mk4_on"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/wind_generator/steel"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/wind_generator/tower"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/wind_generator/housing_bottom"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/steam"
     }
   ]
 }

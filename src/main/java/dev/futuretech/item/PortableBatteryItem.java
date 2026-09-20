@@ -124,15 +124,21 @@ public final class PortableBatteryItem extends Item {
                 ? "item.futuretech.portable_battery.on" : "item.futuretech.portable_battery.off"));
     }
 
+    /**
+     * Ticked by the player's inventory, and by whatever else carries the battery for the player
+     * and ticks it as an inventory would — a Curios slot on the belt does, and the battery keeps
+     * charging the inventory from there. In the inventory the stack is reached through its
+     * slot, the way every other transfer does; anywhere else the stack itself is written, since
+     * nothing but its components ever changes.
+     */
     @Override
     public void inventoryTick(ItemStack stack, ServerLevel level, Entity owner, @Nullable EquipmentSlot slot) {
         if (!isActive(stack) || storedEnergy(stack) <= 0 || !(owner instanceof Player player)) return;
         int self = findSlot(player, stack);
-        if (self < 0) return;
-        charge(player, self);
+        charge(player, stack, handler(self < 0 ? ItemAccess.forStack(stack) : ItemAccess.forPlayerSlot(player, self)));
     }
 
-    /** The slot of this very stack in the player's inventory, or -1 if it is somewhere else (cursor, container). */
+    /** The slot of this very stack in the player's inventory, or -1 if it is somewhere else (cursor, container, curio). */
     private static int findSlot(Player player, ItemStack stack) {
         var inventory = player.getInventory();
         for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
@@ -143,17 +149,16 @@ public final class PortableBatteryItem extends Item {
 
     /**
      * Spreads this tick's budget over the other energy items in the inventory, first slot first.
-     * Other portable batteries are skipped, so two of them never pump energy back and forth.
+     * The battery's own stack is skipped wherever it sits, and so are other portable batteries,
+     * so two of them never pump energy back and forth.
      */
-    static int charge(Player player, int batterySlot) {
+    static int charge(Player player, ItemStack batteryStack, EnergyHandler battery) {
         var inventory = player.getInventory();
-        PortableBatteryItem item = (PortableBatteryItem) inventory.getItem(batterySlot).getItem();
-        EnergyHandler battery = item.handler(ItemAccess.forPlayerSlot(player, batterySlot));
-        int budget = item.tier.chargePerTick;
+        int budget = tier(batteryStack).chargePerTick;
         int moved = 0;
         for (int slot = 0; slot < inventory.getContainerSize() && budget > 0; slot++) {
             ItemStack target = inventory.getItem(slot);
-            if (slot == batterySlot || target.isEmpty() || target.getItem() instanceof PortableBatteryItem) continue;
+            if (target == batteryStack || target.isEmpty() || target.getItem() instanceof PortableBatteryItem) continue;
             EnergyHandler handler = ItemAccess.forPlayerSlot(player, slot).getCapability(Capabilities.Energy.ITEM);
             if (handler == null || EnergyHandlerUtil.isFull(handler)) continue;
             try (var transaction = Transaction.openRoot()) {

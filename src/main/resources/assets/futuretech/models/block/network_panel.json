@@ -1,0 +1,55 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "front": "futuretech:block/network_panel/network_panel_front",
+    "side": "futuretech:block/machine/machine_side",
+    "particle": "futuretech:block/machine/machine_side"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        14
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#side"
+        },
+        "down": {
+          "texture": "#side"
+        },
+        "east": {
+          "texture": "#side"
+        },
+        "west": {
+          "texture": "#side"
+        },
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#front"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": "#side",
+          "cullface": "south"
+        }
+      }
+    }
+  ]
+}

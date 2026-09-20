@@ -1,20 +1,21 @@
 {
-  "result": {
-    "count": 1,
-    "id": "futuretech:electric_furnace"
-  },
   "type": "minecraft:crafting_shaped",
+  "category": "misc",
   "pattern": [
-    "IFI",
-    "CMC",
+    "CFC",
+    "AMA",
     "IRI"
   ],
   "key": {
-    "I": "minecraft:iron_ingot",
+    "C": "#c:plates/copper",
     "F": "minecraft:furnace",
-    "C": "minecraft:copper_ingot",
+    "A": "minecraft:copper_ingot",
     "M": "futuretech:machine_casing",
-    "R": "minecraft:redstone"
+    "I": "#c:gears/iron",
+    "R": "futuretech:reception_coil"
   },
-  "category": "misc"
+  "result": {
+    "id": "futuretech:electric_furnace",
+    "count": 1
+  }
 }

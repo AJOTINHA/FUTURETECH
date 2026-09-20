@@ -1,0 +1,7 @@
+{
+  "parent": "futuretech:block/energy_cable_mk1_node",
+  "textures": {
+    "cable": "futuretech:block/energy_cable_mk2/energy_cable_mk2",
+    "node": "futuretech:block/energy_cable_mk2/energy_cable_mk2_node"
+  }
+}

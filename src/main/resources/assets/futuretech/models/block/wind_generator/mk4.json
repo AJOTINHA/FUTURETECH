@@ -1,0 +1,84 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "side": "futuretech:block/wind_generator/mk4",
+    "particle": "futuretech:block/wind_generator/mk4",
+    "lid": "futuretech:block/wind_generator/lid_mk4",
+    "steel": "futuretech:block/wind_generator/steel",
+    "housing": "futuretech:block/wind_generator/housing_mk4",
+    "housing_bottom": "futuretech:block/wind_generator/housing_bottom",
+    "blade": "futuretech:block/wind_generator/blade_mk4",
+    "tower": "futuretech:block/wind_generator/tower"
+  },
+  "elements": [
+    {
+      "name": "base",
+      "from": [
+        1,
+        0,
+        1
+      ],
+      "to": [
+        15,
+        8,
+        15
+      ],
+      "faces": {
+        "north": {
+          "texture": "#side",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "south": {
+          "texture": "#side",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "east": {
+          "texture": "#side",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "west": {
+          "texture": "#side",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "up": {
+          "texture": "#lid",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        },
+        "down": {
+          "texture": "#lid",
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ]
+        }
+      }
+    }
+  ]
+}

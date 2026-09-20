@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IGI",
+    "SCS",
+    "IGI"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "G": "minecraft:gold_ingot",
+    "S": "minecraft:sand",
+    "C": "futuretech:chip"
+  },
+  "result": {
+    "id": "futuretech:sand_upgrade",
+    "count": 1
+  }
+}

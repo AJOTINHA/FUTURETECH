@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "lit=false,mk=1": {
+      "model": "futuretech:block/teleporter/mk1"
+    },
+    "lit=true,mk=1": {
+      "model": "futuretech:block/teleporter/mk1_on"
+    },
+    "lit=false,mk=2": {
+      "model": "futuretech:block/teleporter/mk2"
+    },
+    "lit=true,mk=2": {
+      "model": "futuretech:block/teleporter/mk2_on"
+    },
+    "lit=false,mk=3": {
+      "model": "futuretech:block/teleporter/mk3"
+    },
+    "lit=true,mk=3": {
+      "model": "futuretech:block/teleporter/mk3_on"
+    },
+    "lit=false,mk=4": {
+      "model": "futuretech:block/teleporter/mk4"
+    },
+    "lit=true,mk=4": {
+      "model": "futuretech:block/teleporter/mk4_on"
+    }
+  }
+}

@@ -3,11 +3,12 @@
   "category": "equipment",
   "pattern": [
     " M ",
-    "MSM",
+    "MGM",
     " S "
   ],
   "key": {
     "M": "#minecraft:copper_tool_materials",
+    "G": "#c:gears/copper",
     "S": "minecraft:stick"
   },
   "result": {

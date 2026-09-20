@@ -100,6 +100,66 @@
       "duration": 160,
       "count": 2,
       "gear": true
+    },
+    "tin_plate": {
+      "ingredient": "#c:ingots/tin",
+      "count": 1,
+      "result": {
+        "count": 1,
+        "id": "futuretech:tin_plate"
+      },
+      "duration": 100,
+      "gear": false
+    },
+    "tin_gear": {
+      "ingredient": "#c:ingots/tin",
+      "count": 2,
+      "result": {
+        "count": 1,
+        "id": "futuretech:tin_gear"
+      },
+      "duration": 160,
+      "gear": true
+    },
+    "lead_plate": {
+      "ingredient": "#c:ingots/lead",
+      "count": 1,
+      "result": {
+        "count": 1,
+        "id": "futuretech:lead_plate"
+      },
+      "duration": 100,
+      "gear": false
+    },
+    "lead_gear": {
+      "ingredient": "#c:ingots/lead",
+      "count": 2,
+      "result": {
+        "count": 1,
+        "id": "futuretech:lead_gear"
+      },
+      "duration": 160,
+      "gear": true
+    },
+    "silver_plate": {
+      "ingredient": "#c:ingots/silver",
+      "count": 1,
+      "result": {
+        "count": 1,
+        "id": "futuretech:silver_plate"
+      },
+      "duration": 100,
+      "gear": false
+    },
+    "silver_gear": {
+      "ingredient": "#c:ingots/silver",
+      "count": 2,
+      "result": {
+        "count": 1,
+        "id": "futuretech:silver_gear"
+      },
+      "duration": 160,
+      "gear": true
     }
   }
 }

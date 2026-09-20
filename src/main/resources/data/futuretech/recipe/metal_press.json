@@ -1,13 +1,21 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "misc",
-  "pattern": ["IPI", "IMI", "CRC"],
+  "pattern": [
+    "IPI",
+    "AMA",
+    "CRC"
+  ],
   "key": {
     "I": "minecraft:iron_ingot",
     "P": "minecraft:piston",
-    "C": "minecraft:copper_ingot",
+    "A": "#c:gears/iron",
     "M": "futuretech:machine_casing",
+    "C": "minecraft:copper_ingot",
     "R": "minecraft:redstone"
   },
-  "result": {"id": "futuretech:metal_press", "count": 1}
+  "result": {
+    "id": "futuretech:metal_press",
+    "count": 1
+  }
 }

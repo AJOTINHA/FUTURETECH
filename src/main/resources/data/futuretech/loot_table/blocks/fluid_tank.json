@@ -14,6 +14,13 @@
               "include": [
                 "futuretech:tank_fluid"
               ]
+            },
+            {
+              "function": "minecraft:copy_state",
+              "properties": [
+                "mk"
+              ],
+              "block": "futuretech:fluid_tank"
             }
           ]
         }

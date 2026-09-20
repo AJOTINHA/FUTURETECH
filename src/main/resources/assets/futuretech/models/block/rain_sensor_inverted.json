@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/template_daylight_detector",
+  "textures": {
+    "top": "futuretech:block/rain_sensor/rain_sensor_inverted_top",
+    "side": "futuretech:block/rain_sensor/rain_sensor_side"
+  }
+}

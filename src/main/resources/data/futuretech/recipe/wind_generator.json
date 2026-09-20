@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " S ",
+    "TRT",
+    "CMC"
+  ],
+  "key": {
+    "S": "#c:gears/steel",
+    "T": "#c:plates/tin",
+    "R": "futuretech:reception_coil",
+    "C": "minecraft:copper_ingot",
+    "M": "futuretech:machine_casing"
+  },
+  "result": {
+    "id": "futuretech:wind_generator",
+    "count": 1
+  }
+}

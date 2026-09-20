@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "futuretech:raw_tin_block"
+  ],
+  "result": {
+    "id": "futuretech:raw_tin",
+    "count": 9
+  }
+}

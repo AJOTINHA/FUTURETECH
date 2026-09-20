@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IDI",
+    "SMS",
+    "CRC"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "D": "minecraft:dispenser",
+    "S": "#c:plates/steel",
+    "M": "futuretech:machine_casing",
+    "C": "#c:gears/copper",
+    "R": "futuretech:reception_coil"
+  },
+  "result": {
+    "id": "futuretech:paint_machine",
+    "count": 1
+  }
+}

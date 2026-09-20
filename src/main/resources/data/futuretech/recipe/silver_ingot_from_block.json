@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    "futuretech:silver_block"
+  ],
+  "result": {
+    "id": "futuretech:silver_ingot",
+    "count": 9
+  }
+}

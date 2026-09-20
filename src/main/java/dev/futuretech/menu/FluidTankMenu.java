@@ -5,8 +5,10 @@ import dev.futuretech.registry.ModMenus;
 import dev.futuretech.registry.ModBlocks;
 import dev.futuretech.api.side.SideConfigMenu;
 import dev.futuretech.api.side.SideMode;
+import dev.futuretech.api.side.SlotRole;
 import dev.futuretech.api.redstone.RedstoneControlMenu;
 import dev.futuretech.api.redstone.RedstoneMode;
+import dev.futuretech.api.upgrade.MachineLevel;
 import dev.futuretech.api.upgrade.UpgradeInventory;
 import dev.futuretech.api.upgrade.UpgradeSlots;
 import net.minecraft.core.Direction;
@@ -40,8 +42,14 @@ public final class FluidTankMenu extends AbstractContainerMenu implements SideCo
     private final ContainerData data;
 
     public FluidTankMenu(int id, Inventory inventory, RegistryFriendlyByteBuf extra) {
-        this(id, inventory, findTank(inventory, extra.readBlockPos()), new SimpleContainer(2),
-                new UpgradeInventory(() -> 1, () -> {}), new SimpleContainerData(FluidTankBlockEntity.DATA_COUNT));
+        this(id, inventory, findTank(inventory, extra.readBlockPos()), new SimpleContainer(2));
+    }
+
+    /** Client side: the upgrade slots lock by the tank's MK, read off the block state the client already has. */
+    private FluidTankMenu(int id, Inventory inventory, @Nullable FluidTankBlockEntity tank, SimpleContainer contents) {
+        this(id, inventory, tank, contents,
+                new UpgradeInventory(() -> tank == null ? 1 : MachineLevel.of(tank.getBlockState()), () -> {}),
+                new SimpleContainerData(FluidTankBlockEntity.DATA_COUNT));
     }
 
     public FluidTankMenu(int id, Inventory inventory, FluidTankBlockEntity tank) {
@@ -71,6 +79,11 @@ public final class FluidTankMenu extends AbstractContainerMenu implements SideCo
     }
 
     public FluidStack fluid() { return tank == null ? FluidStack.EMPTY : tank.displayContents(); }
+
+    /** What the tank holds at its level. */
+    public int capacity() { return tank == null ? FluidTankBlockEntity.CAPACITY : tank.capacity(); }
+
+    public int mk() { return tank == null ? 1 : MachineLevel.of(tank.getBlockState()); }
     public FluidStack visualFluid() { return tank == null ? FluidStack.EMPTY : tank.visualFluid(); }
     public float visualFill(float partialTick) { return tank == null ? 0 : tank.visualFill(partialTick); }
 
@@ -79,7 +92,7 @@ public final class FluidTankMenu extends AbstractContainerMenu implements SideCo
     @Override
     public Direction front() { return Direction.values()[Math.clamp(data.get(FluidTankBlockEntity.DATA_FRONT), 0, 5)]; }
     @Override
-    public BlockState displayState() { return ModBlocks.FLUID_TANK.get().displayState(front()); }
+    public BlockState displayState() { return ModBlocks.FLUID_TANK.get().displayState(front()).setValue(MachineLevel.MK, mk()); }
     @Override
     public Set<SideMode> allowedModes() { return ModBlocks.FLUID_TANK.get().allowedSideModes(); }
     @Override
@@ -90,6 +103,9 @@ public final class FluidTankMenu extends AbstractContainerMenu implements SideCo
     public boolean isAutoPulling() { return false; }
     @Override
     public boolean isAutoPushing() { return false; }
+
+    @Override
+    public SlotRole slotRole(int index) { return index == 0 ? SlotRole.INPUT : index == 1 ? SlotRole.OUTPUT : SlotRole.NONE; }
     @Override
     public RedstoneMode redstoneMode() { return RedstoneMode.byOrdinal(data.get(FluidTankBlockEntity.DATA_REDSTONE)); }
     @Override

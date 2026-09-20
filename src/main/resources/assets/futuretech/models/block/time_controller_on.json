@@ -1,0 +1,6 @@
+{
+  "parent": "futuretech:block/machine_base",
+  "textures": {
+    "front": "futuretech:block/time_controller/time_controller_front_on"
+  }
+}

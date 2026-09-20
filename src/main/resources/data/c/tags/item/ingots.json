@@ -1,1 +1,12 @@
-{"replace":false,"values":["#c:ingots/steel"]}
+{
+  "replace": false,
+  "values": [
+    "#c:ingots/steel",
+    "#c:ingots/tin",
+    "#c:ingots/lead",
+    "#c:ingots/silver",
+    "#c:ingots/electrum",
+    "#c:ingots/red_alloy",
+    "#c:ingots/ender_alloy"
+  ]
+}

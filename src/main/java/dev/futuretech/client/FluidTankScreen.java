@@ -5,6 +5,7 @@ import static dev.futuretech.client.MachineScreenStyle.*;
 import dev.futuretech.block.entity.FluidTankBlockEntity;
 import dev.futuretech.menu.FluidTankMenu;
 import dev.futuretech.api.gui.TabStrip;
+import dev.futuretech.api.gui.TabbedScreen;
 import dev.futuretech.api.upgrade.client.UpgradeTab;
 import dev.futuretech.api.side.client.SideConfigTab;
 import dev.futuretech.api.redstone.client.RedstoneControlTab;
@@ -16,12 +17,15 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
-public final class FluidTankScreen extends AbstractContainerScreen<FluidTankMenu> {
+public final class FluidTankScreen extends AbstractContainerScreen<FluidTankMenu> implements TabbedScreen {
     private static final int BAR_X = 76;
     private static final int BAR_Y = 38;
     private static final int BAR_WIDTH = 24;
     private static final int BAR_HEIGHT = 62;
     private final TabStrip tabs;
+
+    @Override
+    public TabStrip tabs() { return tabs; }
 
     public FluidTankScreen(FluidTankMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, FluidTankMenu.WIDTH, FluidTankMenu.HEIGHT);
@@ -74,7 +78,7 @@ public final class FluidTankScreen extends AbstractContainerScreen<FluidTankMenu
 
     @Override
     protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        graphics.text(font, title, titleLabelX, titleLabelY, TITLE, false);
+        drawMachineTitle(graphics, font, title, menu.mk(), titleLabelX, titleLabelY, imageWidth - titleLabelX - 7);
         graphics.text(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, TEXT, false);
         var fluid = menu.fluid();
         Component name = fluid.isEmpty() ? Component.translatable("gui.futuretech.empty") : fluid.getHoverName();
@@ -82,7 +86,7 @@ public final class FluidTankScreen extends AbstractContainerScreen<FluidTankMenu
         graphics.text(font, shortName, (imageWidth - font.width(shortName)) / 2, 25, TEXT, false);
         centred(graphics, Component.translatable("gui.futuretech.tank.input"), FluidTankMenu.INPUT_X + 8, 47);
         centred(graphics, Component.translatable("gui.futuretech.tank.output"), FluidTankMenu.OUTPUT_X + 8, 47);
-        centred(graphics, Component.translatable("gui.futuretech.tank.amount", fluid.getAmount(), FluidTankBlockEntity.CAPACITY),
+        centred(graphics, Component.translatable("gui.futuretech.tank.amount", fluid.getAmount(), menu.capacity()),
                 imageWidth / 2, 104);
     }
 
@@ -99,7 +103,7 @@ public final class FluidTankScreen extends AbstractContainerScreen<FluidTankMenu
             var fluid = menu.fluid();
             graphics.setTooltipForNextFrame(Component.translatable("gui.futuretech.tank.contents",
                     fluid.isEmpty() ? Component.translatable("gui.futuretech.empty") : fluid.getHoverName(),
-                    fluid.getAmount(), FluidTankBlockEntity.CAPACITY), mouseX, mouseY);
+                    fluid.getAmount(), menu.capacity()), mouseX, mouseY);
         }
     }
 }

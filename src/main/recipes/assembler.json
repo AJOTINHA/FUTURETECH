@@ -3,7 +3,14 @@
   "recipes": {
     "machine_casing": {
       "ingredients": [
-        "minecraft:stone",
+        "minecraft:iron_ingot",
+        "minecraft:glass",
+        "minecraft:iron_ingot",
+        "minecraft:glass",
+        "#c:gears/tin",
+        "minecraft:glass",
+        "minecraft:iron_ingot",
+        "minecraft:glass",
         "minecraft:iron_ingot"
       ],
       "result": {
@@ -11,6 +18,110 @@
         "count": 1
       },
       "duration": 80
+    },
+    "chip": {
+      "ingredients": [
+        "minecraft:copper_ingot",
+        "minecraft:gold_ingot",
+        "minecraft:copper_ingot",
+        "minecraft:redstone",
+        "minecraft:quartz",
+        "minecraft:redstone",
+        "minecraft:copper_ingot",
+        "minecraft:gold_ingot",
+        "minecraft:copper_ingot"
+      ],
+      "result": {
+        "id": "futuretech:chip",
+        "count": 1
+      },
+      "duration": 80
+    },
+    "reception_coil": {
+      "ingredients": [
+        "",
+        "",
+        "minecraft:redstone",
+        "",
+        "#c:ingots/gold",
+        "",
+        "minecraft:redstone",
+        "",
+        ""
+      ],
+      "result": {
+        "id": "futuretech:reception_coil",
+        "count": 1
+      },
+      "duration": 60
+    },
+    "transmission_coil": {
+      "ingredients": [
+        "",
+        "",
+        "minecraft:redstone",
+        "",
+        "#c:ingots/silver",
+        "",
+        "minecraft:redstone",
+        "",
+        ""
+      ],
+      "result": {
+        "id": "futuretech:transmission_coil",
+        "count": 1
+      },
+      "duration": 60
+    },
+    "conductance_coil": {
+      "ingredients": [
+        "minecraft:redstone",
+        "",
+        "",
+        "",
+        "#c:ingots/electrum",
+        "",
+        "",
+        "",
+        "minecraft:redstone"
+      ],
+      "result": {
+        "id": "futuretech:conductance_coil",
+        "count": 1
+      },
+      "duration": 60
+    },
+    "plate_mold": {
+      "ingredients": [
+        "minecraft:iron_ingot",
+        "minecraft:iron_ingot",
+        "",
+        "minecraft:iron_ingot",
+        "minecraft:iron_ingot"
+      ],
+      "result": {
+        "id": "futuretech:plate_mold",
+        "count": 1
+      },
+      "duration": 60
+    },
+    "gear_mold": {
+      "ingredients": [
+        "",
+        "minecraft:iron_ingot",
+        "",
+        "minecraft:iron_ingot",
+        "#c:gears/iron",
+        "minecraft:iron_ingot",
+        "",
+        "minecraft:iron_ingot",
+        ""
+      ],
+      "result": {
+        "id": "futuretech:gear_mold",
+        "count": 1
+      },
+      "duration": 60
     }
   }
 }

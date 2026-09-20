@@ -1,0 +1,57 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "side": "futuretech:block/wind_generator/mk1",
+    "particle": "futuretech:block/wind_generator/mk1",
+    "lid": "futuretech:block/wind_generator/lid_mk1",
+    "steel": "futuretech:block/wind_generator/steel",
+    "housing": "futuretech:block/wind_generator/housing_mk1",
+    "housing_bottom": "futuretech:block/wind_generator/housing_bottom",
+    "blade": "futuretech:block/wind_generator/blade_mk1",
+    "tower": "futuretech:block/wind_generator/tower"
+  },
+  "elements": [],
+  "display": {
+    "gui": {
+      "rotation": [
+        15,
+        145,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1.1,
+        1.1,
+        1.1
+      ]
+    },
+    "ground": {
+      "translation": [
+        0,
+        3,
+        0
+      ],
+      "scale": [
+        0.7,
+        0.7,
+        0.7
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        180,
+        0
+      ],
+      "scale": [
+        0.8,
+        0.8,
+        0.8
+      ]
+    }
+  }
+}

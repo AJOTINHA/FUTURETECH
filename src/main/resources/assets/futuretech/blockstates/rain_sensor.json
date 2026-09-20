@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "facing=south,inverted=false": {
+      "model": "futuretech:block/rain_sensor"
+    },
+    "facing=south,inverted=true": {
+      "model": "futuretech:block/rain_sensor_inverted"
+    },
+    "facing=west,inverted=false": {
+      "model": "futuretech:block/rain_sensor",
+      "y": 90
+    },
+    "facing=west,inverted=true": {
+      "model": "futuretech:block/rain_sensor_inverted",
+      "y": 90
+    },
+    "facing=north,inverted=false": {
+      "model": "futuretech:block/rain_sensor",
+      "y": 180
+    },
+    "facing=north,inverted=true": {
+      "model": "futuretech:block/rain_sensor_inverted",
+      "y": 180
+    },
+    "facing=east,inverted=false": {
+      "model": "futuretech:block/rain_sensor",
+      "y": 270
+    },
+    "facing=east,inverted=true": {
+      "model": "futuretech:block/rain_sensor_inverted",
+      "y": 270
+    }
+  }
+}

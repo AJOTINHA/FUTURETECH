@@ -4,8 +4,10 @@ import static dev.futuretech.client.MachineScreenStyle.*;
 
 import dev.futuretech.api.gui.EnergyInfoTab;
 import dev.futuretech.api.gui.TabStrip;
+import dev.futuretech.api.gui.TabbedScreen;
 import dev.futuretech.api.redstone.client.RedstoneControlTab;
 import dev.futuretech.api.side.client.SideConfigTab;
+import dev.futuretech.api.side.client.SortToggle;
 import dev.futuretech.api.upgrade.client.UpgradeTab;
 import dev.futuretech.menu.SmelteryMenu;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -14,7 +16,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
-public final class SmelteryScreen extends AbstractContainerScreen<SmelteryMenu> {
+public final class SmelteryScreen extends AbstractContainerScreen<SmelteryMenu> implements TabbedScreen {
     /** The energy column down the left edge, centred on the slot rows: outer box, with the fill inset by a pixel. */
     private static final int ENERGY_X = 7;
     private static final int ENERGY_HEIGHT = 49;
@@ -42,6 +44,9 @@ public final class SmelteryScreen extends AbstractContainerScreen<SmelteryMenu> 
     private final AnimatedBar energyBar = new AnimatedBar();
     private final AnimatedBar[] progressBars;
     private final TabStrip tabs;
+
+    @Override
+    public TabStrip tabs() { return tabs; }
 
     public SmelteryScreen(SmelteryMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, SmelteryMenu.IMAGE_WIDTH, 184 + menu.extraHeight());
@@ -76,6 +81,7 @@ public final class SmelteryScreen extends AbstractContainerScreen<SmelteryMenu> 
             drawProgressArrow(graphics, x, y + menu.rowY(lane), meltWidth);
         }
         drawCrucible(graphics, x + CRUCIBLE_X, y + menu.rowY(menu.lanes() - 1) + CRUCIBLE_BELOW_ROW, menu.isWorking());
+        SortToggle.draw(graphics, menu, x + SortToggle.X, y + sortY(), mouseX, mouseY);
         tabs.render(graphics, x, y, imageWidth, mouseX, mouseY);
     }
 
@@ -158,13 +164,18 @@ public final class SmelteryScreen extends AbstractContainerScreen<SmelteryMenu> 
         energyTooltip(graphics, mouseX, mouseY, leftPos + ENERGY_X, topPos + energyTop(),
                 ENERGY_WIDTH, ENERGY_HEIGHT,
                 menu.energyStored(), menu.energyCapacity());
+        SortToggle.tooltip(graphics, menu, leftPos + SortToggle.X, topPos + sortY(), mouseX, mouseY);
         tabs.extractTooltip(graphics, mouseX, mouseY);
     }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        return tabs.mouseClicked(event) || super.mouseClicked(event, doubleClick);
+        return tabs.mouseClicked(event) || SortToggle.click(menu, leftPos + SortToggle.X, topPos + sortY(), event)
+                || super.mouseClicked(event, doubleClick);
     }
+
+    /** The sorting button's top, relative to the panel: centred on the block of lane rows. */
+    private int sortY() { return SortToggle.y(menu.rowY(0), menu.lanes()); }
 
     @Override
     protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {

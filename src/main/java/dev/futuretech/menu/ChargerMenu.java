@@ -10,6 +10,7 @@ import dev.futuretech.api.side.SideConfigMenu;
 import dev.futuretech.api.side.SideConfigurable;
 import dev.futuretech.api.side.SideConfigurableBlock;
 import dev.futuretech.api.side.SideMode;
+import dev.futuretech.api.side.SlotRole;
 import dev.futuretech.api.upgrade.MachineLevel;
 import dev.futuretech.api.upgrade.UpgradeInventory;
 import dev.futuretech.api.upgrade.UpgradeSlots;
@@ -130,6 +131,9 @@ public final class ChargerMenu extends MachineMenu implements SideConfigMenu, Re
 
     @Override
     public boolean isAutoPushing() { return data.get(DATA_AUTO_BASE + 1) != 0; }
+
+    @Override
+    public SlotRole slotRole(int index) { return index == 0 ? SlotRole.INPUT : index == 1 ? SlotRole.OUTPUT : SlotRole.NONE; }
 
     @Override
     public RedstoneMode redstoneMode() { return RedstoneMode.byOrdinal(data.get(DATA_REDSTONE_BASE)); }

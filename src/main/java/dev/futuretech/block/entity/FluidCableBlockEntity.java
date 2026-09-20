@@ -301,8 +301,11 @@ public final class FluidCableBlockEntity extends AbstractCableBlockEntity {
     /** Fluid handler seen by the neighbour beyond {@code side}; resolves the network on every call. */
     public @Nullable ResourceHandler<FluidResource> handler(@Nullable Direction side) {
         if (!(level instanceof ServerLevel)) return null;
-        // A connector the player closed to incoming fluid refuses what the neighbour pushes.
-        boolean accepts = connectors().allowsItemInput(side);
+        // A side the wrench cut joins nothing: no machine, so no handler for one to push into.
+        if (side != null && isCut(side)) return null;
+        // A connector the player closed to incoming fluid refuses what the neighbour pushes,
+        // and so does one redstone has switched off; that one is asked as it goes.
+        boolean open = connectors().allowsItemInput(side);
         return new ResourceHandler<>() {
             private ResourceHandler<FluidResource> current() {
                 return side == null ? network().handlerFor(null)
@@ -328,7 +331,7 @@ public final class FluidCableBlockEntity extends AbstractCableBlockEntity {
 
             @Override
             public int insert(int index, FluidResource resource, int amount, TransactionContext transaction) {
-                return accepts ? current().insert(index, resource, amount, transaction) : 0;
+                return (open && connectorActive(side)) ? current().insert(index, resource, amount, transaction) : 0;
             }
 
             @Override

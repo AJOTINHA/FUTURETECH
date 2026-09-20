@@ -7,16 +7,33 @@ import dev.futuretech.api.side.SidedItems;
 import dev.futuretech.block.entity.BatteryBlockEntity;
 import dev.futuretech.block.entity.ChargerBlockEntity;
 import dev.futuretech.block.entity.FluidTankBlockEntity;
-import dev.futuretech.block.entity.CableBlockEntity;
+import dev.futuretech.block.entity.EnergyCableBlockEntity;
 import dev.futuretech.block.entity.ElectricFurnaceBlockEntity;
 import dev.futuretech.block.entity.FluidCableBlockEntity;
 import dev.futuretech.block.entity.ItemCableBlockEntity;
 import dev.futuretech.block.entity.LavaGeneratorBlockEntity;
+import dev.futuretech.block.entity.BoilerBlockEntity;
+import dev.futuretech.block.entity.SolarGeneratorBlockEntity;
+import dev.futuretech.block.entity.SteamTurbineBlockEntity;
+import dev.futuretech.block.entity.WindGeneratorBlockEntity;
+import dev.futuretech.block.entity.NetworkCableBlockEntity;
+import dev.futuretech.block.entity.RedstoneCableBlockEntity;
+import dev.futuretech.block.entity.NetworkPanelBlockEntity;
+import dev.futuretech.block.entity.StorageCardsBlockEntity;
+import dev.futuretech.block.entity.TesseractBlockEntity;
 import dev.futuretech.block.LaneMachineKind;
 import dev.futuretech.block.entity.LaneMachineBlockEntity;
 import dev.futuretech.block.entity.MetalPressBlockEntity;
+import dev.futuretech.block.entity.PaintMachineBlockEntity;
+import dev.futuretech.block.entity.MelterBlockEntity;
+import dev.futuretech.block.entity.ExtruderBlockEntity;
 import dev.futuretech.block.entity.SmelteryBlockEntity;
+import dev.futuretech.block.entity.TeleporterBlockEntity;
+import dev.futuretech.block.entity.ControllerBlockEntity;
+import dev.futuretech.block.entity.RainSensorBlockEntity;
+import dev.futuretech.block.entity.WaterPumpBlockEntity;
 import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
+import net.minecraft.resources.Identifier;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -35,9 +52,25 @@ public final class ModBlockEntities {
             TYPES.register("solid_fuel_generator", () -> new BlockEntityType<>(
                     SolidFuelGeneratorBlockEntity::new, ModBlocks.SOLID_FUEL_GENERATOR.get()));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SolarGeneratorBlockEntity>> SOLAR_GENERATOR =
+            TYPES.register("solar_generator", () -> new BlockEntityType<>(
+                    SolarGeneratorBlockEntity::new, ModBlocks.SOLAR_GENERATOR.get()));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SteamTurbineBlockEntity>> STEAM_TURBINE =
+            TYPES.register("steam_turbine", () -> new BlockEntityType<>(
+                    SteamTurbineBlockEntity::new, ModBlocks.STEAM_TURBINE.get()));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<WindGeneratorBlockEntity>> WIND_GENERATOR =
+            TYPES.register("wind_generator", () -> new BlockEntityType<>(
+                    WindGeneratorBlockEntity::new, ModBlocks.WIND_GENERATOR.get()));
+
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LavaGeneratorBlockEntity>> LAVA_GENERATOR =
             TYPES.register("lava_generator", () -> new BlockEntityType<>(
                     LavaGeneratorBlockEntity::new, ModBlocks.LAVA_GENERATOR.get()));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BoilerBlockEntity>> BOILER =
+            TYPES.register("boiler", () -> new BlockEntityType<>(
+                    BoilerBlockEntity::new, ModBlocks.BOILER.get()));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ElectricFurnaceBlockEntity>> ELECTRIC_FURNACE =
             TYPES.register("electric_furnace", () -> new BlockEntityType<>(
@@ -56,8 +89,24 @@ public final class ModBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MetalPressBlockEntity>> METAL_PRESS =
             TYPES.register("metal_press", () -> new BlockEntityType<>(MetalPressBlockEntity::new, ModBlocks.METAL_PRESS.get()));
 
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MelterBlockEntity>> MELTER =
+            TYPES.register("melter", () -> new BlockEntityType<>(MelterBlockEntity::new, ModBlocks.MELTER.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ExtruderBlockEntity>> EXTRUDER =
+            TYPES.register("extruder", () -> new BlockEntityType<>(ExtruderBlockEntity::new, ModBlocks.EXTRUDER.get()));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SmelteryBlockEntity>> SMELTERY =
             TYPES.register("smeltery", () -> new BlockEntityType<>(SmelteryBlockEntity::new, ModBlocks.SMELTERY.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PaintMachineBlockEntity>> PAINT_MACHINE =
+            TYPES.register("paint_machine", () -> new BlockEntityType<>(PaintMachineBlockEntity::new, ModBlocks.PAINT_MACHINE.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<WaterPumpBlockEntity>> WATER_PUMP =
+            TYPES.register("water_pump", () -> new BlockEntityType<>(WaterPumpBlockEntity::new, ModBlocks.WATER_PUMP.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TeleporterBlockEntity>> TELEPORTER =
+            TYPES.register("teleporter", () -> new BlockEntityType<>(TeleporterBlockEntity::new, ModBlocks.TELEPORTER.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RainSensorBlockEntity>> RAIN_SENSOR =
+            TYPES.register("rain_sensor", () -> new BlockEntityType<>(RainSensorBlockEntity::new, ModBlocks.RAIN_SENSOR.get()));
+    // One type for both controllers: past what they set, they keep the same things.
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ControllerBlockEntity>> CONTROLLER =
+            TYPES.register("controller", () -> new BlockEntityType<>(ControllerBlockEntity::new,
+                    ModBlocks.TIME_CONTROLLER.get(), ModBlocks.WEATHER_CONTROLLER.get()));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<BatteryBlockEntity>> BATTERY =
             TYPES.register("battery", () -> new BlockEntityType<>(
@@ -69,9 +118,10 @@ public final class ModBlockEntities {
                     FluidTankBlockEntity::new, ModBlocks.FLUID_TANK.get()));
 
     // One block entity type serves every cable tier; list each tier's block here.
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CableBlockEntity>> CABLE =
-            TYPES.register("cable", () -> new BlockEntityType<>(
-                    CableBlockEntity::new, ModBlocks.CABLE_MK1.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<EnergyCableBlockEntity>> CABLE =
+            TYPES.register("energy_cable", () -> new BlockEntityType<>(
+                    EnergyCableBlockEntity::new, ModBlocks.ENERGY_CABLE_MK1.get(), ModBlocks.ENERGY_CABLE_MK2.get(),
+                    ModBlocks.ENERGY_CABLE_MK3.get(), ModBlocks.ENERGY_CABLE_MK4.get()));
 
     // One block entity type serves every item cable tier; list each tier's block here.
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ItemCableBlockEntity>> ITEM_CABLE =
@@ -82,6 +132,32 @@ public final class ModBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<FluidCableBlockEntity>> FLUID_CABLE =
             TYPES.register("fluid_cable", () -> new BlockEntityType<>(
                     FluidCableBlockEntity::new, ModBlocks.FLUID_CABLE_OPAQUE.get(), ModBlocks.FLUID_CABLE.get()));
+
+    // The network cable has one size, so its type serves the one block.
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<NetworkCableBlockEntity>> NETWORK_CABLE =
+            TYPES.register("network_cable", () -> new BlockEntityType<>(
+                    NetworkCableBlockEntity::new, ModBlocks.NETWORK_CABLE.get()));
+
+    // The redstone cable has one size too.
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RedstoneCableBlockEntity>> REDSTONE_CABLE =
+            TYPES.register("redstone_cable", () -> new BlockEntityType<>(
+                    RedstoneCableBlockEntity::new, ModBlocks.REDSTONE_CABLE.get()));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<NetworkPanelBlockEntity>> NETWORK_PANEL =
+            TYPES.register("network_panel", () -> new BlockEntityType<>(
+                    NetworkPanelBlockEntity::new, ModBlocks.NETWORK_PANEL.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<StorageCardsBlockEntity>> STORAGE_CARDS =
+            TYPES.register("storage_cards", () -> new BlockEntityType<>(
+                    StorageCardsBlockEntity::new, ModBlocks.STORAGE_CARDS.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TesseractBlockEntity>> TESSERACT =
+            TYPES.register("tesseract", () -> new BlockEntityType<>(
+                    TesseractBlockEntity::new, ModBlocks.TESSERACT.get()));
+
+    // One type for both ends: past the job, a transmitter and a receiver keep the same things.
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.futuretech.block.entity.WirelessRedstoneBlockEntity>> WIRELESS_REDSTONE =
+            TYPES.register("wireless_redstone", () -> new BlockEntityType<>(
+                    dev.futuretech.block.entity.WirelessRedstoneBlockEntity::new,
+                    ModBlocks.WIRELESS_TRANSMITTER.get(), ModBlocks.WIRELESS_RECEIVER.get()));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.futuretech.block.entity.AssemblerBlockEntity>> ASSEMBLER =
             TYPES.register("assembler", () -> new BlockEntityType<>(dev.futuretech.block.entity.AssemblerBlockEntity::new,
@@ -94,14 +170,46 @@ public final class ModBlockEntities {
         }
         event.registerItem(Capabilities.Energy.ITEM, (stack, access) -> new ItemAccessEnergyHandler(access,
                 ModDataComponents.ENERGY.get(), ModItems.BATTERY_MK1.get().tier(stack).capacity()), ModItems.BATTERY_MK1.get());
+        // The portable teleporter charges the same way, so the charger fills it.
+        event.registerItem(Capabilities.Energy.ITEM, (stack, access) -> ModItems.PORTABLE_TELEPORTER.get().handler(access),
+                ModItems.PORTABLE_TELEPORTER.get());
         event.registerBlockEntity(Capabilities.Energy.BLOCK, METAL_PRESS.get(), (press, side) ->
                 SidedEnergy.view(press.energy(), press.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Item.BLOCK, METAL_PRESS.get(), (press, side) ->
                 SidedItems.view(press, press.sideConfig(), side));
+        // The melter takes energy anywhere, items on the input faces, and its fluid is drawn from the output ones.
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, MELTER.get(), (melter, side) ->
+                SidedEnergy.view(melter.energy(), melter.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Item.BLOCK, MELTER.get(), (melter, side) ->
+                SidedItems.view(melter, melter.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Fluid.BLOCK, MELTER.get(), (melter, side) ->
+                SidedFluids.outflow(melter.tank(), melter.sideConfig(), side));
+        // The extruder takes energy anywhere, fluid on the input faces, and its item leaves by the output ones.
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, EXTRUDER.get(), (extruder, side) ->
+                SidedEnergy.view(extruder.energy(), extruder.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Item.BLOCK, EXTRUDER.get(), (extruder, side) ->
+                SidedItems.view(extruder, extruder.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Fluid.BLOCK, EXTRUDER.get(), (extruder, side) ->
+                SidedFluids.intake(extruder.tanks(), extruder.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, SMELTERY.get(), (smeltery, side) ->
                 SidedEnergy.view(smeltery.energy(), smeltery.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Item.BLOCK, SMELTERY.get(), (smeltery, side) ->
                 SidedItems.view(smeltery, smeltery.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, PAINT_MACHINE.get(), (painter, side) ->
+                SidedEnergy.view(painter.energy(), painter.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Item.BLOCK, PAINT_MACHINE.get(), (painter, side) ->
+                SidedItems.view(painter, painter.sideConfig(), side));
+        // Water only comes out, through the faces in an output mode; buckets follow the same faces.
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, WATER_PUMP.get(), (pump, side) ->
+                SidedEnergy.view(pump.energy(), pump.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Item.BLOCK, WATER_PUMP.get(), (pump, side) ->
+                SidedItems.view(pump, pump.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Fluid.BLOCK, WATER_PUMP.get(), (pump, side) ->
+                SidedFluids.outflow(pump.water(), pump.sideConfig(), side));
+        // The teleporter takes energy on every face and has no items to offer.
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, TELEPORTER.get(), (teleporter, side) -> teleporter.energy());
+        // So do the controllers: they pay for a change from what any face brings in.
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, CONTROLLER.get(), (controller, side) -> controller.energy());
         event.registerBlockEntity(Capabilities.Energy.BLOCK, ASSEMBLER.get(), (assembler, side) -> assembler.energyHandler());
         event.registerBlockEntity(Capabilities.Fluid.BLOCK, FLUID_TANK.get(), (tank, side) -> tank.handler(side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, CHARGER.get(), (charger, side) ->
@@ -120,6 +228,10 @@ public final class ModBlockEntities {
                 SidedEnergy.view(generator.energy(), generator.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, ELECTRIC_FURNACE.get(), (furnace, side) ->
                 SidedEnergy.view(furnace.energy(), furnace.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, SOLAR_GENERATOR.get(), (generator, side) ->
+                SidedEnergy.view(generator.energy(), generator.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, WIND_GENERATOR.get(), (generator, side) ->
+                SidedEnergy.view(generator.energy(), generator.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, LAVA_GENERATOR.get(), (generator, side) ->
                 SidedEnergy.view(generator.energy(), generator.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Energy.BLOCK, BATTERY.get(), (battery, side) ->
@@ -135,12 +247,28 @@ public final class ModBlockEntities {
                 SidedItems.view(generator, generator.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Fluid.BLOCK, LAVA_GENERATOR.get(), (generator, side) ->
                 SidedFluids.intake(generator.lava(), generator.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Item.BLOCK, BOILER.get(), (boiler,side) -> SidedItems.view(boiler,boiler.sideConfig(),side));
+        event.registerBlockEntity(Capabilities.Fluid.BLOCK, BOILER.get(), (boiler,side) -> boiler.handler(side));
+        // The boiler only takes FE while its energy upgrade is installed; it never hands any out.
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, BOILER.get(), (boiler,side) -> boiler.energyHandler(side));
+        event.registerBlockEntity(Capabilities.Fluid.BLOCK, STEAM_TURBINE.get(), (turbine,side) -> SidedFluids.intake(turbine.steam(),turbine.sideConfig(),side));
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, STEAM_TURBINE.get(), (turbine,side) -> SidedEnergy.view(turbine.energy(),turbine.sideConfig(),side));
+        // The tesseract takes all three on every face and keeps none: what goes in comes out at its peers.
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, TESSERACT.get(), (tesseract, side) -> tesseract.energy());
+        event.registerBlockEntity(Capabilities.Item.BLOCK, TESSERACT.get(), (tesseract, side) -> tesseract.items());
+        event.registerBlockEntity(Capabilities.Fluid.BLOCK, TESSERACT.get(), (tesseract, side) -> tesseract.fluids());
         event.registerBlockEntity(Capabilities.Energy.BLOCK, CABLE.get(),
                 (cable, side) -> cable.handler(side));
         event.registerBlockEntity(Capabilities.Item.BLOCK, ITEM_CABLE.get(),
                 (cable, side) -> cable.handler(side));
         event.registerBlockEntity(Capabilities.Fluid.BLOCK, FLUID_CABLE.get(),
                 (cable, side) -> cable.handler(side));
+    }
+
+    static {
+        // The energy cable's block entity used to be plain "cable": saved chunks keep theirs.
+        TYPES.addAlias(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "cable"),
+                Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "energy_cable"));
     }
 
     private ModBlockEntities() {}

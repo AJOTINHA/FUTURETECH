@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " M ",
+    "MIM",
+    " M "
+  ],
+  "key": {
+    "M": "#c:ingots/netherite",
+    "I": "minecraft:iron_ingot"
+  },
+  "result": {
+    "id": "futuretech:netherite_gear",
+    "count": 1
+  }
+}

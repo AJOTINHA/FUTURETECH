@@ -246,6 +246,8 @@ public final class SmelteryBlockEntity extends BaseContainerBlockEntity
         smeltery.beginTick();
         if (smeltery.auto.isPulling()) smeltery.transfer.pullFromNeighbours(level, pos, smeltery, smeltery.sides);
         if (smeltery.auto.isPushing()) smeltery.transfer.pushToNeighbours(level, pos, smeltery, smeltery.sides);
+        if (smeltery.auto.isSorting() && (AutoTransfer.balance(smeltery.items, SLOT_INPUT_A, smeltery.lanes())
+                | AutoTransfer.balance(smeltery.items, SLOT_INPUT_B, smeltery.lanes()))) smeltery.setChanged();
         int wasWorking = smeltery.workingLanes;
         boolean working = smeltery.redstone.allowsRunning() && level instanceof ServerLevel server
                 && smeltery.melt(input -> smeltery.quickCheck.getRecipeFor(input, server).orElse(null));
@@ -264,7 +266,7 @@ public final class SmelteryBlockEntity extends BaseContainerBlockEntity
     /** Advances one tick on every open lane; false when none had anything to do or energy to do it with. */
     boolean melt(AlloyingLookup recipes) {
         int mk = MachineLevel.of(getBlockState());
-        int perTick = MachineLevel.consumption(ENERGY_PER_TICK, mk);
+        int perTick = upgrades.consumption(ENERGY_PER_TICK, mk);
         workingLanes = 0;
         for (int lane = 0; lane < lanes(); lane++) {
             if (meltLane(lane, recipes, perTick)) workingLanes |= 1 << lane;
@@ -306,7 +308,7 @@ public final class SmelteryBlockEntity extends BaseContainerBlockEntity
         }
         ItemStack result = workResult[lane];
         if (result.isEmpty() || !canAccept(lane, result)) return false;
-        progressTotal[lane] = MachineLevel.duration(recipe.value().duration(), MachineLevel.of(getBlockState()));
+        progressTotal[lane] = upgrades.duration(recipe.value().duration(), MachineLevel.of(getBlockState()));
         energy.set(energy.getAmountAsInt() - perTick);
         progress[lane]++;
         if (progress[lane] >= progressTotal[lane]) {

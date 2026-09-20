@@ -4,6 +4,7 @@ import static dev.futuretech.client.MachineScreenStyle.*;
 
 import dev.futuretech.api.gui.EnergyInfoTab;
 import dev.futuretech.api.gui.TabStrip;
+import dev.futuretech.api.gui.TabbedScreen;
 import dev.futuretech.api.redstone.client.RedstoneControlTab;
 import dev.futuretech.api.side.client.SideConfigTab;
 import dev.futuretech.api.upgrade.client.UpgradeTab;
@@ -15,7 +16,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
 /** The item to charge on the left, the energy column standing in the middle, the charged item on the right. */
-public final class ChargerScreen extends AbstractContainerScreen<ChargerMenu> {
+public final class ChargerScreen extends AbstractContainerScreen<ChargerMenu> implements TabbedScreen {
     private static final int LABEL_X = 7;
     /** The energy column between the two slots, centred on their row. */
     private static final int ENERGY_X = 81;
@@ -28,6 +29,9 @@ public final class ChargerScreen extends AbstractContainerScreen<ChargerMenu> {
 
     private final AnimatedBar energyBar = new AnimatedBar();
     private final TabStrip tabs;
+
+    @Override
+    public TabStrip tabs() { return tabs; }
 
     public ChargerScreen(ChargerMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, ChargerMenu.IMAGE_WIDTH, 184);

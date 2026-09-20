@@ -36,6 +36,13 @@
         "id": "futuretech:copper_powder"
       }
     },
+    "electrum_ingot": {
+      "ingredient": "#c:ingots/electrum",
+      "result": {
+        "count": 1,
+        "id": "futuretech:electrum_powder"
+      }
+    },
     "glass": {
       "ingredient": "minecraft:glass",
       "result": {
@@ -78,6 +85,20 @@
         "id": "futuretech:iron_powder"
       }
     },
+    "lead_ingot": {
+      "ingredient": "#c:ingots/lead",
+      "result": {
+        "count": 1,
+        "id": "futuretech:lead_powder"
+      }
+    },
+    "lead_ore": {
+      "ingredient": "#c:ores/lead",
+      "result": {
+        "count": 2,
+        "id": "futuretech:lead_powder"
+      }
+    },
     "raw_copper": {
       "ingredient": "#c:raw_materials/copper",
       "result": {
@@ -99,6 +120,27 @@
         "id": "futuretech:iron_powder"
       }
     },
+    "raw_lead": {
+      "ingredient": "#c:raw_materials/lead",
+      "result": {
+        "count": 2,
+        "id": "futuretech:lead_powder"
+      }
+    },
+    "raw_silver": {
+      "ingredient": "#c:raw_materials/silver",
+      "result": {
+        "count": 2,
+        "id": "futuretech:silver_powder"
+      }
+    },
+    "raw_tin": {
+      "ingredient": "#c:raw_materials/tin",
+      "result": {
+        "count": 2,
+        "id": "futuretech:tin_powder"
+      }
+    },
     "red_sandstone": {
       "ingredient": "minecraft:red_sandstone",
       "result": {
@@ -111,6 +153,34 @@
       "result": {
         "count": 4,
         "id": "minecraft:sand"
+      }
+    },
+    "silver_ingot": {
+      "ingredient": "#c:ingots/silver",
+      "result": {
+        "count": 1,
+        "id": "futuretech:silver_powder"
+      }
+    },
+    "silver_ore": {
+      "ingredient": "#c:ores/silver",
+      "result": {
+        "count": 2,
+        "id": "futuretech:silver_powder"
+      }
+    },
+    "tin_ingot": {
+      "ingredient": "#c:ingots/tin",
+      "result": {
+        "count": 1,
+        "id": "futuretech:tin_powder"
+      }
+    },
+    "tin_ore": {
+      "ingredient": "#c:ores/tin",
+      "result": {
+        "count": 2,
+        "id": "futuretech:tin_powder"
       }
     }
   }

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "CLC",
+    "AMA",
+    "BRB"
+  ],
+  "key": {
+    "C": "#c:plates/copper",
+    "L": "minecraft:lava_bucket",
+    "A": "minecraft:copper_ingot",
+    "M": "futuretech:machine_casing",
+    "B": "#c:gears/copper",
+    "R": "futuretech:reception_coil"
+  },
+  "result": {
+    "id": "futuretech:melter",
+    "count": 1
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "SAS",
+    "TMT",
+    "SRS"
+  ],
+  "key": {
+    "S": "#c:plates/steel",
+    "A": "#c:gears/silver",
+    "T": "futuretech:transmission_coil",
+    "M": "futuretech:machine_casing",
+    "R": "minecraft:redstone"
+  },
+  "result": {
+    "id": "futuretech:steam_turbine",
+    "count": 1
+  }
+}

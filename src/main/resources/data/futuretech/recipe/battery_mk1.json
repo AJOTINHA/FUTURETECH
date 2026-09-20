@@ -2,15 +2,15 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "IRI",
-    "RCR",
-    "IGI"
+    "LRL",
+    "RMR",
+    "LAL"
   ],
   "key": {
-    "I": "minecraft:iron_ingot",
+    "L": "#c:ingots/lead",
     "R": "minecraft:redstone",
-    "C": "futuretech:machine_casing",
-    "G": "minecraft:gold_ingot"
+    "M": "futuretech:machine_casing",
+    "A": "futuretech:reception_coil"
   },
   "result": {
     "id": "futuretech:battery_mk1",

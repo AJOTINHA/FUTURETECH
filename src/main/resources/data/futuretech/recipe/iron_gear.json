@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " M ",
+    "MIM",
+    " M "
+  ],
+  "key": {
+    "M": "#c:ingots/iron",
+    "I": "minecraft:iron_ingot"
+  },
+  "result": {
+    "id": "futuretech:iron_gear",
+    "count": 1
+  }
+}

@@ -4,6 +4,7 @@ import static dev.futuretech.client.MachineScreenStyle.*;
 
 import dev.futuretech.api.gui.EnergyInfoTab;
 import dev.futuretech.api.gui.TabStrip;
+import dev.futuretech.api.gui.TabbedScreen;
 import dev.futuretech.api.redstone.client.RedstoneControlTab;
 import dev.futuretech.api.side.client.SideConfigTab;
 import dev.futuretech.api.upgrade.client.UpgradeTab;
@@ -20,7 +21,7 @@ import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidType;
 
-public final class LavaGeneratorScreen extends AbstractContainerScreen<LavaGeneratorMenu> {
+public final class LavaGeneratorScreen extends AbstractContainerScreen<LavaGeneratorMenu> implements TabbedScreen {
     /** The lava column stands between the bucket slots and the energy readout, spanning both slots. */
     private static final int TANK_X = 34;
     private static final int TANK_Y = LavaGeneratorMenu.INPUT_Y;
@@ -29,6 +30,9 @@ public final class LavaGeneratorScreen extends AbstractContainerScreen<LavaGener
     private final AnimatedBar energyBar = new AnimatedBar();
     private final AnimatedBar lavaBar = new AnimatedBar();
     private final TabStrip tabs;
+
+    @Override
+    public TabStrip tabs() { return tabs; }
 
     public LavaGeneratorScreen(LavaGeneratorMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, LavaGeneratorMenu.IMAGE_WIDTH, 184);

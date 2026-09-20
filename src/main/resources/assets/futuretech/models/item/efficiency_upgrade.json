@@ -1,0 +1,33 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "gui_light": "front",
+  "textures": {
+    "module": "futuretech:item/efficiency_upgrade",
+    "particle": "futuretech:item/efficiency_upgrade"
+  },
+  "elements": [
+    {
+      "name": "upgrade_module",
+      "from": [1.5, 1.5, 7],
+      "to": [14.5, 14.5, 9],
+      "faces": {
+        "north": { "uv": [1.5, 1.5, 14.5, 14.5], "texture": "#module" },
+        "south": { "uv": [1.5, 1.5, 14.5, 14.5], "texture": "#module" },
+        "east": { "uv": [13.6875, 8.1875, 13.8125, 8.3125], "texture": "#module" },
+        "west": { "uv": [13.6875, 8.1875, 13.8125, 8.3125], "texture": "#module" },
+        "up": { "uv": [13.6875, 8.1875, 13.8125, 8.3125], "texture": "#module" },
+        "down": { "uv": [13.6875, 8.1875, 13.8125, 8.3125], "texture": "#module" }
+      }
+    }
+  ],
+  "display": {
+    "gui": { "rotation": [10, -15, 0], "translation": [0, 0, 0], "scale": [1.05, 1.05, 1.05] },
+    "ground": { "rotation": [0, 0, 0], "translation": [0, 3, 0], "scale": [0.6, 0.6, 0.6] },
+    "fixed": { "rotation": [0, 180, 0], "translation": [0, 0, 0], "scale": [0.85, 0.85, 0.85] },
+    "thirdperson_righthand": { "rotation": [0, -90, 15], "translation": [0, 2, 0], "scale": [0.65, 0.65, 0.65] },
+    "thirdperson_lefthand": { "rotation": [0, 90, -15], "translation": [0, 2, 0], "scale": [0.65, 0.65, 0.65] },
+    "firstperson_righthand": { "rotation": [0, -30, 5], "translation": [0, 1, 0], "scale": [0.75, 0.75, 0.75] },
+    "firstperson_lefthand": { "rotation": [0, 30, -5], "translation": [0, 1, 0], "scale": [0.75, 0.75, 0.75] }
+  }
+}

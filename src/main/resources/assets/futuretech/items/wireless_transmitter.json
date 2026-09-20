@@ -1,0 +1,19 @@
+{
+  "model": {
+    "type": "minecraft:composite",
+    "models": [
+      {
+        "type": "minecraft:model",
+        "model": "futuretech:item/wireless_transmitter"
+      },
+      {
+        "type": "minecraft:special",
+        "base": "futuretech:item/wireless_transmitter",
+        "model": {
+          "type": "futuretech:wireless_head",
+          "kind": "transmitter"
+        }
+      }
+    ]
+  }
+}

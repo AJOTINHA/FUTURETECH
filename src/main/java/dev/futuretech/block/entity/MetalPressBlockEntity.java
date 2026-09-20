@@ -286,6 +286,7 @@ public final class MetalPressBlockEntity extends BaseContainerBlockEntity
         metal_press.beginTick();
         if (metal_press.auto.isPulling()) metal_press.transfer.pullFromNeighbours(level, pos, metal_press, metal_press.sides);
         if (metal_press.auto.isPushing()) metal_press.transfer.pushToNeighbours(level, pos, metal_press, metal_press.sides);
+        if (metal_press.auto.isSorting() && (AutoTransfer.balance(metal_press.items, SLOT_INPUT, metal_press.lanes()))) metal_press.setChanged();
         int wasWorking = metal_press.workingLanes;
         metal_press.workingLanes = 0;
         boolean working = metal_press.redstone.allowsRunning() && level instanceof ServerLevel server
@@ -305,7 +306,7 @@ public final class MetalPressBlockEntity extends BaseContainerBlockEntity
     /** Advances one tick on every open lane; false when none had anything to do or energy to do it with. */
     boolean press(PressingLookup recipes) {
         int mk = MachineLevel.of(getBlockState());
-        int perTick = MachineLevel.consumption(ENERGY_PER_TICK, mk);
+        int perTick = upgrades.consumption(ENERGY_PER_TICK, mk);
         workingLanes = 0;
         if (!isMold(getItem(SLOT_MOLD))) {
             for (int lane = 0; lane < LANES; lane++) resetWork(lane);
@@ -348,7 +349,7 @@ public final class MetalPressBlockEntity extends BaseContainerBlockEntity
         }
         ItemStack result = workResult[lane];
         if (result.isEmpty() || !canAccept(lane, result)) return false;
-        progressTotal[lane] = MachineLevel.duration(workRecipe[lane].value().duration(), MachineLevel.of(getBlockState()));
+        progressTotal[lane] = upgrades.duration(workRecipe[lane].value().duration(), MachineLevel.of(getBlockState()));
         energy.set(energy.getAmountAsInt() - perTick);
         progress[lane]++;
         if (progress[lane] >= progressTotal[lane]) {

@@ -2,12 +2,13 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "pattern": [
-    "MMM",
-    "MS ",
+    "MM ",
+    "MG ",
     " S "
   ],
   "key": {
     "M": "#minecraft:copper_tool_materials",
+    "G": "#c:gears/copper",
     "S": "minecraft:stick"
   },
   "result": {

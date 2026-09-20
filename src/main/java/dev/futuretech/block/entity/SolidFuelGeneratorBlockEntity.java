@@ -56,9 +56,15 @@ import org.jspecify.annotations.Nullable;
 public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntity
         implements AutoTransferable, SideConfigurable, RedstoneControllable, Upgradeable {
     public static final int CAPACITY = 20_000;
-    public static final int GENERATION_PER_TICK = 20;
+    public static final int GENERATION_PER_TICK = 40;
     public static final int OUTPUT_PER_TICK = 80;
-    public static final int BURN_TICKS = 1_600;
+    /**
+     * Energy a fuel yields for every tick it would burn in a furnace, Thermal Expansion's rate: a
+     * coal's 1.600 ticks make 16.000 FE, which the generator turns out in 400 ticks.
+     */
+    public static final int FE_PER_BURN_TICK = 10;
+    /** Ticks one coal keeps the generator running. */
+    public static final int BURN_TICKS = 1_600 * FE_PER_BURN_TICK / GENERATION_PER_TICK;
     // Energy is synced as two 16-bit halves; see EnergySync.
     public static final int DATA_ENERGY_LOW = 0;
     public static final int DATA_ENERGY_HIGH = 1;
@@ -210,6 +216,11 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
         return 300;
     }
 
+    /** Ticks the generator runs on a fuel that burns {@code burnTicks} in a furnace; never below one. */
+    public static int generatorTicks(int burnTicks) {
+        return Math.max(1, burnTicks * FE_PER_BURN_TICK / GENERATION_PER_TICK);
+    }
+
     /** The redstone signal is sampled here and on neighbour changes, not every tick. */
     @Override
     public void onLoad() {
@@ -253,8 +264,7 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
             var remainder = fuel.getCraftingRemainder();
             fuel.shrink(1);
             if (fuel.isEmpty()) items.set(0, remainder == null ? ItemStack.EMPTY : remainder.create());
-            burnRemaining = duration;
-            burnTotal = duration;
+            burnRemaining = burnTotal = generatorTicks(duration);
         }
         energy.set(energy.getAmountAsInt() + GENERATION_PER_TICK);
         burnRemaining--;

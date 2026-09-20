@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:smelting",
+  "category": "misc",
+  "ingredient": "#c:dusts/silver",
+  "result": {
+    "id": "futuretech:silver_ingot",
+    "count": 1
+  },
+  "experience": 0.0,
+  "cookingtime": 200
+}

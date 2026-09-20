@@ -242,26 +242,27 @@ class LaneMachineTest {
     }
 
     @Test
-    void everyLevelAddsStorageSpeedAndDrawAndUnlocksASlot(MinecraftServer server) {
+    void everyLevelScalesStorageSpeedAndDrawTogetherAndUnlocksASlot(MinecraftServer server) {
+        // Thermal Expansion's tiers: 1x, 1.5x, 2x and 3x the power, so an item costs the same on every level.
         assertEquals(CAPACITY, crusher(1).energy().getCapacityAsInt());
-        assertEquals(25_000, crusher(2).energy().getCapacityAsInt());
-        assertEquals(30_000, crusher(3).energy().getCapacityAsInt());
-        assertEquals(35_000, crusher(4).energy().getCapacityAsInt());
+        assertEquals(30_000, crusher(2).energy().getCapacityAsInt());
+        assertEquals(40_000, crusher(3).energy().getCapacityAsInt());
+        assertEquals(60_000, crusher(4).energy().getCapacityAsInt());
         assertEquals(100, MachineLevel.duration(WORK_TICKS, 1));
-        assertEquals(87, MachineLevel.duration(WORK_TICKS, 2));
-        assertEquals(77, MachineLevel.duration(WORK_TICKS, 3));
-        assertEquals(69, MachineLevel.duration(WORK_TICKS, 4));
+        assertEquals(67, MachineLevel.duration(WORK_TICKS, 2));
+        assertEquals(50, MachineLevel.duration(WORK_TICKS, 3));
+        assertEquals(33, MachineLevel.duration(WORK_TICKS, 4));
         assertEquals(20, MachineLevel.consumption(ENERGY_PER_TICK, 1));
-        assertEquals(24, MachineLevel.consumption(ENERGY_PER_TICK, 2));
-        assertEquals(28, MachineLevel.consumption(ENERGY_PER_TICK, 3));
-        assertEquals(32, MachineLevel.consumption(ENERGY_PER_TICK, 4));
+        assertEquals(30, MachineLevel.consumption(ENERGY_PER_TICK, 2));
+        assertEquals(40, MachineLevel.consumption(ENERGY_PER_TICK, 3));
+        assertEquals(60, MachineLevel.consumption(ENERGY_PER_TICK, 4));
 
         var crusher = crusher(2);
-        charge(crusher, 25_000);
+        charge(crusher, 30_000);
         crusher.setItem(SLOT_INPUT, new ItemStack(Items.COBBLESTONE));
-        for (int tick = 0; tick < 87; tick++) assertTrue(tick(crusher, recipes(server)), "tick " + tick);
+        for (int tick = 0; tick < 67; tick++) assertTrue(tick(crusher, recipes(server)), "tick " + tick);
         assertEquals(1, crusher.getItem(SLOT_OUTPUT).getCount());
-        assertEquals(25_000 - 87 * 24, crusher.energy().getAmountAsInt());
+        assertEquals(30_000 - 67 * 30, crusher.energy().getAmountAsInt());
 
         // The MK unlocks as many upgrade slots as its number: the third slot of an MK2 is shut.
         var upgrade = new ItemStack(ModItems.SPEED_UPGRADE.get());
@@ -274,12 +275,12 @@ class LaneMachineTest {
         var upgraded = crusher(1);
         charge(upgraded, 20_000);
         upgraded.setBlockState(upgraded.getBlockState().setValue(MachineLevel.MK, 3));
-        assertEquals(30_000, upgraded.energy().getCapacityAsInt());
+        assertEquals(40_000, upgraded.energy().getCapacityAsInt());
         assertEquals(3, upgraded.lanes());
         var restored = crusher(3);
         restored.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, server.registryAccess(),
                 upgraded.saveWithoutMetadata(server.registryAccess())));
-        assertEquals(30_000, restored.energy().getCapacityAsInt());
+        assertEquals(40_000, restored.energy().getCapacityAsInt());
         assertEquals(20_000, restored.energy().getAmountAsInt());
     }
 

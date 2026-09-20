@@ -4,7 +4,10 @@
     "#c:plates/gold",
     "#c:plates/copper",
     "#c:plates/netherite",
-    "#c:plates/steel"
+    "#c:plates/steel",
+    "#c:plates/tin",
+    "#c:plates/lead",
+    "#c:plates/silver"
   ],
   "replace": false
 }

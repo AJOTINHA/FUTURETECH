@@ -4,6 +4,7 @@ import static dev.futuretech.client.MachineScreenStyle.*;
 
 import dev.futuretech.api.gui.EnergyInfoTab;
 import dev.futuretech.api.gui.TabStrip;
+import dev.futuretech.api.gui.TabbedScreen;
 import dev.futuretech.api.redstone.client.RedstoneControlTab;
 import dev.futuretech.api.side.client.SideConfigTab;
 import dev.futuretech.api.upgrade.client.UpgradeTab;
@@ -15,10 +16,13 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
-public final class SolidFuelGeneratorScreen extends AbstractContainerScreen<SolidFuelGeneratorMenu> {
+public final class SolidFuelGeneratorScreen extends AbstractContainerScreen<SolidFuelGeneratorMenu> implements TabbedScreen {
     private final AnimatedBar energyBar = new AnimatedBar();
     private final AnimatedBar fuelBar = new AnimatedBar();
     private final TabStrip tabs;
+
+    @Override
+    public TabStrip tabs() { return tabs; }
 
     public SolidFuelGeneratorScreen(SolidFuelGeneratorMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, SolidFuelGeneratorMenu.IMAGE_WIDTH, 184);

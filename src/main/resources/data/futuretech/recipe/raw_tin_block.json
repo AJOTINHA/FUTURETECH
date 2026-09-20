@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "RRR",
+    "RRR",
+    "RRR"
+  ],
+  "key": {
+    "R": "#c:raw_materials/tin"
+  },
+  "result": {
+    "id": "futuretech:raw_tin_block",
+    "count": 1
+  }
+}

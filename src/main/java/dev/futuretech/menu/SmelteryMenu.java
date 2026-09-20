@@ -10,6 +10,7 @@ import dev.futuretech.api.side.SideConfigMenu;
 import dev.futuretech.api.side.SideConfigurable;
 import dev.futuretech.api.side.SideConfigurableBlock;
 import dev.futuretech.api.side.SideMode;
+import dev.futuretech.api.side.SlotRole;
 import dev.futuretech.api.upgrade.MachineLevel;
 import dev.futuretech.api.upgrade.UpgradeInventory;
 import dev.futuretech.api.upgrade.UpgradeSlots;
@@ -38,6 +39,7 @@ import java.util.Set;
  */
 public final class SmelteryMenu extends MachineMenu implements SideConfigMenu, RedstoneControlMenu, EnergyInfoMenu {
     private final Container contents;
+    private final UpgradeInventory upgrades;
     private final ContainerData data;
     private final int lanes;
     private final int inventoryStart;
@@ -79,6 +81,7 @@ public final class SmelteryMenu extends MachineMenu implements SideConfigMenu, R
         checkContainerSize(contents, INVENTORY_SIZE);
         checkContainerDataCount(data, DATA_COUNT);
         this.contents = contents;
+        this.upgrades = upgrades;
         this.data = data;
         this.lanes = Math.clamp(mk, 1, LANES);
         this.inventoryStart = 3 * lanes;
@@ -123,7 +126,12 @@ public final class SmelteryMenu extends MachineMenu implements SideConfigMenu, R
     public int energyCapacity() { return MachineLevel.capacity(CAPACITY, mk()); }
 
     @Override
-    public int energyRatePerTick() { return MachineLevel.consumption(ENERGY_PER_TICK, mk()) * lanes; }
+    public int energyRatePerTick() { return upgrades.consumption(ENERGY_PER_TICK, mk()) * lanes; }
+
+    @Override
+    public int energyUsagePerTick() {
+        return upgrades.consumption(ENERGY_PER_TICK, mk()) * Integer.bitCount(data.get(DATA_WORKING));
+    }
 
     @Override
     public EnergyInfoMenu.Kind kind() { return EnergyInfoMenu.Kind.CONSUMER; }
@@ -162,6 +170,15 @@ public final class SmelteryMenu extends MachineMenu implements SideConfigMenu, R
 
     @Override
     public boolean isAutoPushing() { return data.get(DATA_AUTO_BASE + 1) != 0; }
+
+    @Override
+    public SlotRole slotRole(int index) { return index < 2 * lanes ? SlotRole.INPUT : index < 3 * lanes ? SlotRole.OUTPUT : SlotRole.NONE; }
+
+    @Override
+    public boolean supportsSorting() { return lanes > 1; }
+
+    @Override
+    public boolean isSorting() { return data.get(DATA_AUTO_BASE + 2) != 0; }
 
     @Override
     public RedstoneMode redstoneMode() { return RedstoneMode.byOrdinal(data.get(DATA_REDSTONE_BASE)); }

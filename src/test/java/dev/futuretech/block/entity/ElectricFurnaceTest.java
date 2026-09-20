@@ -3,9 +3,11 @@ package dev.futuretech.block.entity;
 import static dev.futuretech.block.entity.ElectricFurnaceBlockEntity.*;
 
 import dev.futuretech.api.upgrade.MachineLevel;
+import dev.futuretech.api.upgrade.UpgradeInventory;
 
 import dev.futuretech.api.side.SideMode;
 import dev.futuretech.registry.ModBlocks;
+import dev.futuretech.registry.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.MinecraftServer;
@@ -90,6 +92,35 @@ class ElectricFurnaceTest {
         assertEquals(1, furnace.getItem(SLOT_INPUT).getCount());
         assertEquals(before - SMELT_TICKS * ENERGY_PER_TICK, furnace.energy().getAmountAsInt());
         assertEquals(0, furnace.menuData().get(DATA_PROGRESS));
+    }
+
+    @Test
+    void anEfficiencyUpgradeMakesEveryTickCheaperWithoutSlowingTheSmelt(MinecraftServer server) {
+        var level = recipes(server);
+        var furnace = furnace();
+        furnace.upgrades().setItem(0, new ItemStack(ModItems.EFFICIENCY_UPGRADE.get()));
+        furnace.setItem(SLOT_INPUT, new ItemStack(Items.RAW_IRON));
+        charge(furnace, CAPACITY);
+        int before = furnace.energy().getAmountAsInt();
+        for (int tick = 0; tick < SMELT_TICKS; tick++) assertTrue(tick(furnace, level), "tick " + tick);
+        assertTrue(furnace.getItem(SLOT_OUTPUT).is(Items.IRON_INGOT));
+        int perTick = ENERGY_PER_TICK * (100 - UpgradeInventory.EFFICIENCY_PERCENT) / 100;
+        assertTrue(perTick < ENERGY_PER_TICK);
+        assertEquals(before - SMELT_TICKS * perTick, furnace.energy().getAmountAsInt());
+    }
+
+    @Test
+    void aSpeedUpgradeDoublesTheDrawAndNearlyHalvesTheSmelt(MinecraftServer server) {
+        var level = recipes(server);
+        var furnace = furnace();
+        furnace.upgrades().setItem(0, new ItemStack(ModItems.SPEED_UPGRADE.get()));
+        furnace.setItem(SLOT_INPUT, new ItemStack(Items.RAW_IRON));
+        charge(furnace, CAPACITY);
+        int before = furnace.energy().getAmountAsInt();
+        int ticks = SMELT_TICKS * (100 + UpgradeInventory.SPEED_ENERGY_PERCENT) / 200;
+        for (int tick = 0; tick < ticks; tick++) assertTrue(tick(furnace, level), "tick " + tick);
+        assertTrue(furnace.getItem(SLOT_OUTPUT).is(Items.IRON_INGOT));
+        assertEquals(before - ticks * 2 * ENERGY_PER_TICK, furnace.energy().getAmountAsInt());
     }
 
     @Test

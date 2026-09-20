@@ -1,7 +1,7 @@
 package dev.futuretech.block;
 
 import dev.futuretech.block.entity.AbstractCableBlockEntity;
-import dev.futuretech.block.entity.CableBlockEntity;
+import dev.futuretech.block.entity.EnergyCableBlockEntity;
 import dev.futuretech.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -29,7 +29,7 @@ class CableCutTest {
     private static final BlockPos A = BlockPos.ZERO;
     private static final BlockPos B = A.east();
 
-    private static BlockState cable() { return ModBlocks.CABLE_MK1.get().defaultBlockState(); }
+    private static BlockState cable() { return ModBlocks.ENERGY_CABLE_MK1.get().defaultBlockState(); }
 
     /** A level of two cables side by side, each with its block entity, and nothing else. */
     private static LevelReader level(Map<BlockPos, BlockState> states, Map<BlockPos, AbstractCableBlockEntity> entities) {
@@ -51,8 +51,8 @@ class CableCutTest {
     void aCutOnEitherCableBreaksTheLinkForBoth(MinecraftServer server) {
         var states = new HashMap<BlockPos, BlockState>();
         var entities = new HashMap<BlockPos, AbstractCableBlockEntity>();
-        var a = new CableBlockEntity(A, cable());
-        var b = new CableBlockEntity(B, cable());
+        var a = new EnergyCableBlockEntity(A, cable());
+        var b = new EnergyCableBlockEntity(B, cable());
         states.put(A, cable().setValue(AbstractCableBlock.EAST, true));
         states.put(B, cable().setValue(AbstractCableBlock.WEST, true));
         entities.put(A, a);
@@ -75,16 +75,16 @@ class CableCutTest {
 
     @Test
     void theCutReachesTheClientWithTheUpdateTag(MinecraftServer server) {
-        var a = new CableBlockEntity(A, cable());
+        var a = new EnergyCableBlockEntity(A, cable());
         a.setCut(Direction.UP, true);
         a.setCut(Direction.NORTH, true);
         var tag = a.getUpdateTag(server.registryAccess());
-        var b = new CableBlockEntity(A, cable());
+        var b = new EnergyCableBlockEntity(A, cable());
         b.handleUpdateTag(TagValueInput.create(ProblemReporter.DISCARDING, server.registryAccess(), tag));
         for (Direction side : Direction.values()) {
             assertEquals(side == Direction.UP || side == Direction.NORTH, b.isCut(side), side.toString());
         }
-        assertFalse(new CableBlockEntity(A, cable()).getUpdateTag(server.registryAccess()).contains("Cut"),
+        assertFalse(new EnergyCableBlockEntity(A, cable()).getUpdateTag(server.registryAccess()).contains("Cut"),
                 "An uncut cable sends nothing extra");
     }
 

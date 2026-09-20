@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:crafting_transmute",
+  "category": "equipment",
+  "input": "futuretech:filter_mk3",
+  "material": "futuretech:upgrade_kit_mk4",
+  "result": {
+    "id": "futuretech:filter_mk4"
+  }
+}

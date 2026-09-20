@@ -53,8 +53,5 @@ foreach($kind in @('plate','gear')) {
     }}
     Write-Json "$assets/models/item/press_molds/${kind}_mold.json" $model
     Write-Json "$assets/items/${kind}_mold.json" @{model=@{type='minecraft:model';model="futuretech:item/press_molds/${kind}_mold"}}
-    $pattern=if($kind -eq 'plate'){@('II','II')}else{@(' I ','I I',' I ')}
-    Write-Json "$root/src/main/resources/data/futuretech/recipe/${kind}_mold.json" @{
-        type='minecraft:crafting_shaped';category='misc';pattern=$pattern;key=@{I='minecraft:iron_ingot'};result=@{id="futuretech:${kind}_mold";count=1}
-    }
+    # The molds are made in the Assembler (src/main/recipes/assembler.json), not on the crafting table.
 }

@@ -1,6 +1,7 @@
 package dev.futuretech.item;
 
 import dev.futuretech.FutureTech;
+import dev.futuretech.block.WirelessRedstoneBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -41,9 +42,16 @@ public final class WrenchItem extends Item {
         Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();
         BlockState state = level.getBlockState(pos);
+        if (state.getBlock() instanceof dev.futuretech.block.WindTurbinePartBlock) {
+            pos = dev.futuretech.block.WindTurbineStructure.base(pos, state);
+            state = level.getBlockState(pos);
+        }
         if (context.isSecondaryUseActive()) return dismantle(state, level, pos, context.getPlayer());
         // A cable has nothing to turn; the wrench cuts and restores its links instead.
         if (state.getBlock() instanceof dev.futuretech.block.AbstractCableBlock cable) {
+            InteractionResult uncovered = cable.removeFacade(level, pos, context.getClickLocation(),
+                    context.getClickedFace(), context.getPlayer());
+            if (uncovered != InteractionResult.PASS) return uncovered;
             return cable.toggleLink(level, pos, state, context.getClickLocation(), context.getClickedFace());
         }
         if (level.getBlockEntity(pos) instanceof dev.futuretech.block.entity.AssemblerBlockEntity arm
@@ -86,6 +94,8 @@ public final class WrenchItem extends Item {
 
     /** The state after one turn, or null when the block has nothing to rotate. */
     private static @Nullable BlockState rotated(BlockState state, Level level, BlockPos pos) {
+        // A plate hangs on its face; the wrench turns it on that face rather than off it.
+        if (state.hasProperty(WirelessRedstoneBlock.SPIN)) return state.cycle(WirelessRedstoneBlock.SPIN);
         for (Property<?> property : state.getProperties()) {
             Class<?> type = property.getValueClass();
             if (type == Direction.class) {

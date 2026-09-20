@@ -9,8 +9,11 @@ public interface EnergyInfoMenu {
 
     int energyCapacity();
 
-    /** Energy moved per tick while running: drawn by a consumer, made by a generator. */
+    /** The most energy the machine moves per tick: drawn by a consumer, made by a generator. */
     int energyRatePerTick();
+
+    /** Energy moved this tick: nothing while idle, and a machine with several lanes only what the busy ones take. */
+    default int energyUsagePerTick() { return isWorking() ? energyRatePerTick() : 0; }
 
     /** True while the machine is actually doing work this tick. */
     boolean isWorking();

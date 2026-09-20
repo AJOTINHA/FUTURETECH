@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "GAG",
+    "CBC",
+    "GRG"
+  ],
+  "key": {
+    "G": "#c:plates/gold",
+    "A": "minecraft:amethyst_shard",
+    "C": "futuretech:chip",
+    "B": "minecraft:chest",
+    "R": "minecraft:redstone"
+  },
+  "result": {
+    "id": "futuretech:storage_cards",
+    "count": 1
+  }
+}

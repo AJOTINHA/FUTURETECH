@@ -48,22 +48,7 @@ foreach ($mk in 2..4) {
     }
     Write-Json (Join-Path $assets "models/item/$id.json") $model
     Write-Json (Join-Path $assets "items/$id.json") @{ model = @{ type = 'minecraft:model'; model = "futuretech:item/$id" } }
-    $ingredients = switch ($mk) {
-        2 { @('minecraft:iron_ingot','minecraft:gold_ingot','minecraft:redstone') }
-        3 { @('minecraft:gold_ingot','minecraft:redstone_block','minecraft:quartz') }
-        4 { @('minecraft:diamond','minecraft:ender_pearl','minecraft:redstone_block') }
-    }
-    Write-Json (Join-Path $root "data/futuretech/recipe/$id.json") @{
-        type = 'minecraft:crafting_shaped'; category = 'misc'; pattern = @('ABA','CDC','ABA')
-        key = @{ A=$ingredients[0]; B=$ingredients[1]; C=$ingredients[2]; D='futuretech:machine_casing' }
-        result = @{ id = "futuretech:$id"; count = 1 }
-    }
-    Write-Json (Join-Path $root "data/futuretech/advancement/recipes/$id.json") @{
-        parent = 'minecraft:recipes/root'
-        criteria = @{ has_material = @{ trigger = 'minecraft:inventory_changed'; conditions = @{ items = @(@{ items = $ingredients[0] }) } } }
-        requirements = ,@('has_material')
-        rewards = @{ recipes = @("futuretech:$id") }
-    }
+    # The crafting recipe is balanced by hand in data/futuretech/recipe/ and is not written here. The advancement is kept with it.
 }
 
 foreach ($machine in @('solid_fuel_generator','electric_furnace','crusher')) {

@@ -3,8 +3,10 @@ package dev.futuretech.transfer;
 import dev.futuretech.perf.TickProfiler;
 import dev.futuretech.api.side.SideMode;
 import dev.futuretech.block.ItemCableBlock;
+import dev.futuretech.block.TesseractBlock;
 import dev.futuretech.block.ItemCableTier;
 import dev.futuretech.block.entity.ItemCableBlockEntity;
+import dev.futuretech.item.ItemFilterItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -34,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 
 /**
@@ -80,6 +83,16 @@ public final class ItemCableNetwork {
         /** Whether the connector's filter card lets a resource cross it, in either direction. */
         default boolean accepts(ItemResource resource) { return true; }
 
+        /** Whether the card on this connector keeps levels, which caps what crosses it either way. */
+        default boolean counting() { return false; }
+
+        /**
+         * How much of a resource may still cross before the level the card keeps is reached: what
+         * the neighbour is short of when inserting, what it has over when extracting. Everything,
+         * where no level is kept for that resource.
+         */
+        default int allowance(ItemResource resource, boolean inserting) { return Integer.MAX_VALUE; }
+
         /** The connector's colour; items only cross between connectors of the same colour and channel. */
         default DyeColor color() { return DyeColor.WHITE; }
 
@@ -88,6 +101,14 @@ public final class ItemCableNetwork {
 
         /** Speed upgrades on the connector; each one widens the budget of what enters through it. */
         default int upgrades() { return 0; }
+
+        /**
+         * Whether the block beyond hands over without a pace of its own — a tesseract, whose
+         * channel brings whatever was put in at the other end all at once. What enters through
+         * such a connector is not trickled in one at a time: the budget is the widest a connector
+         * can have. The speed along the cables stays the connector's own.
+         */
+        default boolean unbounded() { return false; }
 
         @Nullable ResourceHandler<ItemResource> handler();
     }
@@ -149,13 +170,18 @@ public final class ItemCableNetwork {
 
         @Override
         protected void onRootCommit(Integer originalState) {
+            long now = now();
             for (ItemFlight flight : departing) {
+                stagger(flight, now);
                 flights.add(flight);
                 announce(flight);
             }
             departing.clear();
         }
     };
+    /** Where the last item to enter through each connector was, so the next one keeps behind it; see {@link #stagger}. */
+    private final Map<EndpointKey, Departure> departures = new HashMap<>();
+    private record Departure(long tick, int travelled) {}
     private final Map<PathKey, List<BlockPos>> paths = new HashMap<>();
     /**
      * Connectors that had no room for a resource earlier this tick. Nothing the network does within
@@ -203,7 +229,9 @@ public final class ItemCableNetwork {
     /** What the connector at {@code index} may let in per interval; the shared entry gets the bare batch. */
     private int allowance(int index) {
         if (index == endpoints.size()) return batch;
-        return Math.min(MAX_PER_INTERVAL, batch + PER_UPGRADE * endpoints.get(index).upgrades());
+        Endpoint endpoint = endpoints.get(index);
+        if (endpoint.unbounded()) return MAX_PER_INTERVAL;
+        return Math.min(MAX_PER_INTERVAL, batch + PER_UPGRADE * endpoint.upgrades());
     }
 
     private void renewBudgets() {
@@ -232,7 +260,8 @@ public final class ItemCableNetwork {
                 if (!cable.getBlockState().getValue(PipeBlock.PROPERTY_BY_DIRECTION.get(side))) continue;
                 BlockPos neighbour = pos.relative(side);
                 if (!level.hasChunkAt(neighbour.getX(), neighbour.getZ())) continue;
-                if (level.getBlockState(neighbour).getBlock() instanceof ItemCableBlock) {
+                // Its own tier only: a link left over from before the tiers were kept apart still ends here.
+                if (cable.getBlockState().getBlock() instanceof ItemCableBlock own && own.joins(level.getBlockState(neighbour))) {
                     if (cables.add(neighbour)) queue.add(neighbour);
                 } else {
                     // Captured here rather than read per tick: changing a connector invalidates the
@@ -240,10 +269,13 @@ public final class ItemCableNetwork {
                     SideMode mode = cable.connectors().mode(side);
                     // A face on "none" never moves anything; most faces border air or the ground.
                     if (mode == SideMode.NONE) continue;
+                    // Redstone is the one thing read live: a signal flips too often to rebuild for.
                     endpoints.add(new CachedEndpoint(new EndpointKey(pos, side),
                             mode.allowsOutput(), mode.allowsInput() && !mode.allowsOutput(),
-                            cable.connectorPriority(side), cable.connectorAccepts(side),
+                            () -> cable.connectorActive(side),
+                            cable.connectorPriority(side), cable.connectorAccepts(side), cable.connectorFilter(side),
                             cable.connectorColor(side), cable.connectorChannel(side), cable.connectorSpeedUpgrades(side),
+                            level.getBlockState(neighbour).getBlock() instanceof TesseractBlock,
                             BlockCapabilityCache.create(
                                     Capabilities.Item.BLOCK, level, neighbour, side.getOpposite())));
                 }
@@ -400,11 +432,14 @@ public final class ItemCableNetwork {
             for (int step = 0; step < count && moved < allowed; step++) {
                 Endpoint endpoint = rank.get((round + step) % count);
                 if (!serves(endpoint, color, channel, resource) || endpoint.key().neighbour().equals(origin)) continue;
+                // A counting connector takes only what its neighbour is short of the level it keeps.
+                int wanted = Math.min(allowed - moved, endpoint.allowance(resource, true));
+                if (wanted <= 0) continue;
                 int room;
                 if (key == null) {
-                    room = ResourceHandlerUtil.insertStacking(endpoint.handler(), resource, allowed - moved, transaction);
+                    room = ResourceHandlerUtil.insertStacking(endpoint.handler(), resource, wanted, transaction);
                 } else {
-                    room = roomFor(endpoint, resource, allowed - moved, transaction);
+                    room = roomFor(endpoint, resource, wanted, transaction);
                     if (room > 0) {
                         departureJournal.updateSnapshots(transaction);
                         departing.add(new ItemFlight(ThreadLocalRandom.current().nextLong(), resource.toStack(room),
@@ -535,8 +570,27 @@ public final class ItemCableNetwork {
                 int budget = budgets[indexByKey.get(endpoint.key())];
                 ResourceHandler<ItemResource> source = endpoint.handler();
                 if (source == null || budget <= 0) continue;
-                ResourceHandlerUtil.moveStacking(source, handlerFor(endpoint.key()), endpoint::accepts, budget, null);
+                if (endpoint.counting()) drain(endpoint, source, budget);
+                else ResourceHandlerUtil.moveStacking(source, handlerFor(endpoint.key()), endpoint::accepts, budget, null);
             }
+        }
+    }
+
+    /**
+     * Pulls from a connector whose card keeps levels, one kind at a time: each is taken only down
+     * to the level the card keeps of it, and never past the connector's budget for the interval.
+     * The plain pump moves whatever it finds, which is why this one exists.
+     */
+    private void drain(Endpoint endpoint, ResourceHandler<ItemResource> source, int budget) {
+        ResourceHandler<ItemResource> destination = handlerFor(endpoint.key());
+        int moved = 0;
+        for (int index = 0; index < source.size() && moved < budget; index++) {
+            ItemResource resource = source.getResource(index);
+            if (resource.isEmpty() || !endpoint.accepts(resource)) continue;
+            int over = endpoint.allowance(resource, false);
+            if (over <= 0) continue;
+            moved += ResourceHandlerUtil.moveStacking(source, destination, resource::equals,
+                    Math.min(budget - moved, over), null);
         }
     }
 
@@ -605,11 +659,34 @@ public final class ItemCableNetwork {
                 flight.from = flight.to;
                 flight.to = endpoint.key().side();
                 flight.waiting = false;
+                // Several may turn back from the same face in one tick, when a chest beyond it opens up.
+                stagger(flight, now());
                 announce(flight);
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * Keeps a flight half a cable behind the one that entered through the same connector before
+     * it. A tesseract, or a chest that was waiting on a full line, hands over several items in one
+     * tick; set off together they would travel as one heap, drawn on top of each other. So each
+     * starts that much further back, at a negative count of ticks: still inside the block it came
+     * from, and drawn only once it crosses the entry face.
+     */
+    /** The tick being played; a network without a level, as the tests build, counts its own ticks from zero. */
+    private long now() { return level == null ? Math.max(lastTick, 0) : level.getGameTime(); }
+
+    private void stagger(ItemFlight flight, long now) {
+        EndpointKey entry = new EndpointKey(flight.path.getFirst(), flight.from);
+        Departure last = departures.get(entry);
+        if (last != null) {
+            long ahead = last.travelled + (now - last.tick);
+            int gap = Math.max(1, flight.ticksPerBlock / 2);
+            flight.travelled = (int) Math.min(flight.travelled, ahead - gap);
+        }
+        departures.put(entry, new Departure(now, flight.travelled));
     }
 
     /** Tells the players watching the flight's cable where it is and where it is going. */
@@ -662,11 +739,42 @@ public final class ItemCableNetwork {
         });
     }
 
-    private record CachedEndpoint(EndpointKey key, boolean delivers, boolean pulls, int priority,
-                                 Predicate<ItemResource> filter, DyeColor color, int channel, int upgrades,
+    /** {@code mayDeliver} and {@code mayPull} are the connector's settings; {@code active} is whether redstone lets it work now. */
+    private record CachedEndpoint(EndpointKey key, boolean mayDeliver, boolean mayPull, BooleanSupplier active, int priority,
+                                 Predicate<ItemResource> filter, ItemStack card, DyeColor color, int channel, int upgrades,
+                                 boolean unbounded,
                                  BlockCapabilityCache<ResourceHandler<ItemResource>, Direction> cache) implements Endpoint {
         @Override
+        public boolean delivers() { return mayDeliver && active.getAsBoolean(); }
+
+        @Override
+        public boolean pulls() { return mayPull && active.getAsBoolean(); }
+
+        @Override
         public boolean accepts(ItemResource resource) { return filter.test(resource); }
+
+        // The card is the connector's own stack, so a level changed on the screen is read at once.
+        @Override
+        public boolean counting() { return ItemFilterItem.counting(card); }
+
+        @Override
+        public int allowance(ItemResource resource, boolean inserting) {
+            int level = ItemFilterItem.level(card, resource);
+            if (level == ItemFilterItem.NO_LEVEL) return Integer.MAX_VALUE;
+            int held = held(resource);
+            return Math.max(0, inserting ? level - held : held - level);
+        }
+
+        /** How much of a resource the block beyond is holding right now. */
+        private int held(ItemResource resource) {
+            ResourceHandler<ItemResource> handler = handler();
+            if (handler == null) return 0;
+            int total = 0;
+            for (int index = 0; index < handler.size(); index++) {
+                if (resource.equals(handler.getResource(index))) total += handler.getAmountAsInt(index);
+            }
+            return total;
+        }
 
         @Override
         public @Nullable ResourceHandler<ItemResource> handler() { return cache.getCapability(); }

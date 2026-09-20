@@ -1,15 +1,24 @@
 package dev.futuretech.registry;
 
+import dev.futuretech.teleport.TeleportTarget;
+
 import dev.futuretech.FutureTech;
+import dev.futuretech.item.ItemFilterItem;
+import dev.futuretech.item.ItemFilterMatch;
 import dev.futuretech.item.ItemFilterMode;
 import dev.futuretech.item.StoredTankFluid;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
+
+import java.util.List;
 
 public final class ModDataComponents {
     public static final DeferredRegister<DataComponentType<?>> TYPES = DeferredRegister.create(
@@ -48,6 +57,48 @@ public final class ModDataComponents {
             TYPES.register("filter_mode", () -> DataComponentType.<ItemFilterMode>builder()
                     .persistent(ItemFilterMode.CODEC)
                     .networkSynchronized(ItemFilterMode.STREAM_CODEC)
+                    .build());
+
+    /** How closely an MK2 or better filter reads what it compares. Absent means the item alone. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemFilterMatch>> FILTER_MATCH =
+            TYPES.register("filter_match", () -> DataComponentType.<ItemFilterMatch>builder()
+                    .persistent(ItemFilterMatch.CODEC)
+                    .networkSynchronized(ItemFilterMatch.STREAM_CODEC.cast())
+                    .build());
+
+    /** The level a counting filter keeps everything it lists at. Absent means zero. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>> FILTER_COUNT =
+            TYPES.register("filter_count", () -> DataComponentType.<Integer>builder()
+                    .persistent(com.mojang.serialization.Codec.intRange(0, ItemFilterItem.MAX_COUNT))
+                    .networkSynchronized(net.minecraft.network.codec.ByteBufCodecs.VAR_INT)
+                    .build());
+
+    /** The block a facade wears. Absent means a facade that lost its block, which covers nothing. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<BlockState>> FACADE_BLOCK =
+            TYPES.register("facade_block", () -> DataComponentType.<BlockState>builder()
+                    .persistent(BlockState.CODEC)
+                    .networkSynchronized(ByteBufCodecs.idMapper(Block.BLOCK_STATE_REGISTRY))
+                    .build());
+
+    /** Where a teleport card points, with the name of the teleporter there. Absent means a blank card. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<TeleportTarget>> TELEPORT_TARGET =
+            TYPES.register("teleport_target", () -> DataComponentType.<TeleportTarget>builder()
+                    .persistent(TeleportTarget.CODEC)
+                    .networkSynchronized(TeleportTarget.STREAM_CODEC)
+                    .build());
+
+    /** The network panel a portable teleporter reads its destinations through. Absent means unlinked. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<GlobalPos>> TELEPORT_LINK =
+            TYPES.register("teleport_link", () -> DataComponentType.<GlobalPos>builder()
+                    .persistent(GlobalPos.CODEC)
+                    .networkSynchronized(GlobalPos.STREAM_CODEC)
+                    .build());
+
+    /** The pads a portable teleporter saved by itself, in the order they were saved. Absent means none. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<List<TeleportTarget>>> TELEPORT_TARGETS =
+            TYPES.register("teleport_targets", () -> DataComponentType.<List<TeleportTarget>>builder()
+                    .persistent(TeleportTarget.CODEC.listOf())
+                    .networkSynchronized(TeleportTarget.STREAM_CODEC.apply(ByteBufCodecs.list()))
                     .build());
 
     private ModDataComponents() {}

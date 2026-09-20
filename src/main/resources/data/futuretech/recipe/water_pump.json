@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "CBC",
+    "PMP",
+    "ARA"
+  ],
+  "key": {
+    "C": "#c:plates/copper",
+    "B": "minecraft:bucket",
+    "P": "minecraft:piston",
+    "M": "futuretech:machine_casing",
+    "A": "#c:gears/copper",
+    "R": "minecraft:redstone"
+  },
+  "result": {
+    "id": "futuretech:water_pump",
+    "count": 1
+  }
+}

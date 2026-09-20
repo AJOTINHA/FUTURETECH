@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "GGG",
+    "LLL",
+    "SSS"
+  ],
+  "key": {
+    "G": "minecraft:glass",
+    "L": "minecraft:lapis_lazuli",
+    "S": "minecraft:stone_slab"
+  },
+  "result": {
+    "id": "futuretech:rain_sensor",
+    "count": 1
+  }
+}

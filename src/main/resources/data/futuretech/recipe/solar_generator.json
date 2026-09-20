@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "GGG",
+    "LML",
+    "SRS"
+  ],
+  "key": {
+    "G": "minecraft:glass",
+    "L": "minecraft:lapis_lazuli",
+    "M": "futuretech:machine_casing",
+    "S": "#c:plates/silver",
+    "R": "futuretech:reception_coil"
+  },
+  "result": {
+    "id": "futuretech:solar_generator",
+    "count": 1
+  }
+}

@@ -32,6 +32,51 @@ class UpgradeInventoryTest {
     }
 
     @Test
+    void efficiencyUpgradesCutTheDrawOnlyFromUnlockedSlots(MinecraftServer server) {
+        var upgrades = new UpgradeInventory(() -> 2, () -> {});
+        int mk2 = MachineLevel.consumption(20, 2);
+        assertEquals(mk2, upgrades.consumption(20, 2));
+        upgrades.setItem(0, new ItemStack(ModItems.EFFICIENCY_UPGRADE.get()));
+        assertEquals(mk2 * (100 - UpgradeInventory.EFFICIENCY_PERCENT) / 100, upgrades.consumption(20, 2));
+        // A speed upgrade is no efficiency upgrade (it doubles the draw instead), and a locked slot counts for nothing.
+        upgrades.setItem(1, new ItemStack(ModItems.SPEED_UPGRADE.get()));
+        upgrades.setItem(2, new ItemStack(ModItems.EFFICIENCY_UPGRADE.get()));
+        assertEquals(1, upgrades.installed(UpgradeInventory.EFFICIENCY));
+        assertEquals(1, upgrades.installed(UpgradeInventory.SPEED));
+        assertEquals(mk2 * 2 * (100 - UpgradeInventory.EFFICIENCY_PERCENT) / 100, upgrades.consumption(20, 2));
+        assertEquals(1, upgrades.efficient(1));
+
+        var full = new UpgradeInventory(() -> {});
+        for (int slot = 0; slot < UpgradeInventory.SLOTS; slot++) {
+            full.setItem(slot, new ItemStack(ModItems.EFFICIENCY_UPGRADE.get()));
+        }
+        assertEquals(100 - 4 * UpgradeInventory.EFFICIENCY_PERCENT, full.efficient(100));
+    }
+
+    @Test
+    void speedUpgradesAddALevelsPowerEachAndMakeItemsCostALittleMore(MinecraftServer server) {
+        var upgrades = new UpgradeInventory(() -> {});
+        assertEquals(20, upgrades.consumption(20, 1));
+        assertEquals(100, upgrades.duration(100, 1));
+        upgrades.setItem(0, new ItemStack(ModItems.SPEED_UPGRADE.get()));
+        // Twice the power over 10% more energy: 2.200 FE at 40 FE/t.
+        assertEquals(40, upgrades.consumption(20, 1));
+        assertEquals(55, upgrades.duration(100, 1));
+        assertEquals(1100, upgrades.cost(1000));
+        upgrades.setItem(1, new ItemStack(ModItems.SPEED_UPGRADE.get()));
+        assertEquals(60, upgrades.consumption(20, 1));
+        assertEquals(40, upgrades.duration(100, 1));
+        // On an MK4 the extra power is the MK4's own: 60 FE/t per upgrade.
+        assertEquals(180, upgrades.consumption(20, 4));
+        assertEquals(13, upgrades.duration(100, 4));
+        // Efficiency on top takes its slice off the draw and the fare, and leaves the time alone.
+        upgrades.setItem(2, new ItemStack(ModItems.EFFICIENCY_UPGRADE.get()));
+        assertEquals(51, upgrades.consumption(20, 1));
+        assertEquals(40, upgrades.duration(100, 1));
+        assertEquals(1050, upgrades.cost(1000));
+    }
+
+    @Test
     void contentsSurviveReloadOnBothMachines(MinecraftServer server) {
         var generator = new SolidFuelGeneratorBlockEntity(BlockPos.ZERO,
                 ModBlocks.SOLID_FUEL_GENERATOR.get().defaultBlockState());

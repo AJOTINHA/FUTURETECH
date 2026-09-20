@@ -1,0 +1,7 @@
+{
+  "parent": "futuretech:block/energy_cable_mk1_line",
+  "textures": {
+    "cable": "futuretech:block/redstone_cable/redstone_cable",
+    "node": "futuretech:block/redstone_cable/redstone_cable_node"
+  }
+}

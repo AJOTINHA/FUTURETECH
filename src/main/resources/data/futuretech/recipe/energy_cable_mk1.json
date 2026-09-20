@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "SSS",
+    "RLR",
+    "SSS"
+  ],
+  "key": {
+    "S": "#c:plates/steel",
+    "R": "minecraft:redstone",
+    "L": "#c:ingots/lead"
+  },
+  "result": {
+    "id": "futuretech:energy_cable_mk1",
+    "count": 6
+  }
+}

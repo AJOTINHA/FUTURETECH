@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " M ",
+    "MIM",
+    " M "
+  ],
+  "key": {
+    "M": "#c:ingots/silver",
+    "I": "minecraft:iron_ingot"
+  },
+  "result": {
+    "id": "futuretech:silver_gear",
+    "count": 1
+  }
+}

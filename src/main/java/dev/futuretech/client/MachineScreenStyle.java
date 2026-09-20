@@ -40,6 +40,212 @@ public final class MachineScreenStyle {
         graphics.fillGradient(x + 2, y + 18, x + width - 2, y + 20, 0x18000000, 0x00000000);
     }
 
+    /**
+     * A button in the rows' style: the row's border and face, its label centred in white, and the
+     * face lit while the pointer is on it. The screens that use it do their own hit-testing with
+     * {@link #overButton}, so a button is a rectangle and a label, not a widget.
+     */
+    static void drawButton(GuiGraphicsExtractor graphics, Font font, int x, int y, int width, int height,
+                           Component label, boolean hovered) {
+        drawButton(graphics, font, x, y, width, height, label, hovered, true);
+    }
+
+    /** The same button, greyed out and deaf while {@code enabled} is false. */
+    static void drawButton(GuiGraphicsExtractor graphics, Font font, int x, int y, int width, int height,
+                           Component label, boolean hovered, boolean enabled) {
+        graphics.fill(x - 1, y - 1, x + width + 1, y + height + 1, 0xFF56616D);
+        graphics.fill(x, y, x + width, y + height, enabled ? 0xFF65717D : 0xFF5B6672);
+        if (hovered && enabled) graphics.fill(x, y, x + width, y + height, 0x40FFFFFF);
+        graphics.text(font, label, x + (width - font.width(label)) / 2, y + (height - font.lineHeight) / 2 + 1,
+                enabled ? TITLE : 0xFF8B959F, false);
+    }
+
+    static boolean overButton(double mouseX, double mouseY, int x, int y, int width, int height) {
+        return mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
+    }
+
+    /** The pencil button beside a card row: a slot-sized square in the row's colours. */
+    public static final int PENCIL_WIDTH = 16;
+    private static final int PENCIL_ROW_BACK = 0xFF56616D;
+    private static final int PENCIL_ROW_FACE = 0xFF65717D;
+    private static final int PENCIL_MUTED = 0xFF8B959F;
+    private static final int PENCIL_TIP = 0xFFC9A66B;
+    /**
+     * The pencil, drawn pixel by pixel in the 16 by 16 of the button: the eraser at the top right,
+     * a three-pixel body down to the tip, and the graphite at the bottom left.
+     */
+    private static final String[] PENCIL = {
+            "................",
+            "................",
+            "...........EE...",
+            "..........EEE...",
+            ".........BBBE...",
+            "........BBBB....",
+            ".......BBBB.....",
+            "......BBBB......",
+            ".....BBBB.......",
+            "....TBBB........",
+            "...TTBB.........",
+            "..GTT...........",
+            "..GG............",
+            "................",
+            "................",
+            "................",
+    };
+
+    /** A slot-sized button in the card rows' style, with the pencil on it, at the row's {@code top}. */
+    static void drawPencil(GuiGraphicsExtractor graphics, int x, int top, boolean lit) {
+        graphics.fill(x - 1, top - 1, x + PENCIL_WIDTH + 1, top + PENCIL_WIDTH + 1, PENCIL_ROW_BACK);
+        graphics.fill(x, top, x + PENCIL_WIDTH, top + PENCIL_WIDTH, PENCIL_ROW_FACE);
+        if (lit) graphics.fill(x, top, x + PENCIL_WIDTH, top + PENCIL_WIDTH, 0x40FFFFFF);
+        for (int row = 0; row < PENCIL.length; row++) {
+            String line = PENCIL[row];
+            for (int col = 0; col < line.length(); col++) {
+                int colour = switch (line.charAt(col)) {
+                    case 'B' -> TITLE;
+                    case 'E' -> PENCIL_MUTED;
+                    case 'T' -> PENCIL_TIP;
+                    case 'G' -> TEXT;
+                    default -> 0;
+                };
+                if (colour != 0) graphics.fill(x + col, top + row, x + col + 1, top + row + 1, colour);
+            }
+        }
+    }
+
+    /**
+     * Vanilla's furnace flame, traced off its {@code lit_progress} sprite. That sprite is opaque and
+     * carries vanilla's own panel grey behind the flames, so blitting it would stamp a grey box onto
+     * our panel; drawing it a run at a time lets the panel show through. It also buys us an unlit
+     * state, which vanilla bakes into its background texture instead of shipping as a sprite.
+     * A dot is see-through, {@code o} the flames' shadow, the rest their fire colours.
+     */
+    private static final String[] FLAME = {
+        ".r.........r..",
+        ".#r...r...r#o.",
+        "..#...#...#.o.",
+        ".ryo..yr..yr..",
+        ".#yo...#..y#..",
+        ".yWo..r#o.Wyo.",
+        "ry#o..y#o.#yr.",
+        "#Wro.rWyo.ry#o",
+        "yWo..#yro..Wyo",
+        "WW#..#Woo.#Wyo",
+        "rWyo.yWo..yWro",
+        ".WWo.yWy..WWo.",
+        "#W#o.#WWo.#W#.",
+        ".ooo..ooo..ooo",
+    };
+    /**
+     * Unlit, the flames drop to one flat grey and shed their shadow. Vanilla's own unlit flame is
+     * 139 grey on a 198 background, so it barely lifts off the panel; matching that ratio against
+     * ours lands on the slot grey, and keeping the shadow would only thicken the silhouette.
+     */
+    private static final int FLAME_OFF = 0xFF8B959F;
+    private static final int FLAME_SHADOW = 0xFF56616D;
+    /** Draws the flame a horizontal run at a time; unlit, every run takes the same flat grey. */
+    static void drawFurnaceFlame(GuiGraphicsExtractor graphics, int x, int y, boolean lit) {
+        for (int row = 0; row < FLAME.length; row++) {
+            String line = FLAME[row];
+            int runStart = 0;
+            int runColour = 0;
+            for (int column = 0; column <= line.length(); column++) {
+                int colour = column < line.length() ? flameColour(line.charAt(column), lit) : 0;
+                if (colour == runColour) continue;
+                if (runColour != 0) graphics.fill(x + runStart, y + row, x + column, y + row + 1, runColour);
+                runStart = column;
+                runColour = colour;
+            }
+        }
+    }
+
+    /** Zero means the panel shows through. */
+    private static int flameColour(char pixel, boolean lit) {
+        if (pixel == '.') return 0;
+        if (!lit) return pixel == 'o' ? 0 : FLAME_OFF;
+        return switch (pixel) {
+            case 'r' -> 0xFFD84C45;
+            case '#' -> 0xFFFFB600;
+            case 'y' -> 0xFFFFFF1F;
+            case 'W' -> 0xFFFFFFFF;
+            // The sprite's own shadow, restated in our palette rather than vanilla's grey.
+            default -> FLAME_SHADOW;
+        };
+    }
+
+    /** Width of the progress arrow, and the scale a screen animates its fill against. */
+    static final int ARROW_WIDTH = 24;
+    private static final int ARROW_TOP = 2;
+    private static final int ARROW_BOTTOM = 15;
+    private static final int ARROW_SHAFT_TOP = 6;
+    private static final int ARROW_SHAFT_BOTTOM = 11;
+    /** Columns of the head; it loses a row off each side per step, ending in a single pixel. */
+    private static final int ARROW_HEAD = 7;
+    private static final int ARROW_BACK = 0xFF56616D;
+
+    /**
+     * Draws the arrow a column at a time, so the fill follows the head's taper instead of stopping
+     * at a straight edge. The last column is scaled to the leftover fraction, keeping the animation
+     * off whole-pixel steps the way the gradient bars do.
+     *
+     * @param x , rowY the arrow's left edge and the top of the slot row it runs along, in screen coordinates
+     * @param filled how many of the {@link #ARROW_WIDTH} columns are covered, fraction included
+     */
+    static void drawProgressArrow(GuiGraphicsExtractor graphics, int x, int rowY, float filled,
+                                  int startColour, int endColour) {
+        drawProgressArrow(graphics, x, rowY, filled, startColour, endColour, false);
+    }
+
+    /**
+     * The same arrow, pointing left when {@code mirrored}: the tail is then at the right edge of the
+     * box and the fill runs towards it, for a machine whose flow arrives from that side.
+     */
+    static void drawProgressArrow(GuiGraphicsExtractor graphics, int x, int rowY, float filled,
+                                  int startColour, int endColour, boolean mirrored) {
+        for (int column = 0; column < ARROW_WIDTH; column++) {
+            // The column is counted from the tail either way; only where it lands on screen flips.
+            int left = mirrored ? x + ARROW_WIDTH - 1 - column : x + column;
+            int top = rowY + arrowTop(column);
+            int bottom = rowY + arrowBottom(column);
+            float covered = Math.clamp(filled - column, 0.0F, 1.0F);
+            graphics.fill(left, top, left + 1, bottom, ARROW_BACK);
+            if (covered <= 0) continue;
+            int colour = lerpColour(startColour, endColour, column / (float) (ARROW_WIDTH - 1));
+            if (covered >= 1) {
+                graphics.fill(left, top, left + 1, bottom, colour);
+                continue;
+            }
+            graphics.pose().pushMatrix();
+            // A part column grows away from the tail, so mirrored it hangs off the cell's right edge.
+            graphics.pose().translate(mirrored ? left + 1 - covered : left, 0);
+            graphics.pose().scale(covered, 1.0F);
+            graphics.fill(0, top, 1, bottom, colour);
+            graphics.pose().popMatrix();
+        }
+    }
+
+    /** Top of one arrow column: the shaft holds its height until the head starts tapering. */
+    private static int arrowTop(int column) {
+        int intoHead = column - (ARROW_WIDTH - ARROW_HEAD);
+        return intoHead < 0 ? ARROW_SHAFT_TOP : ARROW_TOP + intoHead;
+    }
+
+    private static int arrowBottom(int column) {
+        int intoHead = column - (ARROW_WIDTH - ARROW_HEAD);
+        return intoHead < 0 ? ARROW_SHAFT_BOTTOM : ARROW_BOTTOM - intoHead;
+    }
+
+    /** The arrow is drawn per column, so its gradient has to be sampled rather than filled. */
+    private static int lerpColour(int from, int to, float t) {
+        int alpha = lerpChannel(from >>> 24, to >>> 24, t);
+        int red = lerpChannel(from >> 16 & 0xFF, to >> 16 & 0xFF, t);
+        int green = lerpChannel(from >> 8 & 0xFF, to >> 8 & 0xFF, t);
+        int blue = lerpChannel(from & 0xFF, to & 0xFF, t);
+        return alpha << 24 | red << 16 | green << 8 | blue;
+    }
+
+    private static int lerpChannel(int from, int to, float t) { return Math.round(from + (to - from) * t); }
+
     /** Draws the panel's own slots; upgrade slots are drawn by their tab instead. */
     static void drawSlots(GuiGraphicsExtractor graphics, int x, int y, Iterable<Slot> slots) {
         for (Slot slot : slots) {

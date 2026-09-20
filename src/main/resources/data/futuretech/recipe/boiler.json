@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "SSS",
+    "CFC",
+    "LML"
+  ],
+  "key": {
+    "S": "#c:plates/steel",
+    "C": "minecraft:copper_ingot",
+    "F": "minecraft:furnace",
+    "L": "#c:gears/lead",
+    "M": "futuretech:machine_casing"
+  },
+  "result": {
+    "id": "futuretech:boiler",
+    "count": 1
+  }
+}

@@ -20,6 +20,8 @@ public final class FutureTech {
 
     public FutureTech(IEventBus modEventBus) {
         ModDataComponents.TYPES.register(modEventBus);
+        dev.futuretech.registry.ModFluids.TYPES.register(modEventBus);
+        dev.futuretech.registry.ModFluids.FLUIDS.register(modEventBus);
         ModBlocks.BLOCKS.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
         ModBlockEntities.TYPES.register(modEventBus);
@@ -30,6 +32,14 @@ public final class FutureTech {
         modEventBus.addListener(ModBlockEntities::registerCapabilities);
         modEventBus.addListener(ItemJourneys::register);
         modEventBus.addListener(PerfProfiling::registerPayloads);
+        modEventBus.addListener(dev.futuretech.teleport.TeleporterRenamePayload::register);
+        modEventBus.addListener(dev.futuretech.teleport.NetworkPanelPayloads::register);
+        modEventBus.addListener(dev.futuretech.teleport.PortableTeleporterPayloads::register);
+        modEventBus.addListener(dev.futuretech.teleport.StorageCardsEditPayload::register);
+        modEventBus.addListener(dev.futuretech.transfer.TesseractPayloads::register);
+        modEventBus.addListener(dev.futuretech.redstone.WirelessRedstonePayloads::register);
+        NeoForge.EVENT_BUS.addListener(dev.futuretech.transfer.TesseractChannels::onServerStopped);
+        NeoForge.EVENT_BUS.addListener(dev.futuretech.redstone.WirelessRedstone::onServerStopped);
         NeoForge.EVENT_BUS.addListener(PerfProfiling::registerCommands);
         NeoForge.EVENT_BUS.addListener(PerfProfiling::onServerTick);
         NeoForge.EVENT_BUS.addListener(AreaMining::onBreak);

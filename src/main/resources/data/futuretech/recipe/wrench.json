@@ -1,11 +1,17 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
-  "pattern": ["I I", " C ", " R "],
+  "pattern": [
+    "I I",
+    " G ",
+    " I "
+  ],
   "key": {
     "I": "minecraft:iron_ingot",
-    "C": "minecraft:copper_ingot",
-    "R": "minecraft:iron_ingot"
+    "G": "#c:gears/copper"
   },
-  "result": {"id": "futuretech:wrench", "count": 1}
+  "result": {
+    "id": "futuretech:wrench",
+    "count": 1
+  }
 }

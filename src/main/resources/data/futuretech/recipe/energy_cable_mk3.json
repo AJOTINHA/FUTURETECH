@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "CCC",
+    "CKC",
+    "CCC"
+  ],
+  "key": {
+    "C": "futuretech:energy_cable_mk2",
+    "K": "futuretech:upgrade_kit_mk3"
+  },
+  "result": {
+    "id": "futuretech:energy_cable_mk3",
+    "count": 8
+  }
+}

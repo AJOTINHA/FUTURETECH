@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "III",
+    "RRR",
+    "III"
+  ],
+  "key": {
+    "I": "#c:plates/iron",
+    "R": "#c:ingots/red_alloy"
+  },
+  "result": {
+    "id": "futuretech:redstone_cable",
+    "count": 6
+  }
+}

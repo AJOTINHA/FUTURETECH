@@ -1,0 +1,204 @@
+{
+  "type": "futuretech:extruding",
+  "recipes": {
+    "cobblestone": {
+      "first": {
+        "fluid": "minecraft:water",
+        "consumes": 0
+      },
+      "second": {
+        "fluid": "minecraft:lava",
+        "consumes": 0
+      },
+      "result": {
+        "id": "minecraft:cobblestone",
+        "count": 1
+      },
+      "duration": 20
+    },
+    "andesite": {
+      "first": {
+        "fluid": "minecraft:water",
+        "consumes": 1000
+      },
+      "second": {
+        "fluid": "minecraft:lava",
+        "consumes": 0
+      },
+      "result": {
+        "id": "minecraft:andesite",
+        "count": 1
+      },
+      "duration": 40
+    },
+    "cobbled_deepslate": {
+      "first": {
+        "fluid": "minecraft:water",
+        "consumes": 0
+      },
+      "second": {
+        "fluid": "minecraft:lava",
+        "consumes": 0
+      },
+      "result": {
+        "id": "minecraft:cobbled_deepslate",
+        "count": 1
+      },
+      "duration": 40
+    },
+    "deepslate": {
+      "first": {
+        "fluid": "minecraft:water",
+        "consumes": 1000
+      },
+      "second": {
+        "fluid": "minecraft:lava",
+        "consumes": 0
+      },
+      "result": {
+        "id": "minecraft:deepslate",
+        "count": 1
+      },
+      "duration": 40
+    },
+    "diorite": {
+      "first": {
+        "fluid": "minecraft:water",
+        "consumes": 1000
+      },
+      "second": {
+        "fluid": "minecraft:lava",
+        "consumes": 0
+      },
+      "result": {
+        "id": "minecraft:diorite",
+        "count": 1
+      },
+      "duration": 40
+    },
+    "granite": {
+      "first": {
+        "fluid": "minecraft:water",
+        "consumes": 1000
+      },
+      "second": {
+        "fluid": "minecraft:lava",
+        "consumes": 0
+      },
+      "result": {
+        "id": "minecraft:granite",
+        "count": 1
+      },
+      "duration": 40
+    },
+    "stone": {
+      "first": {
+        "fluid": "minecraft:water",
+        "consumes": 1000
+      },
+      "second": {
+        "fluid": "minecraft:lava",
+        "consumes": 0
+      },
+      "result": {
+        "id": "minecraft:stone",
+        "count": 1
+      },
+      "duration": 40
+    },
+    "tuff": {
+      "first": {
+        "fluid": "minecraft:water",
+        "consumes": 1000
+      },
+      "second": {
+        "fluid": "minecraft:lava",
+        "consumes": 0
+      },
+      "result": {
+        "id": "minecraft:tuff",
+        "count": 1
+      },
+      "duration": 40
+    },
+    "obsidian": {
+      "first": {
+        "fluid": "minecraft:water",
+        "consumes": 1000
+      },
+      "second": {
+        "fluid": "minecraft:lava",
+        "consumes": 1000
+      },
+      "result": {
+        "id": "minecraft:obsidian",
+        "count": 1
+      },
+      "duration": 80
+    },
+    "gravel": {
+      "first": {
+        "fluid": "minecraft:water",
+        "consumes": 0
+      },
+      "second": {
+        "fluid": "minecraft:lava",
+        "consumes": 0
+      },
+      "result": {
+        "id": "minecraft:gravel",
+        "count": 1
+      },
+      "duration": 30,
+      "upgrade": "futuretech:upgrades/sand"
+    },
+    "sand": {
+      "first": {
+        "fluid": "minecraft:water",
+        "consumes": 1000
+      },
+      "second": {
+        "fluid": "minecraft:lava",
+        "consumes": 0
+      },
+      "result": {
+        "id": "minecraft:sand",
+        "count": 1
+      },
+      "duration": 40,
+      "upgrade": "futuretech:upgrades/sand"
+    },
+    "red_sand": {
+      "first": {
+        "fluid": "minecraft:water",
+        "consumes": 1000
+      },
+      "second": {
+        "fluid": "minecraft:lava",
+        "consumes": 0
+      },
+      "result": {
+        "id": "minecraft:red_sand",
+        "count": 1
+      },
+      "duration": 60,
+      "upgrade": "futuretech:upgrades/sand"
+    },
+    "soul_sand": {
+      "first": {
+        "fluid": "minecraft:water",
+        "consumes": 1000
+      },
+      "second": {
+        "fluid": "minecraft:lava",
+        "consumes": 1000
+      },
+      "result": {
+        "id": "minecraft:soul_sand",
+        "count": 1
+      },
+      "duration": 80,
+      "upgrade": "futuretech:upgrades/sand"
+    }
+  }
+}

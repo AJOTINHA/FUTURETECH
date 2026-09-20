@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "TWT",
+    "CMC",
+    "ARA"
+  ],
+  "key": {
+    "T": "#c:plates/tin",
+    "W": "minecraft:water_bucket",
+    "C": "#c:gears/copper",
+    "M": "futuretech:machine_casing",
+    "A": "minecraft:copper_ingot",
+    "R": "minecraft:redstone"
+  },
+  "result": {
+    "id": "futuretech:extruder",
+    "count": 1
+  }
+}

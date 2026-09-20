@@ -1,0 +1,12 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "futuretech:item/metal_parts/silver_plate",
+    "tints": [
+      {
+        "type": "minecraft:constant",
+        "value": -1773318
+      }
+    ]
+  }
+}

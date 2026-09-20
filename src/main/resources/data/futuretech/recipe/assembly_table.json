@@ -3,12 +3,13 @@
   "category": "redstone",
   "pattern": [
     "III",
-    " C ",
+    "CAC",
     "I I"
   ],
   "key": {
     "I": "minecraft:iron_ingot",
-    "C": "minecraft:copper_ingot"
+    "C": "minecraft:copper_ingot",
+    "A": "#c:gears/iron"
   },
   "result": {
     "id": "futuretech:assembly_table",

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "NLN",
+    "BMB",
+    "ACA"
+  ],
+  "key": {
+    "N": "#c:plates/netherite",
+    "L": "minecraft:lightning_rod",
+    "B": "futuretech:battery_mk1",
+    "M": "futuretech:machine_casing",
+    "A": "#c:gears/netherite",
+    "C": "minecraft:nether_star"
+  },
+  "result": {
+    "id": "futuretech:weather_controller",
+    "count": 1
+  }
+}

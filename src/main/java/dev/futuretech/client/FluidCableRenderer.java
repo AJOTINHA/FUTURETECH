@@ -3,6 +3,7 @@ package dev.futuretech.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.futuretech.block.AbstractCableBlock;
+import dev.futuretech.block.CableConnector;
 import dev.futuretech.block.entity.FluidCableBlockEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -40,6 +41,12 @@ public final class FluidCableRenderer implements BlockEntityRenderer<FluidCableB
     /** The glass core runs from 5 to 11; the fluid keeps half a unit inside it on every side. */
     private static final float INNER = 5.5F / 16F;
     private static final float OUTER = 10.5F / 16F;
+    /**
+     * How far short of the block's edge an arm stops when it ends in a collar. The collar's plug
+     * sits flush with that edge, and an end cap on the same plane fights it for the pixels; a
+     * quarter of a unit in, the cap is buried in the plug and never seen.
+     */
+    private static final float COLLAR_INSET = 0.25F / 16F;
 
     public static final class State extends BlockEntityRenderState {
         @Nullable TextureAtlasSprite sprite;
@@ -52,6 +59,8 @@ public final class FluidCableRenderer implements BlockEntityRenderer<FluidCableB
         FluidCableBlockEntity.Run first = new FluidCableBlockEntity.Run(0, 1);
         FluidCableBlockEntity.@Nullable Run second;
         final Set<Direction> arms = EnumSet.noneOf(Direction.class);
+        /** The arms that end in a collar rather than in the next cable. */
+        final Set<Direction> collars = EnumSet.noneOf(Direction.class);
     }
 
     public FluidCableRenderer(BlockEntityRendererProvider.Context context) {}
@@ -65,6 +74,7 @@ public final class FluidCableRenderer implements BlockEntityRenderer<FluidCableB
         BlockEntityRenderer.super.extractRenderState(cable, state, partialTick, camera, breakProgress);
         state.sprite = null;
         state.arms.clear();
+        state.collars.clear();
         if (!cable.tier().showsFluid() || cable.getLevel() == null) return;
         double time = cable.getLevel().getGameTime() + partialTick;
         FluidCableBlockEntity.Front front = cable.front(time);
@@ -78,8 +88,10 @@ public final class FluidCableRenderer implements BlockEntityRenderer<FluidCableB
         state.travel = front.travel() == null ? Direction.UP : front.travel();
         state.first = front.first();
         state.second = front.second();
+        int collars = CableConnector.mask(cable.getLevel(), cable.getBlockPos(), cable.getBlockState());
         for (Direction side : Direction.values()) {
             if (cable.getBlockState().getValue(AbstractCableBlock.PROPERTY_BY_DIRECTION.get(side))) state.arms.add(side);
+            if ((collars & (1 << side.ordinal())) != 0) state.collars.add(side);
         }
     }
 
@@ -89,12 +101,13 @@ public final class FluidCableRenderer implements BlockEntityRenderer<FluidCableB
         if (sprite == null) return;
         var stream = new Stream(sprite, ARGB.opaque(state.color), state.fluidLight);
         Set<Direction> arms = EnumSet.copyOf(state.arms);
+        Set<Direction> collars = EnumSet.copyOf(state.collars);
         Direction travel = state.travel;
         var first = state.first;
         var second = state.second;
         collector.submitCustomGeometry(pose, RenderTypes.entityTranslucent(sprite.atlasLocation()), (p, buffer) -> {
-            stream.body(p, buffer, arms, travel, first.from(), first.to());
-            if (second != null) stream.body(p, buffer, arms, travel, second.from(), second.to());
+            stream.body(p, buffer, arms, collars, travel, first.from(), first.to());
+            if (second != null) stream.body(p, buffer, arms, collars, travel, second.from(), second.to());
         });
     }
 
@@ -106,19 +119,21 @@ public final class FluidCableRenderer implements BlockEntityRenderer<FluidCableB
          * where it meets the other, so no two translucent faces share a plane and the seams stay
          * invisible. The core and the arm the fluid comes in by are measured along the way in;
          * every other arm along its own way out, so the front leaves the core through all of them
-         * at once.
+         * at once. An arm ending in a collar stops {@link #COLLAR_INSET} short of the edge.
          */
-        void body(PoseStack.Pose pose, VertexConsumer buffer, Set<Direction> arms, Direction travel, float from, float to) {
+        void body(PoseStack.Pose pose, VertexConsumer buffer, Set<Direction> arms, Set<Direction> collars,
+                  Direction travel, float from, float to) {
             box(pose, buffer, INNER, INNER, INNER, OUTER, OUTER, OUTER, arms, travel, from, to);
             for (Direction side : arms) {
                 float x0 = INNER, y0 = INNER, z0 = INNER, x1 = OUTER, y1 = OUTER, z1 = OUTER;
+                float edge = collars.contains(side) ? COLLAR_INSET : 0;
                 switch (side) {
-                    case WEST -> { x0 = 0; x1 = INNER; }
-                    case EAST -> { x0 = OUTER; x1 = 1; }
-                    case DOWN -> { y0 = 0; y1 = INNER; }
-                    case UP -> { y0 = OUTER; y1 = 1; }
-                    case NORTH -> { z0 = 0; z1 = INNER; }
-                    case SOUTH -> { z0 = OUTER; z1 = 1; }
+                    case WEST -> { x0 = edge; x1 = INNER; }
+                    case EAST -> { x0 = OUTER; x1 = 1 - edge; }
+                    case DOWN -> { y0 = edge; y1 = INNER; }
+                    case UP -> { y0 = OUTER; y1 = 1 - edge; }
+                    case NORTH -> { z0 = edge; z1 = INNER; }
+                    case SOUTH -> { z0 = OUTER; z1 = 1 - edge; }
                 }
                 Direction along = side == travel.getOpposite() ? travel : side;
                 box(pose, buffer, x0, y0, z0, x1, y1, z1, EnumSet.of(side.getOpposite()), along, from, to);

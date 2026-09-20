@@ -40,16 +40,18 @@ class SolidFuelGeneratorTest {
     }
 
     @Test
-    void coalAndCharcoalProduceExactly32000FEPerItem(MinecraftServer server) {
+    void coalAndCharcoalProduceExactly16000FEPerItemIn400Ticks(MinecraftServer server) {
+        // Thermal Expansion's rate: 10 FE for every furnace tick of the fuel, made at 40 FE/t.
+        assertEquals(400, BURN_TICKS);
         for (var item : new Item[] {Items.COAL, Items.CHARCOAL}) {
             var generator = generator();
             var receiver = new SimpleEnergyHandler(100_000);
             generator.setItem(0, new ItemStack(item));
-            for (int tick = 0; tick < 1600; tick++) {
+            for (int tick = 0; tick < 400; tick++) {
                 tick(generator, server);
                 EnergyHandlerUtil.move(generator.energy(), receiver, 80, null);
             }
-            assertEquals(32_000, receiver.getAmountAsInt());
+            assertEquals(16_000, receiver.getAmountAsInt());
             assertEquals(0, generator.menuData().get(DATA_BURN_REMAINING));
             assertTrue(generator.getItem(0).isEmpty());
             tick(generator, server);
@@ -61,30 +63,31 @@ class SolidFuelGeneratorTest {
     @Test
     void fullBufferPausesAndResumesWithoutConsumingAnotherItem(MinecraftServer server) {
         var generator = generator();
-        generator.setItem(0, new ItemStack(Items.COAL, 2));
+        generator.setItem(0, new ItemStack(Items.COAL, 3));
+        // The first coal fills 16.000 in 400 ticks; the second tops the buffer up 100 ticks later.
         for (int tick = 0; tick < 1000; tick++) tick(generator, server);
         assertEquals(20_000, generator.energy().getAmountAsInt());
-        assertEquals(600, generator.menuData().get(DATA_BURN_REMAINING));
+        assertEquals(300, generator.menuData().get(DATA_BURN_REMAINING));
         for (int tick = 0; tick < 100; tick++) tick(generator, server);
-        assertEquals(600, generator.menuData().get(DATA_BURN_REMAINING));
+        assertEquals(300, generator.menuData().get(DATA_BURN_REMAINING));
         assertEquals(1, generator.getItem(0).getCount());
         assertEquals(0, generator.menuData().get(DATA_GENERATING));
 
-        // A partial tick's space must not discard the remaining 10 FE.
+        // A partial tick's space must not discard the remaining 30 FE.
         try (var transaction = Transaction.openRoot()) {
-            assertEquals(10, generator.energy().extract(10, transaction));
+            assertEquals(30, generator.energy().extract(30, transaction));
             transaction.commit();
         }
         tick(generator, server);
-        assertEquals(19_990, generator.energy().getAmountAsInt());
-        assertEquals(600, generator.menuData().get(DATA_BURN_REMAINING));
+        assertEquals(19_970, generator.energy().getAmountAsInt());
+        assertEquals(300, generator.menuData().get(DATA_BURN_REMAINING));
         try (var transaction = Transaction.openRoot()) {
             generator.energy().extract(10, transaction);
             transaction.commit();
         }
         tick(generator, server);
         assertEquals(20_000, generator.energy().getAmountAsInt());
-        assertEquals(599, generator.menuData().get(DATA_BURN_REMAINING));
+        assertEquals(299, generator.menuData().get(DATA_BURN_REMAINING));
         assertEquals(1, generator.getItem(0).getCount());
     }
 
@@ -111,13 +114,13 @@ class SolidFuelGeneratorTest {
         try (var transaction = Transaction.openRoot()) {
             assertEquals(80, generator.energy().extract(1000, transaction));
         }
-        assertEquals(100, generator.energy().getAmountAsInt());
+        assertEquals(200, generator.energy().getAmountAsInt());
         var receiver = new SimpleEnergyHandler(35);
         assertEquals(35, EnergyHandlerUtil.move(generator.energy(), receiver, 80, null));
-        assertEquals(65, generator.energy().getAmountAsInt());
+        assertEquals(165, generator.energy().getAmountAsInt());
         assertEquals(35, receiver.getAmountAsInt());
         assertEquals(0, EnergyHandlerUtil.move(generator.energy(), receiver, 80, null));
-        assertEquals(65, generator.energy().getAmountAsInt());
+        assertEquals(165, generator.energy().getAmountAsInt());
     }
 
     @Test
@@ -128,13 +131,13 @@ class SolidFuelGeneratorTest {
         var saved = original.saveWithoutMetadata(server.registryAccess());
         var restored = generator();
         restored.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, server.registryAccess(), saved));
-        assertEquals(340, restored.energy().getAmountAsInt());
-        assertEquals(1583, restored.menuData().get(DATA_BURN_REMAINING));
+        assertEquals(680, restored.energy().getAmountAsInt());
+        assertEquals(383, restored.menuData().get(DATA_BURN_REMAINING));
         assertEquals(2, restored.getItem(0).getCount());
         assertTrue(restored.getItem(0).is(Items.CHARCOAL));
         tick(restored, server);
-        assertEquals(360, restored.energy().getAmountAsInt());
-        assertEquals(1582, restored.menuData().get(DATA_BURN_REMAINING));
+        assertEquals(720, restored.energy().getAmountAsInt());
+        assertEquals(382, restored.menuData().get(DATA_BURN_REMAINING));
         assertEquals(2, restored.getItem(0).getCount());
     }
 
@@ -168,12 +171,14 @@ class SolidFuelGeneratorTest {
             assertEquals(fuel.ticks(), SolidFuelGeneratorBlockEntity.burnDuration(stack, server.fuelValues()), name);
             generator.setItem(0, stack);
             var receiver = new SimpleEnergyHandler(100_000);
-            for (int t = 0; t < fuel.ticks(); t++) {
+            int ticks = SolidFuelGeneratorBlockEntity.generatorTicks(fuel.ticks());
+            for (int t = 0; t < ticks; t++) {
                 tick(generator, server);
                 EnergyHandlerUtil.move(generator.energy(), receiver, 80, null);
             }
-            assertEquals(fuel.ticks() * 20, receiver.getAmountAsInt(), name);
-            assertEquals(fuel.ticks(), generator.menuData().get(DATA_BURN_TOTAL), name);
+            assertEquals(fuel.ticks() / 4, ticks, name);
+            assertEquals(ticks * GENERATION_PER_TICK, receiver.getAmountAsInt(), name);
+            assertEquals(ticks, generator.menuData().get(DATA_BURN_TOTAL), name);
             assertEquals(0, generator.menuData().get(DATA_BURN_REMAINING), name);
             assertTrue(generator.getItem(0).isEmpty(), name);
             tick(generator, server);
@@ -198,7 +203,7 @@ class SolidFuelGeneratorTest {
     void outputIsCappedPerTickAcrossCallsAndRestoredByAbortedTransactions(MinecraftServer server) {
         var generator = generator();
         generator.setItem(0, new ItemStack(Items.COAL));
-        for (int t = 0; t < 20; t++) tick(generator, server);
+        for (int t = 0; t < 10; t++) tick(generator, server);
         assertEquals(400, generator.energy().getAmountAsInt());
 
         // Several pulls in one tick share the 80 FE budget; a rolled-back pull gives its share back,
@@ -236,7 +241,7 @@ class SolidFuelGeneratorTest {
         var synced = new SimpleContainerData(DATA_COUNT);
         // The vanilla packet writes and reads each slot as a signed short.
         for (int i = 0; i < DATA_COUNT; i++) synced.set(i, (short) generator.menuData().get(i));
-        assertEquals(20_000, EnergySync.unpack(synced.get(DATA_ENERGY_LOW), synced.get(DATA_ENERGY_HIGH)));
+        assertEquals(16_000, EnergySync.unpack(synced.get(DATA_ENERGY_LOW), synced.get(DATA_ENERGY_HIGH)));
         for (int amount : new int[] {0, 32_767, 32_768, 65_535, 65_536, 100_000, 1_000_000}) {
             int low = (short) EnergySync.low(amount);
             int high = (short) EnergySync.high(amount);
@@ -247,20 +252,21 @@ class SolidFuelGeneratorTest {
     @Test
     void woodBurnDurationSurvivesReloadAndChangesOnlyWithTheNextFuel(MinecraftServer server) {
         var generator = generator();
+        // A slab burns 150 furnace ticks: 1.500 FE, which is 37 ticks of the generator.
         generator.setItem(0, new ItemStack(Items.OAK_SLAB));
         for (int tick = 0; tick < 17; tick++) tick(generator, server);
         generator.setItem(0, new ItemStack(Items.COAL));
         var restored = generator();
         restored.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, server.registryAccess(),
                 generator.saveWithoutMetadata(server.registryAccess())));
-        assertEquals(150, restored.menuData().get(DATA_BURN_TOTAL));
-        assertEquals(133, restored.menuData().get(DATA_BURN_REMAINING));
-        for (int tick = 0; tick < 133; tick++) tick(restored, server);
-        assertEquals(3000, restored.energy().getAmountAsInt());
+        assertEquals(37, restored.menuData().get(DATA_BURN_TOTAL));
+        assertEquals(20, restored.menuData().get(DATA_BURN_REMAINING));
+        for (int tick = 0; tick < 20; tick++) tick(restored, server);
+        assertEquals(37 * GENERATION_PER_TICK, restored.energy().getAmountAsInt());
         assertEquals(1, restored.getItem(0).getCount());
         tick(restored, server);
-        assertEquals(1600, restored.menuData().get(DATA_BURN_TOTAL));
-        assertEquals(1599, restored.menuData().get(DATA_BURN_REMAINING));
+        assertEquals(400, restored.menuData().get(DATA_BURN_TOTAL));
+        assertEquals(399, restored.menuData().get(DATA_BURN_REMAINING));
         assertTrue(restored.getItem(0).isEmpty());
     }
 
@@ -273,9 +279,9 @@ class SolidFuelGeneratorTest {
         saved.remove("BurnTotal");
         var restored = generator();
         restored.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, server.registryAccess(), saved));
-        assertEquals(1600, restored.menuData().get(DATA_BURN_TOTAL));
-        assertEquals(1599, restored.menuData().get(DATA_BURN_REMAINING));
+        assertEquals(400, restored.menuData().get(DATA_BURN_TOTAL));
+        assertEquals(399, restored.menuData().get(DATA_BURN_REMAINING));
         tick(restored, server);
-        assertEquals(40, restored.energy().getAmountAsInt());
+        assertEquals(2 * GENERATION_PER_TICK, restored.energy().getAmountAsInt());
     }
 }

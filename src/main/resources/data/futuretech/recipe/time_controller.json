@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "NCN",
+    "BMB",
+    "ADA"
+  ],
+  "key": {
+    "N": "#c:plates/netherite",
+    "C": "minecraft:clock",
+    "B": "futuretech:battery_mk1",
+    "M": "futuretech:machine_casing",
+    "A": "#c:gears/netherite",
+    "D": "minecraft:nether_star"
+  },
+  "result": {
+    "id": "futuretech:time_controller",
+    "count": 1
+  }
+}

@@ -4,8 +4,10 @@ import static dev.futuretech.client.MachineScreenStyle.*;
 
 import dev.futuretech.api.gui.EnergyInfoTab;
 import dev.futuretech.api.gui.TabStrip;
+import dev.futuretech.api.gui.TabbedScreen;
 import dev.futuretech.api.redstone.client.RedstoneControlTab;
 import dev.futuretech.api.side.client.SideConfigTab;
+import dev.futuretech.api.side.client.SortToggle;
 import dev.futuretech.api.upgrade.client.UpgradeTab;
 import dev.futuretech.menu.ElectricFurnaceMenu;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -14,7 +16,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
-public final class ElectricFurnaceScreen extends AbstractContainerScreen<ElectricFurnaceMenu> {
+public final class ElectricFurnaceScreen extends AbstractContainerScreen<ElectricFurnaceMenu> implements TabbedScreen {
     /** The energy column down the left edge, centred on the slot rows: outer box, with the fill inset by a pixel. */
     private static final int ENERGY_X = 7;
     private static final int ENERGY_HEIGHT = 49;
@@ -28,39 +30,9 @@ public final class ElectricFurnaceScreen extends AbstractContainerScreen<Electri
     private static final int ARROW_SHAFT_BOTTOM = 11;
     /** Columns of the head; it loses a row off each side per step, ending in a single pixel. */
     private static final int ARROW_HEAD = 7;
-    /**
-     * Vanilla's furnace flame, traced off its {@code lit_progress} sprite. That sprite is opaque and
-     * carries vanilla's own panel grey behind the flames, so blitting it would stamp a grey box onto
-     * our panel; drawing it a run at a time lets the panel show through. It also buys us an unlit
-     * state, which vanilla bakes into its background texture instead of shipping as a sprite.
-     * A dot is see-through, {@code o} the flames' shadow, the rest their fire colours.
-     */
-    private static final String[] FLAME = {
-        ".r.........r..",
-        ".#r...r...r#o.",
-        "..#...#...#.o.",
-        ".ryo..yr..yr..",
-        ".#yo...#..y#..",
-        ".yWo..r#o.Wyo.",
-        "ry#o..y#o.#yr.",
-        "#Wro.rWyo.ry#o",
-        "yWo..#yro..Wyo",
-        "WW#..#Woo.#Wyo",
-        "rWyo.yWo..yWro",
-        ".WWo.yWy..WWo.",
-        "#W#o.#WWo.#W#.",
-        ".ooo..ooo..ooo",
-    };
     /** Centred under the last input slot, a couple of rows below its border, however many lanes there are. */
     private static final int FLAME_X = 57;
     private static final int FLAME_BELOW_ROW = 19;
-    /**
-     * Unlit, the flames drop to one flat grey and shed their shadow. Vanilla's own unlit flame is
-     * 139 grey on a 198 background, so it barely lifts off the panel; matching that ratio against
-     * ours lands on the slot grey, and keeping the shadow would only thicken the silhouette.
-     */
-    private static final int FLAME_OFF = 0xFF8B959F;
-    private static final int FLAME_SHADOW = 0xFF56616D;
     private static final int ARROW_BACK = 0xFF56616D;
     private static final int ARROW_START = 0xFFEC761C;
     private static final int ARROW_END = 0xFFFFD76A;
@@ -68,6 +40,9 @@ public final class ElectricFurnaceScreen extends AbstractContainerScreen<Electri
     private final AnimatedBar energyBar = new AnimatedBar();
     private final AnimatedBar[] progressBars;
     private final TabStrip tabs;
+
+    @Override
+    public TabStrip tabs() { return tabs; }
 
     public ElectricFurnaceScreen(ElectricFurnaceMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title, ElectricFurnaceMenu.IMAGE_WIDTH, 184 + menu.extraHeight());
@@ -102,45 +77,11 @@ public final class ElectricFurnaceScreen extends AbstractContainerScreen<Electri
             float smeltWidth = progressBars[lane].width(menu.progress(lane), menu.progressTotal(lane), ARROW_WIDTH, menu.isSynced());
             drawProgressArrow(graphics, x, y + menu.rowY(lane), smeltWidth);
         }
-        drawFlame(graphics, x + FLAME_X, y + menu.rowY(menu.lanes() - 1) + FLAME_BELOW_ROW, menu.isWorking());
+        drawFurnaceFlame(graphics, x + FLAME_X, y + menu.rowY(menu.lanes() - 1) + FLAME_BELOW_ROW, menu.isWorking());
+        SortToggle.draw(graphics, menu, x + SortToggle.X, y + sortY(), mouseX, mouseY);
         tabs.render(graphics, x, y, imageWidth, mouseX, mouseY);
     }
 
-    /** Draws the flame a horizontal run at a time; unlit, every run takes the same flat grey. */
-    private static void drawFlame(GuiGraphicsExtractor graphics, int x, int y, boolean lit) {
-        for (int row = 0; row < FLAME.length; row++) {
-            String line = FLAME[row];
-            int runStart = 0;
-            int runColour = 0;
-            for (int column = 0; column <= line.length(); column++) {
-                int colour = column < line.length() ? flameColour(line.charAt(column), lit) : 0;
-                if (colour == runColour) continue;
-                if (runColour != 0) graphics.fill(x + runStart, y + row, x + column, y + row + 1, runColour);
-                runStart = column;
-                runColour = colour;
-            }
-        }
-    }
-
-    /** Zero means the panel shows through. */
-    private static int flameColour(char pixel, boolean lit) {
-        if (pixel == '.') return 0;
-        if (!lit) return pixel == 'o' ? 0 : FLAME_OFF;
-        return switch (pixel) {
-            case 'r' -> 0xFFD84C45;
-            case '#' -> 0xFFFFB600;
-            case 'y' -> 0xFFFFFF1F;
-            case 'W' -> 0xFFFFFFFF;
-            // The sprite's own shadow, restated in our palette rather than vanilla's grey.
-            default -> FLAME_SHADOW;
-        };
-    }
-
-    /**
-     * Draws the arrow a column at a time, so the fill follows the head's taper instead of stopping
-     * at a straight edge. The last column is scaled to the leftover fraction, keeping the animation
-     * off whole-pixel steps the way the gradient bars do.
-     */
     private void drawProgressArrow(GuiGraphicsExtractor graphics, int x, int rowY, float filled) {
         for (int column = 0; column < ARROW_WIDTH; column++) {
             int left = x + ARROW_X + column;
@@ -199,13 +140,18 @@ public final class ElectricFurnaceScreen extends AbstractContainerScreen<Electri
         energyTooltip(graphics, mouseX, mouseY, leftPos + ENERGY_X, topPos + energyTop(),
                 ENERGY_WIDTH, ENERGY_HEIGHT,
                 menu.energyStored(), menu.energyCapacity());
+        SortToggle.tooltip(graphics, menu, leftPos + SortToggle.X, topPos + sortY(), mouseX, mouseY);
         tabs.extractTooltip(graphics, mouseX, mouseY);
     }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        return tabs.mouseClicked(event) || super.mouseClicked(event, doubleClick);
+        return tabs.mouseClicked(event) || SortToggle.click(menu, leftPos + SortToggle.X, topPos + sortY(), event)
+                || super.mouseClicked(event, doubleClick);
     }
+
+    /** The sorting button's top, relative to the panel: centred on the block of lane rows. */
+    private int sortY() { return SortToggle.y(menu.rowY(0), menu.lanes()); }
 
     @Override
     protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {

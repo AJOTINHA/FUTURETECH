@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "E  ",
+    "ORR",
+    "SCS"
+  ],
+  "key": {
+    "E": "minecraft:ender_pearl",
+    "O": "minecraft:obsidian",
+    "R": "minecraft:redstone",
+    "S": "minecraft:smooth_stone_slab",
+    "C": "futuretech:chip"
+  },
+  "result": {
+    "id": "futuretech:wireless_transmitter",
+    "count": 1
+  }
+}

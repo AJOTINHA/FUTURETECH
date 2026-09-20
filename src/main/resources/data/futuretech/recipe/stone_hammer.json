@@ -3,11 +3,12 @@
   "category": "equipment",
   "pattern": [
     "MMM",
-    "MSM",
+    "MGM",
     " S "
   ],
   "key": {
     "M": "#minecraft:stone_tool_materials",
+    "G": "minecraft:stick",
     "S": "minecraft:stick"
   },
   "result": {

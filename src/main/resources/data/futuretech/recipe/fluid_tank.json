@@ -2,12 +2,12 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "IGI",
+    "LGL",
     "GBG",
-    "IGI"
+    "LGL"
   ],
   "key": {
-    "I": "minecraft:iron_ingot",
+    "L": "#c:ingots/lead",
     "G": "minecraft:glass",
     "B": "minecraft:bucket"
   },

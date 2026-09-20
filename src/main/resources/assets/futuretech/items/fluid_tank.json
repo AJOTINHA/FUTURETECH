@@ -1,6 +1,34 @@
 {
   "model": {
-    "type": "minecraft:model",
-    "model": "futuretech:item/fluid_tank"
+    "property": "minecraft:block_state",
+    "type": "minecraft:select",
+    "cases": [
+      {
+        "when": "2",
+        "model": {
+          "model": "futuretech:block/fluid_tank/mk2",
+          "type": "minecraft:model"
+        }
+      },
+      {
+        "when": "3",
+        "model": {
+          "model": "futuretech:block/fluid_tank/mk3",
+          "type": "minecraft:model"
+        }
+      },
+      {
+        "when": "4",
+        "model": {
+          "model": "futuretech:block/fluid_tank/mk4",
+          "type": "minecraft:model"
+        }
+      }
+    ],
+    "fallback": {
+      "model": "futuretech:block/fluid_tank",
+      "type": "minecraft:model"
+    },
+    "block_state_property": "mk"
   }
 }

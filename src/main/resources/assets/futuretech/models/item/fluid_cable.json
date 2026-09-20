@@ -1,5 +1,5 @@
 {
-  "parent": "futuretech:item/cable_mk1",
+  "parent": "futuretech:item/energy_cable_mk1",
   "textures": {
     "cable": "futuretech:block/fluid_cable/fluid_cable",
     "node": "futuretech:block/fluid_cable/fluid_cable_node"

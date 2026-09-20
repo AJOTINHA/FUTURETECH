@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "NAN",
+    "CEC",
+    "SBS"
+  ],
+  "key": {
+    "N": "#c:plates/netherite",
+    "A": "minecraft:amethyst_shard",
+    "C": "futuretech:chip",
+    "E": "#c:ingots/ender_alloy",
+    "S": "#c:plates/steel",
+    "B": "futuretech:conductance_coil"
+  },
+  "result": {
+    "id": "futuretech:tesseract",
+    "count": 1
+  }
+}

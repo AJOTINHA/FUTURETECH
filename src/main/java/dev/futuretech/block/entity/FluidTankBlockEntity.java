@@ -12,6 +12,7 @@ import dev.futuretech.api.side.SideConfigVisuals;
 import net.neoforged.neoforge.model.data.ModelData;
 import dev.futuretech.api.redstone.RedstoneControl;
 import dev.futuretech.api.redstone.RedstoneControllable;
+import dev.futuretech.api.upgrade.MachineLevel;
 import dev.futuretech.api.upgrade.UpgradeInventory;
 import dev.futuretech.api.upgrade.Upgradeable;
 import net.minecraft.core.Direction;
@@ -56,6 +57,7 @@ import net.neoforged.neoforge.transfer.fluid.FluidStacksResourceHandler;
 import net.neoforged.neoforge.transfer.fluid.FluidUtil;
 
 public final class FluidTankBlockEntity extends BlockEntity implements MenuProvider, SideConfigurable, RedstoneControllable, Upgradeable {
+    /** The MK1 tank; every level above doubles it, see {@link #capacity(int)}. */
     public static final int CAPACITY = 16_000;
     public static final int INPUT = 0;
     public static final int OUTPUT = 1;
@@ -64,7 +66,7 @@ public final class FluidTankBlockEntity extends BlockEntity implements MenuProvi
     public static final int DATA_COUNT = DATA_REDSTONE + RedstoneControl.DATA_COUNT;
     private final SideConfig sides;
     private final RedstoneControl redstone = new RedstoneControl();
-    private final UpgradeInventory upgrades = new UpgradeInventory(() -> 1, this::setChanged);
+    private final UpgradeInventory upgrades = new UpgradeInventory(() -> MachineLevel.of(getBlockState()), this::setChanged);
     private final ContainerData menuData = new ContainerData() {
         @Override
         public int get(int index) {
@@ -88,14 +90,22 @@ public final class FluidTankBlockEntity extends BlockEntity implements MenuProvi
         @Override
         public boolean canPlaceItem(int slot, ItemStack stack) { return slot == INPUT && acceptsContainer(stack); }
     };
-    private final FluidStacksResourceHandler fluids = new FluidStacksResourceHandler(1, CAPACITY) {
+    private final Tank fluids = new Tank();
+
+    /** The tank itself, with a capacity that follows the level. */
+    private final class Tank extends FluidStacksResourceHandler {
+        Tank() { super(1, CAPACITY); }
+
         @Override
         protected void onContentsChanged(int index, FluidStack previousContents) {
             setChanged();
             needsSync = true;
             containerDirty = true;
         }
-    };
+
+        /** The field is what {@code getCapacity} answers; an upgrade kit raises it in place. */
+        void resize(int capacity) { this.capacity = capacity; }
+    }
     private boolean needsSync;
     /**
      * Whether the bucket slot or the fluid changed since the bucket was last tried. Trying a
@@ -124,6 +134,21 @@ public final class FluidTankBlockEntity extends BlockEntity implements MenuProvi
     public FluidTankBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.FLUID_TANK.get(), pos, state);
         sides = ((FluidTankBlock)state.getBlock()).createSideConfig(state);
+        fluids.resize(capacity(MachineLevel.of(state)));
+    }
+
+    /** Millibuckets a level-{@code mk} tank holds: the MK1 tank doubled for every level above. */
+    public static int capacity(int mk) { return CAPACITY << (Math.clamp(mk, 1, MachineLevel.MAX) - 1); }
+
+    /** What this tank holds at its level. */
+    public int capacity() { return capacity(MachineLevel.of(getBlockState())); }
+
+    /** An upgrade kit swaps the block state under us; the tank grows with the new level. */
+    @Override
+    public void setBlockState(BlockState state) {
+        super.setBlockState(state);
+        fluids.resize(capacity(MachineLevel.of(state)));
+        needsSync = true;
     }
 
     @Override
@@ -225,12 +250,12 @@ public final class FluidTankBlockEntity extends BlockEntity implements MenuProvi
         var stack = contents();
         return Component.translatable("gui.futuretech.tank.contents",
                 stack.isEmpty() ? Component.translatable("gui.futuretech.empty") : stack.getHoverName(),
-                stack.getAmount(), CAPACITY);
+                stack.getAmount(), capacity());
     }
 
     public int comparatorSignal() {
         int amount = fluids.getAmountAsInt(0);
-        return amount == 0 ? 0 : 1 + (int)(14L * amount / CAPACITY);
+        return amount == 0 ? 0 : 1 + (int)(14L * amount / capacity());
     }
 
     /** The redstone signal is sampled here and on neighbour changes, not every tick. */
@@ -253,7 +278,7 @@ public final class FluidTankBlockEntity extends BlockEntity implements MenuProvi
         int amount = tank.fluids.getAmountAsInt(0);
         FluidResource fluid = tank.fluids.getResource(0);
         long now = level.getGameTime();
-        boolean urgent = !fluid.equals(tank.lastSyncFluid) || amount == 0 || amount == CAPACITY;
+        boolean urgent = !fluid.equals(tank.lastSyncFluid) || amount == 0 || amount == tank.capacity();
         if (!urgent && tank.lastSyncTick != Long.MIN_VALUE && now - tank.lastSyncTick < SYNC_TICKS) return;
         tank.needsSync = false;
         tank.lastSyncTick = now;
@@ -267,7 +292,7 @@ public final class FluidTankBlockEntity extends BlockEntity implements MenuProvi
     }
 
     private void restore(FluidStack stack) {
-        int amount = Math.clamp(stack.getAmount(), 0, CAPACITY);
+        int amount = Math.clamp(stack.getAmount(), 0, capacity());
         fluids.set(0, amount == 0 ? FluidResource.EMPTY : FluidResource.of(stack), amount);
     }
 
@@ -312,8 +337,9 @@ public final class FluidTankBlockEntity extends BlockEntity implements MenuProvi
         sides.load(input);
         if (previousModes != SideConfigVisuals.faceModes(sides)) SideConfigVisuals.refresh(this);
         var incoming = input.read("Fluid", FluidStack.OPTIONAL_CODEC).orElse(FluidStack.EMPTY);
-        syncedContents = incoming.copyWithAmount(Math.clamp(incoming.getAmount(), 0, CAPACITY));
-        float target = Math.clamp(incoming.getAmount(), 0, CAPACITY) / (float)CAPACITY;
+        int capacity = capacity();
+        syncedContents = incoming.copyWithAmount(Math.clamp(incoming.getAmount(), 0, capacity));
+        float target = Math.clamp(incoming.getAmount(), 0, capacity) / (float) capacity;
         float current = visualFill(0);
         boolean sameFluid = incoming.isEmpty() || FluidStack.isSameFluidSameComponents(visualFluid, incoming);
         visualFrom = !visualInitialized ? target : sameFluid ? current : 0;

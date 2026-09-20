@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "SAS",
+    "ACA",
+    "SBS"
+  ],
+  "key": {
+    "S": "#c:plates/silver",
+    "A": "minecraft:amethyst_shard",
+    "C": "futuretech:chip",
+    "B": "futuretech:conductance_coil"
+  },
+  "result": {
+    "id": "futuretech:network_panel",
+    "count": 1
+  }
+}

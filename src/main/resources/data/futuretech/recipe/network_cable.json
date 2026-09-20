@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "SSS",
+    "ACA",
+    "SSS"
+  ],
+  "key": {
+    "S": "#c:plates/silver",
+    "A": "minecraft:amethyst_shard",
+    "C": "futuretech:chip"
+  },
+  "result": {
+    "id": "futuretech:network_cable",
+    "count": 6
+  }
+}

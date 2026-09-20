@@ -1,0 +1,50 @@
+{
+  "model": {
+    "property": "minecraft:block_state",
+    "type": "minecraft:select",
+    "cases": [
+      {
+        "when": "2",
+        "model": {
+          "type": "minecraft:special",
+          "base": "futuretech:block/wind_generator/mk2_item",
+          "model": {
+            "type": "futuretech:wind_turbine",
+            "mk": 2
+          }
+        }
+      },
+      {
+        "when": "3",
+        "model": {
+          "type": "minecraft:special",
+          "base": "futuretech:block/wind_generator/mk3_item",
+          "model": {
+            "type": "futuretech:wind_turbine",
+            "mk": 3
+          }
+        }
+      },
+      {
+        "when": "4",
+        "model": {
+          "type": "minecraft:special",
+          "base": "futuretech:block/wind_generator/mk4_item",
+          "model": {
+            "type": "futuretech:wind_turbine",
+            "mk": 4
+          }
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:special",
+      "base": "futuretech:block/wind_generator/mk1_item",
+      "model": {
+        "type": "futuretech:wind_turbine",
+        "mk": 1
+      }
+    },
+    "block_state_property": "mk"
+  }
+}

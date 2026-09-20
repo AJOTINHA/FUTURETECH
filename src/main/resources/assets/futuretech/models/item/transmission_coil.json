@@ -1,0 +1,6 @@
+{
+  "parent": "futuretech:item/coil",
+  "textures": {
+    "material": "futuretech:item/transmission_coil"
+  }
+}

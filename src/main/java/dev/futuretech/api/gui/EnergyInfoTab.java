@@ -33,15 +33,16 @@ public final class EnergyInfoTab extends MachineTab {
 
     public EnergyInfoTab(EnergyInfoMenu menu, Font font) {
         super(font, Side.LEFT);
-        // Rates and the capacity are fixed per machine, so the rows are built once.
+        // The rate is read every frame: the upgrade slots that lower it fill in only after the
+        // screen opens. What it is now, before they arrive, is the most it can ever be.
         boolean generator = menu.kind() == EnergyInfoMenu.Kind.GENERATOR;
         int rate = menu.energyRatePerTick();
         int output = menu.energyOutputPerTick();
         rows = new ArrayList<>(4);
         rows.add(new Row(label(generator ? "generation" : "usage"), rate(rate),
                 // Idle machines move nothing, so this line drops to zero while the maximum stays put.
-                () -> rate(menu.isWorking() ? rate : 0)));
-        rows.add(new Row(label(generator ? "maximum_generation" : "maximum"), rate(rate), () -> rate(rate)));
+                () -> rate(menu.energyUsagePerTick())));
+        rows.add(new Row(label(generator ? "maximum_generation" : "maximum"), rate(rate), () -> rate(menu.energyRatePerTick())));
         if (output > 0) rows.add(new Row(label("maximum_output"), rate(output), () -> rate(output)));
         rows.add(new Row(label("stored"), amount(menu.energyCapacity()), () -> amount(menu.energyStored())));
     }
@@ -62,7 +63,10 @@ public final class EnergyInfoTab extends MachineTab {
     protected int contentHeight() { return pairY(rows.size() - 1) + VALUE_DROP + font.lineHeight; }
 
     @Override
-    protected void drawIcon(GuiGraphicsExtractor graphics, int x, int y) {
+    protected void drawIcon(GuiGraphicsExtractor graphics, int x, int y) { drawBolt(graphics, x, y); }
+
+    /** The tab's lightning bolt, shared with readouts that are not about energy alone. */
+    public static void drawBolt(GuiGraphicsExtractor graphics, int x, int y) {
         // A lightning bolt, one row per scanline: the upper wedge descends to the left, steps
         // sideways at the notch, and the tail picks up to the right of it. Traced from the
         // U+26A1 glyph, because hand-drawn strips of constant width just read as a slash.

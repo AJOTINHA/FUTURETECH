@@ -3,7 +3,10 @@ package dev.futuretech.api.gui;
 import dev.futuretech.client.MachineScreenStyle;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 
 /**
@@ -71,8 +74,14 @@ public abstract class MachineTab {
 
     public boolean isFullyOpen() { return open && slide >= 1; }
 
+    /** Drawn over the screen's panel every frame, before the tabs themselves; for marks a tab puts on the panel while open. */
+    public void drawPanelOverlay(GuiGraphicsExtractor graphics, int leftPos, int topPos) {}
+
     /** Current height, including the part still sliding; the strip stacks the next tab under it. */
     public int height() { return height; }
+
+    /** Where the tab is on screen as of the last frame, however far it has slid; what JEI keeps clear of. */
+    public Rect2i bounds() { return new Rect2i(x, y, width, height); }
 
     /** Width when fully open; tabs whose content has a fixed position (menu slots) pin this. */
     protected int fullWidth() {
@@ -133,6 +142,11 @@ public abstract class MachineTab {
         return acceptsContentButton(event.button()) && isFullyOpen() && isOver(event.x(), event.y(), x, y, width, height)
                 && clickContent(event, contentX(), contentY());
     }
+
+    /** A key while the screen is up; a tab with something to type into takes what is its. */
+    public boolean keyPressed(KeyEvent event) { return false; }
+
+    public boolean charTyped(CharacterEvent event) { return false; }
 
     private void advanceSlide() {
         long now = System.nanoTime();

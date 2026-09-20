@@ -1,7 +1,10 @@
 package dev.futuretech.api.gui;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.Rect2i;
 
 import java.util.List;
 
@@ -27,6 +30,7 @@ public final class TabStrip {
     public void render(GuiGraphicsExtractor graphics, int leftPos, int topPos, int imageWidth, int mouseX, int mouseY) {
         int leftY = topPos + TOP_OFFSET;
         int rightY = topPos + TOP_OFFSET;
+        for (MachineTab tab : tabs) tab.drawPanelOverlay(graphics, leftPos, topPos);
         for (MachineTab tab : tabs) {
             boolean left = tab.side() == MachineTab.Side.LEFT;
             tab.render(graphics, left ? leftPos + 2 : leftPos + imageWidth - 2, left ? leftY : rightY, mouseX, mouseY);
@@ -48,5 +52,24 @@ public final class TabStrip {
         return false;
     }
 
+    /** Call from {@code keyPressed}; returns true when a tab consumed the key. */
+    public boolean keyPressed(KeyEvent event) {
+        for (MachineTab tab : tabs) {
+            if (tab.keyPressed(event)) return true;
+        }
+        return false;
+    }
+
+    /** Call from {@code charTyped}; returns true when a tab consumed the character. */
+    public boolean charTyped(CharacterEvent event) {
+        for (MachineTab tab : tabs) {
+            if (tab.charTyped(event)) return true;
+        }
+        return false;
+    }
+
     public MachineTab get(int index) { return tabs.get(index); }
+
+    /** Every tab's box as of the last frame: the ground the screen holds beyond its panel. */
+    public List<Rect2i> areas() { return tabs.stream().map(MachineTab::bounds).toList(); }
 }

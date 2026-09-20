@@ -1,0 +1,10 @@
+{
+  "model": {
+    "type": "futuretech:facade",
+    "base": "futuretech:item/facade_panel",
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "futuretech:item/facade"
+    }
+  }
+}

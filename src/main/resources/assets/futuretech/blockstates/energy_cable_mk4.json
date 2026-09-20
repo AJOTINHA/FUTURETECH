@@ -1,0 +1,1296 @@
+{
+  "multipart": [
+    {
+      "when": {
+        "OR": [
+          {
+            "north": "false",
+            "east": "false",
+            "south": "false",
+            "west": "false",
+            "up": "false",
+            "down": "false"
+          },
+          {
+            "north": "true",
+            "south": "false"
+          },
+          {
+            "east": "true",
+            "west": "false"
+          },
+          {
+            "south": "true",
+            "north": "false"
+          },
+          {
+            "west": "true",
+            "east": "false"
+          },
+          {
+            "up": "true",
+            "down": "false"
+          },
+          {
+            "down": "true",
+            "up": "false"
+          },
+          {
+            "north": "true",
+            "east": "true"
+          },
+          {
+            "north": "true",
+            "west": "true"
+          },
+          {
+            "north": "true",
+            "up": "true"
+          },
+          {
+            "north": "true",
+            "down": "true"
+          },
+          {
+            "east": "true",
+            "south": "true"
+          },
+          {
+            "east": "true",
+            "up": "true"
+          },
+          {
+            "east": "true",
+            "down": "true"
+          },
+          {
+            "south": "true",
+            "west": "true"
+          },
+          {
+            "south": "true",
+            "up": "true"
+          },
+          {
+            "south": "true",
+            "down": "true"
+          },
+          {
+            "west": "true",
+            "up": "true"
+          },
+          {
+            "west": "true",
+            "down": "true"
+          }
+        ]
+      },
+      "apply": {
+        "model": "futuretech:block/energy_cable_mk4_node"
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "OR": [
+              {
+                "north": "false",
+                "east": "false",
+                "south": "false",
+                "west": "false",
+                "up": "false",
+                "down": "false"
+              },
+              {
+                "north": "true",
+                "south": "false"
+              },
+              {
+                "east": "true",
+                "west": "false"
+              },
+              {
+                "south": "true",
+                "north": "false"
+              },
+              {
+                "west": "true",
+                "east": "false"
+              },
+              {
+                "up": "true",
+                "down": "false"
+              },
+              {
+                "down": "true",
+                "up": "false"
+              },
+              {
+                "north": "true",
+                "east": "true"
+              },
+              {
+                "north": "true",
+                "west": "true"
+              },
+              {
+                "north": "true",
+                "up": "true"
+              },
+              {
+                "north": "true",
+                "down": "true"
+              },
+              {
+                "east": "true",
+                "south": "true"
+              },
+              {
+                "east": "true",
+                "up": "true"
+              },
+              {
+                "east": "true",
+                "down": "true"
+              },
+              {
+                "south": "true",
+                "west": "true"
+              },
+              {
+                "south": "true",
+                "up": "true"
+              },
+              {
+                "south": "true",
+                "down": "true"
+              },
+              {
+                "west": "true",
+                "up": "true"
+              },
+              {
+                "west": "true",
+                "down": "true"
+              }
+            ]
+          },
+          {
+            "north": "false"
+          }
+        ]
+      },
+      "apply": {
+        "model": "futuretech:block/energy_cable_mk4_cap"
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "OR": [
+              {
+                "north": "false",
+                "east": "false",
+                "south": "false",
+                "west": "false",
+                "up": "false",
+                "down": "false"
+              },
+              {
+                "north": "true",
+                "south": "false"
+              },
+              {
+                "east": "true",
+                "west": "false"
+              },
+              {
+                "south": "true",
+                "north": "false"
+              },
+              {
+                "west": "true",
+                "east": "false"
+              },
+              {
+                "up": "true",
+                "down": "false"
+              },
+              {
+                "down": "true",
+                "up": "false"
+              },
+              {
+                "north": "true",
+                "east": "true"
+              },
+              {
+                "north": "true",
+                "west": "true"
+              },
+              {
+                "north": "true",
+                "up": "true"
+              },
+              {
+                "north": "true",
+                "down": "true"
+              },
+              {
+                "east": "true",
+                "south": "true"
+              },
+              {
+                "east": "true",
+                "up": "true"
+              },
+              {
+                "east": "true",
+                "down": "true"
+              },
+              {
+                "south": "true",
+                "west": "true"
+              },
+              {
+                "south": "true",
+                "up": "true"
+              },
+              {
+                "south": "true",
+                "down": "true"
+              },
+              {
+                "west": "true",
+                "up": "true"
+              },
+              {
+                "west": "true",
+                "down": "true"
+              }
+            ]
+          },
+          {
+            "east": "false"
+          }
+        ]
+      },
+      "apply": {
+        "model": "futuretech:block/energy_cable_mk4_cap",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "OR": [
+              {
+                "north": "false",
+                "east": "false",
+                "south": "false",
+                "west": "false",
+                "up": "false",
+                "down": "false"
+              },
+              {
+                "north": "true",
+                "south": "false"
+              },
+              {
+                "east": "true",
+                "west": "false"
+              },
+              {
+                "south": "true",
+                "north": "false"
+              },
+              {
+                "west": "true",
+                "east": "false"
+              },
+              {
+                "up": "true",
+                "down": "false"
+              },
+              {
+                "down": "true",
+                "up": "false"
+              },
+              {
+                "north": "true",
+                "east": "true"
+              },
+              {
+                "north": "true",
+                "west": "true"
+              },
+              {
+                "north": "true",
+                "up": "true"
+              },
+              {
+                "north": "true",
+                "down": "true"
+              },
+              {
+                "east": "true",
+                "south": "true"
+              },
+              {
+                "east": "true",
+                "up": "true"
+              },
+              {
+                "east": "true",
+                "down": "true"
+              },
+              {
+                "south": "true",
+                "west": "true"
+              },
+              {
+                "south": "true",
+                "up": "true"
+              },
+              {
+                "south": "true",
+                "down": "true"
+              },
+              {
+                "west": "true",
+                "up": "true"
+              },
+              {
+                "west": "true",
+                "down": "true"
+              }
+            ]
+          },
+          {
+            "south": "false"
+          }
+        ]
+      },
+      "apply": {
+        "model": "futuretech:block/energy_cable_mk4_cap",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "OR": [
+              {
+                "north": "false",
+                "east": "false",
+                "south": "false",
+                "west": "false",
+                "up": "false",
+                "down": "false"
+              },
+              {
+                "north": "true",
+                "south": "false"
+              },
+              {
+                "east": "true",
+                "west": "false"
+              },
+              {
+                "south": "true",
+                "north": "false"
+              },
+              {
+                "west": "true",
+                "east": "false"
+              },
+              {
+                "up": "true",
+                "down": "false"
+              },
+              {
+                "down": "true",
+                "up": "false"
+              },
+              {
+                "north": "true",
+                "east": "true"
+              },
+              {
+                "north": "true",
+                "west": "true"
+              },
+              {
+                "north": "true",
+                "up": "true"
+              },
+              {
+                "north": "true",
+                "down": "true"
+              },
+              {
+                "east": "true",
+                "south": "true"
+              },
+              {
+                "east": "true",
+                "up": "true"
+              },
+              {
+                "east": "true",
+                "down": "true"
+              },
+              {
+                "south": "true",
+                "west": "true"
+              },
+              {
+                "south": "true",
+                "up": "true"
+              },
+              {
+                "south": "true",
+                "down": "true"
+              },
+              {
+                "west": "true",
+                "up": "true"
+              },
+              {
+                "west": "true",
+                "down": "true"
+              }
+            ]
+          },
+          {
+            "west": "false"
+          }
+        ]
+      },
+      "apply": {
+        "model": "futuretech:block/energy_cable_mk4_cap",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "OR": [
+              {
+                "north": "false",
+                "east": "false",
+                "south": "false",
+                "west": "false",
+                "up": "false",
+                "down": "false"
+              },
+              {
+                "north": "true",
+                "south": "false"
+              },
+              {
+                "east": "true",
+                "west": "false"
+              },
+              {
+                "south": "true",
+                "north": "false"
+              },
+              {
+                "west": "true",
+                "east": "false"
+              },
+              {
+                "up": "true",
+                "down": "false"
+              },
+              {
+                "down": "true",
+                "up": "false"
+              },
+              {
+                "north": "true",
+                "east": "true"
+              },
+              {
+                "north": "true",
+                "west": "true"
+              },
+              {
+                "north": "true",
+                "up": "true"
+              },
+              {
+                "north": "true",
+                "down": "true"
+              },
+              {
+                "east": "true",
+                "south": "true"
+              },
+              {
+                "east": "true",
+                "up": "true"
+              },
+              {
+                "east": "true",
+                "down": "true"
+              },
+              {
+                "south": "true",
+                "west": "true"
+              },
+              {
+                "south": "true",
+                "up": "true"
+              },
+              {
+                "south": "true",
+                "down": "true"
+              },
+              {
+                "west": "true",
+                "up": "true"
+              },
+              {
+                "west": "true",
+                "down": "true"
+              }
+            ]
+          },
+          {
+            "up": "false"
+          }
+        ]
+      },
+      "apply": {
+        "model": "futuretech:block/energy_cable_mk4_cap",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "OR": [
+              {
+                "north": "false",
+                "east": "false",
+                "south": "false",
+                "west": "false",
+                "up": "false",
+                "down": "false"
+              },
+              {
+                "north": "true",
+                "south": "false"
+              },
+              {
+                "east": "true",
+                "west": "false"
+              },
+              {
+                "south": "true",
+                "north": "false"
+              },
+              {
+                "west": "true",
+                "east": "false"
+              },
+              {
+                "up": "true",
+                "down": "false"
+              },
+              {
+                "down": "true",
+                "up": "false"
+              },
+              {
+                "north": "true",
+                "east": "true"
+              },
+              {
+                "north": "true",
+                "west": "true"
+              },
+              {
+                "north": "true",
+                "up": "true"
+              },
+              {
+                "north": "true",
+                "down": "true"
+              },
+              {
+                "east": "true",
+                "south": "true"
+              },
+              {
+                "east": "true",
+                "up": "true"
+              },
+              {
+                "east": "true",
+                "down": "true"
+              },
+              {
+                "south": "true",
+                "west": "true"
+              },
+              {
+                "south": "true",
+                "up": "true"
+              },
+              {
+                "south": "true",
+                "down": "true"
+              },
+              {
+                "west": "true",
+                "up": "true"
+              },
+              {
+                "west": "true",
+                "down": "true"
+              }
+            ]
+          },
+          {
+            "down": "false"
+          }
+        ]
+      },
+      "apply": {
+        "model": "futuretech:block/energy_cable_mk4_cap",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "OR": [
+              {
+                "north": "false",
+                "east": "false",
+                "south": "false",
+                "west": "false",
+                "up": "false",
+                "down": "false"
+              },
+              {
+                "north": "true",
+                "south": "false"
+              },
+              {
+                "east": "true",
+                "west": "false"
+              },
+              {
+                "south": "true",
+                "north": "false"
+              },
+              {
+                "west": "true",
+                "east": "false"
+              },
+              {
+                "up": "true",
+                "down": "false"
+              },
+              {
+                "down": "true",
+                "up": "false"
+              },
+              {
+                "north": "true",
+                "east": "true"
+              },
+              {
+                "north": "true",
+                "west": "true"
+              },
+              {
+                "north": "true",
+                "up": "true"
+              },
+              {
+                "north": "true",
+                "down": "true"
+              },
+              {
+                "east": "true",
+                "south": "true"
+              },
+              {
+                "east": "true",
+                "up": "true"
+              },
+              {
+                "east": "true",
+                "down": "true"
+              },
+              {
+                "south": "true",
+                "west": "true"
+              },
+              {
+                "south": "true",
+                "up": "true"
+              },
+              {
+                "south": "true",
+                "down": "true"
+              },
+              {
+                "west": "true",
+                "up": "true"
+              },
+              {
+                "west": "true",
+                "down": "true"
+              }
+            ]
+          },
+          {
+            "north": "true"
+          }
+        ]
+      },
+      "apply": {
+        "model": "futuretech:block/energy_cable_mk4_arm"
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "OR": [
+              {
+                "north": "false",
+                "east": "false",
+                "south": "false",
+                "west": "false",
+                "up": "false",
+                "down": "false"
+              },
+              {
+                "north": "true",
+                "south": "false"
+              },
+              {
+                "east": "true",
+                "west": "false"
+              },
+              {
+                "south": "true",
+                "north": "false"
+              },
+              {
+                "west": "true",
+                "east": "false"
+              },
+              {
+                "up": "true",
+                "down": "false"
+              },
+              {
+                "down": "true",
+                "up": "false"
+              },
+              {
+                "north": "true",
+                "east": "true"
+              },
+              {
+                "north": "true",
+                "west": "true"
+              },
+              {
+                "north": "true",
+                "up": "true"
+              },
+              {
+                "north": "true",
+                "down": "true"
+              },
+              {
+                "east": "true",
+                "south": "true"
+              },
+              {
+                "east": "true",
+                "up": "true"
+              },
+              {
+                "east": "true",
+                "down": "true"
+              },
+              {
+                "south": "true",
+                "west": "true"
+              },
+              {
+                "south": "true",
+                "up": "true"
+              },
+              {
+                "south": "true",
+                "down": "true"
+              },
+              {
+                "west": "true",
+                "up": "true"
+              },
+              {
+                "west": "true",
+                "down": "true"
+              }
+            ]
+          },
+          {
+            "east": "true"
+          }
+        ]
+      },
+      "apply": {
+        "model": "futuretech:block/energy_cable_mk4_arm",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "OR": [
+              {
+                "north": "false",
+                "east": "false",
+                "south": "false",
+                "west": "false",
+                "up": "false",
+                "down": "false"
+              },
+              {
+                "north": "true",
+                "south": "false"
+              },
+              {
+                "east": "true",
+                "west": "false"
+              },
+              {
+                "south": "true",
+                "north": "false"
+              },
+              {
+                "west": "true",
+                "east": "false"
+              },
+              {
+                "up": "true",
+                "down": "false"
+              },
+              {
+                "down": "true",
+                "up": "false"
+              },
+              {
+                "north": "true",
+                "east": "true"
+              },
+              {
+                "north": "true",
+                "west": "true"
+              },
+              {
+                "north": "true",
+                "up": "true"
+              },
+              {
+                "north": "true",
+                "down": "true"
+              },
+              {
+                "east": "true",
+                "south": "true"
+              },
+              {
+                "east": "true",
+                "up": "true"
+              },
+              {
+                "east": "true",
+                "down": "true"
+              },
+              {
+                "south": "true",
+                "west": "true"
+              },
+              {
+                "south": "true",
+                "up": "true"
+              },
+              {
+                "south": "true",
+                "down": "true"
+              },
+              {
+                "west": "true",
+                "up": "true"
+              },
+              {
+                "west": "true",
+                "down": "true"
+              }
+            ]
+          },
+          {
+            "south": "true"
+          }
+        ]
+      },
+      "apply": {
+        "model": "futuretech:block/energy_cable_mk4_arm",
+        "y": 180
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "OR": [
+              {
+                "north": "false",
+                "east": "false",
+                "south": "false",
+                "west": "false",
+                "up": "false",
+                "down": "false"
+              },
+              {
+                "north": "true",
+                "south": "false"
+              },
+              {
+                "east": "true",
+                "west": "false"
+              },
+              {
+                "south": "true",
+                "north": "false"
+              },
+              {
+                "west": "true",
+                "east": "false"
+              },
+              {
+                "up": "true",
+                "down": "false"
+              },
+              {
+                "down": "true",
+                "up": "false"
+              },
+              {
+                "north": "true",
+                "east": "true"
+              },
+              {
+                "north": "true",
+                "west": "true"
+              },
+              {
+                "north": "true",
+                "up": "true"
+              },
+              {
+                "north": "true",
+                "down": "true"
+              },
+              {
+                "east": "true",
+                "south": "true"
+              },
+              {
+                "east": "true",
+                "up": "true"
+              },
+              {
+                "east": "true",
+                "down": "true"
+              },
+              {
+                "south": "true",
+                "west": "true"
+              },
+              {
+                "south": "true",
+                "up": "true"
+              },
+              {
+                "south": "true",
+                "down": "true"
+              },
+              {
+                "west": "true",
+                "up": "true"
+              },
+              {
+                "west": "true",
+                "down": "true"
+              }
+            ]
+          },
+          {
+            "west": "true"
+          }
+        ]
+      },
+      "apply": {
+        "model": "futuretech:block/energy_cable_mk4_arm",
+        "y": 270
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "OR": [
+              {
+                "north": "false",
+                "east": "false",
+                "south": "false",
+                "west": "false",
+                "up": "false",
+                "down": "false"
+              },
+              {
+                "north": "true",
+                "south": "false"
+              },
+              {
+                "east": "true",
+                "west": "false"
+              },
+              {
+                "south": "true",
+                "north": "false"
+              },
+              {
+                "west": "true",
+                "east": "false"
+              },
+              {
+                "up": "true",
+                "down": "false"
+              },
+              {
+                "down": "true",
+                "up": "false"
+              },
+              {
+                "north": "true",
+                "east": "true"
+              },
+              {
+                "north": "true",
+                "west": "true"
+              },
+              {
+                "north": "true",
+                "up": "true"
+              },
+              {
+                "north": "true",
+                "down": "true"
+              },
+              {
+                "east": "true",
+                "south": "true"
+              },
+              {
+                "east": "true",
+                "up": "true"
+              },
+              {
+                "east": "true",
+                "down": "true"
+              },
+              {
+                "south": "true",
+                "west": "true"
+              },
+              {
+                "south": "true",
+                "up": "true"
+              },
+              {
+                "south": "true",
+                "down": "true"
+              },
+              {
+                "west": "true",
+                "up": "true"
+              },
+              {
+                "west": "true",
+                "down": "true"
+              }
+            ]
+          },
+          {
+            "up": "true"
+          }
+        ]
+      },
+      "apply": {
+        "model": "futuretech:block/energy_cable_mk4_arm",
+        "x": 270
+      }
+    },
+    {
+      "when": {
+        "AND": [
+          {
+            "OR": [
+              {
+                "north": "false",
+                "east": "false",
+                "south": "false",
+                "west": "false",
+                "up": "false",
+                "down": "false"
+              },
+              {
+                "north": "true",
+                "south": "false"
+              },
+              {
+                "east": "true",
+                "west": "false"
+              },
+              {
+                "south": "true",
+                "north": "false"
+              },
+              {
+                "west": "true",
+                "east": "false"
+              },
+              {
+                "up": "true",
+                "down": "false"
+              },
+              {
+                "down": "true",
+                "up": "false"
+              },
+              {
+                "north": "true",
+                "east": "true"
+              },
+              {
+                "north": "true",
+                "west": "true"
+              },
+              {
+                "north": "true",
+                "up": "true"
+              },
+              {
+                "north": "true",
+                "down": "true"
+              },
+              {
+                "east": "true",
+                "south": "true"
+              },
+              {
+                "east": "true",
+                "up": "true"
+              },
+              {
+                "east": "true",
+                "down": "true"
+              },
+              {
+                "south": "true",
+                "west": "true"
+              },
+              {
+                "south": "true",
+                "up": "true"
+              },
+              {
+                "south": "true",
+                "down": "true"
+              },
+              {
+                "west": "true",
+                "up": "true"
+              },
+              {
+                "west": "true",
+                "down": "true"
+              }
+            ]
+          },
+          {
+            "down": "true"
+          }
+        ]
+      },
+      "apply": {
+        "model": "futuretech:block/energy_cable_mk4_arm",
+        "x": 90
+      }
+    },
+    {
+      "when": {
+        "north": "true",
+        "east": "false",
+        "south": "true",
+        "west": "false",
+        "up": "false",
+        "down": "false"
+      },
+      "apply": {
+        "model": "futuretech:block/energy_cable_mk4_line"
+      }
+    },
+    {
+      "when": {
+        "north": "false",
+        "east": "true",
+        "south": "false",
+        "west": "true",
+        "up": "false",
+        "down": "false"
+      },
+      "apply": {
+        "model": "futuretech:block/energy_cable_mk4_line",
+        "y": 90
+      }
+    },
+    {
+      "when": {
+        "north": "false",
+        "east": "false",
+        "south": "false",
+        "west": "false",
+        "up": "true",
+        "down": "true"
+      },
+      "apply": {
+        "model": "futuretech:block/energy_cable_mk4_line",
+        "x": 270
+      }
+    }
+  ]
+}

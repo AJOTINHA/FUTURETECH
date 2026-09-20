@@ -3,6 +3,7 @@ package dev.futuretech.api.side.client;
 import dev.futuretech.api.gui.MachineTab;
 import dev.futuretech.api.side.SideConfigMenu;
 import dev.futuretech.api.side.SideMode;
+import dev.futuretech.api.side.SlotRole;
 import dev.futuretech.block.FluidTankBlock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -16,7 +17,6 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.level.block.state.BlockState;
@@ -34,6 +34,9 @@ import java.util.Map;
  * <p>Machines with an inventory also get two toggles down the left edge: a blue arrow that pulls
  * items from whatever sits against an input face, and an orange one that pushes results to whatever
  * sits against an output face. They are drawn in the same colours the tiles use for those modes.
+ *
+ * <p>While the tab is open, the panel's slots wear the same colours: a blue frame on the slots the
+ * input faces feed and an orange one on the slots the output faces empty.
  */
 public final class SideConfigTab<M extends AbstractContainerMenu & SideConfigMenu> extends MachineTab {
     private static final int TILE = 16;
@@ -93,20 +96,20 @@ public final class SideConfigTab<M extends AbstractContainerMenu & SideConfigMen
 
     /** One auto-transfer toggle: which way it moves items, and how it is drawn. */
     private enum Toggle {
-        PULL("pull", PULL_COLOR, SideConfigMenu.BUTTON_AUTO_PULL, true),
-        PUSH("push", PUSH_COLOR, SideConfigMenu.BUTTON_AUTO_PUSH, false);
+        PULL("pull", PULL_COLOR, SideConfigMenu.BUTTON_AUTO_PULL, ARROW),
+        PUSH("push", PUSH_COLOR, SideConfigMenu.BUTTON_AUTO_PUSH, ToggleArt.flipped(ARROW));
 
         final String key;
         final int color;
         final int buttonId;
         /** Pulling points down, into the machine; pushing points up, out of it. */
-        final boolean down;
+        final String[] glyph;
 
-        Toggle(String key, int color, int buttonId, boolean down) {
+        Toggle(String key, int color, int buttonId, String[] glyph) {
             this.key = "gui.futuretech.auto." + key;
             this.color = color;
             this.buttonId = buttonId;
-            this.down = down;
+            this.glyph = glyph;
         }
     }
 
@@ -122,6 +125,25 @@ public final class SideConfigTab<M extends AbstractContainerMenu & SideConfigMen
 
     @Override
     protected Component title() { return Component.translatable("gui.futuretech.sides"); }
+
+    /** Frames the input and output slots in their face colours while the tab is open; the frame is the slot's own 1 px border. */
+    @Override
+    public void drawPanelOverlay(GuiGraphicsExtractor graphics, int leftPos, int topPos) {
+        if (!isOpen()) return;
+        for (int index = 0; index < menu.slots.size(); index++) {
+            SlotRole role = menu.slotRole(index);
+            if (role == SlotRole.NONE) continue;
+            var slot = menu.slots.get(index);
+            if (!slot.isActive()) continue;
+            int x = leftPos + slot.x;
+            int y = topPos + slot.y;
+            int color = modeColor(role == SlotRole.INPUT ? SideMode.INPUT : SideMode.OUTPUT);
+            graphics.fill(x - 1, y - 1, x + TILE + 1, y, color);
+            graphics.fill(x - 1, y + TILE, x + TILE + 1, y + TILE + 1, color);
+            graphics.fill(x - 1, y, x, y + TILE, color);
+            graphics.fill(x + TILE, y, x + TILE + 1, y + TILE, color);
+        }
+    }
 
     /** The toggles this machine offers, top to bottom; empty when it has no inventory. */
     private List<Toggle> toggles() {
@@ -187,51 +209,9 @@ public final class SideConfigTab<M extends AbstractContainerMenu & SideConfigMen
             Toggle toggle = shown.get(index);
             int x = contentX + 1;
             int y = toggleY(contentY, index, shown.size());
-            boolean on = isOn(toggle);
-            graphics.fill(x - 1, y - 1, x + TILE + 1, y + TILE + 1, on ? toggle.color : 0xFF56616D);
-            graphics.fill(x, y, x + TILE, y + TILE, 0xFF65717D);
-            graphics.fill(x, y, x + TILE, y + 1, 0xFFB5C0CA);
-            graphics.fill(x, y + 1, x + 1, y + TILE, 0xFF9AA7B3);
-            graphics.fill(x + 1, y + TILE - 1, x + TILE, y + TILE, 0xFF394651);
-            graphics.fill(x + TILE - 1, y + 1, x + TILE, y + TILE, 0xFF394651);
-            drawArrow(graphics, x, y, on ? toggle.color : 0xFF56616D, toggle.down);
-            if (isFullyOpen() && isOver(mouseX, mouseY, x, y, TILE, TILE)) {
-                graphics.fill(x, y, x + TILE, y + TILE, 0x40FFFFFF);
-            }
+            ToggleArt.draw(graphics, x, y, toggle.color, isOn(toggle), toggle.glyph,
+                    isFullyOpen() && isOver(mouseX, mouseY, x, y, TILE, TILE));
         }
-    }
-
-    /** Inset pixel arrow with a dark outline and a light edge for contrast at GUI scale. */
-    private static void drawArrow(GuiGraphicsExtractor graphics, int x, int y, int color, boolean down) {
-        int red = color >> 16 & 255;
-        int green = color >> 8 & 255;
-        int blue = color & 255;
-        int highlight = 0xFF000000 | ((red * 3 + 255) / 4 << 16)
-                | ((green * 3 + 255) / 4 << 8) | (blue * 3 + 255) / 4;
-        // Paint the outline first so adjacent rows cannot cover the coloured face.
-        for (int row = 0; row < ARROW.length; row++) {
-            for (int column = 0; column < ARROW[row].length(); column++) {
-                if (!arrowPixel(column, row, down)) continue;
-                int px = x + 2 + column;
-                int py = y + 2 + row;
-                graphics.fill(px - 1, py, px + 2, py + 1, 0xFF26333F);
-                graphics.fill(px, py - 1, px + 1, py + 2, 0xFF26333F);
-            }
-        }
-        for (int row = 0; row < ARROW.length; row++) {
-            for (int column = 0; column < ARROW[row].length(); column++) {
-                if (!arrowPixel(column, row, down)) continue;
-                boolean lightEdge = !arrowPixel(column - 1, row, down) || !arrowPixel(column, row - 1, down);
-                int px = x + 2 + column;
-                int py = y + 2 + row;
-                graphics.fill(px, py, px + 1, py + 1, lightEdge ? highlight : color);
-            }
-        }
-    }
-
-    private static boolean arrowPixel(int column, int row, boolean down) {
-        if (row < 0 || row >= ARROW.length || column < 0 || column >= ARROW[0].length()) return false;
-        return ARROW[down ? row : ARROW.length - 1 - row].charAt(column) == '#';
     }
 
     private boolean isOn(Toggle toggle) {
@@ -262,12 +242,9 @@ public final class SideConfigTab<M extends AbstractContainerMenu & SideConfigMen
         for (Face face : Face.values()) {
             if (!isOver(mouseX, mouseY, tileX(gridX, face), tileY(contentY, face), TILE, TILE)) continue;
             SideMode mode = menu.sideMode(face.resolve(front));
-            List<FormattedCharSequence> lines = new ArrayList<>(List.of(
+            graphics.setTooltipForNextFrame(List.of(
                     Component.translatable(face.key).getVisualOrderText(),
-                    Component.translatable(mode.translationKey()).getVisualOrderText(),
-                    Component.translatable("gui.futuretech.side.cycle_hint").getVisualOrderText()));
-            if (face == Face.FRONT) lines.add(Component.translatable("gui.futuretech.side.clear_hint").getVisualOrderText());
-            graphics.setTooltipForNextFrame(lines, mouseX, mouseY);
+                    Component.translatable(mode.translationKey()).getVisualOrderText()), mouseX, mouseY);
             return;
         }
     }

@@ -20,6 +20,9 @@ public final class RedstoneControl {
 
     public boolean isPowered() { return powered; }
 
+    /** For a client-side copy, which cannot sample: the signal as the server last said it was. */
+    public void setPowered(boolean powered) { this.powered = powered; }
+
     /**
      * Samples the signal at {@code pos}. Reading the six neighbours (and, behind each solid one,
      * six more) is too much to do every tick, so this runs when the block entity loads and when a
