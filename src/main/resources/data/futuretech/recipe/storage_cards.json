@@ -2,15 +2,16 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "IAI",
-    "CHC",
-    "IAI"
+    "GAG",
+    "CBC",
+    "GRG"
   ],
   "key": {
-    "I": "minecraft:iron_ingot",
+    "G": "#c:plates/gold",
     "A": "minecraft:amethyst_shard",
     "C": "futuretech:chip",
-    "H": "minecraft:chest"
+    "B": "minecraft:chest",
+    "R": "minecraft:redstone"
   },
   "result": {
     "id": "futuretech:storage_cards",

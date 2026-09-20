@@ -4,13 +4,13 @@
   "pattern": [
     "GGG",
     "LML",
-    "CRC"
+    "SRS"
   ],
   "key": {
     "G": "minecraft:glass",
     "L": "minecraft:lapis_lazuli",
     "M": "futuretech:machine_casing",
-    "C": "#c:ingots/copper",
+    "S": "#c:plates/silver",
     "R": "futuretech:reception_coil"
   },
   "result": {

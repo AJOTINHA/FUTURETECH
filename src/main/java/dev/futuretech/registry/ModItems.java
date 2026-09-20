@@ -12,6 +12,7 @@ import dev.futuretech.item.ItemFilterItem;
 import dev.futuretech.item.WrenchItem;
 import dev.futuretech.item.AreaToolItem;
 import dev.futuretech.item.MachineUpgradeKitItem;
+import dev.futuretech.item.OreBlockItem;
 import dev.futuretech.item.PortableBatteryItem;
 import dev.futuretech.item.PortableTeleporterItem;
 import dev.futuretech.item.TeleportCardItem;
@@ -154,8 +155,8 @@ public final class ModItems {
     public static final DeferredItem<PortableTeleporterItem> PORTABLE_TELEPORTER = ITEMS.registerItem(
             "portable_teleporter", PortableTeleporterItem::new, properties -> properties.stacksTo(1));
     // Tin, lead and silver, from the ore to the parts.
-    public static final DeferredItem<BlockItem> TIN_ORE = ITEMS.registerSimpleBlockItem("tin_ore", ModBlocks.TIN_ORE);
-    public static final DeferredItem<BlockItem> DEEPSLATE_TIN_ORE = ITEMS.registerSimpleBlockItem("deepslate_tin_ore", ModBlocks.DEEPSLATE_TIN_ORE);
+    public static final DeferredItem<OreBlockItem> TIN_ORE = registerOre("tin_ore", "tin", ModBlocks.TIN_ORE);
+    public static final DeferredItem<OreBlockItem> DEEPSLATE_TIN_ORE = registerOre("deepslate_tin_ore", "tin", ModBlocks.DEEPSLATE_TIN_ORE);
     public static final DeferredItem<BlockItem> TIN_BLOCK = ITEMS.registerSimpleBlockItem("tin_block", ModBlocks.TIN_BLOCK);
     public static final DeferredItem<BlockItem> RAW_TIN_BLOCK = ITEMS.registerSimpleBlockItem("raw_tin_block", ModBlocks.RAW_TIN_BLOCK);
     public static final DeferredItem<Item> RAW_TIN = ITEMS.registerSimpleItem("raw_tin");
@@ -163,8 +164,8 @@ public final class ModItems {
     public static final DeferredItem<Item> TIN_POWDER = ITEMS.registerSimpleItem("tin_powder");
     public static final DeferredItem<Item> TIN_PLATE = ITEMS.registerSimpleItem("tin_plate");
     public static final DeferredItem<Item> TIN_GEAR = ITEMS.registerSimpleItem("tin_gear");
-    public static final DeferredItem<BlockItem> LEAD_ORE = ITEMS.registerSimpleBlockItem("lead_ore", ModBlocks.LEAD_ORE);
-    public static final DeferredItem<BlockItem> DEEPSLATE_LEAD_ORE = ITEMS.registerSimpleBlockItem("deepslate_lead_ore", ModBlocks.DEEPSLATE_LEAD_ORE);
+    public static final DeferredItem<OreBlockItem> LEAD_ORE = registerOre("lead_ore", "lead", ModBlocks.LEAD_ORE);
+    public static final DeferredItem<OreBlockItem> DEEPSLATE_LEAD_ORE = registerOre("deepslate_lead_ore", "lead", ModBlocks.DEEPSLATE_LEAD_ORE);
     public static final DeferredItem<BlockItem> LEAD_BLOCK = ITEMS.registerSimpleBlockItem("lead_block", ModBlocks.LEAD_BLOCK);
     public static final DeferredItem<BlockItem> RAW_LEAD_BLOCK = ITEMS.registerSimpleBlockItem("raw_lead_block", ModBlocks.RAW_LEAD_BLOCK);
     public static final DeferredItem<Item> RAW_LEAD = ITEMS.registerSimpleItem("raw_lead");
@@ -172,8 +173,8 @@ public final class ModItems {
     public static final DeferredItem<Item> LEAD_POWDER = ITEMS.registerSimpleItem("lead_powder");
     public static final DeferredItem<Item> LEAD_PLATE = ITEMS.registerSimpleItem("lead_plate");
     public static final DeferredItem<Item> LEAD_GEAR = ITEMS.registerSimpleItem("lead_gear");
-    public static final DeferredItem<BlockItem> SILVER_ORE = ITEMS.registerSimpleBlockItem("silver_ore", ModBlocks.SILVER_ORE);
-    public static final DeferredItem<BlockItem> DEEPSLATE_SILVER_ORE = ITEMS.registerSimpleBlockItem("deepslate_silver_ore", ModBlocks.DEEPSLATE_SILVER_ORE);
+    public static final DeferredItem<OreBlockItem> SILVER_ORE = registerOre("silver_ore", "silver", ModBlocks.SILVER_ORE);
+    public static final DeferredItem<OreBlockItem> DEEPSLATE_SILVER_ORE = registerOre("deepslate_silver_ore", "silver", ModBlocks.DEEPSLATE_SILVER_ORE);
     public static final DeferredItem<BlockItem> SILVER_BLOCK = ITEMS.registerSimpleBlockItem("silver_block", ModBlocks.SILVER_BLOCK);
     public static final DeferredItem<BlockItem> RAW_SILVER_BLOCK = ITEMS.registerSimpleBlockItem("raw_silver_block", ModBlocks.RAW_SILVER_BLOCK);
     public static final DeferredItem<Item> RAW_SILVER = ITEMS.registerSimpleItem("raw_silver");
@@ -184,6 +185,10 @@ public final class ModItems {
     /** Alloyed in the smeltery: a silver and a gold ingot make two. */
     public static final DeferredItem<Item> ELECTRUM_INGOT = ITEMS.registerSimpleItem("electrum_ingot");
     public static final DeferredItem<Item> ELECTRUM_POWDER = ITEMS.registerSimpleItem("electrum_powder");
+    /** Alloyed in the smeltery from an iron ingot and two redstone; the conductor of the redstone cable. */
+    public static final DeferredItem<Item> RED_ALLOY_INGOT = ITEMS.registerSimpleItem("red_alloy_ingot");
+    /** Alloyed in the smeltery from a gold ingot and two ender pearls; what the tesseract and the teleporter are built on. */
+    public static final DeferredItem<Item> ENDER_ALLOY_INGOT = ITEMS.registerSimpleItem("ender_alloy_ingot");
     /** Thermal's three redstone coils: an ingot wound with a diagonal of redstone; gold, silver and electrum. */
     public static final DeferredItem<Item> RECEPTION_COIL = ITEMS.registerSimpleItem("reception_coil");
     public static final DeferredItem<Item> TRANSMISSION_COIL = ITEMS.registerSimpleItem("transmission_coil");
@@ -221,6 +226,12 @@ public final class ModItems {
     public static final DeferredItem<FluidTankBlockItem> FLUID_TANK = ITEMS.registerItem(
             "fluid_tank", properties -> new FluidTankBlockItem(ModBlocks.FLUID_TANK.get(), properties),
             properties -> properties.useBlockDescriptionPrefix().stacksTo(1));
+
+    /** An ore's item, whose tooltip says where the ore generates. */
+    private static DeferredItem<OreBlockItem> registerOre(String name, String metal, DeferredBlock<net.minecraft.world.level.block.Block> block) {
+        return ITEMS.registerItem(name, properties -> new OreBlockItem(block.get(), metal, properties),
+                properties -> properties.useBlockDescriptionPrefix());
+    }
 
     private static DeferredItem<BatteryBlockItem> registerBattery(DeferredBlock<BatteryBlock> block) {
         return ITEMS.registerItem(block.getId().getPath(), properties -> new BatteryBlockItem(block.get(), properties),
@@ -276,6 +287,8 @@ public final class ModItems {
     public static final DeferredItem<Item> LAVA_UPGRADE = ITEMS.registerSimpleItem("lava_upgrade");
     /** In a boiler, swaps the fuel slot for an energy buffer; see {@link dev.futuretech.block.entity.BoilerBlockEntity#FE_PER_HEAT}. */
     public static final DeferredItem<Item> ENERGY_UPGRADE = ITEMS.registerSimpleItem("energy_upgrade");
+    /** In an extruder, swaps the stone products for sand, gravel and their kin. */
+    public static final DeferredItem<Item> SAND_UPGRADE = ITEMS.registerSimpleItem("sand_upgrade");
     public static final DeferredItem<Item> CHIP = ITEMS.registerSimpleItem("chip");
 
     public static final DeferredItem<MachineUpgradeKitItem> UPGRADE_KIT_MK2 = ITEMS.registerItem(

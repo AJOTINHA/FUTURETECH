@@ -2,14 +2,15 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "CGC",
+    "SSS",
     "CFC",
-    "CMC"
+    "LML"
   ],
   "key": {
-    "C": "#c:ingots/copper",
-    "G": "minecraft:glass",
+    "S": "#c:plates/steel",
+    "C": "minecraft:copper_ingot",
     "F": "minecraft:furnace",
+    "L": "#c:gears/lead",
     "M": "futuretech:machine_casing"
   },
   "result": {

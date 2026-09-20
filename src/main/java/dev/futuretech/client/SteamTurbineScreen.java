@@ -1,7 +1,6 @@
 package dev.futuretech.client;
 
 import static dev.futuretech.client.MachineScreenStyle.*;
-import dev.futuretech.api.gui.EnergyInfoTab;
 import dev.futuretech.api.gui.TabStrip;
 import dev.futuretech.api.gui.TabbedScreen;
 import dev.futuretech.api.redstone.client.RedstoneControlTab;
@@ -25,7 +24,7 @@ public final class SteamTurbineScreen extends AbstractContainerScreen<SteamTurbi
         super(menu, inventory, title, SteamTurbineMenu.IMAGE_WIDTH, 184);
         titleLabelX = inventoryLabelX = 8;
         inventoryLabelY = 90;
-        tabs = new TabStrip(new UpgradeTab(menu, font), new SideConfigTab<>(menu, font), new RedstoneControlTab<>(menu, font), new EnergyInfoTab(menu, font));
+        tabs = new TabStrip(new UpgradeTab(menu, font), new SideConfigTab<>(menu, font), new RedstoneControlTab<>(menu, font), new SteamTurbineInfoTab(menu, font));
     }
 
     @Override public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
@@ -36,7 +35,15 @@ public final class SteamTurbineScreen extends AbstractContainerScreen<SteamTurbi
         graphics.fill(x+24,y+26,x+46,y+70,0xFF56616D);
         graphics.fill(x+25,y+27,x+45,y+69,BAR_BACK);
         int height = Math.round(steamBar.width(menu.steamStored(),dev.futuretech.block.entity.SteamTurbineBlockEntity.STEAM_CAPACITY,42,menu.isSynced()));
-        graphics.fill(x+25,y+69-height,x+45,y+69,0xFFD2E5E8);
+        if (height > 0) {
+            var model = net.minecraft.client.Minecraft.getInstance().getModelManager().getFluidStateModelSet()
+                    .get(dev.futuretech.registry.ModFluids.STEAM.get().defaultFluidState());
+            graphics.enableScissor(x+25,y+69-height,x+45,y+69);
+            for (int row = 0; row < 42; row += 16) for (int column = 0; column < 20; column += 16) {
+                graphics.blitSprite(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, model.stillMaterial().sprite(), x+25+column, y+27+row, 16, 16, 0xFFFFFFFF);
+            }
+            graphics.disableScissor();
+        }
         for (int step=1;step<4;step++) graphics.fill(x+40,y+27+step*10,x+45,y+28+step*10,0xAAFFFFFF);
         graphics.fill(x+69, y+46, x+163, y+60, BAR_BACK);
         float width = energyBar.width(menu.energyStored(), menu.energyCapacity(), 92, menu.isSynced());

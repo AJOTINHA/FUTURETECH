@@ -2,16 +2,16 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "R  ",
-    " G ",
-    "  R"
+    " M ",
+    "MIM",
+    " M "
   ],
   "key": {
-    "R": "minecraft:redstone",
-    "G": "#c:ingots/electrum"
+    "M": "#c:ingots/gold",
+    "I": "minecraft:iron_ingot"
   },
   "result": {
-    "id": "futuretech:conductance_coil",
+    "id": "futuretech:gold_gear",
     "count": 1
   }
 }

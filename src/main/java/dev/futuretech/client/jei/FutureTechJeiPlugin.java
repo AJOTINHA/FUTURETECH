@@ -56,6 +56,16 @@ public final class FutureTechJeiPlugin implements IModPlugin {
     /** The paint machine has no recipe book: its one page is written here, over every block a facade may wear. */
     private static final IRecipeType<PaintingDisplay> PAINTING =
             IRecipeType.create(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "painting"), PaintingDisplay.class);
+    /** The generators and the boiler have no recipe book either: one page type per machine, written in code. */
+    private static final IRecipeType<GeneratorPage> BOILING = generatorType("boiling");
+    private static final IRecipeType<GeneratorPage> STEAM_TURBINE = generatorType("steam_turbine");
+    private static final IRecipeType<GeneratorPage> LAVA_GENERATOR = generatorType("lava_generator");
+    private static final IRecipeType<GeneratorPage> SOLAR_GENERATOR = generatorType("solar_generator");
+    private static final IRecipeType<GeneratorPage> WIND_GENERATOR = generatorType("wind_generator");
+
+    private static IRecipeType<GeneratorPage> generatorType(String name) {
+        return IRecipeType.create(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, name), GeneratorPage.class);
+    }
 
     @Override
     public Identifier getPluginUid() {
@@ -81,7 +91,12 @@ public final class FutureTechJeiPlugin implements IModPlugin {
                 MachineRecipeCategory.ofHolders(gui, EXTRUDING, ModBlocks.EXTRUDER.get(), 122, 42, 56, 9,
                         ExtruderBlockEntity.ENERGY_PER_TICK, ExtrudingRecipe::duration, FutureTechJeiPlugin::extruding),
                 new MachineRecipeCategory<>(gui, PAINTING, ModBlocks.PAINT_MACHINE.get(), 122, 42, 56, 9,
-                        PaintMachineBlockEntity.ENERGY_PER_TICK, display -> PaintMachineBlockEntity.PAINT_TICKS, FutureTechJeiPlugin::painting));
+                        PaintMachineBlockEntity.ENERGY_PER_TICK, display -> PaintMachineBlockEntity.PAINT_TICKS, FutureTechJeiPlugin::painting),
+                new GeneratorCategory(gui, BOILING, ModBlocks.BOILER.get(), 3),
+                new GeneratorCategory(gui, STEAM_TURBINE, ModBlocks.STEAM_TURBINE.get(), 4),
+                new GeneratorCategory(gui, LAVA_GENERATOR, ModBlocks.LAVA_GENERATOR.get(), 3),
+                new GeneratorCategory(gui, SOLAR_GENERATOR, ModBlocks.SOLAR_GENERATOR.get(), 3),
+                new GeneratorCategory(gui, WIND_GENERATOR, ModBlocks.WIND_GENERATOR.get(), 3));
     }
 
     @Override
@@ -104,6 +119,11 @@ public final class FutureTechJeiPlugin implements IModPlugin {
         registration.addRecipes(MELTING, melting);
         registration.addRecipes(EXTRUDING, extruding);
         registration.addRecipes(PAINTING, List.of(PaintingDisplay.everyBlock()));
+        registration.addRecipes(BOILING, GeneratorPages.boiler());
+        registration.addRecipes(STEAM_TURBINE, GeneratorPages.turbine());
+        registration.addRecipes(LAVA_GENERATOR, GeneratorPages.lavaGenerator());
+        registration.addRecipes(SOLAR_GENERATOR, GeneratorPages.solar());
+        registration.addRecipes(WIND_GENERATOR, GeneratorPages.wind());
     }
 
     @Override
@@ -116,6 +136,11 @@ public final class FutureTechJeiPlugin implements IModPlugin {
         registration.addCraftingStation(MELTING, ModBlocks.MELTER.get());
         registration.addCraftingStation(EXTRUDING, ModBlocks.EXTRUDER.get());
         registration.addCraftingStation(PAINTING, ModBlocks.PAINT_MACHINE.get());
+        registration.addCraftingStation(BOILING, ModBlocks.BOILER.get());
+        registration.addCraftingStation(STEAM_TURBINE, ModBlocks.STEAM_TURBINE.get());
+        registration.addCraftingStation(LAVA_GENERATOR, ModBlocks.LAVA_GENERATOR.get());
+        registration.addCraftingStation(SOLAR_GENERATOR, ModBlocks.SOLAR_GENERATOR.get());
+        registration.addCraftingStation(WIND_GENERATOR, ModBlocks.WIND_GENERATOR.get());
         // The electric furnace smelts vanilla recipes; the solid fuel generator burns vanilla fuels.
         registration.addCraftingStation(RecipeTypes.SMELTING, ModBlocks.ELECTRIC_FURNACE.get());
         registration.addCraftingStation(RecipeTypes.SMELTING_FUEL, ModBlocks.SOLID_FUEL_GENERATOR.get());
@@ -154,6 +179,10 @@ public final class FutureTechJeiPlugin implements IModPlugin {
     private static void extruding(IRecipeLayoutBuilder builder, ExtrudingRecipe recipe) {
         fluidPart(builder, 8, recipe.first());
         fluidPart(builder, 30, recipe.second());
+        // A product upgrade the machine has to carry is part of the station, the way a mold is.
+        recipe.upgrade().ifPresent(tag -> builder.addSlot(RecipeIngredientRole.CRAFTING_STATION, 52, 8)
+                .setStandardSlotBackground().addItemStacks(MachineRecipeCategory.stacks(Ingredient.of(
+                        net.minecraft.core.registries.BuiltInRegistries.ITEM.getOrThrow(tag)), 1)));
         builder.addOutputSlot(90, 8).setOutputSlotBackground().add(recipe.result());
         // The tanks are unordered, so neither fluid is the first one.
         builder.setShapeless();
@@ -202,10 +231,9 @@ public final class FutureTechJeiPlugin implements IModPlugin {
     }
 
     private static void assembling(IRecipeLayoutBuilder builder, AssemblingRecipe recipe) {
-        List<Ingredient> ingredients = recipe.ingredients();
         for (int i = 0; i < 9; i++) {
             var slot = builder.addInputSlot(4 + (i % 3) * 18, 4 + (i / 3) * 18).setStandardSlotBackground();
-            if (i < ingredients.size()) slot.add(ingredients.get(i));
+            if (i < recipe.size() && !recipe.blank(i)) slot.add(recipe.ingredient(i));
         }
         builder.addOutputSlot(96, 22).setOutputSlotBackground().add(recipe.result());
     }

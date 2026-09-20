@@ -80,7 +80,7 @@ public final class TesseractBlockEntity extends BlockEntity implements RedstoneC
 
         @Override
         public int insert(int amount, TransactionContext transaction) {
-            return deliver(Kind.ENERGY, peer -> peer.deliverEnergy(amount, transaction), amount);
+            return deliver(Kind.ENERGY, (peer, share) -> peer.deliverEnergy(share, transaction), amount);
         }
 
         @Override
@@ -184,9 +184,9 @@ public final class TesseractBlockEntity extends BlockEntity implements RedstoneC
 
     public ResourceHandler<FluidResource> fluids() { return fluids; }
 
-    /** What a delivery does at one peer; answers how much it placed there. */
+    /** What a delivery does at one peer, given what is still to place; answers how much it placed there. */
     private interface Delivery {
-        int to(TesseractBlockEntity peer);
+        int to(TesseractBlockEntity peer, int amount);
     }
 
     /**
@@ -210,9 +210,14 @@ public final class TesseractBlockEntity extends BlockEntity implements RedstoneC
         }
     }
 
-    /** One peer's share of a delivery: what it managed to place, never more than {@code amount}; nothing unless it receives the kind. */
+    /**
+     * One peer's share of a delivery: what it managed to place of what is still to place; nothing
+     * unless it receives the kind. The peer is offered only the remainder - offered the whole and
+     * counted for the remainder, a second peer would place what the first already had, and the
+     * channel would make items out of nothing.
+     */
     private int take(Kind kind, Delivery delivery, int amount) {
-        return receives(kind) ? Math.min(amount, delivery.to(this)) : 0;
+        return receives(kind) ? Math.min(amount, delivery.to(this, amount)) : 0;
     }
 
     /** Puts energy into the blocks around this tesseract, as much as they take. */
@@ -293,7 +298,7 @@ public final class TesseractBlockEntity extends BlockEntity implements RedstoneC
         @Override
         public int insert(int index, T resource, int amount, TransactionContext transaction) {
             if (index != 0 || resource.isEmpty()) return 0;
-            return deliver(kind, peer -> peer.deliverResource(capability, cacheSlot, resource, amount, transaction), amount);
+            return deliver(kind, (peer, share) -> peer.deliverResource(capability, cacheSlot, resource, share, transaction), amount);
         }
 
         @Override

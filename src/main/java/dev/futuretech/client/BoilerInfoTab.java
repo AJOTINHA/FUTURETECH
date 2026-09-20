@@ -47,7 +47,7 @@ public final class BoilerInfoTab extends MachineTab {
         rows.add(new Row(label("heat_percent"), value("percent", 140), () -> value("percent", menu.heatPercent())));
         switch (menu.fuelMode()) {
             case BoilerBlockEntity.LAVA -> {
-                // Heat is bought a mB at a time, so the draw reads best per second: 2 heat/t at 100% is 8 mB/s.
+                // Heat is bought a mB at a time, so the draw reads best per second: 6 heat/t at 100% is 24 mB/s.
                 rows.add(new Row(label("lava_usage"), value("lava_rate", lavaPerSecond(maxWater, 140)),
                         () -> value("lava_rate", lavaPerSecond(menu.productionRate() / BoilerBlockEntity.STEAM_PER_WATER, menu.heatPercent()))));
                 rows.add(new Row(label("lava_stored"), tank(BoilerBlockEntity.LAVA_CAPACITY, BoilerBlockEntity.LAVA_CAPACITY),

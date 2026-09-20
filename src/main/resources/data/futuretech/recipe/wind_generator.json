@@ -2,14 +2,15 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    " I ",
-    "IRI",
+    " S ",
+    "TRT",
     "CMC"
   ],
   "key": {
-    "I": "#c:ingots/iron",
+    "S": "#c:gears/steel",
+    "T": "#c:plates/tin",
     "R": "futuretech:reception_coil",
-    "C": "#c:ingots/copper",
+    "C": "minecraft:copper_ingot",
     "M": "futuretech:machine_casing"
   },
   "result": {

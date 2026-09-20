@@ -2,13 +2,14 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "III",
-    "AAA",
-    "III"
+    "SSS",
+    "ACA",
+    "SSS"
   ],
   "key": {
-    "I": "minecraft:iron_ingot",
-    "A": "minecraft:amethyst_shard"
+    "S": "#c:plates/silver",
+    "A": "minecraft:amethyst_shard",
+    "C": "futuretech:chip"
   },
   "result": {
     "id": "futuretech:network_cable",

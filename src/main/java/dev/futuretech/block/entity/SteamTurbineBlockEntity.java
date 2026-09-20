@@ -52,7 +52,7 @@ public final class SteamTurbineBlockEntity extends BlockEntity implements MenuPr
     public static final int SPEED_LOSS_PERCENT = 10;
     public static final int OUTPUT_PER_TICK = 1_200;
     public static final int DATA_ENERGY_LOW = 0, DATA_ENERGY_HIGH = 1, DATA_RATE = 2, DATA_STEAM = 3,
-            DATA_MK = 4, DATA_STATUS = 5, DATA_MAX_RATE = 6, DATA_SIDE_BASE = 7;
+            DATA_MK = 4, DATA_STATUS = 5, DATA_MAX_RATE = 6, DATA_STEAM_PER_TICK = 7, DATA_FE_PER_MB = 8, DATA_SIDE_BASE = 9;
     public static final int DATA_FRONT = DATA_SIDE_BASE + SideConfig.DATA_COUNT;
     public static final int DATA_REDSTONE_BASE = DATA_FRONT + 1;
     public static final int DATA_COUNT = DATA_REDSTONE_BASE + RedstoneControl.DATA_COUNT;
@@ -79,6 +79,8 @@ public final class SteamTurbineBlockEntity extends BlockEntity implements MenuPr
                 case DATA_STEAM -> steamAmount();
                 case DATA_MK -> MachineLevel.of(getBlockState());
                 case DATA_MAX_RATE -> steamPerTick() * fePerMb();
+                case DATA_STEAM_PER_TICK -> steamPerTick();
+                case DATA_FE_PER_MB -> fePerMb();
                 case DATA_STATUS -> status;
                 case DATA_FRONT -> front().ordinal();
                 default -> {

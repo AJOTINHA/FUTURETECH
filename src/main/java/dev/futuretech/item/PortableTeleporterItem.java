@@ -97,9 +97,15 @@ public final class PortableTeleporterItem extends Item {
     /** The slot a saved pad is listed under: below zero, so it cannot be mistaken for a slot on the network. */
     private static int savedSlot(int index) { return -1 - index; }
 
-    /** What a trip from {@code from} to {@code target} costs the teleporter: the top level's fare. */
+    /**
+     * What a trip from {@code from} to {@code target} costs the teleporter: the top level's fare,
+     * but never more than that level's trip into another dimension. A pad's fare grows with the
+     * distance without end; the teleporter is carried anywhere, so the far side of the world costs
+     * what the Nether does, and a full charge always covers the trip.
+     */
     public static int cost(GlobalPos from, TeleportTarget target) {
-        return TeleporterBlockEntity.cost(from, target, MachineLevel.MAX);
+        return Math.min(TeleporterBlockEntity.cost(from, target, MachineLevel.MAX),
+                TeleporterBlockEntity.crossDimensionCost(MachineLevel.MAX));
     }
 
     /** The panel the stack is linked to, if it still stands; the chunk is read as it is, loaded or not. */

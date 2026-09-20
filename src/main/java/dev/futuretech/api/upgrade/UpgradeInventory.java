@@ -33,6 +33,8 @@ public final class UpgradeInventory extends SimpleContainer {
     public static final TagKey<Item> LAVA = tag("upgrades/lava");
     /** Energy upgrades: a boiler carrying one heats its water with FE instead of solid fuel. */
     public static final TagKey<Item> ENERGY = tag("upgrades/energy");
+    /** Sand upgrades: an extruder carrying one turns out sand, gravel and their kin instead of stone. */
+    public static final TagKey<Item> SAND = tag("upgrades/sand");
     /** Percent more energy an item costs for every speed upgrade; four of them cost 40% more. */
     public static final int SPEED_ENERGY_PERCENT = 10;
     /** Percent of the draw every efficiency upgrade takes off; four of them leave 40%. */

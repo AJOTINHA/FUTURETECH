@@ -4,6 +4,7 @@
     "futuretech:speed_upgrade",
     "futuretech:efficiency_upgrade",
     "futuretech:lava_upgrade",
-    "futuretech:energy_upgrade"
+    "futuretech:energy_upgrade",
+    "futuretech:sand_upgrade"
   ]
 }

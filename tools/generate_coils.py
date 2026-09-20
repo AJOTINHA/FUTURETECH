@@ -64,12 +64,8 @@ def main(assets_only=False):
         if assets_only:
             print(f"  {name}: 3D model, material atlas")
             continue
-        write_json(DATA / "futuretech/recipe" / f"{name}.json", {
-            "type": "minecraft:crafting_shaped", "category": "misc", "pattern": coil["pattern"],
-            "key": {"R": "minecraft:redstone", "G": coil["ingot"]},
-            "result": {"id": f"futuretech:{name}", "count": 1}})
-        write_json(DATA / "futuretech/advancement/recipes" / f"{name}.json", recipe_advancement(f"futuretech:{name}", "minecraft:redstone"))
-        print(f"  {name}: texture, model, recipe")
+        # The coils are made in the Assembler (src/main/recipes/assembler.json), not on the crafting table.
+        print(f"  {name}: texture, model")
     if assets_only:
         return
     for lang, key in (("en_us", "en"), ("pt_br", "pt")):

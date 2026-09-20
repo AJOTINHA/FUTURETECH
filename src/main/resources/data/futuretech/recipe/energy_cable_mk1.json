@@ -2,13 +2,14 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "CCC",
-    "RRR",
-    "CCC"
+    "SSS",
+    "RLR",
+    "SSS"
   ],
   "key": {
-    "C": "minecraft:copper_ingot",
-    "R": "minecraft:redstone"
+    "S": "#c:plates/steel",
+    "R": "minecraft:redstone",
+    "L": "#c:ingots/lead"
   },
   "result": {
     "id": "futuretech:energy_cable_mk1",

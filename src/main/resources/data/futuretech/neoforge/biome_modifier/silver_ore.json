@@ -1,6 +1,9 @@
 {
   "type": "neoforge:add_features",
   "biomes": "#minecraft:is_overworld",
-  "features": "futuretech:silver_ore",
+  "features": [
+    "futuretech:silver_ore",
+    "futuretech:silver_ore_lower"
+  ],
   "step": "underground_ores"
 }

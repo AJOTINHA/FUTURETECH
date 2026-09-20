@@ -1,19 +1,20 @@
 {
-  "result": {
-    "count": 1,
-    "id": "futuretech:solid_fuel_generator"
-  },
   "type": "minecraft:crafting_shaped",
+  "category": "misc",
   "pattern": [
-    "III",
-    "FCF",
-    "IRI"
+    "CCC",
+    "FMF",
+    "ARA"
   ],
   "key": {
-    "I": "minecraft:iron_ingot",
-    "R": "minecraft:redstone",
+    "C": "#c:plates/copper",
     "F": "minecraft:furnace",
-    "C": "futuretech:machine_casing"
+    "M": "futuretech:machine_casing",
+    "A": "#c:gears/copper",
+    "R": "minecraft:redstone"
   },
-  "category": "misc"
+  "result": {
+    "id": "futuretech:solid_fuel_generator",
+    "count": 1
+  }
 }

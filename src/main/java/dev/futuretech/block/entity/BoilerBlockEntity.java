@@ -62,7 +62,7 @@ import org.jspecify.annotations.Nullable;
 public final class BoilerBlockEntity extends BaseContainerBlockEntity
         implements AutoTransferable, SideConfigurable, RedstoneControllable, Upgradeable {
     public static final int WATER_CAPACITY = 8_000, STEAM_CAPACITY = 16_000, LAVA_CAPACITY = 8_000;
-    public static final int WATER_PER_TICK = 2, STEAM_PER_WATER = 10;
+    public static final int WATER_PER_TICK = 6, STEAM_PER_WATER = 10;
     /** One mB of lava carries this much heat: a bucket matches the lava generator's 50 000 FE, times the turbine's tenfold. */
     public static final int HEAT_PER_LAVA_MB = 5;
     /** FE per unit of heat: dearer than the turbine gives back per unit even with every upgrade, so steam never pays for itself. */

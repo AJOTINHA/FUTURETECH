@@ -46,7 +46,9 @@ public final class SteamMachinesGameTests {
             level.setBlock(turbinePos.below(2),ModBlocks.BATTERY_MK1.get().defaultBlockState(),Block.UPDATE_ALL);
             for(Direction side:Direction.values()) check(helper,boiler.get().sideConfig().mode(side)==SideMode.NONE && turbine.get().sideConfig().mode(side)==SideMode.NONE,"Placed steam machines start with every face closed");
             boiler.get().sideConfig().set(Direction.WEST,SideMode.INPUT);boiler.get().sideConfig().set(Direction.UP,SideMode.OUTPUT);boiler.get().sideConfigChanged();
-            turbine.get().sideConfig().set(Direction.UP,SideMode.INPUT);turbine.get().sideConfig().set(Direction.DOWN,SideMode.OUTPUT);turbine.get().sideConfigChanged();
+            // Only the steam face is opened: energy leaves the turbine through every face, like the other generators.
+            turbine.get().sideConfig().set(Direction.UP,SideMode.INPUT);turbine.get().sideConfigChanged();
+            check(helper,level.getCapability(Capabilities.Energy.BLOCK,turbinePos,Direction.DOWN)!=null,"The turbine offers energy on an unconfigured face");
             battery.get().sideConfig().set(Direction.UP,SideMode.INPUT);battery.get().sideConfigChanged();
             var tank=(FluidTankBlockEntity)level.getBlockEntity(pos.west(2));
             tank.sideConfig().set(Direction.EAST,SideMode.OUTPUT);tank.sideConfigChanged();
@@ -62,7 +64,7 @@ public final class SteamMachinesGameTests {
             check(helper,level.getCapability(Capabilities.Energy.BLOCK,pos,Direction.DOWN)==null,"The boiler has no electrical output");
         }).thenIdle(120).thenExecute(()->{
             check(helper,boiler.get().waterAmount()>0,"Water travels from tank through a fluid cable into the boiler");
-            check(helper,boiler.get().menuData().get(BoilerBlockEntity.DATA_RATE)==20,"Boiler produces 20 mB of steam per tick");
+            check(helper,boiler.get().menuData().get(BoilerBlockEntity.DATA_RATE)==60,"Boiler produces 60 mB of steam per tick");
             check(helper,battery.get().energy().getAmountAsInt()>1000,"Steam travels through pipes to the turbine and energy through cable to battery");
             turbine.get().redstoneControl().setMode(RedstoneMode.HIGH);turbine.get().redstoneControlChanged();
         }).thenIdle(12).thenExecute(()->{
@@ -92,7 +94,7 @@ public final class SteamMachinesGameTests {
             level.setBlock(lavaPos,ModBlocks.BOILER.get().defaultBlockState(),Block.UPDATE_ALL);
             var lavaCable=(FluidCableBlockEntity)level.getBlockEntity(lavaPos.west());
             lavaCable.setConnectorMode(Direction.WEST,SideMode.INPUT);lavaCable.setConnectorMode(Direction.EAST,SideMode.OUTPUT);
-            // An MK1 cable carries 400 FE/t and an MK1 battery hands out 200; the boiler burns 600 FE/t at full rate.
+            // An MK1 cable carries 400 FE/t and an MK1 battery hands out 200; the boiler burns 1 800 FE/t at full rate.
             level.setBlock(energyPos.east(),ModBlocks.ENERGY_CABLE_MK4.get().defaultBlockState(),Block.UPDATE_ALL);
             level.setBlock(energyPos.east(2),ModBlocks.BATTERY_MK1.get().defaultBlockState().setValue(dev.futuretech.api.upgrade.MachineLevel.MK,4),Block.UPDATE_ALL);
             level.setBlock(energyPos,ModBlocks.BOILER.get().defaultBlockState(),Block.UPDATE_ALL);
@@ -116,9 +118,11 @@ public final class SteamMachinesGameTests {
             check(helper,level.getCapability(Capabilities.Energy.BLOCK,energyPos,Direction.NORTH)==null,"A closed face still offers no FE");
         }).thenIdle(60).thenExecute(()->{
             check(helper,lavaBoiler.get().lavaAmount()>0,"Lava travels from the tank into the boiler's lava tank");
-            check(helper,lavaBoiler.get().menuData().get(BoilerBlockEntity.DATA_RATE)==20,"The lava boiler produces 20 mB of steam per tick");
-            check(helper,energyBoiler.get().energy().getAmountAsInt()>0 || energyBoiler.get().menuData().get(BoilerBlockEntity.DATA_BURN)>0,"FE travels from the battery through the cable into the boiler");
-            check(helper,energyBoiler.get().menuData().get(BoilerBlockEntity.DATA_RATE)==20,"The energy boiler produces 20 mB of steam per tick");
+            check(helper,lavaBoiler.get().menuData().get(BoilerBlockEntity.DATA_RATE)==60,"The lava boiler produces 60 mB of steam per tick");
+            // The boiler spends FE as fast as it arrives, so the steam it made is the proof the FE got there.
+            check(helper,energyBoiler.get().steamAmount()>0,"FE travels from the battery through the cable into the boiler");
+            // At 6 heat/t the energy boiler wants 1 800 FE/t and an MK4 battery hands out 1 600, so it runs a little short some ticks.
+            check(helper,energyBoiler.get().menuData().get(BoilerBlockEntity.DATA_RATE)>0,"The energy boiler produces steam on FE");
             check(helper,energyBoiler.get().menuData().get(BoilerBlockEntity.DATA_MODE)==BoilerBlockEntity.ENERGY,"The menu reports the energy mode");
         }).thenSucceed();
     }

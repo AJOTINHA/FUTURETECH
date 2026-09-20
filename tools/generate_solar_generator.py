@@ -162,11 +162,7 @@ def main():
     write(ASSETS/'items/solar_generator.json',item)
     loot=json.loads((DATA/'futuretech/loot_table/blocks/lava_generator.json').read_text().replace('lava_generator','solar_generator'))
     write(DATA/'futuretech/loot_table/blocks/solar_generator.json',loot)
-    write(DATA/'futuretech/recipe/solar_generator.json',{
-        'type':'minecraft:crafting_shaped','category':'misc','pattern':['GGG','LML','CRC'],
-        'key':{'G':'minecraft:glass','L':'minecraft:lapis_lazuli','M':'futuretech:machine_casing',
-               'C':'#c:ingots/copper','R':'futuretech:reception_coil'},
-        'result':{'id':'futuretech:solar_generator','count':1}})
+    # The crafting recipe is balanced by hand in data/futuretech/recipe/ and is not written here.
     write(DATA/'futuretech/advancement/recipes/solar_generator.json',{
         'parent':'minecraft:recipes/root','criteria':{
             'has_item':{'trigger':'minecraft:inventory_changed','conditions':{'items':[{'items':'futuretech:reception_coil'}]}},

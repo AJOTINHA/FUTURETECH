@@ -7,6 +7,9 @@ import dev.futuretech.registry.ModRecipes;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import java.util.Optional;
+import net.minecraft.world.item.Item;
+import net.minecraft.tags.TagKey;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -31,9 +34,20 @@ import net.neoforged.neoforge.transfer.fluid.FluidResource;
  *
  * <p>Several recipes may share the same pair of fluids - water and lava give cobblestone, stone or
  * obsidian - so which one runs is the player's choice on the machine, never a search.
+ *
+ * <p>A recipe may name an {@link #upgrade}: an item tag one of the machine's upgrade slots has to
+ * hold for it to be on offer. Those recipes replace the plain ones rather than join them - a
+ * machine carrying a sand upgrade makes sand, gravel and their kin instead of stone - so the plain
+ * recipes are only on offer while no such upgrade is installed.
  */
-public record ExtrudingRecipe(Part first, Part second, ItemStackTemplate result, int duration)
+public record ExtrudingRecipe(Part first, Part second, ItemStackTemplate result, int duration,
+                              Optional<TagKey<Item>> upgrade)
         implements Recipe<ExtrudingRecipe.Input> {
+    /** A plain recipe, on offer whenever no product upgrade is installed. */
+    public ExtrudingRecipe(Part first, Part second, ItemStackTemplate result, int duration) {
+        this(first, second, result, duration, Optional.empty());
+    }
+
     /**
      * One feed: the fluid a tank has to hold, and how much of it a batch drinks - which may be
      * none at all. A machine fed water and lava turns out cobblestone forever without spending
@@ -68,13 +82,15 @@ public record ExtrudingRecipe(Part first, Part second, ItemStackTemplate result,
             Part.CODEC.fieldOf("first").forGetter(ExtrudingRecipe::first),
             Part.CODEC.fieldOf("second").forGetter(ExtrudingRecipe::second),
             ItemStackTemplate.CODEC.fieldOf("result").forGetter(ExtrudingRecipe::result),
-            Codec.intRange(1, 12000).optionalFieldOf("duration", 200).forGetter(ExtrudingRecipe::duration)
+            Codec.intRange(1, 12000).optionalFieldOf("duration", 200).forGetter(ExtrudingRecipe::duration),
+            TagKey.codec(Registries.ITEM).optionalFieldOf("upgrade").forGetter(ExtrudingRecipe::upgrade)
     ).apply(i, ExtrudingRecipe::new));
     public static final StreamCodec<RegistryFriendlyByteBuf, ExtrudingRecipe> STREAM_CODEC = StreamCodec.composite(
             Part.STREAM_CODEC, ExtrudingRecipe::first,
             Part.STREAM_CODEC, ExtrudingRecipe::second,
             ItemStackTemplate.STREAM_CODEC, ExtrudingRecipe::result,
-            ByteBufCodecs.VAR_INT, ExtrudingRecipe::duration, ExtrudingRecipe::new);
+            ByteBufCodecs.VAR_INT, ExtrudingRecipe::duration,
+            ByteBufCodecs.optional(TagKey.streamCodec(Registries.ITEM)), ExtrudingRecipe::upgrade, ExtrudingRecipe::new);
 
     /** What the two tanks hold when something asks a recipe about them. */
     public record Input(FluidStack a, FluidStack b) implements RecipeInput {

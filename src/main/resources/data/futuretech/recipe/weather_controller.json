@@ -2,16 +2,17 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "IKI",
+    "NLN",
     "BMB",
-    "IRI"
+    "ACA"
   ],
   "key": {
-    "I": "minecraft:iron_ingot",
-    "K": "minecraft:lightning_rod",
+    "N": "#c:plates/netherite",
+    "L": "minecraft:lightning_rod",
     "B": "futuretech:battery_mk1",
     "M": "futuretech:machine_casing",
-    "R": "minecraft:redstone"
+    "A": "#c:gears/netherite",
+    "C": "minecraft:nether_star"
   },
   "result": {
     "id": "futuretech:weather_controller",

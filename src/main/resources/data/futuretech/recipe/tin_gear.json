@@ -2,16 +2,16 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "  R",
-    " G ",
-    "R  "
+    " M ",
+    "MIM",
+    " M "
   ],
   "key": {
-    "R": "minecraft:redstone",
-    "G": "#c:ingots/silver"
+    "M": "#c:ingots/tin",
+    "I": "minecraft:iron_ingot"
   },
   "result": {
-    "id": "futuretech:transmission_coil",
+    "id": "futuretech:tin_gear",
     "count": 1
   }
 }

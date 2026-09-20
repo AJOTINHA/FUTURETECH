@@ -1,8 +1,10 @@
-"""Lava Upgrade and Energy Upgrade: the boiler's heat sources, plus their models, recipes, tags and names.
+"""Lava Upgrade, Energy Upgrade and Sand Upgrade: the boiler's heat sources and the extruder's sand
+products, plus their models, recipes, tags and names.
 
-Both are the Efficiency Upgrade's module (frame, panel, pins copied from speed_upgrade.png) with a
-different symbol on the panel: a drop of lava in the lava generator's oranges, and a battery cell
-in the energy bar's blues. The item models copy the Efficiency Upgrade's, only the texture changes.
+All are the Efficiency Upgrade's module (frame, panel, pins copied from speed_upgrade.png) with a
+different symbol on the panel: a drop of lava in the lava generator's oranges, a battery cell in
+the energy bar's blues, and a heap of sand in sand's own yellows. The item models copy the
+Efficiency Upgrade's, only the texture changes.
 
 Run from any directory: python tools/generate_boiler_upgrades.py
 """
@@ -22,6 +24,9 @@ LAVA_DARK = (192, 74, 6, 255)
 ENERGY = (85, 231, 237, 255)
 ENERGY_DARK = (22, 118, 196, 255)
 ENERGY_SHELL = (172, 188, 200, 255)
+SAND = (219, 207, 163, 255)
+SAND_LIGHT = (237, 228, 190, 255)
+SAND_DARK = (188, 172, 122, 255)
 
 # A drop over the 22 x 17 panel: narrow at the top, round at the bottom, a bright highlight on its left.
 DROP = [
@@ -57,6 +62,24 @@ CELL = [
     "..SSSSSSSSSSSSSSSS....",
     "......................",
     "......................",
+]
+
+# A heap of sand over the panel: a rounded mound, lit from the upper left, with a few loose grains around it.
+HEAP = [
+    "......................",
+    "......................",
+    "......................",
+    "..........LL..........",
+    "........LLLLLS........",
+    ".......LLLLLLSS.......",
+    "......LLLLLLSSSD......",
+    ".....LLLLLSSSSSD......",
+    "....LLLLSSSSSSSDD.....",
+    "...LLLSSSSSSSSSDDD....",
+    "..LLSSSSSSSSSSDDDDD...",
+    ".SSSSSSSSSSSSDDDDDDD..",
+    "......................",
+    "...D......D.....D.....",
 ]
 
 
@@ -117,14 +140,16 @@ def names(entries):
 if __name__ == "__main__":
     texture(DROP, {"L": LAVA, "B": LAVA_BRIGHT, "D": LAVA_DARK}).save(TEXTURES / "lava_upgrade.png")
     texture(CELL, {"S": ENERGY_SHELL, "L": ENERGY, "D": ENERGY_DARK}).save(TEXTURES / "energy_upgrade.png")
+    texture(HEAP, {"L": SAND_LIGHT, "S": SAND, "D": SAND_DARK}).save(TEXTURES / "sand_upgrade.png")
     resources("lava_upgrade", "minecraft:magma_block")
     resources("energy_upgrade", "futuretech:reception_coil")
+    resources("sand_upgrade", "minecraft:sand")
     names({
         "item.futuretech.lava_upgrade": ("Upgrade de Lava", "Lava Upgrade"),
         "item.futuretech.energy_upgrade": ("Upgrade de Energia", "Energy Upgrade"),
+        "item.futuretech.sand_upgrade": ("Upgrade de Areia", "Sand Upgrade"),
         "gui.futuretech.boiler.no_lava": ("Sem lava", "No lava"),
         "gui.futuretech.boiler.no_energy": ("Sem energia", "No energy"),
         "gui.futuretech.boiler.lava": ("Lava", "Lava"),
-        "gui.futuretech.boiler.heat": ("Calor: %s%% por mB", "Heat: %s%% per mB"),
     })
-    print("Lava and energy upgrades generated.")
+    print("Lava, energy and sand upgrades generated.")

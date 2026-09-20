@@ -1,12 +1,12 @@
 {
   "parent": "minecraft:recipes/root",
   "criteria": {
-    "has_item": {
+    "has_ingot": {
       "trigger": "minecraft:inventory_changed",
       "conditions": {
         "items": [
           {
-            "items": "minecraft:redstone"
+            "items": "#c:ingots/silver"
           }
         ]
       }
@@ -14,19 +14,19 @@
     "has_the_recipe": {
       "trigger": "minecraft:recipe_unlocked",
       "conditions": {
-        "recipe": "futuretech:transmission_coil"
+        "recipe": "futuretech:silver_gear"
       }
     }
   },
   "requirements": [
     [
-      "has_item",
+      "has_ingot",
       "has_the_recipe"
     ]
   ],
   "rewards": {
     "recipes": [
-      "futuretech:transmission_coil"
+      "futuretech:silver_gear"
     ]
   }
 }

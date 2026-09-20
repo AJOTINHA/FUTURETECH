@@ -19,6 +19,7 @@ import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemStackTemplate;
+import dev.futuretech.registry.ModItems;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
@@ -143,20 +144,59 @@ class ExtruderTest {
         assertEquals(1, amount(extruder, TANK_B));
     }
 
+    /** The recipes a plain machine offers, in the order it counts them: the ones naming no upgrade. */
+    private static List<Integer> stoneIndices(List<RecipeHolder<ExtrudingRecipe>> recipes) {
+        List<Integer> indices = new java.util.ArrayList<>();
+        for (int index = 0; index < recipes.size(); index++) if (recipes.get(index).value().upgrade().isEmpty()) indices.add(index);
+        return indices;
+    }
+
     @Test
     void theButtonStepsThroughEveryProductAndComesBackAround(MinecraftServer server) {
         var recipes = shipped(server);
-        assertEquals(9, recipes.size(), "water and lava should give nine products");
+        assertEquals(13, recipes.size(), "water and lava should give nine stone products and four sand ones");
+        var stone = stoneIndices(recipes);
+        assertEquals(9, stone.size());
         var extruder = extruder(1);
         extruder.extrude(recipes);
-        assertEquals(0, extruder.choiceIndex());
-        for (int step = 1; step <= recipes.size(); step++) {
+        assertEquals(stone.getFirst(), extruder.choiceIndex());
+        // Without the sand upgrade the button walks the stone products only, skipping the sand ones in between.
+        for (int step = 1; step <= stone.size(); step++) {
             extruder.cycleChoice(recipes, false);
-            assertEquals(step % recipes.size(), extruder.choiceIndex());
+            assertEquals(stone.get(step % stone.size()), extruder.choiceIndex());
         }
         // And back the other way, which is what a right click does.
         extruder.cycleChoice(recipes, true);
-        assertEquals(recipes.size() - 1, extruder.choiceIndex());
+        assertEquals(stone.getLast(), extruder.choiceIndex());
+    }
+
+    @Test
+    void theSandUpgradeSwapsTheProductsForSandAndBack(MinecraftServer server) {
+        var recipes = shipped(server);
+        var extruder = ready(2_000, 2_000);
+        select(extruder, recipes, Items.OBSIDIAN);
+        extruder.upgrades().setItem(0, new ItemStack(ModItems.SAND_UPGRADE.get()));
+        // The stone choice is gone with the upgrade in: the first sand product stands in, and the button walks sand only.
+        extruder.extrude(recipes);
+        assertTrue(recipes.get(extruder.choiceIndex()).value().result().create().is(Items.GRAVEL));
+        java.util.Set<Item> seen = new java.util.HashSet<>();
+        for (int step = 0; step < 8; step++) {
+            seen.add(recipes.get(extruder.choiceIndex()).value().result().create().getItem());
+            extruder.cycleChoice(recipes, false);
+        }
+        assertEquals(java.util.Set.of(Items.GRAVEL, Items.SAND, Items.RED_SAND, Items.SOUL_SAND), seen);
+        // Sand drinks a bucket of water a batch and makes sand.
+        select(extruder, recipes, Items.SAND);
+        var sand = recipes.get(extruder.choiceIndex()).value();
+        assertEquals(40, sand.duration());
+        for (int tick = 0; tick < sand.duration(); tick++) assertTrue(extruder.extrude(recipes));
+        assertTrue(extruder.getItem(SLOT_OUTPUT).is(Items.SAND));
+        assertEquals(1_000, amount(extruder, TANK_A));
+        assertEquals(2_000, amount(extruder, TANK_B));
+        // Taking the upgrade out brings the stone products back, starting from the first one.
+        extruder.upgrades().setItem(0, ItemStack.EMPTY);
+        extruder.extrude(recipes);
+        assertTrue(recipes.get(extruder.choiceIndex()).value().result().create().is(Items.COBBLESTONE));
     }
 
     @Test
@@ -193,7 +233,7 @@ class ExtruderTest {
         var extruder = extruder(1);
         extruder.cycleChoice(recipes, false);
         int chosen = extruder.choiceIndex();
-        assertEquals(1, chosen);
+        assertEquals(stoneIndices(recipes).get(1), chosen, "the second stone product, past the sand one between");
         var loaded = extruder(1);
         loaded.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, server.registryAccess(),
                 extruder.saveWithoutMetadata(server.registryAccess())));
@@ -206,7 +246,7 @@ class ExtruderTest {
         var recipes = shipped(server);
         var extruder = extruder(1);
         extruder.cycleChoice(recipes, false);
-        assertEquals(1, extruder.choiceIndex());
+        assertEquals(stoneIndices(recipes).get(1), extruder.choiceIndex());
         // A data pack that no longer has that recipe must not leave the machine pointing at nothing.
         extruder.extrude(List.of(recipe("other_mix", Fluids.WATER, 1_000, Fluids.LAVA, 1_000)));
         assertEquals(0, extruder.choiceIndex());

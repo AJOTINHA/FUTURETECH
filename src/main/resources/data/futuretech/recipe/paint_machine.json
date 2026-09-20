@@ -3,15 +3,16 @@
   "category": "misc",
   "pattern": [
     "IDI",
-    "PMP",
-    "IRI"
+    "SMS",
+    "CRC"
   ],
   "key": {
     "I": "minecraft:iron_ingot",
     "D": "minecraft:dispenser",
-    "P": "futuretech:steel_plate",
+    "S": "#c:plates/steel",
     "M": "futuretech:machine_casing",
-    "R": "minecraft:redstone"
+    "C": "#c:gears/copper",
+    "R": "futuretech:reception_coil"
   },
   "result": {
     "id": "futuretech:paint_machine",

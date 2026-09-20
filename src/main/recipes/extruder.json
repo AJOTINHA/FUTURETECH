@@ -135,6 +135,70 @@
         "count": 1
       },
       "duration": 80
+    },
+    "gravel": {
+      "first": {
+        "fluid": "minecraft:water",
+        "consumes": 0
+      },
+      "second": {
+        "fluid": "minecraft:lava",
+        "consumes": 0
+      },
+      "result": {
+        "id": "minecraft:gravel",
+        "count": 1
+      },
+      "duration": 30,
+      "upgrade": "futuretech:upgrades/sand"
+    },
+    "sand": {
+      "first": {
+        "fluid": "minecraft:water",
+        "consumes": 1000
+      },
+      "second": {
+        "fluid": "minecraft:lava",
+        "consumes": 0
+      },
+      "result": {
+        "id": "minecraft:sand",
+        "count": 1
+      },
+      "duration": 40,
+      "upgrade": "futuretech:upgrades/sand"
+    },
+    "red_sand": {
+      "first": {
+        "fluid": "minecraft:water",
+        "consumes": 1000
+      },
+      "second": {
+        "fluid": "minecraft:lava",
+        "consumes": 0
+      },
+      "result": {
+        "id": "minecraft:red_sand",
+        "count": 1
+      },
+      "duration": 60,
+      "upgrade": "futuretech:upgrades/sand"
+    },
+    "soul_sand": {
+      "first": {
+        "fluid": "minecraft:water",
+        "consumes": 1000
+      },
+      "second": {
+        "fluid": "minecraft:lava",
+        "consumes": 1000
+      },
+      "result": {
+        "id": "minecraft:soul_sand",
+        "count": 1
+      },
+      "duration": 80,
+      "upgrade": "futuretech:upgrades/sand"
     }
   }
 }

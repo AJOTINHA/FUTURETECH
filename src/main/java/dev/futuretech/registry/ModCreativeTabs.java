@@ -76,6 +76,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.EFFICIENCY_UPGRADE.get());
                         output.accept(ModItems.LAVA_UPGRADE.get());
                         output.accept(ModItems.ENERGY_UPGRADE.get());
+                        output.accept(ModItems.SAND_UPGRADE.get());
                         output.accept(ModItems.CHIP.get());
                         output.accept(ModItems.UPGRADE_KIT_MK2.get());
                         output.accept(ModItems.UPGRADE_KIT_MK3.get());
@@ -127,6 +128,8 @@ public final class ModCreativeTabs {
                         }
                         output.accept(ModItems.ELECTRUM_INGOT.get());
                         output.accept(ModItems.ELECTRUM_POWDER.get());
+                        output.accept(ModItems.RED_ALLOY_INGOT.get());
+                        output.accept(ModItems.ENDER_ALLOY_INGOT.get());
                         output.accept(ModItems.RECEPTION_COIL.get());
                         output.accept(ModItems.TRANSMISSION_COIL.get());
                         output.accept(ModItems.CONDUCTANCE_COIL.get());

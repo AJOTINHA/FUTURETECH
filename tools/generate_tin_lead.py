@@ -25,24 +25,47 @@ METALS = {
         "en": "Tin", "pt": "Estanho",
         # What every iron texture is multiplied by: a pale blue-silver, so it reads apart from iron.
         "tint": 0xC9DCE6,
-        # Veins: how many blocks each, how many tries a chunk, and the heights, a trapezoid peaking in the middle.
-        "vein": 9, "count": 14, "min": -24, "max": 56,
+        # As common as copper: vanilla's ore_copper, one band peaking at Y 48.
+        "like": ("cobre", "copper"),
+        "bands": [{"name": "", "vein": 10, "count": 16, "shape": "trapezoid", "min": -16, "max": 112}],
     },
     "lead": {
         "en": "Lead", "pt": "Chumbo",
         # A dull blue-grey.
         "tint": 0x7B8698,
-        "vein": 8, "count": 10, "min": -48, "max": 32,
+        # As common as iron: vanilla's ore_iron_upper, ore_iron_middle and ore_iron_small.
+        "like": ("ferro", "iron"),
+        "bands": [{"name": "_middle", "vein": 9, "count": 10, "shape": "trapezoid", "min": -24, "max": 56},
+                  {"name": "_upper", "vein": 9, "count": 90, "shape": "trapezoid", "min": 80, "max": 384},
+                  {"name": "_small", "vein": 4, "count": 10, "shape": "uniform", "min": -64, "max": 72}],
     },
     "silver": {
         "en": "Silver", "pt": "Prata",
         # Thermal's silver: nearly white with a blue cast, its shadows far paler than iron's, which is
         # what the lift does; the tint alone could only darken.
         "tint": 0xE4F0FA, "lift": 0.45,
-        # Rarer and deeper than the other two.
-        "vein": 7, "count": 6, "min": -60, "max": 16,
+        # As rare as gold: vanilla's ore_gold and the buried ore_gold_lower (a vein in every other chunk, half discarded at air).
+        "like": ("ouro", "gold"),
+        "bands": [{"name": "", "vein": 9, "count": 4, "shape": "trapezoid", "min": -64, "max": 32},
+                  {"name": "_lower", "vein": 9, "count": (0, 1), "shape": "uniform", "min": -64, "max": -48, "discard": 0.5}],
     },
 }
+
+
+def spawn_lines(metal, lang):
+    """What the ore's tooltip says about its bands: the first band as the main line, the rest on a second."""
+    bands = metal["bands"]
+    like = metal["like"][0 if lang == "pt" else 1]
+    first = bands[0]
+    if lang == "pt":
+        main = f"Gera de Y {first['min']} a Y {first['max']} (como o {like})"
+        rest = ", ".join(f"Y {b['min']} a Y {b['max']}" for b in bands[1:])
+        second = f"Também em {rest}" if rest else ""
+    else:
+        main = f"Generates from Y {first['min']} to Y {first['max']} (like {like})"
+        rest = ", ".join(f"Y {b['min']} to Y {b['max']}" for b in bands[1:])
+        second = f"Also at {rest}" if rest else ""
+    return main, second
 
 
 # Alloys: an ingot and a powder only, made in the smeltery rather than dug up.
@@ -269,24 +292,33 @@ def main():
                              (f"raw_{name}_from_block", f"futuretech:{raw_storage}")):
             write_json(advancements / f"{recipe}.json", recipe_advancement(f"futuretech:{recipe}", item))
 
-        # Worldgen: veins in stone and deepslate, everywhere in the overworld.
-        write_json(DATA / "futuretech/worldgen/configured_feature" / f"{ore}.json", {
-            "type": "minecraft:ore",
-            "config": {"size": metal["vein"], "discard_chance_on_air_exposure": 0.0, "targets": [
-                {"target": {"predicate_type": "minecraft:tag_match", "tag": "minecraft:stone_ore_replaceables"}, "state": {"Name": f"futuretech:{ore}"}},
-                {"target": {"predicate_type": "minecraft:tag_match", "tag": "minecraft:deepslate_ore_replaceables"}, "state": {"Name": f"futuretech:{deep}"}},
-            ]}})
-        write_json(DATA / "futuretech/worldgen/placed_feature" / f"{ore}.json", {
-            "feature": f"futuretech:{ore}",
-            "placement": [
-                {"type": "minecraft:count", "count": metal["count"]},
-                {"type": "minecraft:in_square"},
-                {"type": "minecraft:height_range", "height": {"type": "minecraft:trapezoid",
-                                                              "min_inclusive": {"absolute": metal["min"]}, "max_inclusive": {"absolute": metal["max"]}}},
-                {"type": "minecraft:biome"},
-            ]})
+        # Worldgen: veins in stone and deepslate, everywhere in the overworld, one placed feature per
+        # band and one configured feature per vein size and discard chance, the way vanilla lays out its own ores.
+        placed = []
+        for band in metal["bands"]:
+            feature = f"{ore}{band['name']}"
+            discard = band.get("discard", 0.0)
+            write_json(DATA / "futuretech/worldgen/configured_feature" / f"{feature}.json", {
+                "type": "minecraft:ore",
+                "config": {"size": band["vein"], "discard_chance_on_air_exposure": discard, "targets": [
+                    {"target": {"predicate_type": "minecraft:tag_match", "tag": "minecraft:stone_ore_replaceables"}, "state": {"Name": f"futuretech:{ore}"}},
+                    {"target": {"predicate_type": "minecraft:tag_match", "tag": "minecraft:deepslate_ore_replaceables"}, "state": {"Name": f"futuretech:{deep}"}},
+                ]}})
+            count = band["count"]
+            if isinstance(count, tuple):
+                count = {"type": "minecraft:uniform", "min_inclusive": count[0], "max_inclusive": count[1]}
+            write_json(DATA / "futuretech/worldgen/placed_feature" / f"{feature}.json", {
+                "feature": f"futuretech:{feature}",
+                "placement": [
+                    {"type": "minecraft:count", "count": count},
+                    {"type": "minecraft:in_square"},
+                    {"type": "minecraft:height_range", "height": {"type": f"minecraft:{band['shape']}",
+                                                                  "min_inclusive": {"absolute": band["min"]}, "max_inclusive": {"absolute": band["max"]}}},
+                    {"type": "minecraft:biome"},
+                ]})
+            placed.append(f"futuretech:{feature}")
         write_json(DATA / "futuretech/neoforge/biome_modifier" / f"{ore}.json", {
-            "type": "neoforge:add_features", "biomes": "#minecraft:is_overworld", "features": f"futuretech:{ore}", "step": "underground_ores"})
+            "type": "neoforge:add_features", "biomes": "#minecraft:is_overworld", "features": placed, "step": "underground_ores"})
         print(f"  {name}: textures, models, loot, tags, recipes, worldgen")
 
     for name, alloy in ALLOYS.items():
@@ -327,6 +359,9 @@ def main():
                            f"item.futuretech.raw_{name}": f"{word} Bruto",
                            f"item.futuretech.{name}_ingot": f"Lingote de {word}", f"item.futuretech.{name}_powder": f"Pó de {word}",
                            f"item.futuretech.{name}_plate": f"Placa de {word}", f"item.futuretech.{name}_gear": f"Engrenagem de {word}"}
+            main, second = spawn_lines(metal, key)
+            entries[f"block.futuretech.{name}_ore.spawn"] = main
+            entries[f"block.futuretech.{name}_ore.spawn2"] = second
             for entry, value in entries.items():
                 if f'"{entry}"' not in text:
                     lines.append(f'  "{entry}": {json.dumps(value, ensure_ascii=False)},\n')

@@ -89,10 +89,7 @@ def main():
     write(ASSETS/'blockstates/wind_turbine_part.json',{'variants':{'':{'model':'futuretech:block/wind_generator/part'}}})
     for path in ('loot_table/blocks/solar_generator.json','advancement/recipes/solar_generator.json'):
         write(DATA/'futuretech'/path.replace('solar_generator','wind_generator'),json.loads((DATA/'futuretech'/path).read_text().replace('solar_generator','wind_generator')))
-    write(DATA/'futuretech/recipe/wind_generator.json',{
-        'type':'minecraft:crafting_shaped','category':'misc','pattern':[' I ','IRI','CMC'],
-        'key':{'I':'#c:ingots/iron','R':'futuretech:reception_coil','C':'#c:ingots/copper','M':'futuretech:machine_casing'},
-        'result':{'id':'futuretech:wind_generator','count':1}})
+    # The crafting recipe is balanced by hand in data/futuretech/recipe/ and is not written here.
     for tag in ('mineable/pickaxe','needs_stone_tool'):
         path=DATA/f'minecraft/tags/block/{tag}.json'; obj=json.loads(path.read_text())
         for block in ('wind_generator','wind_turbine_part'):

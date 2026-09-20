@@ -63,6 +63,12 @@ public final class SteamTurbineMenu extends MachineMenu implements SideConfigMen
     @Override public boolean isWorking() { return energyUsagePerTick() > 0; }
     @Override public Kind kind() { return Kind.GENERATOR; }
     public int steamStored() { return data.get(DATA_STEAM); }
+    /** mB of steam a tick at full speed, level and speed upgrades included. */
+    public int steamPerTick() { return Math.max(1, data.get(DATA_STEAM_PER_TICK)); }
+    /** FE each mB of steam returns after the speed upgrades take their share. */
+    public int fePerMb() { return Math.max(1, data.get(DATA_FE_PER_MB)); }
+    /** mB of steam drunk this tick: the energy made, at this tick's worth per mB. */
+    public int steamUsagePerTick() { return energyUsagePerTick() / fePerMb(); }
     public int status() { return Math.clamp(data.get(DATA_STATUS), ACTIVE, FULL); }
 
     @Override

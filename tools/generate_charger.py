@@ -110,13 +110,7 @@ def models_and_data():
     copy_json("assets/futuretech/items/smeltery.json", "assets/futuretech/items/charger.json", "smeltery", "charger")
     copy_json("data/futuretech/loot_table/blocks/crusher.json", "data/futuretech/loot_table/blocks/charger.json", "crusher", "charger")
     copy_json("data/futuretech/advancement/recipes/crusher.json", "data/futuretech/advancement/recipes/charger.json", "crusher", "charger")
-    write(RES / "data/futuretech/recipe/charger.json", {
-        "type": "minecraft:crafting_shaped", "category": "misc",
-        "pattern": ["IBI", "CMC", "IRI"],
-        "key": {"I": "minecraft:iron_ingot", "B": "futuretech:battery_mk1", "C": "minecraft:copper_ingot",
-                "M": "futuretech:machine_casing", "R": "minecraft:redstone"},
-        "result": {"id": "futuretech:charger", "count": 1},
-    })
+    # The crafting recipe is balanced by hand in data/futuretech/recipe/ and is not written here.
 
 
 if __name__ == "__main__":

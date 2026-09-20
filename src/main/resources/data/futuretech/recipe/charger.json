@@ -2,16 +2,17 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "IBI",
+    "GBG",
     "CMC",
-    "IRI"
+    "ARA"
   ],
   "key": {
-    "I": "minecraft:iron_ingot",
+    "G": "#c:plates/gold",
     "B": "futuretech:battery_mk1",
     "C": "minecraft:copper_ingot",
     "M": "futuretech:machine_casing",
-    "R": "minecraft:redstone"
+    "A": "#c:gears/gold",
+    "R": "futuretech:reception_coil"
   },
   "result": {
     "id": "futuretech:charger",

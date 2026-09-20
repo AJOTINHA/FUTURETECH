@@ -2,15 +2,16 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "IAI",
-    "CMC",
-    "IRI"
+    "TIT",
+    "AMA",
+    "CRC"
   ],
   "key": {
-    "I": "minecraft:iron_ingot",
-    "A": "minecraft:iron_axe",
-    "C": "minecraft:copper_ingot",
+    "T": "#c:plates/tin",
+    "I": "minecraft:iron_axe",
+    "A": "#c:gears/iron",
     "M": "futuretech:machine_casing",
+    "C": "minecraft:copper_ingot",
     "R": "minecraft:redstone"
   },
   "result": {

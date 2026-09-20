@@ -1,19 +1,20 @@
 {
-  "result": {
-    "count": 1,
-    "id": "futuretech:upgrade_kit_mk2"
-  },
   "type": "minecraft:crafting_shaped",
-  "key": {
-    "D": "futuretech:machine_casing",
-    "A": "minecraft:iron_ingot",
-    "B": "minecraft:gold_ingot",
-    "C": "minecraft:redstone"
-  },
+  "category": "misc",
   "pattern": [
-    "ABA",
-    "CDC",
-    "ABA"
+    "IGI",
+    "RMR",
+    "IAI"
   ],
-  "category": "misc"
+  "key": {
+    "I": "#c:plates/iron",
+    "G": "minecraft:gold_ingot",
+    "R": "minecraft:redstone",
+    "M": "futuretech:machine_casing",
+    "A": "futuretech:reception_coil"
+  },
+  "result": {
+    "id": "futuretech:upgrade_kit_mk2",
+    "count": 1
+  }
 }

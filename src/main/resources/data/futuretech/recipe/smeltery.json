@@ -4,13 +4,14 @@
   "pattern": [
     "IBI",
     "CMC",
-    "IRI"
+    "ARA"
   ],
   "key": {
-    "I": "minecraft:iron_ingot",
+    "I": "#c:plates/iron",
     "B": "minecraft:blast_furnace",
     "C": "minecraft:copper_ingot",
     "M": "futuretech:machine_casing",
+    "A": "#c:gears/iron",
     "R": "minecraft:redstone"
   },
   "result": {

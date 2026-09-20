@@ -14,7 +14,7 @@ COAL=(38,34,34,255); COAL_OFF=(52,44,42,255); EMBER=(140,50,18,255)
 FLAME=(248,98,6,255); FLAME_WARM=(253,159,7,255); FLAME_BRIGHT=(255,214,110,255)
 BLADE=(192,212,218,255); BLADE_EDGE=(107,137,152,255); BLADE_DIM=(120,134,140,255)
 HUB=(214,228,228,255); RIM=(165,185,195,255); RIM_DARK=(59,91,110,255)
-BOILER_FRAMES=8; TURBINE_FRAMES=4
+BOILER_FRAMES=8; TURBINE_FRAMES=4; STEAM_FRAMES=16
 
 def window(image):
     """The dark interior behind the window frame, the same the lava generator shows its tank in."""
@@ -88,12 +88,18 @@ def models():
                 copy_json(f'models/block/smeltery/mk{mk}{suffix}.json',f'models/block/{kind}/mk{mk}{suffix}.json',kind)
 
 def main():
-    steam=Image.new('RGBA',(32,32),'#c4d9df');d=ImageDraw.Draw(steam)
-    for y in range(32):
-        for x in range(32):
-            v=round(209+12*math.sin(x*.35+y*.23)+7*math.cos(y*.61-x*.2))
-            d.point((x,y),fill=(v,min(255,v+10),min(255,v+13),255))
+    # The fluid's texture is an animation of wisps drifting upward: every wave has a whole number of
+    # periods across the 32 px tile and a phase that comes round over the frames, so it tiles and loops.
+    steam=Image.new('RGBA',(32,32*STEAM_FRAMES))
+    for frame in range(STEAM_FRAMES):
+        phase=2*math.pi*frame/STEAM_FRAMES
+        for y in range(32):
+            for x in range(32):
+                a=2*math.pi*(2*x+3*y)/32; b=2*math.pi*(4*y-x)/32; c=2*math.pi*(x-2*y)/32
+                v=round(209+11*math.sin(a+phase)+7*math.cos(b-2*phase)+4*math.sin(c+3*phase))
+                steam.putpixel((x,32*frame+y),(v,min(255,v+10),min(255,v+13),255))
     steam.save(ASSETS/'textures/block/steam.png')
+    write(ASSETS/'textures/block/steam.png.mcmeta',{'animation':{'width':32,'height':32,'frametime':2,'interpolate':True}})
     atlas=ASSETS/'atlases/blocks.json';obj=json.loads(atlas.read_text())
     source={'type':'single','resource':'futuretech:block/steam'}
     if source not in obj['sources']: obj['sources'].append(source)
@@ -112,10 +118,7 @@ def main():
         for tag in ('mineable/pickaxe','needs_stone_tool'):
             path=DATA/f'minecraft/tags/block/{tag}.json';obj=json.loads(path.read_text())
             if 'futuretech:'+kind not in obj['values']: obj['values'].append('futuretech:'+kind); write(path,obj)
-    write(DATA/'futuretech/recipe/boiler.json',{'type':'minecraft:crafting_shaped','category':'misc','pattern':['CGC','CFC','CMC'],
-        'key':{'C':'#c:ingots/copper','G':'minecraft:glass','F':'minecraft:furnace','M':'futuretech:machine_casing'},'result':{'id':'futuretech:boiler','count':1}})
-    write(DATA/'futuretech/recipe/steam_turbine.json',{'type':'minecraft:crafting_shaped','category':'misc','pattern':['IRI','CMC','IRI'],
-        'key':{'I':'#c:ingots/iron','C':'#c:ingots/copper','R':'futuretech:transmission_coil','M':'futuretech:machine_casing'},'result':{'id':'futuretech:steam_turbine','count':1}})
+    # The crafting recipe is balanced by hand in data/futuretech/recipe/ and is not written here.
     names={
         'block.futuretech.boiler':('Boiler','Boiler'),
         'block.futuretech.steam_turbine':('Turbina a Vapor','Steam Turbine'),

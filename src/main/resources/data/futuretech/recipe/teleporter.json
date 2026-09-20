@@ -2,17 +2,17 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "EPE",
+    "ENE",
     "DMD",
-    "IRI"
+    "CAC"
   ],
   "key": {
-    "E": "minecraft:ender_pearl",
-    "P": "futuretech:steel_plate",
+    "E": "#c:ingots/ender_alloy",
+    "N": "#c:plates/netherite",
     "D": "minecraft:diamond",
     "M": "futuretech:machine_casing",
-    "I": "minecraft:iron_ingot",
-    "R": "minecraft:redstone"
+    "C": "futuretech:conductance_coil",
+    "A": "futuretech:chip"
   },
   "result": {
     "id": "futuretech:teleporter",

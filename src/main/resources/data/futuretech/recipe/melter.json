@@ -2,16 +2,17 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "IBI",
-    "CMC",
-    "IRI"
+    "CLC",
+    "AMA",
+    "BRB"
   ],
   "key": {
-    "I": "minecraft:iron_ingot",
-    "B": "minecraft:lava_bucket",
-    "C": "minecraft:copper_ingot",
+    "C": "#c:plates/copper",
+    "L": "minecraft:lava_bucket",
+    "A": "minecraft:copper_ingot",
     "M": "futuretech:machine_casing",
-    "R": "minecraft:redstone"
+    "B": "#c:gears/copper",
+    "R": "futuretech:reception_coil"
   },
   "result": {
     "id": "futuretech:melter",

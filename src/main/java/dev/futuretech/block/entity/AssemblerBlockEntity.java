@@ -55,7 +55,7 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         int progress = 0, present = 0;
         if (recipe != null) {
             List<ItemStack> placeholders = table.placeholders(recipe);
-            for (int slot = 0; slot < recipe.ingredients().size(); slot++) {
+            for (int slot = 0; slot < recipe.size(); slot++) {
                 ItemStack actual = table.inventory.getItem(slot);
                 if (!actual.isEmpty()) present |= 1 << slot;
                 ingredients.add(actual.isEmpty() ? placeholders.get(slot) : actual.copyWithCount(1));
@@ -175,8 +175,8 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
     List<ItemStack> placeholders(AssemblingRecipe recipe) {
         if (placeholderRecipe != recipe) {
             List<ItemStack> stacks = new ArrayList<>();
-            for (var ingredient : recipe.ingredients()) {
-                stacks.add(ingredient.items().findFirst().map(item -> new ItemStack(item)).orElse(ItemStack.EMPTY));
+            for (int slot = 0; slot < recipe.size(); slot++) {
+                stacks.add(recipe.preview(slot).map(ItemStack::new).orElse(ItemStack.EMPTY));
             }
             stacks.add(recipe.result().create());
             placeholderStacks = List.copyOf(stacks);
@@ -188,6 +188,70 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         if (!inventory.isEmpty() || locked() || recipes().stream().noneMatch(e -> e.id.equals(id))) return false;
         selected = id;
         changed();
+        return true;
+    }
+
+    /**
+     * The recipes the player locked for automation, in the order they were locked. While any are
+     * locked, the table picks among them by itself: whenever it stands empty, the input arm looks
+     * at what the chests hold and the table takes the next locked recipe they can supply in full.
+     */
+    private final Set<String> pinned = new LinkedHashSet<>();
+    public boolean isPinned(String id) { return pinned.contains(id); }
+    public int pinnedCount() { return pinned.size(); }
+    public List<String> pinnedIds() { return List.copyOf(pinned); }
+    /** Locks or unlocks a recipe; false for a recipe the book does not have. */
+    public boolean togglePin(String id) {
+        if (recipes().stream().noneMatch(e -> e.id.equals(id))) return false;
+        if (!pinned.remove(id)) pinned.add(id);
+        changed();
+        return true;
+    }
+
+    /**
+     * With locked recipes and the table empty and idle, takes the next locked recipe after the
+     * current one whose ingredients the chests can all supply - round-robin, so two recipes that
+     * are both supplied take turns rather than the first starving the second.
+     */
+    void autoSelect(List<Endpoint> endpoints) {
+        if (pinned.isEmpty() || !inventory.isEmpty() || locked()) return;
+        List<String> ids = new ArrayList<>(pinned);
+        List<Entry> book = recipes();
+        int start = ids.indexOf(selected);
+        for (int step = 0; step < ids.size(); step++) {
+            String id = ids.get(Math.floorMod(start + 1 + step, ids.size()));
+            AssemblingRecipe recipe = book.stream().filter(e -> e.id.equals(id)).map(Entry::recipe).findFirst().orElse(null);
+            if (recipe == null || !supplied(recipe, endpoints)) continue;
+            if (!id.equals(selected)) { selected = id; changed(); }
+            return;
+        }
+    }
+
+    /**
+     * Whether the chests, between them, hold one item for every ingredient - counted, so two irons
+     * need two irons. A chest reached through several of its faces is one chest, counted once.
+     */
+    private static boolean supplied(AssemblingRecipe recipe, List<Endpoint> endpoints) {
+        List<ItemStack> pool = new ArrayList<>();
+        Set<BlockPos> seen = new HashSet<>();
+        for (Endpoint endpoint : endpoints) {
+            if (!seen.add(endpoint.pos())) continue;
+            var handler = endpoint.handler();
+            if (handler == null) continue;
+            for (int slot = 0; slot < handler.size(); slot++) {
+                ItemResource resource = handler.getResource(slot);
+                if (!resource.isEmpty()) pool.add(resource.toStack((int) Math.min(Integer.MAX_VALUE, handler.getAmountAsLong(slot))));
+            }
+        }
+        for (int slot = 0; slot < recipe.size(); slot++) {
+            if (recipe.blank(slot)) continue;
+            var ingredient = recipe.ingredient(slot);
+            boolean found = false;
+            for (ItemStack stack : pool) {
+                if (stack.getCount() > 0 && ingredient.test(stack)) { stack.shrink(1); found = true; break; }
+            }
+            if (!found) return false;
+        }
         return true;
     }
 
@@ -366,6 +430,8 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         AssemblerBlockEntity table = nearest(Kind.TABLE);
         if (table == null || table.locked() || table.nearest(Kind.TERMINAL) == null) return;
         if (table.controllerEnergy() < ENERGY_PER_TICK) return;
+        // The input arm is the one that sees the chests, so it is the one that lets the table pick a locked recipe.
+        if (kind() == Kind.TRANSPORT && !outputMode()) table.autoSelect(endpoints());
         AssemblingRecipe recipe = table.recipe();
         if (recipe == null) return;
         tablePos = table.worldPosition;
@@ -389,12 +455,16 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
             }
         } else {
             if (!table.inventory.getItem(RESULT).isEmpty()) return;
+            // A job only starts once the chests can finish it: the arm never lays a table it cannot
+            // complete, so nothing sits half-fetched, and under automation the table stays free
+            // to switch to a recipe the chests could finish.
+            if (table.inventory.isEmpty() && !supplied(recipe, endpoints())) return;
             int slot = table.nextIngredient(recipe);
             if (slot < 0) return;
             for (Endpoint endpoint : endpoints()) {
                 var handler = endpoint.handler();
                 if (handler == null) continue;
-                ItemStack extracted = extractIngredient(handler, recipe.ingredients().get(slot));
+                ItemStack extracted = extractIngredient(handler, recipe.ingredient(slot));
                 if (extracted.isEmpty()) continue;
                 chestPos = endpoint.pos; chestSide = endpoint.side; targetSlot = slot;
                 selected = table.selected;
@@ -463,7 +533,7 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         if (++animationTick >= TRAVEL_TICKS) idle();
     }
     public int nextIngredient(AssemblingRecipe recipe) {
-        for (int i = 0; i < recipe.ingredients().size(); i++) if (inventory.getItem(i).isEmpty()) return i;
+        for (int i = 0; i < recipe.size(); i++) if (!recipe.blank(i) && inventory.getItem(i).isEmpty()) return i;
         return -1;
     }
     /** Light smoke and occasional vanilla lava pops follow the powered drill tip. */
@@ -485,8 +555,8 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
     }
     public boolean acceptIngredient(int slot, ItemStack stack) {
         AssemblingRecipe recipe = recipe();
-        if (recipe == null || slot < 0 || slot >= recipe.ingredients().size() || stack.getCount() != 1
-                || !inventory.getItem(slot).isEmpty() || !recipe.ingredients().get(slot).test(stack)) return false;
+        if (recipe == null || slot < 0 || slot >= recipe.size() || stack.getCount() != 1
+                || !inventory.getItem(slot).isEmpty() || recipe.blank(slot) || !recipe.accepts(slot, stack)) return false;
         inventory.setItem(slot, stack.copy());
         return true;
     }
@@ -502,7 +572,7 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         if (!ready(recipe)) return false;
         // The complete job is validated before anything is consumed. This is a single server tick.
         ItemStack result = recipe.assemble(input());
-        for (int slot = 0; slot < recipe.ingredients().size(); slot++) inventory.removeItem(slot, 1);
+        for (int slot = 0; slot < recipe.size(); slot++) inventory.removeItem(slot, 1);
         inventory.setItem(RESULT, result);
         changed();
         return true;
@@ -596,6 +666,7 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         for (int i = 0; i < 10; i++) stacks.set(i, inventory.getItem(i));
         ContainerHelper.saveAllItems(output, stacks);
         output.putString("Recipe", selected); output.putInt("Phase", phase); output.putInt("AnimationTick", animationTick);
+        if (!pinned.isEmpty()) output.store("Pinned", com.mojang.serialization.Codec.STRING.listOf(), List.copyOf(pinned));
         output.putInt("Duration", duration); output.putInt("TargetSlot", targetSlot);
         if (kind() == Kind.TERMINAL) output.putInt("Energy", energy.getAmountAsInt());
         output.putBoolean("Moving", moving);
@@ -610,6 +681,7 @@ public final class AssemblerBlockEntity extends BlockEntity implements MenuProvi
         ContainerHelper.loadAllItems(input, stacks);
         for (int i = 0; i < 10; i++) inventory.setItem(i, stacks.get(i));
         selected = input.getStringOr("Recipe", ""); phase = Math.clamp(input.getIntOr("Phase", 0), 0, 2);
+        pinned.clear(); pinned.addAll(input.read("Pinned", com.mojang.serialization.Codec.STRING.listOf()).orElse(List.of()));
         animationTick = Math.max(0, input.getIntOr("AnimationTick", 0)); duration = Math.clamp(input.getIntOr("Duration", 80), 20, 12000);
         targetSlot = Math.clamp(input.getIntOr("TargetSlot", 0), 0, 8);
         tablePos = input.read("Table", BlockPos.CODEC).orElse(BlockPos.ZERO); chestPos = input.read("Chest", BlockPos.CODEC).orElse(BlockPos.ZERO);

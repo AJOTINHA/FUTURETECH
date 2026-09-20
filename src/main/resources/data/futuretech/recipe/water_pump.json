@@ -2,16 +2,16 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "IBI",
+    "CBC",
     "PMP",
-    "CRC"
+    "ARA"
   ],
   "key": {
-    "I": "minecraft:iron_ingot",
+    "C": "#c:plates/copper",
     "B": "minecraft:bucket",
     "P": "minecraft:piston",
     "M": "futuretech:machine_casing",
-    "C": "minecraft:copper_ingot",
+    "A": "#c:gears/copper",
     "R": "minecraft:redstone"
   },
   "result": {

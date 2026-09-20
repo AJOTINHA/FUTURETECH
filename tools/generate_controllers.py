@@ -174,14 +174,7 @@ def models_and_data(kind):
     })
     copy_json("data/futuretech/advancement/recipes/crusher.json",
               f"data/futuretech/advancement/recipes/{kind}.json", "crusher", kind)
-    # The core over the casing, a battery either side to hold the fare, redstone under it to hear the signal.
-    write(RES / f"data/futuretech/recipe/{kind}.json", {
-        "type": "minecraft:crafting_shaped", "category": "misc",
-        "pattern": ["IKI", "BMB", "IRI"],
-        "key": {"I": "minecraft:iron_ingot", "K": CORES[kind], "B": "futuretech:battery_mk1",
-                "M": "futuretech:machine_casing", "R": "minecraft:redstone"},
-        "result": {"id": f"futuretech:{kind}", "count": 1},
-    })
+    # The crafting recipe is balanced by hand in data/futuretech/recipe/ and is not written here.
 
 
 if __name__ == "__main__":

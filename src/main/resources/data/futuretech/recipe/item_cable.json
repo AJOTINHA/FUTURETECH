@@ -2,13 +2,14 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "III",
-    "PPP",
-    "III"
+    "TTT",
+    "GIG",
+    "TTT"
   ],
   "key": {
-    "I": "minecraft:iron_ingot",
-    "P": "minecraft:glass_pane"
+    "T": "#c:plates/tin",
+    "G": "minecraft:glass_pane",
+    "I": "#c:gears/iron"
   },
   "result": {
     "id": "futuretech:item_cable",

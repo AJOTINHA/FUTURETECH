@@ -2,15 +2,17 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "IAI",
+    "NAN",
     "CEC",
-    "IAI"
+    "SBS"
   ],
   "key": {
-    "I": "minecraft:iron_ingot",
+    "N": "#c:plates/netherite",
     "A": "minecraft:amethyst_shard",
     "C": "futuretech:chip",
-    "E": "minecraft:ender_pearl"
+    "E": "#c:ingots/ender_alloy",
+    "S": "#c:plates/steel",
+    "B": "futuretech:conductance_coil"
   },
   "result": {
     "id": "futuretech:tesseract",

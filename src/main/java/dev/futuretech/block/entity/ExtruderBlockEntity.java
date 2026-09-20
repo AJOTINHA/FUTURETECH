@@ -10,6 +10,9 @@ import dev.futuretech.api.side.SideConfigurable;
 import dev.futuretech.api.side.SideConfigurableBlock;
 import dev.futuretech.api.upgrade.MachineLevel;
 import dev.futuretech.api.upgrade.UpgradeInventory;
+import java.util.Optional;
+import net.minecraft.world.item.Item;
+import net.minecraft.tags.TagKey;
 import dev.futuretech.api.upgrade.Upgradeable;
 import dev.futuretech.block.ExtruderBlock;
 import dev.futuretech.energy.EnergySync;
@@ -158,7 +161,24 @@ public final class ExtruderBlockEntity extends BaseContainerBlockEntity
     private ItemStack chosenResult = ItemStack.EMPTY;
     private boolean choiceStale = true;
     private final ItemTransferUtil transfer = new ItemTransferUtil();
-    private final UpgradeInventory upgrades = new UpgradeInventory(() -> MachineLevel.of(getBlockState()), this::markChanged);
+    private final UpgradeInventory upgrades = new UpgradeInventory(() -> MachineLevel.of(getBlockState()), this::upgradesChanged);
+    /** The upgrades that swap the product list; the first one installed wins. */
+    private static final List<TagKey<Item>> PRODUCT_UPGRADES = List.of(UpgradeInventory.SAND);
+
+    /** An upgrade going in or out may change which recipes are on offer, so the choice is looked at again. */
+    private void upgradesChanged() {
+        choiceStale = true;
+        markChanged();
+    }
+
+    /** The product upgrade installed, if any: the tag the recipes on offer must name. */
+    public Optional<TagKey<Item>> activeUpgrade() {
+        for (TagKey<Item> tag : PRODUCT_UPGRADES) if (upgrades.installed(tag) > 0) return Optional.of(tag);
+        return Optional.empty();
+    }
+
+    /** Whether the machine, as upgraded now, may make this recipe. */
+    public boolean offers(ExtrudingRecipe recipe) { return recipe.upgrade().equals(activeUpgrade()); }
     private final ContainerData data = new ContainerData() {
         @Override
         public int get(int index) {
@@ -361,11 +381,17 @@ public final class ExtruderBlockEntity extends BaseContainerBlockEntity
         cycleChoice(ExtrudingRecipes.of(level.getServer().getRecipeManager()), backwards);
     }
 
-    /** The same step over a given list, which is what a test drives it with. */
+    /** The same step over a given list, which is what a test drives it with; only recipes on offer are stepped through. */
     void cycleChoice(List<RecipeHolder<ExtrudingRecipe>> recipes, boolean backwards) {
         if (recipes.isEmpty()) return;
         resolveChoice(recipes);
-        choose(recipes, Math.floorMod(choiceIndex + (backwards ? -1 : 1), recipes.size()));
+        if (chosen == null) return;
+        int index = choiceIndex;
+        for (int step = 0; step < recipes.size(); step++) {
+            index = Math.floorMod(index + (backwards ? -1 : 1), recipes.size());
+            if (offers(recipes.get(index).value())) break;
+        }
+        choose(recipes, index);
         progress = 0;
         markChanged();
     }
@@ -379,23 +405,31 @@ public final class ExtruderBlockEntity extends BaseContainerBlockEntity
         progressTotal = upgrades.duration(chosen.value().duration(), MachineLevel.of(getBlockState()));
     }
 
-    /** Finds the chosen recipe among the loaded ones; the first one stands in for a choice that is gone. */
+    /**
+     * Finds the chosen recipe among the loaded ones; the first one on offer stands in for a choice
+     * that is gone, or that the upgrades no longer allow. With nothing on offer at all the machine
+     * makes nothing.
+     */
     private void resolveChoice(List<RecipeHolder<ExtrudingRecipe>> recipes) {
         choiceStale = false;
-        if (recipes.isEmpty()) {
-            chosen = null;
-            chosenResult = ItemStack.EMPTY;
-            choiceIndex = -1;
-            return;
-        }
+        int first = -1;
         for (int index = 0; index < recipes.size(); index++) {
+            ExtrudingRecipe recipe = recipes.get(index).value();
+            if (!offers(recipe)) continue;
+            if (first < 0) first = index;
             if (recipes.get(index).id().identifier().equals(choiceId)) {
                 choose(recipes, index);
                 return;
             }
         }
-        // Nothing picked yet, or the pick left with its data pack: the first recipe stands in.
-        choose(recipes, 0);
+        if (first < 0) {
+            chosen = null;
+            chosenResult = ItemStack.EMPTY;
+            choiceIndex = -1;
+            return;
+        }
+        // Nothing picked yet, or the pick left with its data pack or its upgrade: the first on offer stands in.
+        choose(recipes, first);
     }
 
     /** Advances one tick on the chosen product; false without the fluids, the energy or the room for it. */

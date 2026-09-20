@@ -46,6 +46,12 @@ class PortableTeleporterItemTest {
         GlobalPos from = GlobalPos.of(Level.OVERWORLD, BlockPos.ZERO);
         assertEquals(TeleporterBlockEntity.cost(from, pad(100), MachineLevel.MAX), PortableTeleporterItem.cost(from, pad(100)));
         assertTrue(PortableTeleporterItem.cost(from, pad(100)) < TeleporterBlockEntity.cost(from, pad(100), 1));
+        // Anywhere in the world: the far side of the map costs what another dimension does, and a full charge covers it.
+        int ceiling = TeleporterBlockEntity.crossDimensionCost(MachineLevel.MAX);
+        assertEquals(ceiling, PortableTeleporterItem.cost(from, pad(30_000_000)));
+        assertTrue(TeleporterBlockEntity.cost(from, pad(30_000_000), MachineLevel.MAX) > PortableTeleporterItem.CAPACITY, "A pad could not afford that trip");
+        assertEquals(ceiling, PortableTeleporterItem.cost(from, new TeleportTarget(GlobalPos.of(Level.NETHER, BlockPos.ZERO), "nether")));
+        assertTrue(ceiling * 8 <= PortableTeleporterItem.CAPACITY, "A full charge is eight trips to anywhere");
         ItemStack stack = new ItemStack(ModItems.PORTABLE_TELEPORTER.get());
         GlobalPos panel = GlobalPos.of(Level.NETHER, new BlockPos(3, 60, 3));
         PortableTeleporterItem.link(stack, panel);

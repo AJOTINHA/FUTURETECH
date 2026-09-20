@@ -2,15 +2,16 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "IRI",
-    "CMC",
-    "IRI"
+    "SAS",
+    "TMT",
+    "SRS"
   ],
   "key": {
-    "I": "#c:ingots/iron",
-    "C": "#c:ingots/copper",
-    "R": "futuretech:transmission_coil",
-    "M": "futuretech:machine_casing"
+    "S": "#c:plates/steel",
+    "A": "#c:gears/silver",
+    "T": "futuretech:transmission_coil",
+    "M": "futuretech:machine_casing",
+    "R": "minecraft:redstone"
   },
   "result": {
     "id": "futuretech:steam_turbine",

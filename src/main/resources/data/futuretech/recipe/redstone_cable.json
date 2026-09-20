@@ -7,8 +7,8 @@
     "III"
   ],
   "key": {
-    "I": "minecraft:iron_ingot",
-    "R": "minecraft:redstone"
+    "I": "#c:plates/iron",
+    "R": "#c:ingots/red_alloy"
   },
   "result": {
     "id": "futuretech:redstone_cable",

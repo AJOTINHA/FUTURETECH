@@ -1,13 +1,21 @@
 {
   "type": "minecraft:crafting_shaped",
   "category": "misc",
-  "pattern": ["IPI", "CMC", "IRI"],
+  "pattern": [
+    "LPL",
+    "IMI",
+    "CRC"
+  ],
   "key": {
-    "I": "minecraft:iron_ingot",
+    "L": "#c:plates/lead",
     "P": "minecraft:piston",
-    "C": "minecraft:copper_ingot",
+    "I": "#c:gears/iron",
     "M": "futuretech:machine_casing",
+    "C": "minecraft:copper_ingot",
     "R": "minecraft:redstone"
   },
-  "result": {"id": "futuretech:crusher", "count": 1}
+  "result": {
+    "id": "futuretech:crusher",
+    "count": 1
+  }
 }

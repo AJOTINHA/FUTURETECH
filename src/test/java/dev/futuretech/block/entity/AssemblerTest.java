@@ -15,6 +15,7 @@ import net.neoforged.testframework.junit.EphemeralTestServerProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import java.util.*;
+import net.minecraft.world.item.ItemStack;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(EphemeralTestServerProvider.class)
@@ -26,10 +27,19 @@ class AssemblerTest {
         final List<AssemblerBlockEntity.Entry> book;
         AssemblerBlockEntity table, input, output, worker, terminal;
         final ItemStacksResourceHandler source = new ItemStacksResourceHandler(2), destination = new ItemStacksResourceHandler(1);
-        Cell(MinecraftServer server) {
-            book = server.getRecipeManager().getRecipes().stream().filter(h -> h.value() instanceof AssemblingRecipe)
-                    .map(h -> new AssemblerBlockEntity.Entry(h.id().identifier().toString(), (AssemblingRecipe)h.value())).toList();
-            assertEquals(1, book.size());
+        /**
+         * A two-ingredient casing recipe of the tests' own, so the cell's timings and energy do not
+         * move with the shipped recipe (which takes nine items); the shipped book is checked separately.
+         */
+        static List<AssemblerBlockEntity.Entry> book() {
+            var casing = AssemblingRecipe.of(List.of(net.minecraft.world.item.crafting.Ingredient.of(Items.STONE),
+                    net.minecraft.world.item.crafting.Ingredient.of(Items.IRON_INGOT)),
+                    new net.minecraft.world.item.ItemStackTemplate(ModItems.MACHINE_CASING.get(), 1), 80);
+            return List.of(new AssemblerBlockEntity.Entry(RECIPE, casing));
+        }
+        Cell(MinecraftServer server) { this(server, book()); assertEquals(1, book.size()); }
+        Cell(MinecraftServer server, List<AssemblerBlockEntity.Entry> book) {
+            this.book = book;
             table = add(BlockPos.ZERO, ModBlocks.ASSEMBLY_TABLE.get().defaultBlockState());
             input = add(new BlockPos(-2,0,0), ModBlocks.TRANSPORT_ARM.get().defaultBlockState());
             output = add(new BlockPos(2,0,0), ModBlocks.TRANSPORT_ARM.get().defaultBlockState().setValue(AssemblerBlock.OUTPUT,true));
@@ -38,7 +48,7 @@ class AssemblerTest {
             terminal.energy().set(AssemblerBlockEntity.ENERGY_CAPACITY);
             chests.put(new BlockPos(-4,0,0),source); chests.put(new BlockPos(4,0,0),destination);
             source.set(0,ItemResource.of(Items.STONE),1); source.set(1,ItemResource.of(Items.IRON_INGOT),1);
-            assertTrue(table.select(RECIPE));
+            assertTrue(table.select(book.getFirst().id()));
         }
         AssemblerBlockEntity add(BlockPos pos, BlockState state) {
             var block = new AssemblerBlockEntity(pos,state,this); blocks.put(pos,block); return block;
@@ -64,6 +74,101 @@ class AssemblerTest {
             table=blocks.get(table.getBlockPos()); input=blocks.get(input.getBlockPos()); worker=blocks.get(worker.getBlockPos());
             output=blocks.get(output.getBlockPos()); terminal=blocks.get(terminal.getBlockPos());
         }
+    }
+    /** Locked recipes: the table picks whichever the chests can supply, and lets the player's own pick go when they cannot. */
+    @Test void lockedRecipesAreChosenByWhatTheChestsHold(MinecraftServer server) {
+        final String STICKS = "futuretech:assembling/sticks";
+        var sticks = AssemblingRecipe.of(List.of(net.minecraft.world.item.crafting.Ingredient.of(Items.OAK_PLANKS),
+                net.minecraft.world.item.crafting.Ingredient.of(Items.OAK_PLANKS)), new net.minecraft.world.item.ItemStackTemplate(Items.STICK, 4), 40);
+        var book = new ArrayList<>(Cell.book()); book.add(new AssemblerBlockEntity.Entry(STICKS, sticks));
+        var c = new Cell(server, book);
+        assertFalse(c.table.togglePin("futuretech:assembling/nothing"), "Only recipes in the book lock");
+        assertTrue(c.table.togglePin(RECIPE)); assertTrue(c.table.togglePin(STICKS));
+        assertEquals(2, c.table.pinnedCount()); assertTrue(c.table.isPinned(STICKS));
+        // The chest holds stone and iron: the casing is what can be made, and it is made.
+        c.ticks(400);
+        assertEquals(RECIPE, c.table.selectedId());
+        assertEquals(ItemResource.of(ModItems.MACHINE_CASING.get()), c.destination.getResource(0));
+        // Now the chest holds planks: with the table empty the sticks recipe is taken up by itself.
+        c.source.set(0, ItemResource.of(Items.OAK_PLANKS), 2);
+        c.ticks(400);
+        assertEquals(STICKS, c.table.selectedId());
+        assertEquals(0, c.source.getAmountAsInt(0), "Both planks were fetched");
+        assertTrue(c.table.inventory.getItem(AssemblerBlockEntity.RESULT).is(Items.STICK) || c.output.cargo().is(Items.STICK));
+        // A single plank is not enough for the sticks recipe: nothing switches to it.
+        c.table.inventory.setItem(AssemblerBlockEntity.RESULT, ItemStack.EMPTY); c.output.inventory.setItem(0, ItemStack.EMPTY);
+        c.source.set(0, ItemResource.of(Items.OAK_PLANKS), 1); c.source.set(1, ItemResource.of(Items.STONE), 1);
+        c.ticks(40);
+        assertEquals(STICKS, c.table.selectedId()); assertEquals(1, c.source.getAmountAsInt(0), "Nothing is fetched for a recipe the chest cannot finish");
+        // Unlocking everything hands the choice back to the player, and locks survive a reload until then.
+        c.restore(server);
+        assertEquals(2, c.table.pinnedCount());
+        assertTrue(c.table.togglePin(RECIPE)); assertTrue(c.table.togglePin(STICKS));
+        assertEquals(0, c.table.pinnedCount());
+    }
+    /** The shipped book: the casing, nine items on the table, four irons in the corners, glass between them and a tin gear in the middle. */
+    @Test void theShippedCasingRecipeTakesIronGlassAndATinGear(MinecraftServer server) {
+        var shipped = server.getRecipeManager().getRecipes().stream().filter(h -> h.value() instanceof AssemblingRecipe)
+                .map(h -> (AssemblingRecipe) h.value()).toList();
+        assertEquals(7, shipped.size(), "casing, chip, the three coils and the two molds");
+        var gearMold = shipped.stream().filter(r -> r.result().create().is(ModItems.GEAR_MOLD.get())).findFirst().orElseThrow();
+        assertEquals(9, gearMold.size());
+        assertTrue(gearMold.accepts(4, new ItemStack(ModItems.IRON_GEAR.get())), "The gear mold is shaped on an iron gear");
+        assertTrue(gearMold.blank(0) && gearMold.blank(2) && gearMold.blank(6) && gearMold.blank(8));
+        var plateMold = shipped.stream().filter(r -> r.result().create().is(ModItems.PLATE_MOLD.get())).findFirst().orElseThrow();
+        assertEquals(5, plateMold.size());
+        assertTrue(plateMold.blank(2), "The 2x2 square leaves the top-right blank");
+        // The coils keep their crafting-table shape: the ingot in the middle, the redstone on a diagonal, the rest blank.
+        for (var coil : List.of(ModItems.RECEPTION_COIL, ModItems.TRANSMISSION_COIL)) {
+            var recipe = shipped.stream().filter(r -> r.result().create().is(coil.get())).findFirst().orElseThrow();
+            assertEquals(9, recipe.size());
+            assertTrue(recipe.accepts(2, new ItemStack(Items.REDSTONE)) && recipe.accepts(6, new ItemStack(Items.REDSTONE)));
+            for (int slot : new int[]{0, 1, 3, 5, 7, 8}) assertTrue(recipe.blank(slot));
+        }
+        var conductance = shipped.stream().filter(r -> r.result().create().is(ModItems.CONDUCTANCE_COIL.get())).findFirst().orElseThrow();
+        assertTrue(conductance.accepts(0, new ItemStack(Items.REDSTONE)) && conductance.accepts(8, new ItemStack(Items.REDSTONE)));
+        assertTrue(conductance.blank(2) && conductance.blank(6));
+        var casing = shipped.stream().filter(r -> r.result().create().is(ModItems.MACHINE_CASING.get())).findFirst().orElseThrow();
+        var chip = shipped.stream().filter(r -> r.result().create().is(ModItems.CHIP.get())).findFirst().orElseThrow();
+        for (int corner : new int[]{0, 2, 6, 8}) assertTrue(chip.accepts(corner, new ItemStack(Items.COPPER_INGOT)));
+        for (int edge : new int[]{1, 7}) assertTrue(chip.accepts(edge, new ItemStack(Items.GOLD_INGOT)));
+        for (int edge : new int[]{3, 5}) assertTrue(chip.accepts(edge, new ItemStack(Items.REDSTONE)));
+        assertTrue(chip.accepts(4, new ItemStack(Items.QUARTZ)));
+        assertEquals(9, casing.size());
+        assertTrue(casing.result().create().is(ModItems.MACHINE_CASING.get()));
+        for (int corner : new int[]{0, 2, 6, 8}) assertTrue(casing.accepts(corner, new ItemStack(Items.IRON_INGOT)));
+        for (int edge : new int[]{1, 3, 5, 7}) assertTrue(casing.accepts(edge, new ItemStack(Items.GLASS)));
+        assertTrue(casing.accepts(4, new ItemStack(ModItems.TIN_GEAR.get())));
+        assertTrue(server.getRecipeManager().getRecipes().stream().noneMatch(h -> List.of("machine_casing", "chip", "reception_coil", "transmission_coil", "conductance_coil", "plate_mold", "gear_mold").contains(h.id().identifier().getPath())
+                && !(h.value() instanceof AssemblingRecipe)), "The crafting table no longer makes the casing or the chip");
+    }
+    /** A shaped recipe: the arm lays items on the positions the shape names and leaves the blanks empty. */
+    @Test void blankPositionsAreSkippedAndStayEmpty(MinecraftServer server) {
+        final String COIL = "futuretech:assembling/coil";
+        var blank = AssemblingRecipe.BLANK;
+        var redstone = Optional.of(net.minecraft.world.item.crafting.Ingredient.of(Items.REDSTONE));
+        var coil = new AssemblingRecipe(List.of(blank, blank, redstone, blank, Optional.of(net.minecraft.world.item.crafting.Ingredient.of(Items.GOLD_INGOT)), blank, redstone, blank, blank),
+                new net.minecraft.world.item.ItemStackTemplate(ModItems.RECEPTION_COIL.get(), 1), 60);
+        var c = new Cell(server, List.of(new AssemblerBlockEntity.Entry(COIL, coil)));
+        assertTrue(c.table.select(COIL));
+        c.source.set(0, ItemResource.of(Items.REDSTONE), 2); c.source.set(1, ItemResource.of(Items.GOLD_INGOT), 1);
+        c.ticks(600);
+        assertEquals(ItemResource.of(ModItems.RECEPTION_COIL.get()), c.destination.getResource(0));
+        assertTrue(c.table.inventory.isEmpty());
+        // One redstone short: the two on the diagonal are counted, the blanks are not.
+        c.source.set(0, ItemResource.of(Items.REDSTONE), 1); c.source.set(1, ItemResource.of(Items.GOLD_INGOT), 1);
+        c.ticks(100);
+        assertEquals(1, c.source.getAmountAsInt(0)); assertTrue(c.table.inventory.isEmpty());
+    }
+    /** The arm never starts a table it cannot finish: with only the stone in the chest nothing is fetched, until the iron arrives. */
+    @Test void nothingIsFetchedUntilTheChestHoldsTheWholeRecipe(MinecraftServer server) {
+        var c = new Cell(server);
+        c.source.set(1, ItemResource.EMPTY, 0);
+        c.ticks(100);
+        assertEquals(1, c.source.getAmountAsInt(0)); assertTrue(c.input.cargo().isEmpty()); assertTrue(c.table.inventory.isEmpty());
+        c.source.set(1, ItemResource.of(Items.IRON_INGOT), 1);
+        c.ticks(400);
+        assertEquals(1, c.destination.getAmountAsInt(0));
     }
     @Test void completeCellConsumesOnlyStoneAndIronAndOutputsOneCasing(MinecraftServer server) {
         var c = new Cell(server);

@@ -2,12 +2,13 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "pattern": [
-    "MMM",
-    "MS ",
+    "MM ",
+    "MG ",
     " S "
   ],
   "key": {
     "M": "#minecraft:diamond_tool_materials",
+    "G": "#c:gears/steel",
     "S": "minecraft:stick"
   },
   "result": {

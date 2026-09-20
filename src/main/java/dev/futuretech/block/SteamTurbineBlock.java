@@ -80,8 +80,9 @@ public final class SteamTurbineBlock extends BaseEntityBlock implements SideConf
 
     @Override
     public SideConfig createSideConfig(BlockState state) {
-        // New machines start closed; the player opens the faces they want from the screen.
-        return new SideConfig(ALLOWED_SIDE_MODES, true, side -> SideMode.NONE);
+        // New machines start closed for steam; the player opens the faces they want from the screen.
+        // Energy is not governed: like the other generators, the turbine hands power out of every face.
+        return new SideConfig(ALLOWED_SIDE_MODES, side -> SideMode.NONE);
     }
 
     @Override

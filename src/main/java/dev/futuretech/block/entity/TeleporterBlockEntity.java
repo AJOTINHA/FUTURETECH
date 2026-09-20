@@ -317,8 +317,18 @@ public final class TeleporterBlockEntity extends BaseContainerBlockEntity implem
         int base = from.dimension().equals(target.dimension())
                 ? BASE_COST + (int) Math.round(COST_PER_BLOCK * Math.sqrt(from.pos().distSqr(target.pos().pos())))
                 : CROSS_DIMENSION_COST;
-        // A straight line from 100% at MK1 to the top level's share at MK4, in whole percent
-        // thirds: the steps between levels are equal, and the ends are exactly what was asked.
+        return atLevel(base, mk);
+    }
+
+    /** What a trip into another dimension costs at level {@code mk}: the flat fare, the level's share of it. */
+    public static int crossDimensionCost(int mk) { return atLevel(CROSS_DIMENSION_COST, mk); }
+
+    /**
+     * An MK1 fare at level {@code mk}: a straight line from 100% at MK1 to the top level's share at
+     * MK4, in whole percent thirds - the steps between levels are equal, and the ends are exactly
+     * what was asked.
+     */
+    private static int atLevel(int base, int mk) {
         int steps = MachineLevel.MAX - 1;
         int share = steps * 100 - (100 - TOP_LEVEL_COST_PERCENT) * (Math.clamp(mk, 1, MachineLevel.MAX) - 1);
         return base * share / (steps * 100);

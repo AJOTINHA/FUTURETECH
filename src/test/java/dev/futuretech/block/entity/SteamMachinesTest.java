@@ -91,12 +91,12 @@ class SteamMachinesTest {
         turbine.setBlockState(turbine.getBlockState().setValue(MachineLevel.MK,2));
         boiler.upgrades().setItem(0,new ItemStack(ModItems.SPEED_UPGRADE.get()));boiler.upgrades().setItem(1,new ItemStack(ModItems.SPEED_UPGRADE.get()));
         turbine.upgrades().setItem(0,new ItemStack(ModItems.SPEED_UPGRADE.get()));
-        assertEquals(9,boiler.waterPerTick(),"MK2 boils 3 mB/t; two speed upgrades make it three times that");
+        assertEquals(27,boiler.waterPerTick(),"MK2 boils 9 mB/t; two speed upgrades make it three times that");
         assertEquals(90*120/100,boiler.heatPercent(),"MK2 pays 90%, plus 10% per speed upgrade");
-        assertEquals(9,boiler.menuData().get(BoilerBlockEntity.DATA_MAX_WATER));
+        assertEquals(27,boiler.menuData().get(BoilerBlockEntity.DATA_MAX_WATER));
         boiler.setItem(BoilerBlockEntity.SLOT_FUEL,new ItemStack(Items.COAL));insert(boiler.tanks(),water(),8000);
         boiler.boil(server.fuelValues());
-        assertEquals(90,boiler.menuData().get(BoilerBlockEntity.DATA_RATE));
+        assertEquals(270,boiler.menuData().get(BoilerBlockEntity.DATA_RATE));
         assertEquals(60,turbine.steamPerTick(),"MK2 draws 30 mB/t; one speed upgrade doubles it");
         assertEquals(9,turbine.fePerMb());
         assertEquals(540,turbine.menuData().get(SteamTurbineBlockEntity.DATA_MAX_RATE));
@@ -122,11 +122,11 @@ class SteamMachinesTest {
         boiler.boil(server.fuelValues());
         assertEquals(BoilerBlockEntity.ACTIVE,boiler.menuData().get(BoilerBlockEntity.DATA_STATUS));
         assertEquals(1,boiler.getItem(BoilerBlockEntity.SLOT_FUEL).getCount(),"Coal in the slot is left alone");
-        assertEquals(1999,boiler.lavaAmount());
-        // One mB bought five heat, two were spent on 2 mB of water.
-        assertEquals(3,boiler.menuData().get(BoilerBlockEntity.DATA_BURN));
+        assertEquals(1998,boiler.lavaAmount());
+        // Two mB bought ten heat, six were spent on 6 mB of water.
+        assertEquals(4,boiler.menuData().get(BoilerBlockEntity.DATA_BURN));
         assertEquals(BoilerBlockEntity.LAVA,boiler.menuData().get(BoilerBlockEntity.DATA_MODE));
-        assertEquals(1999,boiler.menuData().get(BoilerBlockEntity.DATA_RESERVE));
+        assertEquals(1998,boiler.menuData().get(BoilerBlockEntity.DATA_RESERVE));
         ((FluidStacksResourceHandler)boiler.tanks()).set(2,FluidResource.EMPTY,0);
         boiler.boil(server.fuelValues());boiler.boil(server.fuelValues());boiler.boil(server.fuelValues());
         assertEquals(BoilerBlockEntity.NO_LAVA,boiler.menuData().get(BoilerBlockEntity.DATA_STATUS));
@@ -147,7 +147,7 @@ class SteamMachinesTest {
         boiler.boil(server.fuelValues());
         assertEquals(BoilerBlockEntity.ACTIVE,boiler.menuData().get(BoilerBlockEntity.DATA_STATUS));
         assertEquals(2000-6*BoilerBlockEntity.FE_PER_HEAT,boiler.energy().getAmountAsInt(),"Only six units fit in 2 000 FE");
-        assertEquals(4,boiler.menuData().get(BoilerBlockEntity.DATA_BURN));
+        assertEquals(0,boiler.menuData().get(BoilerBlockEntity.DATA_BURN),"Six units bought, six spent on 6 mB of water");
         ((TickLimitedEnergyHandler)boiler.energy()).set(0);
         boiler.boil(server.fuelValues());boiler.boil(server.fuelValues());boiler.boil(server.fuelValues());
         assertEquals(BoilerBlockEntity.NO_ENERGY,boiler.menuData().get(BoilerBlockEntity.DATA_STATUS));
@@ -194,10 +194,10 @@ class SteamMachinesTest {
         boiler.setItem(0,new ItemStack(Items.COAL));boiler.boil(server.fuelValues());
         try(var tx=Transaction.openRoot()) {
             assertEquals(0,input.extract(steam(),1000,tx));
-            assertEquals(20,output.extract(steam(),1000,tx));
+            assertEquals(60,output.extract(steam(),1000,tx));
             // Aborting this transfer must return all steam.
         }
-        assertEquals(20,boiler.steamAmount());
+        assertEquals(60,boiler.steamAmount());
         boiler.sideConfig().set(Direction.UP,SideMode.NONE);
         try(var tx=Transaction.openRoot()) { assertEquals(0,output.extract(steam(),1000,tx)); }
         var turbine=turbine();
@@ -243,10 +243,11 @@ class SteamMachinesTest {
             turbine.setBlockState(turbine.getBlockState().setValue(MachineLevel.MK,mk));
             assertEquals(steamTotal,boiler.steamAmount());assertEquals(energyTotal,turbine.energy().getAmountAsInt());
             boiler.boil(server.fuelValues());turbine.generateEnergy();
-            int rate=MachineLevel.consumption(20,mk);
-            assertEquals(rate,boiler.menuData().get(BoilerBlockEntity.DATA_RATE));
-            assertEquals(rate*SteamTurbineBlockEntity.FE_PER_MB,turbine.menuData().get(SteamTurbineBlockEntity.DATA_RATE));
-            steamTotal+=rate;energyTotal+=rate*SteamTurbineBlockEntity.FE_PER_MB;
+            int boiled=MachineLevel.consumption(BoilerBlockEntity.WATER_PER_TICK,mk)*BoilerBlockEntity.STEAM_PER_WATER;
+            int drunk=MachineLevel.consumption(SteamTurbineBlockEntity.STEAM_PER_TICK,mk);
+            assertEquals(boiled,boiler.menuData().get(BoilerBlockEntity.DATA_RATE));
+            assertEquals(drunk*SteamTurbineBlockEntity.FE_PER_MB,turbine.menuData().get(SteamTurbineBlockEntity.DATA_RATE));
+            steamTotal+=boiled;energyTotal+=drunk*SteamTurbineBlockEntity.FE_PER_MB;
         }
     }
     @Test void reloadPreservesHeatFluidsEnergyAndSettings(MinecraftServer server) {
@@ -259,8 +260,8 @@ class SteamMachinesTest {
         var restored=boiler();var restoredTurbine=turbine();
         restored.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING,server.registryAccess(),boiler.saveWithoutMetadata(server.registryAccess())));
         restoredTurbine.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING,server.registryAccess(),turbine.saveWithoutMetadata(server.registryAccess())));
-        assertEquals(998,restored.waterAmount());assertEquals(20,restored.steamAmount());
-        assertEquals(1598,restored.menuData().get(BoilerBlockEntity.DATA_BURN));assertEquals(2,restored.getItem(0).getCount());
+        assertEquals(994,restored.waterAmount());assertEquals(60,restored.steamAmount());
+        assertEquals(1594,restored.menuData().get(BoilerBlockEntity.DATA_BURN));assertEquals(2,restored.getItem(0).getCount());
         assertEquals(SideMode.OUTPUT,restored.sideConfig().mode(Direction.EAST));assertEquals(RedstoneMode.LOW,restored.redstoneControl().mode());
         assertEquals(980,restoredTurbine.steamAmount());assertEquals(200,restoredTurbine.energy().getAmountAsInt());
     }

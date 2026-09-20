@@ -152,13 +152,7 @@ def models_and_data():
     copy_json("assets/futuretech/items/smeltery.json", "assets/futuretech/items/sawmill.json", "smeltery", "sawmill")
     copy_json("data/futuretech/loot_table/blocks/crusher.json", "data/futuretech/loot_table/blocks/sawmill.json", "crusher", "sawmill")
     copy_json("data/futuretech/advancement/recipes/crusher.json", "data/futuretech/advancement/recipes/sawmill.json", "crusher", "sawmill")
-    write(RES / "data/futuretech/recipe/sawmill.json", {
-        "type": "minecraft:crafting_shaped", "category": "misc",
-        "pattern": ["IAI", "CMC", "IRI"],
-        "key": {"I": "minecraft:iron_ingot", "A": "minecraft:iron_axe", "C": "minecraft:copper_ingot",
-                "M": "futuretech:machine_casing", "R": "minecraft:redstone"},
-        "result": {"id": "futuretech:sawmill", "count": 1},
-    })
+    # The crafting recipe is balanced by hand in data/futuretech/recipe/ and is not written here.
 
 
 def recipes():

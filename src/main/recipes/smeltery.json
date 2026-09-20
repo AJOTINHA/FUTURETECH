@@ -90,6 +90,36 @@
         "id": "futuretech:electrum_ingot"
       },
       "duration": 200
+    },
+    "red_alloy_ingot": {
+      "first": {
+        "ingredient": "#c:ingots/iron",
+        "count": 1
+      },
+      "second": {
+        "ingredient": "minecraft:redstone",
+        "count": 2
+      },
+      "result": {
+        "count": 1,
+        "id": "futuretech:red_alloy_ingot"
+      },
+      "duration": 200
+    },
+    "ender_alloy_ingot": {
+      "first": {
+        "ingredient": "#c:ingots/gold",
+        "count": 1
+      },
+      "second": {
+        "ingredient": "minecraft:ender_pearl",
+        "count": 2
+      },
+      "result": {
+        "count": 1,
+        "id": "futuretech:ender_alloy_ingot"
+      },
+      "duration": 200
     }
   }
 }

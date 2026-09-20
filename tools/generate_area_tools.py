@@ -235,9 +235,16 @@ def lumber_axe():
 
 TOOLS = {
     # name: (model, vanilla texture, vanilla item tag, crafting pattern, pt name, en name)
-    'hammer': (hammer, 'pickaxe', 'pickaxes', ['MMM', 'MSM', ' S '], 'Martelo de {}', '{} Hammer'),
-    'excavator': (excavator, 'shovel', 'shovels', [' M ', 'MSM', ' S '], 'Escavadora de {}', '{} Excavator'),
-    'lumber_axe': (lumber_axe, 'axe', 'axes', ['MMM', 'MS ', ' S '], 'Machado Lenhador de {}', '{} Lumber Axe'),
+    # M is the head material, S the stick and G the gear that joins head and haft: the metal's own
+    # gear on the metal tools, a stick on the wooden and stone ones.
+    'hammer': (hammer, 'pickaxe', 'pickaxes', ['MMM', 'MGM', ' S '], 'Martelo de {}', '{} Hammer'),
+    'excavator': (excavator, 'shovel', 'shovels', [' M ', 'MGM', ' S '], 'Escavadora de {}', '{} Excavator'),
+    'lumber_axe': (lumber_axe, 'axe', 'axes', ['MM ', 'MG ', ' S '], 'Machado Lenhador de {}', '{} Lumber Axe'),
+}
+# The gear each material's tools are built around; diamond has no gear of its own and takes steel.
+GEARS = {
+    'wooden': 'minecraft:stick', 'stone': 'minecraft:stick', 'copper': '#c:gears/copper', 'iron': '#c:gears/iron',
+    'golden': '#c:gears/gold', 'diamond': '#c:gears/steel', 'netherite': '#c:gears/netherite',
 }
 
 for tool, (build, vanilla, vanilla_tag, pattern, pt_name, en_name) in TOOLS.items():
@@ -252,12 +259,8 @@ for tool, (build, vanilla, vanilla_tag, pattern, pt_name, en_name) in TOOLS.item
         write(ASSETS / f'models/item/{name}.json', {'parent': f'futuretech:item/{tool}',
               'textures': {'palette': f'minecraft:item/{material}_{vanilla}'}})
         write(ASSETS / f'items/{name}.json', {'model': {'type': 'minecraft:model', 'model': 'futuretech:item/' + name}})
-        if material == 'netherite':
-            recipe = {'type': 'minecraft:smithing_transform', 'template': 'minecraft:netherite_upgrade_smithing_template',
-                      'base': f'futuretech:diamond_{tool}', 'addition': '#minecraft:' + tag, 'result': {'id': item}}
-        else:
-            recipe = {'type': 'minecraft:crafting_shaped', 'category': 'equipment', 'pattern': pattern,
-                      'key': {'M': '#minecraft:' + tag, 'S': 'minecraft:stick'}, 'result': {'id': item, 'count': 1}}
+        recipe = {'type': 'minecraft:crafting_shaped', 'category': 'equipment', 'pattern': pattern,
+                  'key': {'M': '#minecraft:' + tag, 'G': GEARS[material], 'S': 'minecraft:stick'}, 'result': {'id': item, 'count': 1}}
         write(RES / f'data/futuretech/recipe/{name}.json', recipe)
         write(RES / f'data/futuretech/advancement/recipes/tools/{name}.json', {
             'parent': 'minecraft:recipes/root',

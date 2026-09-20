@@ -2,13 +2,13 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "III",
-    "LGL",
-    "III"
+    "LLL",
+    "AGA",
+    "LLL"
   ],
   "key": {
-    "I": "minecraft:iron_ingot",
-    "L": "minecraft:lime_dye",
+    "L": "#c:plates/lead",
+    "A": "minecraft:lime_dye",
     "G": "minecraft:glass_pane"
   },
   "result": {

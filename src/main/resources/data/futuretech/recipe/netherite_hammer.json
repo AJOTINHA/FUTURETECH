@@ -1,9 +1,18 @@
 {
-  "type": "minecraft:smithing_transform",
-  "template": "minecraft:netherite_upgrade_smithing_template",
-  "base": "futuretech:diamond_hammer",
-  "addition": "#minecraft:netherite_tool_materials",
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "MMM",
+    "MGM",
+    " S "
+  ],
+  "key": {
+    "M": "#minecraft:netherite_tool_materials",
+    "G": "#c:gears/netherite",
+    "S": "minecraft:stick"
+  },
   "result": {
-    "id": "futuretech:netherite_hammer"
+    "id": "futuretech:netherite_hammer",
+    "count": 1
   }
 }

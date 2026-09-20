@@ -2,14 +2,15 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "pattern": [
-    "IAI",
+    "SAS",
     "ACA",
-    "IAI"
+    "SBS"
   ],
   "key": {
-    "I": "minecraft:iron_ingot",
+    "S": "#c:plates/silver",
     "A": "minecraft:amethyst_shard",
-    "C": "futuretech:chip"
+    "C": "futuretech:chip",
+    "B": "futuretech:conductance_coil"
   },
   "result": {
     "id": "futuretech:network_panel",
