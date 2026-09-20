@@ -1,643 +1,92 @@
 # FUTURETECH
 
-Mod de máquinas, energia e automação industrial para **Minecraft Java 26.2**, com **NeoForge 26.2.0.82** e **Java 25**.
+Mod de máquinas, energia e automação industrial para Minecraft Java.
 
-## Estado atual
+## Requisitos
 
-**Plates e gears:** oito componentes na aba FUTURETECH: placa e engrenagem de ferro, ouro, cobre e netherita (`<metal>_plate` e `<metal>_gear`). As placas são chapas finas com bordas chanfradas; as engrenagens têm oito dentes e furo central real. Os modelos 3D usam as texturas dos respectivos blocos de metal do Minecraft, ficam em `models/item/metal_parts/` e podem ser recriados com `tools/Generate-MetalParts.ps1`. Há traduções PT/EN e tags `c:plates/<metal>` e `c:gears/<metal>`. São componentes preparados para futuras receitas, ainda sem fabricação ou uso em receitas.
+| | |
+| --- | --- |
+| Minecraft | 26.2 |
+| NeoForge | 26.2.0.82 ou superior |
+| Java | 25 |
 
-As texturas de blocos ficam organizadas em `assets/futuretech/textures/block/`: `machine/` guarda as faces compartilhadas; `solid_fuel_generator/`, `electric_furnace/`, `crusher/`, `battery/` e `assembler/` guardam os recursos de cada máquina. O tanque reutiliza a estrutura e as conexões da pasta `battery/`. Os cabos usam `energy_cable_mk1/` a `energy_cable_mk4/` (energia, um miolo por MK; a estrutura vem do MK1), `item_cable/` (itens), `fluid_cable/` (fluidos) e `cable_connector/` (conectores compartilhados), sem PNGs soltos na raiz.
+## Instalação
 
-As faces compartilhadas e as frentes do gerador, da fornalha e do triturador possuem cópias nas subpastas `mk2/` (quinas amarelas), `mk3/` (vermelhas) e `mk4/` (azul-ciano). Somente os cantos externos da carcaça mudam de cor; rebites, painéis e animações originais são preservados. Os kits de upgrade selecionam essas texturas no mundo, no inventário e na configuração dos lados. Fontes ImageGen, prompts e exportador ficam em `art/machine_tiers/`.
+1. Instale o NeoForge para Minecraft 26.2.
+2. Baixe o `futuretech-1.0.0.jar`.
+3. Coloque o arquivo na pasta `mods` da sua instância.
 
-Versão `1.0.0`, com identificação `futuretech`, aba criativa própria e traduções em português e inglês.
-Os **Kits de Upgrade MK2, MK3 e MK4** aparecem na aba FUTURETECH como maletas 3D amarelas, vermelhas e ciano. Segure o kit e use **Shift + clique direito** no Gerador a Combustível Sólido, na Fornalha Elétrica ou no Triturador. A sequência é MK1 → MK2 → MK3 → MK4, usando o kit correspondente a cada etapa. Cada aplicação válida consome um kit no sobrevivência; no criativo, ele permanece. Kits de nível errado e blocos incompatíveis mostram uma mensagem e não consomem o item. O upgrade mantém a mesma máquina, com inventário, energia, progresso e configuração dos lados. O MK é salvo no estado do bloco e acompanha o item ao quebrar ou recolher com a chave; ao recolocar, o nível e o visual são restaurados. O nome do item também mostra o MK. O nível libera slots de melhoria e, no Triturador e na Fornalha, faixas de processamento (veja [Melhorias](#melhorias) e [Faixas por MK](#faixas-por-mk)).
+Tudo do mod fica em uma aba própria no inventário criativo, com nomes em português do Brasil e em inglês.
 
-As receitas dos kits usam uma carcaça no centro, quatro materiais A nos cantos, dois B acima/abaixo e dois C nas laterais: MK2 usa A = ferro, B = ouro e C = redstone; MK3 usa A = ouro, B = bloco de redstone e C = quartzo; MK4 usa A = diamante, B = pérola do Ender e C = bloco de redstone. Os modelos e recursos são reproduzíveis com `tools/Generate-UpgradeKits.ps1`.
+## O que tem no mod
 
-O **Speed Upgrade** (`futuretech:speed_upgrade`) é um módulo 3D com textura própria, setas ciano e contatos dourados. Aparece na aba FUTURETECH e pode ser instalado nos slots de melhorias, um por slot, com persistência ao salvar o mundo. A receita usa quatro lingotes de ferro nos cantos, dois de ouro no centro superior e inferior, redstone nas laterais e açúcar no centro. Por enquanto o item não altera a velocidade das máquinas. A fonte da textura e seu exportador ficam em `art/speed_upgrade/`.
+### Energia
 
-O **Filtro** (`futuretech:filter`) é um item destinado ao cabo de itens. Aparece na aba FUTURETECH, ao lado do cabo de itens, e usa um modelo 3D com moldura espessa, grade metálica vazada, parafusos e marcador ciano nos dois lados. O inventário mostra a peça levemente inclinada para evidenciar a espessura. A receita rende um filtro com quatro pepitas de ferro nos cantos e cinco linhas nas demais posições da bancada. Colocado no slot de um conector do cabo de itens, decide o que atravessa aquele conector, nas duas direções: a engrenagem ao lado do slot abre a lista de nove itens e o botão Permitir/Bloquear. Permitir deixa passar só o que está na lista (vazia, não passa nada); Bloquear deixa passar tudo menos o listado. A comparação olha só o tipo do item, então uma picareta gasta continua sendo picareta. A lista e o modo ficam no próprio item, em componentes, e viajam com ele. O exportador do modelo e as fontes visuais ficam em `art/filter/`.
+- **Geradores:** a Combustível Sólido, de Lava, Solar, Eólico, e o par Boiler + Turbina a Vapor.
+- **Baterias MK1 a MK4**, com faces configuráveis e carga preservada ao quebrar o bloco.
+- **Cabos de energia MK1 a MK4.** Cabos que se tocam formam uma rede só, e a rede anda no ritmo do MK mais lento.
+- **Carregador** e **Bateria Portátil** (MK1 a MK4) para recarregar itens.
 
-A **Carcaça de Máquina** (`futuretech:machine_casing`) usa uma moldura cúbica vazada com a mesma paleta de aço cinza das máquinas MK1, com bordas grossas e aberturas quadradas de 6×6 pixels nas seis faces, seguindo a referência enviada. Os três túneis atravessam o centro: o modelo, a colisão e a seleção acompanham a estrutura; os blocos atrás dela continuam visíveis pelas aberturas. O novo modelo substitui o visual da carcaça existente e mantém o identificador, as receitas e os blocos já colocados no mundo. Só é fabricada no Assembler: quatro barras de ferro nas quinas, um vidro entre cada par de barras e uma engrenagem de estanho no meio (80 ticks); não tem receita na bancada. Requer picareta de pedra ou superior para soltar o item. As máquinas mantêm suas texturas próprias.
+### Processamento
 
-O **Chip Eletrônico** (`futuretech:chip`) é um componente empilhável na aba FUTURETECH, com placa azul-petróleo exposta, 24 pinos dourados finos, trilhas de cobre com curvas, pontos de solda e processador central com tampa de aço chanfrada e núcleo ciano nos dois lados. As texturas próprias de 32×32 são desenhadas em pixel art por `tools/generate_chip_textures.py`. A moldura foi simplificada para destacar o processador; o detalhe dourado de orientação continua removido. Só é fabricado no Assembler: quatro barras de cobre nas quinas, ouro em cima e embaixo, redstone dos lados e um quartzo no meio (80 ticks); não tem receita na bancada. As três **bobinas** (recepção = ouro, transmissão = prata, condutância = electrum) também são só do Assembler: redstone, o lingote e redstone, 60 ticks. O chip está disponível como componente para futuras receitas, sem função de melhoria por enquanto. O chip e a carcaça usam texturas próprias de 32×32 pixels, em `textures/item/chip/` e `textures/block/machine_casing/`. A segunda versão das texturas usa formas simples e materiais foscos: o chip possui placa azul-petróleo, trilhas de cobre, cerâmica escura, contatos de latão e centro prateado com marca ciano; a carcaça usa a textura própria `textures/block/machine_casing/hollow_frame.png`, de 32×32 pixels, recolorida com cores extraídas da `machine/machine_side.png`: aço cinza no corpo e cinza-azulado escuro nas bordas. Todos os pixels usam cores existentes na textura das máquinas. O desenho vazado e o relevo foram preservados; `python tools/recolor_machine_casing.py` reproduz a recoloração a partir da fonte original. A carcaça segue a referência do usuário, sem grelhas nem indicadores luminosos. Os modelos podem ser recriados com `python tools/generate_chip_and_casing.py`. As fontes ImageGen, os prompts, a prévia e o exportador das texturas ficam em `art/chip_and_casing/`; `python art/chip_and_casing/export_textures.py` executa o gerador de pixel art do chip e a recoloração da carcaça. As fontes ImageGen antigas ficam preservadas como histórico; as texturas atuais do chip são reproduzíveis por código.
+Triturador, Fornalha Elétrica, Serraria, Metal Press, Fundidora, Melter, Extrusor, Máquina de Pintura e o Assembler, que fabrica os componentes que não têm receita de bancada.
 
-O **Gerador a Combustível Sólido** é a primeira máquina funcional. Clique com o botão direito para abrir sua interface e coloque carvão, carvão vegetal ou um combustível de madeira no slot. Aceita troncos, madeiras descascadas, tábuas, gravetos, ferramentas de madeira, portas, cercas, escadas, lajes, placas, barcos, baús e outros itens de madeira, incluindo bambu e madeiras do Nether. Também é possível usar Shift + clique para mover combustível do inventário.
+- **Kits de Upgrade MK2, MK3 e MK4:** Shift + clique direito na máquina. A sequência é MK1 → MK2 → MK3 → MK4, e o upgrade preserva inventário, energia, progresso e configuração. A potência por nível é 100%, 150%, 200% e 300% da MK1.
+- **Melhorias:** Velocidade, Eficiência, Lava, Energia e Areia, instaladas nos slots que o MK libera.
 
-O nome acima do slot acompanha o item inserido e o idioma do jogo. Quando o slot está vazio, aparece “Vazio” (“Empty” em inglês). A barra de combustível permanece visível, inclusive enquanto termina a queima do último item consumido.
+### Transporte
 
-- Gera **20 FE/t** (400 FE/s a 20 ticks por segundo).
-- Cada carvão fornece **1.600 ticks de geração**, totalizando **32.000 FE**.
-- Os combustíveis de madeira usam a duração da fornalha quando disponível: troncos e tábuas geram normalmente **6.000 FE**, lajes **3.000 FE** e gravetos **2.000 FE**. Peças de madeira sem valor de fornalha, como as do Nether, recebem uma duração por categoria.
-- A barra de queima acompanha a duração do combustível em uso, mesmo após salvar e carregar o mundo.
-- Armazena **20.000 FE** e pausa quando não há espaço para mais um tick de geração; o combustível em queima fica preservado.
-- Envia automaticamente até **80 FE/t**, no total, para blocos adjacentes que aceitem energia pela API do NeoForge. Todas as faces entregam energia sem precisar de configuração, inclusive as que estão em Nenhum; o gerador não recebe energia. A configuração de lado do gerador serve só para escolher por onde entra combustível. O limite vale por tick e não por chamada: blocos vizinhos que puxem energia por conta própria dividem os mesmos 80 FE/t com o envio automático.
-- Salva energia, combustível e progresso de queima ao sair do mundo ou descarregar o chunk.
-- Mostra energia e geração atual na interface. A frente acende durante a geração; um comparador mede o nível da reserva.
-- A energia é sincronizada para a interface em duas metades de 16 bits, então capacidades acima de 32.767 FE (como a futura bateria) não estouram o pacote de dados do menu.
-- A GUI mantém fundo cinza liso, cabeçalho azul escuro e slots simples, com os quatro cantos externos recortados em pixels no estilo do Minecraft, sombra externa discreta e relevo fino nos slots. As barras têm degradês contínuos, movimento suave e um brilho leve.
+- **Cabos de itens e de fluidos**, cada um em versão normal e opaca, com **Filtros MK1 a MK4** nos conectores.
+- **Facades:** clique num cabo com um bloco para esconder aquela face; a Chave tira de volta.
+- **Tanque de Fluido** e **Bomba d'Água**.
+- **Tesseract**, **Teleportador** com Cartão de Teleporte, e **Teleportador Portátil**.
 
-A receita usa cinco barras de ferro, duas fornalhas, uma carcaça de máquina e um pó de redstone:
+### Redstone e rede
 
-```text
-Ferro     Ferro      Ferro
-Fornalha  Carcaça    Fornalha
-Ferro     Redstone   Ferro
+- **Cabo de Redstone**, **Transmissor** e **Receptor sem fio**, **Sensor de Chuva**.
+- **Cabo de Rede**, **Painel de Rede** e **Cartões de Armazenamento**.
+- **Controlador de Tempo** e **Controlador de Clima**.
+
+### Materiais e ferramentas
+
+- **Minérios novos:** estanho, chumbo e prata, gerados no mundo, com bruto, bloco, lingote, pó, placa e engrenagem.
+- **Ligas:** aço, electrum, liga vermelha e liga do End.
+- **Componentes:** chip eletrônico, carcaça de máquina, bobinas de redstone, moldes de placa e engrenagem.
+- **Ferramentas de área:** Martelos e Escavadoras quebram um 3 × 3 na face atingida; Machados Lenhadores derrubam a árvore inteira. Em madeira, pedra, cobre, ferro, ouro, diamante e netherita.
+- **Chave** para girar máquinas, recolher blocos com o conteúdo e remover facades.
+
+## Configuração das máquinas
+
+Cada face de uma máquina pode ser Entrada, Saída, Ambos ou Nenhum, pela aba de lados na interface. Também dá para controlar a máquina por redstone, escolhendo se ela trabalha sempre, só com sinal ou só sem sinal.
+
+## Compatibilidade
+
+Os cabos se ligam a qualquer bloco que exponha as capabilities padrão do NeoForge (energia, itens e fluidos) na face tocada, e as máquinas daqui expõem as suas do mesmo jeito. Máquinas, baús, tanques e cabos de outros mods NeoForge funcionam junto, sem integração específica.
+
+Os materiais usam as tags comuns (`c:ingots/<metal>`, `c:dusts/<metal>`, `c:plates/<metal>`, `c:gears/<metal>`), então receitas de outros mods aceitam os itens daqui e as máquinas daqui aceitam os de lá.
+
+Suporte opcional a **JEI**, que mostra as receitas das máquinas e dos geradores, e a **Curios**, que aceita a Bateria Portátil nos slots de cinto e amuleto.
+
+## Compilar do código-fonte
+
+Abra a pasta como projeto Gradle na IDE, com um JDK 25.
+
+```bash
+./gradlew build
 ```
 
-O gerador usa texturas próprias de 32 × 32 pixels, com carcaça de aço cinza, moldura escura, detalhes discretos em azul e uma abertura que acende em laranja durante a geração. O visual industrial simples é inspirado no Thermal Expansion. Ao quebrá-lo com picareta de pedra ou superior, ele solta o bloco e o combustível restante no inventário; a energia e o combustível já em queima não são preservados no item.
-
-A lista de peças de madeira é extensível pela tag de itens `futuretech:generator_wooden_fuels`, que inclui as categorias de madeira do Minecraft. Madeiras de outros mods que pertençam a essas tags também são aceitas; itens adicionais podem ser incluídos por datapack. Itens que só contêm madeira em parte (camas, estandartes, tochas, quadros, molduras, jukebox, sensor de luz e colmeias naturais) ficam de fora de propósito.
-
-A **Bateria** (`futuretech:battery_mk1`) armazena a energia do gerador e aceita os kits MK2, MK3 e MK4 em sequência com **Shift + clique direito**. Clique com o botão direito para ver a reserva e as taxas de entrada e saída do último tick.
-
-- Cada upgrade dobra armazenamento, entrada e saída: **MK1: 100.000 FE / 200 FE/t**, **MK2: 200.000 FE / 400 FE/t**, **MK3: 400.000 FE / 800 FE/t**, **MK4: 800.000 FE / 1.600 FE/t**. Entrada e saída têm limites independentes por tick, não por chamada; o upgrade preserva a carga, os módulos e a configuração dos lados e de redstone.
-- Cada face é configurável (veja "Configuração de lados"); a orientação voltada para o jogador ao colocar é a referência do painel. Uma face de bateria nunca é entrada e saída ao mesmo tempo, para um cabo não devolver à bateria a energia dela mesma. Uma bateria nunca envia diretamente para outra bateria.
-- Ao quebrar ou recolher com a chave, o item preserva o MK (`minecraft:block_state`) e a carga (`futuretech:energy`); a tooltip e a barra usam a capacidade desse nível. Ao recolocar, o nível e a energia voltam para o bloco. Baterias vazias do mesmo nível continuam empilháveis.
-- Um comparador mede o nível da reserva.
-
-A receita usa quatro barras de ferro, três pós de redstone, uma carcaça de máquina e uma barra de ouro:
-
-```text
-Ferro     Redstone   Ferro
-Redstone  Carcaça    Redstone
-Ferro     Ouro       Ferro
+```bash
+./gradlew runClient
 ```
 
-A bateria MK1 usa uma estrutura 3D vazada, com doze vigas de metal escuro e cantos reforçados. Cada face em Nenhum permanece aberta. Entrada acrescenta uma chapa de aço com furo quadrado e aro azul; Saída usa o mesmo modelo com aro laranja, nas seis orientações. As vigas mantêm o metal original. No centro, uma esfera azul-ciano com malha hexagonal luminosa gira uma volta a cada 20 segundos, sem encostar nas vigas. A colisão física acompanha apenas a estrutura; as aberturas são reais, sem painéis transparentes. A área de seleção e clique ocupa o bloco inteiro, impedindo interagir com blocos atrás da bateria através das aberturas. Faces configuradas como Saída exibem partículas luminosas em espiral, do núcleo até o centro do encaixe, passando de ciano para laranja. Faces em Entrada exibem o fluxo inverso: partículas azuis partem do encaixe e chegam ao núcleo em ciano. O fluxo acompanha o tamanho do núcleo, funciona nas seis direções e aparece pela configuração da face, independentemente de transferência de energia ou cabo conectado. A carga continua visível na interface e no item. O modelo está em `assets/futuretech/models/block/battery_mk1.json`; as imagens da frente antiga em `art/battery_mk1` ficam preservadas como referência.
-
-Todas as baterias compartilham o mesmo bloco e item registrados e as mesmas classes (`BatteryBlock`, `BatteryBlockEntity`, `BatteryBlockItem`, `BatteryMenu`, `BatteryScreen`). O estado `mk` seleciona o `BatteryTier`, com capacidade, taxa por tick e cor das linhas do núcleo. As linhas grossas e seu halo são brancos no MK1, amarelos no MK2, vermelhos no MK3 e cianos no MK4. As três cores dos upgrades foram amostradas da quina (0, 0) das texturas `machine/{mk2,mk3,mk4}/machine_side.png`: `#F2C202`, `#D21A1E` e `#01FDFE`. A pulsação e os anéis metálicos permanecem iguais.
-
-O **Cabo** de energia (`futuretech:energy_cable_mk1` a `energy_cable_mk4`) transporta energia entre blocos que não estão encostados. Cabos que se tocam formam uma rede única, de qualquer MK; a rede anda no ritmo do MK mais lento que tiver.
-
-- Cada MK dobra o anterior, como as baterias: **MK1 400 FE/t, MK2 800, MK3 1.600, MK4 3.200** para a rede inteira. O miolo é um fio: isolamento carvão com a linha acesa fina na cor do MK — branco, amarelo, vermelho, ciano, as mesmas linhas da bateria e quinas das máquinas — e o tampão do colar acompanha (`EnergyCableBlock.contactTexture()`, um por bloco).
-- Sobe de MK **na bancada**: oito cabos do MK de baixo em volta do Kit de Upgrade do MK de cima rendem oito cabos do novo MK.
-- A rede inteira move até o throughput do tier, no total, e guarda no máximo um tick de energia — e só o que as máquinas atrás dos conectores de saída ainda conseguem receber. Sem para onde enviar, ela recusa a inserção e o bloco de origem fica com a energia; nada é engolido num buffer que não é salvo, então o gerador não acende ao entrar no mundo só para repor o que a rede perdeu.
-- Funciona por "empurrão", igual ao gerador e à bateria: qualquer bloco vizinho que envie energia para um cabo alimenta a rede, e a rede reparte o que tem em rodízio entre todos os blocos vizinhos que aceitam energia. A rede nunca devolve energia para um bloco que está tentando inserir nela, mesmo quando a inserção é recusada por o buffer estar cheio, e mesmo que esse bloco encoste na rede por mais de uma face. Isso é o que impede uma bateria com uma face de saída e outra de entrada na mesma rede de ficar recebendo a própria energia de volta a cada tick. Faces configuradas como "Nenhum" não se conectam a cabos.
-- Os braços do cabo aparecem para outros cabos e para qualquer bloco com capacidade de energia naquele lado, inclusive máquinas de outros mods. Nas conexões com máquinas, geradores e baterias, aparece um conector metálico de 9 × 9 unidades, com dois níveis de espessura e abertura central. Funciona nas seis direções, acompanha a conexão ativa e faz parte da área clicável e da colisão; emendas entre cabos continuam sem o conector.
-- A rede é recalculada quando um cabo é colocado ou quebrado; quebrar um cabo no meio divide a rede em duas.
-- Sem tratamento de energia guardada no item: o cabo é um bloco simples, quebrável com qualquer picareta ou à mão.
-
-A receita usa seis lingotes de cobre e três pós de redstone e rende seis cabos:
-
-```text
-Cobre     Cobre     Cobre
-Redstone  Redstone  Redstone
-Cobre     Cobre     Cobre
+```bash
+./gradlew test
 ```
 
-Como nas baterias, todos os cabos compartilham as mesmas classes (`EnergyCableBlock`, `EnergyCableBlockEntity`, `EnergyCableNetwork`); o `EnergyCableTier` define o throughput. Cabos de tiers diferentes se conectam, e a rede assume o menor throughput entre eles. MK2 a MK4 são os modelos do MK1 com o miolo trocado, gerados por `python tools/generate_cable_tiers.py` junto com as sprites das quatro rampas (e a do cabo de itens), blockstates, loot e receitas. O MK1 usa os modelos de `Model/cabo_no.bbmodel` e `Model/cabo.bbmodel`: exterior de 8 unidades, miolo ciano de 6 e frames de 1. O nó fechado tem 37 volumes e cada braço 13. O importador centraliza o conjunto sem redimensioná-lo e extrai o branco e o cinza com variações sutis do nó. Nos trechos retos, duas conexões opostas formam uma linha contínua sem nó intermediário. Pontas, curvas e ramificações mostram o nó com braços apenas nas faces conectadas. A colisão tem largura de 8 e os conectores com máquinas têm abertura de 8 × 8. O item mostra o nó completo. Os recursos podem ser recriados com `art/energy_cable_mk1/Export-Cable.ps1`.
+A primeira execução baixa o Gradle e as dependências do Minecraft e do NeoForge. A instância de desenvolvimento usa a pasta `run` do projeto.
 
-O **Cabo de Itens** (`futuretech:item_cable`) é o irmão do cabo de energia para itens: mesma geometria e mesmos conectores, em cinza (o amarelo que ele tinha é hoje a cor do Cabo de Energia MK2). Cabos de itens que se tocam formam uma rede; um cabo de itens ao lado de um cabo de energia é só um vizinho, nunca continuação.
+## Licença
 
-- O item **viaja de verdade**: ao entrar num cabo (empurrado pela máquina ou bombeado pelo conector) ele sai da origem na hora, recebe um destino entre os inventários da sua cor e canal que têm espaço — contando o que já está a caminho — e percorre os cabos a 20 ticks por bloco (Speed Upgrades no conector de entrada aceleram: com 32, um bloco por tick); só entra no destino quando chega. Se ninguém tem espaço, o empurrão é recusado e o item fica na máquina. Se o destino encher no meio do caminho, o item procura outro a partir de onde está; sem alternativa, espera na ponta e tenta de novo a cada intervalo. Os itens em trânsito são salvos com o cabo em que estão e caem no chão se esse cabo for quebrado. A rede nunca manda um item de volta ao bloco que o empurrou, nem por outra face.
-- No cabo sem miolo dá para ver os itens passando; o opaco esconde e nem os desenha.
-- Move **1 item a cada 20 ticks** por conector de entrada, o ritmo dos cabos básicos de outros mods; a cota não acumula entre intervalos. O `ItemCableTier` define lote e intervalo, e uma rede com tiers misturados anda no ritmo do mais lento.
-- Cada conector com um bloco (baú, barril, fornalha, máquina do mod, hopper) abre uma interface própria com clique direito: **Inserir** e **Extrair** como no cabo de energia. Nos cabos de itens e de fluido um conector novo vem com os dois desligados e não move nada até o jogador ligar o que quer; no cabo de energia vem com os dois ligados, porque energia só sai dos blocos que a empurram (gerador, bateria), então não há o que drenar por acidente e cada máquina fica ligada no instante em que o cabo encosta; um conector só em Extrair bombeia do inventário vizinho, e um conector só em Inserir nunca esvazia o baú que encosta.
-- **Prioridade** de −100 a +100 (shift + clique anda de 10): quem tem prioridade maior recebe primeiro, e só o que não coube desce para os demais; empatados se revezam. Vale também para as bombas.
-- **Cor** (uma das 16 tintas, branco por padrão, escolhida num painel que abre ao clicar no quadrado) e **Canal** de 0 a 100: um item que entra por um conector só sai por conectores da **mesma cor e mesmo canal**. Prioridade e filtro valem dentro de cada linha.
-- **Filtro**: slot para um `futuretech:filter`, com a engrenagem que abre a lista. Ao quebrar o cabo, o filtro cai.
-- Funciona com qualquer bloco que ofereça a capability de itens, inclusive os baús e fornalhas do jogo e máquinas de outros mods.
+Todos os direitos reservados. Veja [LICENSE](LICENSE).
 
-A receita usa seis lingotes de ferro e três vidros e rende seis cabos:
-
-```
-I I I
-G G G
-I I I
-```
-
-O **Cabo de Itens** (`futuretech:item_cable`) é o mesmo cabo sem o miolo: só a gaiola de cantos cinza e trilhos brancos, com os vãos abertos. Mesma velocidade, mesmos conectores, mesma interface; os dois cabos de itens se emendam entre si. A receita troca o vidro por painéis de vidro:
-
-```
-I I I
-P P P
-I I I
-```
-
-Os modelos são gerados a partir dos do Cabo de Energia MK1 removendo os volumes do miolo e recompondo as seis faces de cada barra, já que o gerador original descartava as faces que o miolo escondia.
-
-O **Cabo de Fluido** vem em duas versões, ambas verdes: o **Cabo de Fluido Opaco** (`futuretech:fluid_cable_opaque`), com miolo verde, e o **Cabo de Fluido** (`futuretech:fluid_cable`), com miolo de vidro (textura própria na paleta do vidro do jogo), que deixa ver o fluido passando. Mesma geometria e mesmos conectores dos outros cabos; cabos de fluido só se emendam entre si.
-
-- A rede funciona como a de energia: um buffer por linha que recebe o que os vizinhos empurram, bombeia dos tanques atrás dos conectores em Extrair e reparte o que tem entre os tanques que aceitam, sem nunca devolver ao bloco que empurrou. A vazão é de 500 mB/t por linha, movida em **lotes de 4 ticks** (2.000 mB por rodada): mesmo ritmo, um quarto das transações — cada movimento pela API de transferência custa microssegundos, e bombear e entregar todo tick era quase todo o custo de uma rede ocupada. Cheia, recusa o empurrão e o fluido fica na origem.
-- Cada conector tem **Prioridade**, **Cor** e **Canal**; cada par cor+canal é uma linha com buffer próprio, então uma mesma rede pode carregar água e lava em linhas diferentes sem misturar. Dentro da linha, prioridade maior enche primeiro e iguais dividem em rodízio. Não há filtro nem melhoria no conector de fluido.
-- O cabo de vidro desenha o fluido que a rede está carregando (textura e tinta do próprio fluido), no miolo e nos braços conectados. O fluido aparece com a textura parada de uma source (lava brilha com luz própria, água usa a do ambiente) e entra como uma **onda**: a rede diz a cada cabo em que sentido o fluido passou por ele (o caminho da entrada até o tanque que recebeu; numa linha que ainda não entregou, a direção é espalhada a partir da entrada), e o cliente descobre de onde o fluido vem em cada cabo e faz a frente cruzar um cabo a cada 10 ticks, cada cabo começando quando o cabo de onde ele recebe ficou cheio — então a onda parte de onde a mudança começou (a entrada da linha, um cabo recém-colocado, o lado religado de um corte), entrando pelo braço de entrada, atravessando o miolo e saindo por todos os outros braços, o do conector por último. Quando o fluxo para, uma cauda sai pelo mesmo caminho um segundo depois. Um corte não para o que já está no duto: a frente segue até o fim e sai por lá, com a cauda atrás; fluido que volta no meio do esvaziamento é outra onda atrás dessa, que se junta a ela se a alcançar. Um chunk que carrega com fluido correndo já aparece cheio. O opaco não desenha nada.
-- Funciona com qualquer bloco que ofereça a capability de fluidos, inclusive o caldeirão.
-
-Receitas: ferro nas linhas de cima e de baixo, corante verde-limão nas laterais e vidro no meio (opaco) ou painel de vidro (de vidro), rendendo 6.
-
-O **Cabo de Rede** (`futuretech:network_cable`) é o quarto cabo, de miolo roxo. Por enquanto ele é só a estrutura: mesma geometria, a chave corta e religa as ligações, os facades cobrem as faces e a água acompanha o bloco como nos outros. **Ainda não transporta nada.**
-
-- Ele se emenda com outros cabos de rede e se liga **só ao Teleportador**, em qualquer das seis faces. Qualquer outra máquina ao lado — bateria, tanque, fornalha, os outros cabos — continua sendo só vizinha, sem braço e sem ligação.
-- Na face do teleportador aparece o colar metálico de sempre, com o tampão roxo. Ele é a ligação aparecendo, não um conector: o cabo não tem modo, prioridade, filtro nem cor para configurar, então o clique passa direto em vez de abrir uma tela vazia.
-- Os outros cabos perguntam ao vizinho por uma capability, o que exige um `Level` de verdade; este pergunta que bloco é o vizinho, e por isso responde por `linksTo(LevelReader, BlockPos, BlockState, Direction)`, o gancho do `AbstractCableBlock` para ligações decididas pelo estado do bloco.
-- Tem tamanho único, sem MK e sem versão opaca, e não é tickado: quando ganhar o que carregar, a rede entra em `NetworkCableBlockEntity`.
-
-A receita usa ferro nas linhas de cima e de baixo e três fragmentos de ametista no meio, rendendo 6:
-
-```text
-Ferro     Ferro      Ferro
-Ametista  Ametista   Ametista
-Ferro     Ferro      Ferro
-```
-
-As três texturas do miolo (`network_cable.png`, `network_cable_node.png` e `network_cable_contact.png`) saem de `python tools/generate_network_cable.py`, que desenha os mesmos padrões do Cabo de Energia MK1 com a rampa roxa.
-
-O **Cabo de Redstone** (`futuretech:redstone_cable`) é o quinto cabo, de miolo vermelho: um fio na forma dos outros cabos, com as mesmas ligações, chave, facades e conectores. Não tem MK, não tem versão opaca e não é tickado — como a redstone, ele é avisado.
-
-- Aqui as palavras são do cabo, não do vizinho (nos outros cabos "inserir" é *no baú*; o sinal mora no fio): **Inserir** lê o sinal (0–15) do bloco ao lado para dentro do cabo — a alavanca insere; **Extrair** dá o sinal do cabo para o bloco ao lado — a lâmpada extrai —, com força forte como a de um repetidor, então um bloco sólido (ou uma lâmpada acesa) passa o sinal adiante. Um conector novo começa em **nenhum**: um cabo que devolvesse o que lê entraria em laço no primeiro bloco de pedra que tocasse.
-- Cada conector tem **cor e canal**, e cada par cor-canal é uma linha própria: a linha carrega o **maior** sinal lido pelos conectores que extraem nela, e é isso que os conectores que inserem nela dão. Dezesseis fios num cabo só (e mais cem canais por cor). Não há prioridade nem filtro; a tela do conector agora monta as linhas por tipo, e o cabo de itens e o de fluido ficam exatamente onde estavam.
-- Ele se liga sozinho ao que o pó de redstone se ligaria (`canRedstoneConnectTo`: pó, alavanca, botão, tocha, bloco de redstone, repetidor e comparador pelas pontas, observador pelas costas, o receptor e o transmissor wireless pela frente), às máquinas do mod (`SideConfigurableBlock`) e aos blocos da tag `#futuretech:redstone_cable_links` — lâmpada, pistões, portas, alçapões, portões, dispensador, ejetor, funil, crafter, bloco de notas, TNT, sino, trilhos, blocos de comando, lâmpadas de cobre, teleportador e tesseract. Pedra, baú e os outros cabos continuam vizinhos, para o cabo não ganhar colar em toda parede por onde passa.
-- A rede (`redstone/RedstoneCableNetwork`) não tem buffer: quando um vizinho de um cabo muda, o cabo relê os conectores que extraem nele; se a força de uma linha mudou, os blocos ao lado dos conectores que a inserem são avisados e releem o cabo. Enquanto a rede lê, os conectores dela respondem zero, para um bloco em que ela insere não voltar como sinal dela mesma — e o mesmo silêncio vale quando o cabo lê a redstone na própria porta (o modo redstone do conector), senão um conector em "só sem sinal" se desligaria e religaria para sempre. Um conector em ambos ao lado de pó de redstone é o único laço que sobra, porque o pó guarda a própria força no estado.
-- Cada conector tem dois interruptores a mais, na linha logo abaixo de Inserir/Extrair, acesos na cor do cabo: **Sensor** (num conector que insere) lê o bloco como um comparador — quão cheio está o baú, o tanque, a bateria, a máquina — em vez do sinal dele, e acompanha o que entra e sai (`onNeighborChange`, o mesmo aviso que o comparador recebe); **Forte** (num conector que extrai, ligado por padrão) diz se o sinal atravessa o bloco ao lado como o de um repetidor ou só o acorda, como o pó — desligue para uma lâmpada não acender a vizinha.
-- A **chave num lado sem ligação** força a ligação a qualquer bloco que esteja ali (pedra, baú, o que for), e a chave de novo desfaz; um cabo que não teria ligado sozinho passa a ter colar ali, com conector para configurar. A ligação forçada fica guardada (`Forced`, como `Cut`) e espera o ar: se o bloco some ela dorme, se outro entra ela volta. Só o cabo de redstone permite (`forces()` do `AbstractCableBlock`); nos outros, a chave num lado sem ligação continua passando direto.
-- A rede é refeita num **block tick agendado** (um tick depois), como o repetidor dá o passo dele, nunca de dentro da mudança de bloco que pediu: até lá o cabo continua respondendo pela rede aposentada, então a lâmpada na ponta não pisca enquanto a linha é percorrida de novo. A rede aposentada, depois disso, avisa os blocos em que costumava inserir, para quem perdeu o cabo ou o conector ler zero.
-
-A receita usa chapas de ferro nas linhas de cima e de baixo e três lingotes de Liga Vermelha no meio, rendendo 6:
-
-```text
-Chapa de ferro  Chapa de ferro  Chapa de ferro
-Liga Vermelha   Liga Vermelha   Liga Vermelha
-Chapa de ferro  Chapa de ferro  Chapa de ferro
-```
-
-As texturas do miolo (`redstone_cable.png`, `redstone_cable_node.png` e `redstone_cable_contact.png`) saem de `python tools/generate_redstone_cable.py`, a mesma rampa de quatro tons dos outros cabos em vermelho. Os testes: `RedstoneCableNetworkTest` (a rede sobre um mundo de mentira), `RedstoneCableJoinTest` (a que ele se liga) e `RedstoneCableGameTests` (alavanca, força, cores, passagem por bloco, corte, modo redstone, ligação forçada, sensor num baú e sinal fraco num servidor de verdade, com `./gradlew runGameTestServer`).
-
-Todos os cabos compartilham `AbstractCableBlock` e `AbstractCableBlockEntity` (forma, conexões, modos, prioridade, cor e canal dos conectores, menu); cada tipo só diz o que emenda e qual capability o vizinho precisa oferecer — ou, no caso do cabo de rede, que bloco o vizinho precisa ser. Todos eles estão na tag `minecraft:mineable/pickaxe`: nenhum exige a ferramenta certa para soltar o item, então a tag só muda a velocidade da quebra, e é por isso que os cabos de itens e de fluidos ficaram tanto tempo de fora sem ninguém notar. `CablePickaxeTagTest` agora percorre o registro e cobra a tag de todo bloco que seja um `AbstractCableBlock`. O cabo de itens usa os modelos do Cabo de Energia MK1 como pai, trocando apenas as texturas do miolo (`item_cable_opaque.png`, `item_cable_opaque_node.png`) e o tampão do colar (`item_cable_contact.png`). A lógica fica em `transfer/ItemCableNetwork`.
-
-A **Fornalha Elétrica** (`futuretech:electric_furnace`) é a primeira máquina que consome energia. Ela funde exatamente o que uma fornalha comum funde, sem combustível e no dobro da velocidade.
-
-- Buffer de **20.000 FE**, recebendo até **200 FE/t**. Nunca entrega energia: cada face é Entrada ou Nenhum.
-- Gasta **20 FE/t** enquanto trabalha, e leva metade do tempo de cozimento da receita — 100 ticks nos 200 ticks padrão. Um gerador a combustível sólido no talo sustenta exatamente uma fornalha.
-- Sem energia ela para e a barra recua aos poucos, como uma fornalha esfriando; o progresso não zera de uma vez e o item continua no slot.
-- Slot de entrada à esquerda, saída à direita. A saída não aceita itens colocados à mão.
-- Automatizável com funis, mas as faces não são fixas: configure Entrada onde o ingrediente entra e Saída onde o resultado sai (veja "Configuração de lados"). Uma máquina recém-colocada está fechada para itens. Como na fornalha comum, o slot de entrada aceita qualquer item — a consulta de receita precisa do servidor, então a checagem acontece na hora de fundir.
-- Tem as mesmas abas de Melhorias, Configuração e Redstone das outras máquinas, e um comparador mede a energia guardada.
-- Ao quebrar, solta o bloco e os itens dentro; a energia guardada não é preservada.
-
-A receita gasta uma fornalha, quatro lingotes de ferro, dois de cobre, uma carcaça e um pó de redstone:
-
-```text
-Ferro     Fornalha  Ferro
-Cobre     Carcaça   Cobre
-Ferro     Redstone  Ferro
-```
-
-O bloco herda o modelo `machine_base`, com a textura `machine_side` nas cinco faces não frontais. A frente própria tem versões desligada e ligada, com porta metálica, duas resistências e visor azul. Fornalha e gerador ligados usam animações de 16 quadros de 32 × 32 pixels: o aquecimento varia e um brilho percorre o visor azul, mantendo a carcaça parada. As versões desligadas são estáticas.
-
-As fontes e os exportadores PowerShell ficam em `art/`. Execute `art/electric_furnace/Export-Textures.ps1` ou `art/solid_fuel_generator/Export-Textures.ps1` para recriar as frentes e os arquivos `.png.mcmeta`. Os dois usam `art/Export-ActiveAnimation.ps1` e a paleta compartilhada de `art/StatusDisplay.ps1`. A prévia animada está em `art/active-animation-preview.html`.
-
-O **Triturador** (`futuretech:crusher`) usa uma frente de rolos dentados, carcaça grafite e indicador ciano. Sua GUI segue o layout da fornalha elétrica: entrada à esquerda, saída à direita, energia na lateral e abas de melhorias, lados, redstone e informações. Um símbolo de rolos indica o funcionamento e a seta ciano acompanha o progresso.
-
-- Reserva de **20.000 FE**, entrada de até **200 FE/t**, consumo de **20 FE/t** e **100 ticks (5 segundos)** por operação: 2.000 FE por item.
-- Sem energia ou espaço para o resultado completo, pausa e preserva o progresso. Trocar o ingrediente por outro reinicia o trabalho. Itens, energia e progresso são salvos com o mundo.
-- Recebe energia por qualquer face. Para automatizar itens, configure faces de entrada e saída; elas começam fechadas. Possui extração/inserção automática, controle de redstone e slots para melhorias, como as outras máquinas.
-- Ao quebrar, solta a máquina e seus itens; não guarda energia no item.
-- Receitas próprias, extensíveis por datapacks com o tipo `futuretech:crushing`: pedregulho → cascalho; cascalho → areia; arenito → 4 areias; arenito vermelho → 4 areias vermelhas; osso → 6 farinhas de osso; vara de blaze → 4 pós de blaze; vidro → areia.
-
-O triturador também duplica os metais brutos: **1 ferro bruto → 2 pós de ferro**, **1 ouro bruto → 2 pós de ouro** e **1 cobre bruto → 2 pós de cobre**. Cada pó vira **1 lingote** na fornalha comum (200 ticks) ou elétrica (100 ticks e 2.000 FE). Assim, um bruto rende dois lingotes após triturar e fundir. Os três pós aparecem na aba FUTURETECH e têm ícones próprios em `art/powders/`. Cada lingote de ferro, ouro ou cobre também pode ser triturado e rende **1 pó** do mesmo metal. Os ícones dos pós aparecem 30% maiores na GUI. A fundição dos pós não concede experiência adicional.
-
-A fabricação usa quatro ferros, um pistão, dois cobres, uma carcaça e uma redstone:
-
-```text
-Ferro     Pistão    Ferro
-Cobre     Carcaça   Cobre
-Ferro     Redstone  Ferro
-```
-
-## Serraria (Sawmill)
-
-A **Serraria** (`futuretech:sawmill`) é o mesmo tipo de máquina que o Triturador — um item de entrada vira um resultado, uma faixa por MK, mesmos kits, lados, redstone e melhorias — com o livro de receitas `futuretech:sawing` em `src/main/recipes/sawmill.json`. Qualquer tronco, madeira ou tronco descascado (`#minecraft:<madeira>_logs`, `#minecraft:crimson_stems`, `#minecraft:warped_stems`) rende **8 tábuas**, o dobro da bancada; um bloco de bambu rende 4 tábuas de bambu e uma tábua (`#minecraft:planks`) rende **4 gravetos**. Receita: lingotes de ferro nos cantos, um machado de ferro no topo, cobre dos lados, carcaça no meio e redstone embaixo.
-
-No código, Triturador e Serraria são um `LaneMachineBlock`/`LaneMachineBlockEntity`/`LaneMachineMenu`/`LaneMachineScreen` só, e `LaneMachineKind` (`CRUSHER`, `SAWMILL`) escolhe o livro de receitas, o bloco, o nome, as partículas (faíscas ou serragem) e o indicador da tela (rolos ou disco de serra). As receitas dos dois são `LaneMachineRecipe`, registradas em dois tipos. `python tools/generate_sawmill.py` desenha a frente (o disco girando com dentes ciano e serragem sobre um tronco, na moldura do Triturador) e gera modelos, blockstate, loot, receita e nomes.
-
-A arte e seus exportadores ficam em `art/crusher/`; a textura estática é `assets/futuretech/textures/block/crusher/crusher_front.png`. Durante o processamento, `crusher_front_on.png` mostra os rolos girando em sentidos opostos e o visor ciano pulsante, em dez quadros com ciclo de um segundo. A carcaça permanece idêntica e parada. Veja `art/crusher/active-preview.html` para comparar as duas versões.
-
-## Desempenho
-
-Regras que valem para todas as máquinas e redes, pensadas para o custo por tick no servidor não crescer com o tamanho da fábrica:
-
-- **Luz com histerese.** `LIT` só apaga 20 ticks depois do último tick de trabalho (`LitHold`). Uma máquina que recebe menos energia do que gasta trabalha um tick a cada poucos; sem a espera ela ligaria e desligaria o bloco (remesh do chunk e, na Fornalha e na Fundidora, recálculo de luz) a cada poucos ticks.
-- **Redstone por evento, não por tick.** O sinal de redstone é lido quando o block entity carrega e quando um vizinho muda (`neighborChanged` → `RedstoneControl.sample`), como a fornalha vanilla. Ler as seis faces todo tick, e atrás de cada vizinho sólido mais seis, custava ~50 µs por máquina parada.
-- **`setChanged()` só marca o chunk.** O `setChanged()` do vanilla avisa comparadores a cada chamada (`updateNeighbourForOutputSignal`, ~12 leituras de bloco, ~25 µs medidos); uma máquina que muda todo tick gastava mais nisso do que no trabalho. As máquinas do mod sobrescrevem `setChanged()` para só marcar o chunk (`ComparatorNotifier.markChanged`) e avisam comparadores no fim do tick, só quando o sinal muda e no máximo a cada 4 ticks.
-- **Vizinhos em cache.** O envio de energia do gerador e da bateria (`EnergyExporter`) e a entrada/saída automática de itens (`ItemTransferUtil`) guardam um `BlockCapabilityCache` por face; nada é consultado quando não há energia para enviar.
-- **Faixa parada não mexe no livro.** Sem energia para o tick, a faixa sai antes de qualquer busca (a pausa preserva o trabalho). Enquanto o mesmo item fica na faixa, a receita já resolvida e o resultado são reaproveitados, com uma nova busca a cada 100 ticks para pegar recarga de receitas; antes, uma máquina com item dentro e sem energia refazia busca e `assemble` por faixa a cada tick, e o custo crescia com o MK.
-- **Receita sem resultado é lembrada.** Um item sem receita parado numa faixa não é procurado no livro todo tick: a faixa lembra a falha por 100 ticks (`RecipeMissMemo`), o que na Fornalha Elétrica evita varrer todas as receitas de smelting do jogo. Uma pilha maior do mesmo item é procurada de novo, porque a receita pode pedir mais de um.
-- **Assembler faz um levantamento a cada 40 ticks.** As peças e os inventários ao alcance são listados uma vez por levantamento, com cache de capability por face; colocar ou quebrar uma peça do Assembler por perto refaz o levantamento na hora, e um baú novo entra no próximo. O livro de receitas de montagem é montado uma vez por recarga de receitas, não a cada consulta.
-- **Monitor do Terminal só recalcula quando algo mudou.** Cada peça do Assembler, ao mudar de estado (`changed()`), marca os Terminais ao alcance; o monitor recalcula só quando marcado, quando a energia cruza o mínimo de trabalho ou a cada 100 ticks. Medido: recalcular a cada 5 ticks custava ~60 µs por vez — código que roda 4× por segundo fica sem compilação JIT por dezenas de minutos e executa interpretado, então a saída é rodar menos, não rodar mais rápido.
-- **Rede de energia não abre transação à toa.** Um conector em Extrair só bombeia se a fonte tem energia e a rede tem para onde entregar (medido: bombear zero custava 15–25 µs por tick em transações); o de fluido só bombeia de tanque com algo dentro. Máquinas cheias são puladas antes de qualquer transação, e um fio de energia (menos de 20 FE por destino) vai inteiro para um destino por vez, em rodízio entre ticks, em vez de abrir uma transação por máquina para entregar 1 FE a cada uma. O custo da distribuição aparece no primeiro cabo da rede que tica.
-- **Entrega em inventário vanilla sem transação.** Medido: um item entrando num baú pela API de transferência do NeoForge custava 60–230 µs (snapshots e cópias sobre 27 slots). Baú, barril, funil e as máquinas do mod recebem pelo caminho do funil vanilla (`HopperBlockEntity.addItem`, um `setChanged` no fim), e o espaço é lido direto do `Container`; blocos que só oferecem handler (outros mods) seguem pela API.
-- **Rede de itens não pergunta duas vezes.** Um conector que recusou um recurso num tick não é consultado de novo por outros itens do mesmo recurso nesse tick; com centenas de itens esperando em baús cheios, cada baú é sondado uma vez por tick em vez de uma vez por item.
-- **Rede de fluido pula tanque cheio e cochila travada.** Antes de qualquer transação, um destino sem espaço para o fluido é descartado; uma linha cujo fluido ninguém pegou só tenta de novo a cada 5 ticks; uma parcela não fica abaixo de 50 mB. O tanque só tenta encher/esvaziar o balde do slot quando o slot ou o fluido mudou (e a cada 20 ticks), em vez de montar handler e transação todo tick para um balde que não dá para processar.
-- **Tanque manda o nível a cada 5 ticks** enquanto enche, e avisa comparadores só quando o sinal muda; trocar de fluido, esvaziar ou encher é enviado na hora. Rede de energia sem carga e sem bomba não aloca nada no tick.
-
-### Medir dentro do mundo
-
-`/futuretech perf` (nível de operador) liga e desliga o medidor de tick do mod. Ligado, cada bloco do FUTURETECH num raio de 32 blocos ganha um rótulo flutuante com o nome e o custo médio do seu tick em microssegundos — verde abaixo de 50 µs, amarelo até 200 µs, vermelho acima — e o canto superior direito mostra o total da dimensão, quantos blocos estão sendo medidos e a fração do tick de 50 ms que isso representa. O servidor embrulha o ticker de cada block entity (`TickProfiler.wrap`) e manda aos jogadores, a cada 10 ticks, o que mediu perto deles; desligado, o embrulho custa uma leitura de boolean. O primeiro bloco de cada tipo a ticar marca alguns µs a mais que os iguais a ele (medido: 3 µs contra 0,5 µs em Trituradores idênticos): é o cache da CPU frio depois do resto do tick, pago uma vez por tipo, não por bloco. Saltos isolados (um bloco que passa segundos em 40–100 µs e volta) são pausas da JVM — coleta de lixo, JIT — caindo no bloco que estava executando, não custo do mod; a média reage devagar de propósito para não amplificá-los. O que um bloco mede é o que ele faz no próprio tick: uma máquina que empurra energia ou itens paga pelo empurrão, e o tick de uma rede de cabos cai no primeiro cabo da rede que ticar.
-
-## Configuração de lados
-
-Toda máquina tem, na lateral direita da interface, a aba **Configuração** (ícone de cubo desdobrado). Ela mostra as seis faces do bloco com as texturas reais, a frente no meio, e os lados nomeados como quem olha de frente para a máquina.
-
-O modo de uma face **sempre** decide os itens. Se ele também decide a energia depende da máquina:
-
-| | itens | energia |
-|---|---|---|
-| **Máquinas** (fornalha) | o modo decide | livre — recebe por qualquer face, não precisa configurar |
-| **Gerador** | Entrada aceita combustível | livre — envia por qualquer face, mesmo em Nenhum |
-| **Bateria** | o modo decide (quando tiver slot) | **o modo decide** — Entrada carrega, Saída descarrega |
-
-A ideia é não fazer o jogador configurar energia à toa: uma máquina liga em qualquer lado e um gerador alimenta o que estiver encostado. Na bateria é o contrário, porque escolher por onde a energia entra e sai é a função dela; uma face em Nenhum não carrega nem descarrega.
-
-- Clique esquerdo numa face avança o modo: Entrada → Saída → Ambos → Nenhum; clique direito percorre a ordem inversa. Os dois pulam os modos que a máquina não permite.
-- Shift + clique esquerdo na frente põe todas as faces em Nenhum.
-- Faces em Nenhum não oferecem a capability de itens ao vizinho e somem para os funis.
-- A configuração é salva com o bloco.
-
-Modos por máquina:
-
-| máquina | modos | por quê |
-|---|---|---|
-| Gerador | Entrada, Nenhum | só tem slot de combustível, e não produz item de resultado |
-| Bateria | Entrada, Saída, Nenhum | direção da energia; nunca Ambos, para não devolver energia a si mesma |
-| Fornalha | Entrada, Saída, Ambos, Nenhum | ingrediente entra, resultado sai, ou os dois na mesma face |
-
-- Faces configuradas usam a textura do modo, no mundo e na aba: **Entrada** com detalhes azuis (`machine_side_input`), **Saída** com detalhes laranja (`machine_side_output`) e **Ambos** combinando as duas cores (`machine_side_input_output`). Faces em Nenhum mantêm a lateral normal. Vale também para a frente, se ela for configurada.
-- A aparência é sincronizada para os jogadores próximos e restaurada ao carregar o mundo.
-
-### Transporte automático
-
-Máquinas com inventário ganham dois botões na lateral esquerda da aba, desenhados nas mesmas cores dos modos:
-
-- **Seta azul para baixo — Puxar itens.** A máquina tira itens por conta própria de qualquer baú, máquina ou tubo encostado numa face configurada como **Entrada**.
-- **Seta laranja para cima — Empurrar itens.** A máquina entrega o resultado a qualquer baú, máquina ou tubo encostado numa face configurada como **Saída**.
-
-Os dois começam **desligados**, então uma máquina recém-colocada nunca mexe num vizinho sem você mandar. Cada um move até **16 itens a cada 4 ticks**, no total (o mesmo ritmo de 4 por tick, em rodadas), com a primeira face sorteada a cada rodada para uma vizinha ocupada não travar as outras — o mesmo rodízio que o envio de energia usa. Entre rodadas a máquina nem olha os vizinhos, e os handlers das seis faces ficam em cache (`BlockCapabilityCache`), então o transporte automático não custa consultas de capability por tick.
-
-O transporte respeita as mesmas regras de face do funil: uma face em Entrada só recebe, uma em Saída só entrega, e uma em Nenhum não faz nem uma coisa nem outra. Ligar o botão sem configurar face nenhuma não faz nada.
-
-Quais botões aparecem depende da máquina: a fornalha tem os dois, o gerador só o de puxar (ele consome combustível mas não produz item), e a bateria nenhum, por não ter inventário.
-
-Os funis seguem a configuração em vez de faces fixas: uma face em Entrada aceita item no slot de entrada, uma em Saída deixa puxar do slot de resultado, e uma em Ambos faz as duas coisas. A mesma configuração alimenta `Capabilities.Item.BLOCK`, então tubos e máquinas de outros mods enxergam exatamente o mesmo que um funil.
-
-A API fica em `dev.futuretech.api.side` e é reaproveitável por qualquer máquina nova: o bloco implementa `SideConfigurableBlock` (modos permitidos, padrões por face, estado para desenhar), o block entity implementa `SideConfigurable` e guarda um `SideConfig` (salvo/carregado e exposto em slots de dados do menu), o menu implementa `SideConfigMenu` e encaminha `clickMenuButton` para `SideConfigMenu.handleButton`, as capabilities passam por `SidedEnergy.view` e `SidedItems.view`, e a tela coloca um `SideConfigTab` no seu `TabStrip`. O construtor do `SideConfig` recebe se aquela máquina deixa a configuração governar energia. Os cliques viajam pelo pacote vanilla de botão de menu, sem rede própria.
-
-## Controle de redstone
-
-Abaixo da aba de configuração fica a aba **Redstone**, com três modos: **Ignorar** (funciona sempre), **Sinal baixo** (funciona só sem sinal) e **Sinal alto** (funciona só com sinal). A aba mostra se o bloco está recebendo sinal agora. No gerador, o sinal controla a geração (o combustível em queima fica preservado; a energia guardada continua saindo). Na bateria, controla a saída; a carga pelas faces de entrada nunca é bloqueada.
-
-## Melhorias
-
-A primeira aba, **Melhorias**, tem quatro slots para itens de upgrade. Os slots aceitam só itens da tag `futuretech:upgrades`, que inclui o Speed Upgrade, um por slot. As máquinas guardam os itens pela `UpgradeInventory` (`dev.futuretech.api.upgrade`). Os slots são slots reais do menu (Shift + clique funciona) e o conteúdo é salvo com o bloco e cai ao quebrá-lo.
-
-O **MK da máquina libera os slots**: MK1 (o padrão) abre um, MK2 dois, MK3 três e MK4 os quatro. Os slots fechados aparecem com um cadeado e não aceitam item (a bateria segue o próprio tier; o tanque, sem MK, tem um). Os efeitos dos itens de upgrade ainda não estão implementados.
-
-**Cada nível MK** acima do MK1 dá à máquina, além dos slots (e das faixas, no Triturador e na Fornalha):
-
-- **+25 % de energia armazenada** sobre a capacidade base (`MachineLevel.capacity`): 20.000 FE viram 25.000, 30.000 e 35.000;
-- **+15 % de velocidade**: o tempo de cada trabalho é dividido por `1 + 0,15 × (MK − 1)` (`MachineLevel.duration`), então 100 ticks viram 87, 77 e 69;
-- **+20 % de consumo por tick** para pagar essa velocidade (`MachineLevel.consumption`): 20 FE/t viram 24, 28 e 32.
-
-Os percentuais ficam em `MachineLevel`. O gerador ganha só a capacidade. Aplicar um kit muda a capacidade na hora, inclusive na barra e na aba de energia.
-
-Como os slots de menu têm posição fixa, a aba de melhorias é a primeira da tira, onde nenhuma aba aberta acima pode empurrá-la.
-
-A API fica em `dev.futuretech.api.redstone` (`RedstoneMode`, `RedstoneControl`, `RedstoneControllable`, `RedstoneControlMenu`, `RedstoneControlTab`) e segue o mesmo desenho da configuração de lados. As abas em si vêm de `dev.futuretech.api.gui` (`MachineTab`, `TabStrip`): uma tela cria um `TabStrip` com as abas que quiser e repassa desenho, tooltip e cliques; abas abertas empurram as de baixo.
-
-A API fica em `dev.futuretech.api.side` e é reaproveitável por qualquer máquina nova: o bloco implementa `SideConfigurableBlock` (modos permitidos, padrões por face, estado para desenhar), o block entity implementa `SideConfigurable` e guarda um `SideConfig` (salvo/carregado e exposto em slots de dados do menu), o menu implementa `SideConfigMenu` e encaminha `clickMenuButton` para `SideConfigMenu.handleButton`, a capability de energia passa por `SidedEnergy.view`, e a tela coloca um `SideConfigTab` no seu `TabStrip`. Os cliques viajam pelo pacote vanilla de botão de menu, sem rede própria.
-
-## Faixas por MK
-
-O Triturador, a Serraria e a Fornalha Elétrica têm até quatro **faixas**, cada uma um slot de entrada emparelhado com um de saída e o próprio progresso. O MK diz quantas estão abertas: MK1 uma, MK2 duas, MK3 três e MK4 quatro, então um MK4 processa quatro itens ao mesmo tempo. Cada faixa em trabalho paga o consumo por tick do nível, ou seja, quatro faixas ativas gastam quatro vezes mais; faixa parada não gasta. A interface cresce uma linha de slots por faixa extra, cada uma com a própria seta de progresso (e, com mais de uma faixa, os rolos ou a chama ao lado de cada saída). O MK viaja no pacote de abertura do menu, por isso esses dois menus usam `IMenuTypeExtension`.
-
-No inventário do bloco as entradas são os slots 0–3 e as saídas 4–7 (`SLOT_INPUT + faixa`, `SLOT_OUTPUT + faixa`); só as faixas abertas aparecem para funis, cabos e configuração de lados. Um funil ou cabo que empurra um mesmo item é distribuído entre as faixas abertas: cada item vai para a faixa que tem menos daquele item (vazias incluídas), então uma pilha se espalha e as faixas trabalham em paralelo em vez de encher a primeira. Um item diferente só entra numa faixa vazia. O progresso de cada faixa é salvo com o bloco (`Progress`, `Progress1`…) e o da faixa 0 usa as chaves antigas, então mundos anteriores continuam de onde estavam.
-
-## Bateria Portátil
-
-A **Bateria Portátil** (`futuretech:portable_battery`, 200.000 FE no MK1, não empilha) fica no inventário e carrega os outros itens que guardam energia — qualquer item com a capability de energia do NeoForge, inclusive as baterias-bloco do mod guardadas no bolso — a 500 FE por tick, do primeiro slot ao último. **Shift + clique direito** com ela na mão liga e desliga; ligada, ela brilha como um item encantado (é o `ENCHANTMENT_GLINT_OVERRIDE` vanilla, sem renderer próprio) e mostra "ligada" na tooltip. **Clique direito num bloco com energia** (bateria, máquina) enche a bateria a partir dele, de uma vez. A carga fica no componente `futuretech:energy`, o interruptor em `futuretech:active`. Receita: cobre em cima, chapas de ferro dos lados e dois blocos de redstone no meio.
-
-Há quatro níveis, `PortableBatteryItem.Tier`: MK1 200.000 FE a 500 FE/t, MK2 400.000 a 1.000, MK3 800.000 a 2.000 e MK4 1.600.000 a 4.000 (`portable_battery_mk2..4`). Sobe de nível **na bancada**: a bateria mais o Kit de Upgrade do próximo MK (receita `crafting_transmute`, que preserva a carga e o interruptor). Com o **Curios** instalado, a bateria entra no slot de **cinto** (`belt`, que o mod adiciona ao jogador; e em `charm`, se outro mod o tiver) e continua carregando o inventário de lá: o Curios tica o item como um inventário ticaria, e a bateria escreve a carga no próprio stack quando não se encontra entre os slots do jogador (`data/futuretech/curios/entities/player.json`, `data/curios/tags/item/{belt,charm}.json`). Os ícones levam as cores de MK das máquinas no terminal e na faixa de cima, com um pino por nível; `python tools/generate_portable_battery.py` desenha os quatro.
-
-## Tesseract
-
-O **Tesseract** (`futuretech:tesseract`) entrega o que é empurrado nele aos blocos em volta de todo outro tesseract do mesmo canal, onde quer que estejam — energia, itens e fluidos, cada um com o próprio modo (envia, recebe, ambos, nenhum). Ele não guarda nada: tem um slot sempre vazio em cada face, e o que entra é entregue na hora; nada sai dele, e nada que ele entrega vai parar noutro tesseract. A entrega roda os pares a cada tick e **oferece a cada par só o que ainda falta colocar**: houve um bug em que o segundo par recebia a quantidade inteira e só a diferença era contada — 64 itens entravam, 74 saíam — e o GameTest `tesseract_delivers_each_item_once` (um remetente, dois receptores com baú, bateria e tanque, o primeiro quase cheio) garante que itens, FE e mB saem uma vez só. A rede de teleporte atravessa o tesseract por outro caminho (os cabos de rede é que o cruzam), então não move recursos e não tinha o problema.
-
-## Teleportador Portátil
-
-O **Teleportador Portátil** (`futuretech:portable_teleporter`, 100.000 FE, carrega no Carregador) leva o jogador de onde ele estiver para qualquer pad que conheça: os salvos nele por Shift + clique num pad (até 32) e, vinculado a um Painel de Rede pelos slots de vínculo do painel, todo destino que o pad do painel alcança. Clique direito abre a lista; ele **funciona de qualquer lugar do mundo e de qualquer dimensão**: a tarifa é a de um pad MK4, mas nunca passa da tarifa de outra dimensão (12.500 FE) — um pad cobra pela distância sem teto, o portátil não, então uma carga cheia sempre paga a viagem (oito viagens para qualquer lugar). O pad de destino precisa continuar de pé; chunk descarregado não impede.
-
-## Carregador (Charger)
-
-O **Carregador** (`futuretech:charger`) enche itens que guardam energia: qualquer item com a capability de energia do NeoForge, deste mod (Bateria Portátil, bateria-bloco no bolso) ou de outros. A interface tem o slot de entrada à esquerda, a **barra de energia no meio** e o slot de saída à direita: o item fica na entrada enquanto carrega e, cheio, passa sozinho para a saída, de onde um funil ou cabo em "Extrair" só tira itens carregados. Só entra na entrada o que tem energia; a saída não aceita nada por cima. Buffer de 50.000 FE, 1.000 FE/t no MK1 (a taxa e o buffer crescem com o MK, como nas outras máquinas), com os mesmos kits, lados, redstone, transporte automático e melhorias. Receita: ferro nos cantos, Bateria MK1 em cima, cobre dos lados, carcaça no meio, redstone embaixo. `python tools/generate_charger.py` desenha a frente (a baia com a bateria enchendo e o raio no contato) e gera modelos, blockstate, loot e receita.
-
-## Tanque de fluido
-
-O **Tanque de Fluido** (`futuretech:fluid_tank`) usa a mesma armação metálica da bateria, com os seis vãos fechados por vidro. Guarda **16.000 mB (16 baldes)** de um fluido por vez. O conteúdo aparece dentro do bloco com a textura e a cor do fluido; a superfície sobe e desce suavemente conforme o tanque enche ou esvazia.
-
-Clique com um balde cheio para abastecer ou com um balde vazio para retirar. Fluidos diferentes não se misturam, e um balde só transfere se couber o volume inteiro. Clique sem balde para abrir a interface: entrada à esquerda, barra de armazenamento no centro e saída à direita. Um balde vazio na entrada retira 1.000 mB e produz um balde cheio na saída; um balde cheio deposita 1.000 mB e produz um balde vazio. A troca espera se a saída estiver bloqueada, faltar fluido ou espaço no tanque, ou o fluido não for compatível. Shift + clique move os baldes entre a interface e o inventário. Os dois slots são salvos com o mundo; seus itens caem ao quebrar o bloco. A aba **Configuração de lados** define Entrada, Saída, Ambos ou Nenhum para fluidos em cada face; tanques colocados começam com todas as faces em Nenhum; abra os lados desejados na configuração. A aba **Redstone** oferece Ignorar, Sinal baixo e Sinal alto, controlando o processamento dos baldes e as transferências externas. O uso manual de baldes diretamente no bloco continua disponível. A aba **Melhorias** tem os quatro slots padrão, salvos com o mundo e soltos ao quebrar; por enquanto os upgrades não alteram a velocidade ou a capacidade do tanque. As seis faces oferecem a capability de fluidos do NeoForge para cabos e máquinas compatíveis conforme sua configuração. Um comparador mede o nível de enchimento.
-
-O conteúdo é salvo com o mundo e acompanha o item ao quebrar o tanque com picareta de pedra ou superior. A tooltip do item mostra o fluido e a quantidade; ao recolocar, o conteúdo retorna. A receita usa quatro lingotes de ferro nos cantos, quatro blocos de vidro nas laterais e um balde vazio no centro. O tanque aparece na aba criativa FUTURETECH, ao lado da bateria. O modelo pode ser recriado por `art/fluid_tank/export_tank.py`.
-
-A **Wrench** (`futuretech:wrench`) é um item 3D com boca aberta, cabeça de aço, parafuso central e cabo escuro com detalhes ciano. Aparece na aba FUTURETECH e tem posições próprias na mão, no inventário e na moldura. A receita usa três lingotes de ferro e um de cobre. Clique direito em um bloco gira ele: blocos com `FACING` percorrem norte → leste → sul → oeste → cima → baixo (as máquinas do mod só as quatro horizontais), blocos com eixo ciclam X → Y → Z e o resto usa a rotação própria do bloco. Em um cabo a chave não gira nada: clique direito no braço (ou no colar) corta a ligação daquele lado — o braço some, a rede se divide e nada mais passa por ali — e um novo clique no mesmo lugar refaz a ligação; o corte fica gravado nos dois cabos, então dá para refazer por qualquer um dos lados, e vale também para a ligação com uma máquina. Shift + clique direito em um bloco do FutureTech desmonta ele pelo caminho normal de drop, então o tanque cai com o fluido e a bateria com a carga. O modelo usa os materiais existentes do filtro e pode ser recriado com `art/wrench/export_model.py`.
-
-## Assembler
-
-O Assembler usa quatro blocos separados: **Mesa de montagem**, **Braço de transporte**, **Braço de montagem** e **Terminal do Assembler**. Todos aparecem na aba FUTURETECH e têm receitas de fabricação com materiais vanilla, para não depender da primeira carcaça.
-
-Monte a célula livremente, com cada braço a até **3 blocos** de distância da mesa e do inventário que ele atende. A distância é medida entre os centros dos blocos; a busca inclui diferenças de altura e escolhe o alvo compatível mais próximo. O terminal precisa estar a até 3 blocos da mesa. Um arranjo inicial, visto de cima, é:
-
-```text
-                        Terminal
-                           ·
-Baú entrada · Braço azul · Mesa · Braço laranja · Baú saída
-                           ·
-                    Braço de montagem
-```
-
-Cada `·` representa um espaço vazio. Os braços detectam os blocos automaticamente, sem precisar de ligações manuais. Clique com a **Wrench** no braço de transporte parado para alternar entre **entrada azul** e **saída laranja**. O braço de montagem usa uma ferramenta giratória própria. Shift + Wrench desmonta qualquer uma das peças; os materiais guardados na peça caem para recuperação.
-
-Abra o terminal e use as setas para selecionar **Carcaça de máquina**: **1 pedra (`minecraft:stone`) + 1 lingote de ferro → 1 carcaça (`futuretech:machine_casing`)**. Os ícones esmaecidos mostram os materiais esperados. Coloque os ingredientes no baú de entrada. O braço azul leva um item por viagem até a mesa; o braço de montagem se aproxima, trabalha por 4 segundos e recua; só então o braço laranja recolhe o resultado e o leva ao baú de saída. A interface mostra o progresso, o estado e as quatro conexões.
-
-**Travar receitas para automatizar**: o botão com o cadeado, embaixo da seta `>`, trava a receita que está na tela (verde = travada; clique de novo para destravar), e dá para travar várias. Com qualquer receita travada a mesa passa a escolher sozinha: sempre que fica vazia, o braço de entrada olha o que os baús ao alcance têm e a mesa toma a próxima receita travada que eles conseguem suprir por inteiro (contando as quantidades — dois ferros pedem dois ferros, e um baú visto por várias faces conta uma vez), em rodízio, para duas receitas supridas se revezarem. Em qualquer modo o braço só começa a levar itens quando os baús têm a receita completa (contadas as quantidades); com metade dos ingredientes ele não pega nada, então nunca fica uma mesa meio cheia esperando. As setas continuam funcionando; sem nenhuma receita travada tudo segue manual. As travas são salvas com a mesa; a linha "Automático: N receita(s) travada(s)" aparece sob o nome da receita.
-
-O resultado aguarda na mesa se o baú estiver cheio. Se o destino ficar indisponível durante o transporte, o braço mantém o item e tenta novamente. Cada peça salva seus itens e o estágio do movimento; os testes cobrem retomadas antes e depois da fabricação. A troca de receita exige a mesa vazia e os braços parados. É possível retirar materiais pela interface quando a mesa está livre. A energia entra somente pelo controller (Terminal do Assembler), em qualquer face: capacidade de 32.000 FE e entrada máxima de 200 FE por tick. Cada braço consome 20 FE por tick de movimento ou montagem; parado ou bloqueado não consome. Sem energia, os movimentos e a montagem pausam, preservando os itens, e continuam quando a energia retorna. A GUI do controller mostra a barra vertical com o mesmo degradê animado das máquinas e a quantidade de FE ao passar o mouse. A energia armazenada é salva com o mundo.
-
-As receitas próprias ficam em `src/main/recipes/assembler.json` (veja [Receitas das máquinas](#receitas-das-máquinas)), com tipo `futuretech:assembling`, de 1 a 9 posições na grade 3×3 (um item por posição, ou `""` para deixar a posição vazia e manter a forma que a receita tinha na bancada — as bobinas ficam na diagonal, o molde de chapa no quadrado 2×2), resultado e duração em ticks. Numa posição vazia nada pode ser posto. Modelos e dados podem ser regenerados com `python tools/generate_assembler.py`.
-
-## Receitas das máquinas
-
-Cada máquina com receitas próprias tem **um único arquivo** em `src/main/recipes/`: `crusher.json` (tipo `futuretech:crushing`), `sawmill.json` (tipo `futuretech:sawing`), `metal_press.json` (tipo `futuretech:pressing`), `smeltery.json` (tipo `futuretech:alloying`) e `assembler.json` (tipo `futuretech:assembling`). O arquivo traz o `type` uma vez e um mapa `recipes` em que a chave é o nome da receita e o valor é o corpo dela, sem o `type`:
-
-```json
-{
-  "type": "futuretech:crushing",
-  "recipes": {
-    "cobblestone": { "ingredient": "minecraft:cobblestone", "result": { "id": "minecraft:gravel", "count": 1 } }
-  }
-}
-```
-
-O jogo só carrega uma receita por JSON, então a tarefa `expandMachineRecipes` do Gradle (que roda em todo `build`/`runClient`) gera `data/futuretech/recipe/<tipo>/<nome>.json` em `build/generated/recipes` a partir desses arquivos. Para adicionar uma receita, basta acrescentar uma entrada no arquivo da máquina; não crie arquivos soltos em `data/futuretech/recipe/crushing` ou `assembling`. As receitas de crafting das mesas vanilla continuam uma por arquivo em `src/main/resources/data/futuretech/recipe/`.
-
-### JEI
-
-Com o JEI instalado, cada máquina ganha uma aba própria: Triturador, Serraria, Metal Press (com o molde de chapa ou engrenagem ao lado da entrada), Fundidora (duas entradas com quantidade, sem ordem) e Mesa de montagem (grade de até nove ingredientes). A linha de baixo mostra o tempo em MK1 e a energia total daquela receita. Clicar na Fornalha Elétrica abre as receitas de fornalha vanilla e no Gerador a Combustível Sólido a lista de combustíveis.
-
-Desde a 1.21.2 o cliente não recebe as receitas do servidor; `ModRecipes.syncToClients` envia os quatro tipos de receita de máquina no `OnDatapackSyncEvent` (funciona em servidor dedicado também) e `SyncedRecipes` guarda o que chegou no cliente para o plugin `FutureTechJeiPlugin` (`src/main/java/dev/futuretech/client/jei/`). O JEI é `compileOnly`/`localRuntime` no Gradle: o jar publicado não depende dele e o plugin só carrega quando o JEI está presente.
-
-## Desenvolvimento no Windows
-
-Abra esta pasta como projeto Gradle na IDE, usando um JDK 25.
-
-```powershell
-# Compilar e copiar automaticamente para o PrismLauncher
-.\gradlew.bat build
-
-# Iniciar uma instância de desenvolvimento do Minecraft
-.\gradlew.bat runClient
-
-# Testar geração, bateria, rede de cabos, configuração de lados, persistência e receitas
-.\gradlew.bat test
-```
-
-A primeira execução baixa o Gradle e as dependências do Minecraft/NeoForge. A instância de desenvolvimento usa a pasta `run` deste projeto.
-
-Na primeira compilação, a tarefa `initGitRepository` executa `git init` (ramo `main`) antes de `compileJava`; nas seguintes ela é pulada porque a pasta `.git` já existe. Os commits continuam manuais.
-
-No Windows, `build` copia o JAR após o empacotamento e as verificações para `C:\Users\AJG\AppData\Roaming\PrismLauncher\instances\FUTURETECH\minecraft\mods\futuretech.jar`. O nome instalado é fixo para substituir a versão anterior nas próximas compilações. O JAR com versão continua em `build/libs`.
-
-O destino pode ser alterado pela propriedade `prism_mods_dir` em `gradle.properties`. A cópia usa a tarefa `copyModToPrism` e preserva os demais mods da pasta.
-
-## Próximas etapas
-
-1. Tiers de máquina (velocidade e buffer) reaproveitando o padrão de `BatteryTier` e `EnergyCableTier`.
-
-## Origem
-
-Estrutura baseada no [MDK oficial do NeoForge para 26.2 com ModDevGradle](https://github.com/NeoForgeMDKs/MDK-26.2-ModDevGradle). A licença do modelo está em `TEMPLATE_LICENSE.txt`. O código do mod mantém a configuração inicial `All Rights Reserved`.
-
-## Metal Press
-
-A Metal Press transforma lingotes de ferro, ouro, cobre e netherita em chapas e engrenagens. O slot **Molde** da GUI aceita um **Molde de Chapa** (1 lingote → 1 chapa, 100 ticks) ou **Molde de Engrenagem** (2 lingotes → 1 engrenagem, 160 ticks). Um único molde reutilizável define o trabalho de todas as linhas; sem molde, a máquina não processa. Trocar ou remover o molde reinicia o progresso, preservando os lingotes. Cada linha consome 20 FE/t na MK1; falta de energia ou saída cheia pausa o trabalho. O molde não é consumido nem se desgasta. Molde, inventário, energia e progresso são salvos no mundo. Shift+clique em um molde o coloca no slot próprio; automação transporta apenas ingredientes e resultados. Os moldes são feitos no Assembler: o de chapa com quatro lingotes de ferro, o de engrenagem com quatro lingotes de ferro e uma engrenagem de ferro (a da bancada) que dá a forma, 60 ticks cada; não têm receita na bancada. Prensas de versões anteriores precisam receber um molde para voltar a trabalhar.
-
-Suporta configuração dos lados, entrada/saída automática, redstone e kits MK2–MK4, com uma linha de processamento por MK e os mesmos ajustes de energia, velocidade e cores das outras máquinas. A entrada automática junta lotes de dois antes de distribuir os lingotes entre linhas no modo engrenagem. A frente usa PNGs próprios de 32×32 em `textures/block/metal_press/`: `metal_press_front.png` (desligada) e `metal_press_front_on.png` (ligada, tira de quatro quadros 32×32 com o pistão descendo e subindo e indicador ciano fixo; ciclo de 16 ticks definido no `.mcmeta`). Os modelos em `models/block/metal_press/` reutilizam as laterais e quinas MK da carcaça. `tools/Generate-MetalPress.ps1` gera somente os modelos; as oito receitas são editadas diretamente em `src/main/recipes/metal_press.json`.
-## Fundidora (Smeltery)
-
-A **Fundidora** (`futuretech:smeltery`) derrete dois ingredientes numa liga: cada faixa tem **dois slots de entrada** lado a lado e um de saída, e a ordem dos dois não importa (ferro + carvão funde igual a carvão + ferro). As receitas ficam em `src/main/recipes/smeltery.json`, tipo `futuretech:alloying`, com `first` e `second` (cada um com `ingredient` e `count`, padrão 1), `result` e `duration` (padrão 200 ticks). As iniciais: **1 ferro + 2 carvões → 1 aço** (200 ticks), **1 pó de ferro + 2 carvões → 1 aço**, **1 ferro + 3 carvões vegetais → 1 aço** (240 ticks) e **4 sucatas de netherita + 4 ouros → 1 netherita** (400 ticks).
-
-- Reserva de **20.000 FE**, entrada de até **200 FE/t** e consumo de **30 FE/t** por faixa ativa na MK1: 6.000 FE por lingote de aço. Falta de energia ou saída cheia pausa e preserva o progresso; trocar um dos ingredientes reinicia a faixa. Ao concluir, cada slot paga a quantidade da parte que ele acabou sendo.
-- Segue o esquema de faixas por MK (uma por nível), kits MK2–MK4, configuração de lados, entrada/saída automática, redstone e melhorias, como o Triturador e a Prensa. No inventário do bloco as primeiras entradas são os slots 0–3, as segundas 4–7 e as saídas 8–11.
-- Um funil ou cabo que empurra um item vai para o slot que já tem menos daquele item; se nenhum tem, para um slot vazio cuja dupla já está preenchida, completando o par; senão, para a primeira entrada livre. Shift+clique na GUI segue a mesma regra, então dois shift+cliques formam um par na faixa 1 em vez de espalhar por duas faixas.
-- Ligada, emite luz 13, solta faíscas e um pouco de fumaça pela frente. Um comparador mede a reserva de energia.
-
-A GUI é a do Triturador com um segundo slot de entrada: energia à esquerda, os dois ingredientes juntos, seta ciano de progresso e o lingote à direita; sob os ingredientes, um cadinho fica cinza parado e laranja com o metal fervendo enquanto trabalha. A frente usa PNGs de 32×32 em `textures/block/smeltery/`: `smeltery_front.png` (desligada: cadinho com escória escura e indicador apagado) e `smeltery_front_on.png` (tira de oito quadros com o metal derretido ondulando e borbulhando, dutos de alimentação aquecidos e indicador laranja; 3 ticks por quadro no `.mcmeta`). As duas são desenhadas por `art/smeltery/Generate-Front.py` (Python + Pillow) sobre a `machine_side` compartilhada, e os modelos em `models/block/smeltery/` reutilizam as laterais e as quinas MK da carcaça, como na Prensa.
-
-A fabricação segue o padrão das outras máquinas, com um alto-forno no topo:
-
-```text
-Ferro     Alto-forno  Ferro
-Cobre     Carcaça     Cobre
-Ferro     Redstone    Ferro
-```
-
-## Estanho, chumbo e prata
-
-Três minérios novos, em pedra e em ardósia, com bloco, bruto, lingote, pó, placa e engrenagem; toda textura é a do ferro recolorida por `python -B tools/generate_tin_lead.py`, que também gera o worldgen. A raridade copia a do vanilla: **estanho gera como o cobre** (16 veios de 10 por chunk, de Y −16 a Y 112, pico em Y 48), **chumbo como o ferro** (10 veios de Y −24 a Y 56, 90 de Y 80 a Y 384 nas montanhas e 10 veios pequenos de Y −64 a Y 72) e **prata como o ouro** (4 veios de Y −64 a Y 32, mais um enterrado a cada dois chunks de Y −64 a Y −48). Cada banda é uma `placed_feature` própria, como o vanilla faz. A tooltip do minério (e da versão de ardósia) diz em que alturas ele gera; o texto sai do mesmo script, das mesmas alturas.
-
-## Ligas: Vermelha e do End
-
-Dois lingotes que só existem como lingote, fundidos na Fundidora em 200 ticks: a **Liga Vermelha** (`futuretech:red_alloy_ingot`, 1 ferro + 2 redstone) e a **Liga do End** (`futuretech:ender_alloy_ingot`, 1 ouro + 2 pérolas do Ender). A Liga Vermelha é o condutor do Cabo de Redstone; a Liga do End entra no Tesseract (no lugar da pérola do centro) e no Teleportador (no lugar das duas pérolas de cima). Tags `c:ingots/red_alloy` e `c:ingots/ender_alloy`. As texturas são o lingote de ferro do vanilla recolorido, como as do estanho e da prata; `python -B tools/generate_alloy_ingots.py` regenera texturas, modelos, tags, as receitas da fundidora e as três receitas que os usam.
-
-## Aço
-
-O lingote de aço (`futuretech:steel_ingot`) é produzido na Fundidora (1 ferro ou 1 pó de ferro + 2 carvões, ou 1 ferro + 3 carvões vegetais). A Metal Press aceita aço com os moldes existentes: 1 lingote produz 1 chapa de aço; 2 lingotes produzem 1 engrenagem de aço. Toda engrenagem (ferro, ouro, cobre, netherite, aço, estanho, chumbo e prata) também sai da bancada: quatro lingotes do metal em cruz e um lingote de ferro no meio. As receitas ficam no arquivo único `src/main/recipes/metal_press.json`. Os itens integram as tags `c:ingots/steel`, `c:plates/steel` e `c:gears/steel`.
-
-## Compatibilidade com outros mods
-
-Os cabos se ligam a qualquer bloco que exponha as capabilities padrão do NeoForge na face tocada (`Capabilities.Energy.BLOCK`, `Capabilities.Item.BLOCK`, `Capabilities.Fluid.BLOCK`), e as máquinas do mod expõem as suas do mesmo jeito. Ou seja, máquinas, baús, tanques e geradores de outros mods NeoForge funcionam nas pontas dos cabos, e cabos de outros mods funcionam nas máquinas daqui, sem nada específico por mod.
-
-Os pós estão nas tags `c:dusts/iron`, `c:dusts/gold`, `c:dusts/copper` (e `c:dusts`); aço, chapas e engrenagens em `c:ingots/steel`, `c:plates/<metal>` e `c:gears/<metal>`. Receitas de outros mods que pedem essas tags aceitam os itens daqui. No sentido inverso, as receitas das máquinas usam as tags comuns como entrada: o Triturador mói `#c:ingots/<metal>`, `#c:raw_materials/<metal>` e `#c:ores/<metal>` (o bloco de minério, com Toque Suave, rende 2 pós), a Metal Press prensa `#c:ingots/<metal>` (inclusive `#c:ingots/steel` de outro mod), a Fundidora aceita `#c:ingots/iron` e `#c:dusts/iron`, e a fornalha funde qualquer `#c:dusts/<metal>` no lingote vanilla.
-
-## Martelos, Escavadoras e Machados Lenhadores
-
-Os martelos, as escavadoras e os machados lenhadores de **madeira, pedra, cobre, ferro, ouro, diamante e netherita** aparecem na aba FUTURETECH. Martelo e escavadora quebram uma camada 3×3 centrada no bloco atingido, conforme a face: parede, chão ou teto. O martelo alcança blocos de picareta (pedra, minérios); a escavadora, blocos de pá (terra, areia, cascalho, neve). O machado lenhador derruba a árvore inteira a partir de qualquer tronco: todos os troncos **do mesmo tipo** conectados (inclusive na diagonal, para galhos e árvores grandes), até 128 blocos; tábuas, troncos descascados e uma bétula encostada no carvalho ficam de fora. **Segure Shift** para quebrar apenas um bloco. Funcionam também no criativo. Com o botão direito, o machado lenhador descasca troncos, raspa e desencera cobre, e a escavadora faz caminhos de terra e apaga fogueiras, como as ferramentas vanilla (o `useOn` é delegado ao machado/pá de ferro, que cobra o desgaste da ferramenta em mão). Os três são o mesmo `AreaToolItem`; um `Kind` define a tag de blocos, o alcance (`Reach.PLANE` ou `Reach.TREE`), as `ItemAbilities` e a ferramenta vanilla delegada.
-
-Ao mirar com uma dessas ferramentas, o contorno mostra os blocos que vão junto: a área 3×3 ou a árvore inteira. Durante a mineração, todos recebem as rachaduras no mesmo estágio do bloco central. Soltar o ataque, trocar de ferramenta ou segurar Shift remove a animação adicional; a seleção respeita o material e a dureza dos blocos. Os modelos têm bordas iluminadas, sombras na parte inferior da cabeça, detalhes de superfície e veios no cabo, mantendo as paletas das picaretas (martelo), das pás (escavadora) e dos machados (lenhador).
-
-Cada material usa a velocidade, durabilidade, reparo e nível de mineração da picareta (martelo), da pá (escavadora) ou do machado (lenhador) equivalente; todos batem mais forte e mais devagar que a ferramenta vanilla. Cada bloco quebrado consome um uso, com os efeitos normais de Inquebrável; a área para quando a ferramenta quebra. Fortuna, Toque Suave, Eficiência e Remendo são compatíveis. A netherita resiste ao fogo. A quebra adicional respeita proteções e drops normais, alcança apenas blocos compatíveis com a ferramenta e o material e ignora vizinhos com dureza superior a três vezes a do bloco central.
-
-Na bancada, o martelo usa **cinco materiais**, o machado lenhador **quatro** e a escavadora **três**, sempre com dois gravetos (tábuas para madeira; materiais de ferramenta de pedra para pedra; lingotes de cobre/ferro/ouro ou diamantes):
-
-```text
-Martelo                       Escavadora                    Machado Lenhador
-Material Material Material             Material             Material Material Material
-Material Graveto  Material    Material Graveto  Material    Material Graveto
-         Graveto                       Graveto                       Graveto
-```
-
-Os de netherita são uma melhoria da versão de diamante na mesa de ferraria, com um molde de melhoria de netherita e um lingote de netherita. Os modelos 3D reutilizam diretamente as cores das texturas das picaretas, pás e machados vanilla, acompanhando também resource packs. `python tools/generate_area_tools.py` regenera modelos, receitas, desbloqueios, tags e nomes.
-
-O teste `AreaToolItemTest` valida materiais e carregamento das receitas das três ferramentas. `./gradlew.bat runGameTestServer` executa os testes de mineração em um mundo separado em `build/gametest-run`, cobrindo as três orientações, Shift, criativo, desgaste, proteção, limites do material, a separação entre blocos de picareta e de pá, a derrubada de uma árvore com galho, o limite de troncos e o botão direito (descascar, caminho). O código em `src/gameTest` só é usado no desenvolvimento e não entra no JAR distribuído.
-
-
-## Gerador Solar
-
-O **Gerador Solar** (`futuretech:solar_generator`) gera energia sem combustível quando seu painel tem acesso ao céu. O rendimento acompanha a altura do sol: o pico reforçado ocorre ao meio-dia, diminui gradualmente com o quadrado da altura solar perto do amanhecer/entardecer e é zero à noite. Qualquer bloco acima do painel, inclusive vidro, folhas e lajes, interrompe a produção; dimensões sem iluminação celeste também não geram. Chuva reduz o pico pela metade; tempestade completa reduz para 20%.
-
-| Nível | Pico em céu limpo | Reserva |
-| --- | --- | --- |
-| MK1 | 40 FE/t | 20.000 FE |
-| MK2 | 60 FE/t | 30.000 FE |
-| MK3 | 80 FE/t | 40.000 FE |
-| MK4 | 120 FE/t | 60.000 FE |
-
-Use os kits MK2–MK4 em sequência com Shift + botão direito. A energia armazenada é mantida na melhoria. O solar não tem slots de combustível nem de melhorias avulsas.
-
-**Todas as faces começam fechadas**, como nas outras máquinas: abra a que quiser na aba de lados (Saída ou Nenhum) e coloque um cabo de energia ou consumidor ali. O limite de saída é 200 FE/t compartilhado por todas as faces, sem aceitar energia externa. A energia já guardada continua saindo à noite ou com a geração pausada por redstone. Um comparador mede a reserva. Energia, lados e controle de redstone são salvos no mundo; ao quebrar o bloco, o item mantém o MK, mas não a carga, como os outros geradores.
-
-A interface mostra energia, geração atual, porcentagem de luz solar e o motivo de parada. O modelo tem base metálica, suporte central e painel azul com células fotovoltaicas; o símbolo de sol da frente acende durante a produção. A configuração de saídas preserva a textura das células. O painel acompanha o sol com inclinação visual limitada a 30° e articulação sob as células, mantendo todo o movimento dentro do bloco. Moldura, verso, suporte e tampa usam materiais próprios; as quinas amarelas/vermelhas/ciano acompanham o MK.
-
-Receita na bancada:
-
-```text
-Vidro   Vidro                 Vidro
-Lápis   Carcaça de máquina    Lápis
-Cobre   Bobina de Recepção    Cobre
-```
-
-`python -B tools/generate_solar_generator.py` regenera os recursos. `SolarGeneratorTest` cobre produção, clima, redstone, limites, kits, salvamento e receita. O GameTest `solar_generator_sky_and_cable` cobre céu aberto, cobertura, noite, sinal de redstone e uma bateria alimentada por cabo em um mundo separado.
-
-
-## Gerador Eólico
-
-O **Gerador Eólico** (`futuretech:wind_generator`) usa uma torre clara de cinco blocos de altura e uma hélice animada de três pás afuniladas. O formato segue a referência visual do [gerador do Mekanism](https://wiki.aidancbrady.com/wiki/Wind_Turbine), com texturas próprias do FUTURETECH e detalhes MK2 amarelos, MK3 vermelhos e MK4 ciano.
-
-Um único item coloca a estrutura completa, reservando somente uma coluna de 1 × 5 × 1 blocos. As pás são visuais e não têm hitboxes nem reservam os espaços laterais, permitindo geradores lado a lado. A colisão e a seleção acompanham a base, a haste e o motor. As antigas células invisíveis laterais são removidas automaticamente ao carregar os geradores, sem perder energia ou upgrades. Clique na torre para abrir a interface; a chave e os kits também reconhecem a torre. Quebrar uma parte remove a estrutura inteira e entrega um único gerador, preservando o MK. Pistões não movem a estrutura.
-
-A geração funciona igualmente de dia e de noite. O rendimento depende da altura do motor (três blocos acima da base): 25% em Y64 ou menos, crescendo até 100% em Y192. Obstáculos nos quatro eixos horizontais, até quatro blocos do motor, reduzem a eficiência. Cobertura acima da torre ou um bloco nos dois espaços à frente do motor interrompe a geração. A avaliação é atualizada uma vez por segundo, sem carregar chunks vizinhos.
-
-| Nível | Pico | Reserva |
-|---|---:|---:|
-| MK1 | 24 FE/t | 20.000 FE |
-| MK2 | 36 FE/t | 30.000 FE |
-| MK3 | 48 FE/t | 40.000 FE |
-| MK4 | 72 FE/t | 60.000 FE |
-
-Todas as faces da base começam fechadas; abra as saídas que quiser na aba de lados. O limite de exportação é 200 FE/t compartilhado. Redstone pode pausar a geração, mas a energia armazenada continua disponível. A interface informa energia, produção, vento e motivo de parada.
-
-Receita: ` I ` / `IRI` / `CMC`, com I = lingote de ferro, R = bobina de recepção, C = lingote de cobre e M = carcaça de máquina. `python -B tools/generate_wind_generator.py` regenera texturas, modelos, receita, traduções e registros de recursos.
-
-
-## Vapor: Boiler e Turbina a Vapor
-
-O vapor é um circuito de duas máquinas. O **Boiler** (`futuretech:boiler`) aquece água e produz **Vapor** (`futuretech:steam`, fluido próprio que passa por cabos e tanques de fluido); a **Turbina a Vapor** (`futuretech:steam_turbine`) consome o vapor e gera energia. O boiler não tem saída elétrica; a turbina não aceita água nem outro fluido.
-
-O boiler tem um tanque de água (8.000 mB), um tanque de vapor (16.000 mB), um slot de combustível e o par de slots de balde (entra balde de água, sai balde vazio). Cada mB de água vira 10 mB de vapor e custa **uma unidade de calor** no MK1; um carvão vale 1.600 unidades, como na fornalha. O boiler pausa sem água, sem calor, com o tanque de vapor cheio ou por redstone, e não gasta combustível parado. O vapor sai pelas faces de saída (1.000 mB a cada 4 ticks) e um comparador mede o tanque de vapor.
-
-| Nível | Água → vapor | Calor por mB de água | Turbina |
-| --- | --- | --- | --- |
-| MK1 | 6 → 60 mB/t | 100 % | 200 FE/t (20 mB/t) |
-| MK2 | 9 → 90 mB/t | 90 % | 300 FE/t (30 mB/t) |
-| MK3 | 12 → 120 mB/t | 80 % | 400 FE/t (40 mB/t) |
-| MK4 | 18 → 180 mB/t | 70 % | 600 FE/t (60 mB/t) |
-
-Um boiler abastece **três turbinas** do mesmo nível. Cada MK acelera as duas máquinas e ainda **barateia o calor**: a coluna do meio é o que cada mB de água custa (`BoilerBlockEntity.MK_HEAT_PERCENT`), então o mesmo carvão ferve 1.600 mB no MK1 e 2.285 no MK4. A turbina devolve 10 FE por mB de vapor (`FE_PER_MB`), guarda 40.000 FE (+25 % por MK) e entrega até 1.200 FE/t; um carvão no MK1 rende 160.000 FE, dez vezes o gerador de carvão. A conta é feita em centésimos de unidade (`heatDebt`), então 70 % de 2 mB fecha certinho ao longo dos ticks.
-
-As duas máquinas têm a aba de **Melhorias** (slots liberados pelo MK, como as outras), e os itens fazem diferença:
-
-- **Speed Upgrade** (`futuretech:speed_upgrade`): a regra das outras máquinas. No boiler cada um soma **mais uma vez o vapor do nível** (MK1: 60 → 120 → 180 → 240 mB/t) e cobra **+10 % de calor por mB** por item. Na turbina cada um soma mais uma vez o vapor consumido por tick, e por isso a energia, mas devolve **−10 % de FE por mB** por item (`SPEED_LOSS_PERCENT`: 10 → 9 → 8 → 7 FE/mB). Vale nos três modos de calor.
-- **Upgrade de Eficiência** (`futuretech:efficiency_upgrade`): só no boiler, cada um tira 15 % da conta de calor, por cima do desconto do MK e do acréscimo do Speed. Um MK4 com três deles paga 38 % por mB.
-- **Upgrade de Lava** (`futuretech:lava_upgrade`, tag `upgrades/lava`): o boiler passa a aquecer com lava. O slot de combustível some da tela e no lugar dele aparece um tanque de lava (8.000 mB), que enche pelas faces de entrada ou por balde de lava clicado no bloco. Cada mB de lava compra 5 unidades de calor (`HEAT_PER_LAVA_MB`): um balde aquece 5.000 mB de água no MK1, dez vezes o que o Gerador de Lava tira dele. Receita: a do Upgrade de Eficiência com blocos de magma no lugar da redstone.
-- **Upgrade de Energia** (`futuretech:energy_upgrade`, tag `upgrades/energy`): o boiler passa a aquecer com FE. O slot de combustível dá lugar a uma coluna de energia: uma reserva de 20.000 FE (entra 2.000 FE/t) que só aparece para os cabos enquanto o upgrade está instalado, e só nas faces de entrada. Cada unidade de calor custa 300 FE (`FE_PER_HEAT`), comprada em lotes de 10. É de propósito um conversor com perda: no MK1 entram 1.800 FE/t para as três turbinas que ele abastece devolverem 600, e mesmo um MK4 com três upgrades de eficiência paga 11,55 FE por mB de vapor contra os 10 que a turbina devolve, então não há moto-contínuo. Receita: a do Upgrade de Eficiência com bobinas de recepção no lugar da redstone.
-
-Com lava e energia instalados ao mesmo tempo, a lava vale. Trocar de modo avisa os cabos vizinhos (a face passa a oferecer ou esconder o buffer de energia). Com combustível sólido, a barra debaixo do slot mostra o calor que resta no item aceso; o rótulo acima da coluna acompanha o modo (Combustível, Lava, Energia).
-
-As duas máquinas nascem com **todas as faces fechadas** para fluidos e itens; as faces do boiler governam também a energia (o buffer do Upgrade de Energia só aparece nas entradas). A **turbina entrega energia por todas as faces**, como os outros geradores: basta encostar um cabo ou uma bateria, sem configurar saída. Os modelos seguem o padrão das outras máquinas (laterais compartilhadas, quinas coloridas por MK) e só a frente muda: o boiler mostra o tambor de cobre com visor de água sobre a fornalha, cujas chamas se animam em produção; a turbina mostra as quatro pás girando atrás do aro.
-
-Receitas na bancada: Boiler = `CGC` / `CFC` / `CMC` (C = cobre, G = vidro, F = fornalha, M = carcaça de máquina); Turbina = `IRI` / `CMC` / `IRI` (I = ferro, R = bobina de transmissão). `python -B tools/generate_steam_machines.py` regenera texturas, modelos, receitas e traduções das máquinas e do vapor; `python -B tools/generate_boiler_upgrades.py` gera os dois upgrades. `SteamMachinesTest` cobre rendimento por MK, eficiência, os três modos de calor, baldes, redstone, kits e salvamento; os GameTests `water_boiler_steam_turbine_battery` (tanque → cabo → boiler → cabo → turbina → cabo → bateria, com pausas por redstone) e `boiler_lava_and_energy_upgrades` (lava por cabo de fluido e FE por cabo de energia) rodam num servidor de verdade.
-
-
-## Extrusor (Extruder)
-
-O **Extrusor** (`futuretech:extruder`, "Misturador" em pt-BR) junta dois fluidos em um item com energia: com água e lava faz pedregulho (20 ticks, sem gastar nada), pedra, andesito, diorito, granito, tufo, ardósia e ardósia bruta (40 ticks; as lisas gastam 1.000 mB de água) e obsidiana (80 ticks, um balde de cada). O jogador escolhe o produto na tela e a máquina faz aquele até ele trocar; as receitas ficam em `src/main/recipes/extruder.json` (tipo `futuretech:extruding`).
-
-O **Upgrade de Areia** (`futuretech:sand_upgrade`, tag `upgrades/sand`) instalado na aba de melhorias **troca a lista inteira**: em vez das pedras, o extrusor passa a oferecer cascalho (30 ticks, sem gastar nada), areia (40 ticks, 1.000 mB de água), areia vermelha (60 ticks, 1.000 mB de água) e areia das almas (80 ticks, um balde de cada). O botão de produto só percorre a lista ativa; tirar o upgrade devolve as pedras, começando pelo pedregulho. Uma receita nomeia o upgrade no campo `"upgrade"` (um id de tag de item) e só aparece com ele instalado; o JEI mostra o upgrade na receita como parte da estação, do jeito que mostra o molde da prensa. Receita do upgrade: a do Upgrade de Eficiência com areia no lugar da redstone; a textura sai de `python -B tools/generate_boiler_upgrades.py`. `ExtruderTest` cobre a troca de lista, o ciclo do botão e o retorno às pedras.
-
-
-## Balanceamento das receitas de bancada
-
-As receitas de bancada das máquinas foram rebalanceadas para usar o que o mod produz — engrenagens (bancada ou prensa), chapas (prensa), aço (fundidora), estanho, chips e bobinas (Assembler), ligas Vermelha e do End — em quatro degraus, e cada máquina tem um metal seu, para toda chapa e engrenagem do mod ter onde entrar: cobre nas quentes e simples, estanho nas leves, chumbo nas pesadas, ferro nas de trabalho, ouro nas que lidam com energia, prata nas de sinal e luz, aço nas de pressão, netherite nas que cruzam mundos; e as bobinas onde a energia entra (recepção), sai (transmissão) ou viaja longe (condutância). **Esta tabela é a fonte**: onde outra seção deste arquivo descrever uma receita diferente, vale esta. Os scripts de arte (`generate_*.py`, `Generate-UpgradeKits.ps1`) não escrevem mais essas receitas; elas ficam só em `data/futuretech/recipe/`.
-
-Legenda: ferro/cobre/ouro = lingote; **chapa** = `c:plates/…`; **eng.** = `c:gears/…`; **carcaça** = Carcaça de Máquina; **chip**, **bob. R/T/C** = bobina de recepção/transmissão/condutância; **liga End** = `c:ingots/ender_alloy`; **bat.** = Bateria MK1.
-
-**Degrau 0 — Assembler (só vanilla e engrenagens de bancada, antes de existir carcaça)**
-
-| Item | Linha 1 | Linha 2 | Linha 3 |
-|---|---|---|---|
-| Mesa de montagem | ferro ×3 | cobre · eng. ferro · cobre | ferro · — · ferro |
-| Braço de transporte | — · ferro · ferro | — · pistão · eng. ferro | redstone · cobre · — |
-| Braço de montagem | — · ferro · ferro | — · diamante · pistão | redstone · eng. ferro · — |
-| Terminal do Assembler | vidraça ×3 | ferro · redstone · ferro | cobre · eng. cobre · cobre |
-
-**Degrau 1 — carcaça, lingotes e engrenagens; a Metal Press vem antes das chapas**
-
-| Item | Linha 1 | Linha 2 | Linha 3 |
-|---|---|---|---|
-| Metal Press | ferro · pistão · ferro | eng. ferro · carcaça · eng. ferro | cobre · redstone · cobre |
-| Gerador a Combustível Sólido | chapa cobre ×3 | fornalha · carcaça · fornalha | eng. cobre · redstone · eng. cobre |
-| Fornalha Elétrica | chapa cobre · fornalha · chapa cobre | cobre · carcaça · cobre | eng. ferro · bob. R · eng. ferro |
-| Triturador | chapa chumbo · pistão · chapa chumbo | eng. ferro · carcaça · eng. ferro | cobre · redstone · cobre |
-| Serraria | chapa estanho · machado de ferro · chapa estanho | eng. ferro · carcaça · eng. ferro | cobre · redstone · cobre |
-| Extrusor | chapa estanho · balde de água · chapa estanho | eng. cobre · carcaça · eng. cobre | cobre · redstone · cobre |
-| Bomba d'água | chapa cobre · balde · chapa cobre | pistão · carcaça · pistão | eng. cobre · redstone · eng. cobre |
-| Bateria MK1 | chumbo · redstone · chumbo | redstone · carcaça · redstone | chumbo · bob. R · chumbo |
-| Tanque de Fluido | chumbo · vidro · chumbo | vidro · balde · vidro | chumbo · vidro · chumbo |
-
-**Degrau 2 — chapas, aço, chips e bobinas**
-
-| Item | Linha 1 | Linha 2 | Linha 3 |
-|---|---|---|---|
-| Derretedor | chapa cobre · balde de lava · chapa cobre | cobre · carcaça · cobre | eng. cobre · bob. R · eng. cobre |
-| Fundidora | chapa ferro · alto-forno · chapa ferro | cobre · carcaça · cobre | eng. ferro · redstone · eng. ferro |
-| Gerador de Lava | chapa ouro · balde · chapa ouro | fornalha · carcaça · fornalha | eng. cobre · bob. T · eng. cobre |
-| Carregador | chapa ouro · bat. · chapa ouro | cobre · carcaça · cobre | eng. ouro · bob. R · eng. ouro |
-| Boiler | chapa aço ×3 | cobre · fornalha · cobre | eng. chumbo · carcaça · eng. chumbo |
-| Turbina a Vapor | chapa aço · eng. prata · chapa aço | bob. T · carcaça · bob. T | chapa aço · redstone · chapa aço |
-| Gerador Solar | vidro ×3 | lápis · carcaça · lápis | chapa prata · bob. R · chapa prata |
-| Gerador Eólico | — · eng. aço · — | chapa estanho · bob. R · chapa estanho | cobre · carcaça · cobre |
-| Máquina de Pintura | ferro · dispensador · ferro | chapa aço · carcaça · chapa aço | eng. cobre · bob. R · eng. cobre |
-| Painel de Rede | chapa prata · ametista · chapa prata | ametista · chip · ametista | chapa prata · bob. C · chapa prata |
-| Cartões de Armazenamento | chapa ouro · ametista · chapa ouro | chip · baú · chip | chapa ouro · redstone · chapa ouro |
-| Tesseract | chapa netherite · ametista · chapa netherite | chip · liga End · chip | chapa aço · bob. C · chapa aço |
-| Speed Upgrade | ferro · ouro · ferro | redstone · açúcar · redstone | ferro · chip · ferro |
-| Kit MK2 | chapa ferro · ouro · chapa ferro | redstone · carcaça · redstone | chapa ferro · bob. R · chapa ferro |
-| Kit MK3 | chapa ouro · bloco de redstone · chapa ouro | eng. ouro · carcaça · eng. ouro | chapa ouro · bob. T · chapa ouro |
-| Kit MK4 | diamante · liga End · diamante | bob. C · carcaça · bob. C | diamante · eng. netherite · diamante |
-| Teleportador Portátil | chapa aço · liga End · chapa aço | diamante · chip · diamante | chapa prata · Bateria Portátil · chapa prata |
-
-**Cabos — chapas do metal de cada rede, e o que a rede carrega no meio (rendem 6)**
-
-| Item | Linha 1 | Linha 2 | Linha 3 |
-|---|---|---|---|
-| Cabo de Energia MK1 (×6) | chapa aço ×3 | redstone · chumbo · redstone | chapa aço ×3 |
-| Cabo de Itens (×6) | chapa estanho ×3 | vidraça · eng. ferro · vidraça | chapa estanho ×3 |
-| Cabo de Itens opaco (×6) | chapa estanho ×3 | vidro · eng. ferro · vidro | chapa estanho ×3 |
-| Cabo de Fluido (×6) | chapa chumbo ×3 | corante verde-limão · vidraça · corante verde-limão | chapa chumbo ×3 |
-| Cabo de Fluido opaco (×6) | chapa chumbo ×3 | corante verde-limão · vidro · corante verde-limão | chapa chumbo ×3 |
-| Cabo de Rede (×6) | chapa prata ×3 | ametista · chip · ametista | chapa prata ×3 |
-| Cabo de Redstone (×6) | chapa ferro ×3 | liga Vermelha ×3 | chapa ferro ×3 |
-
-**Degrau 3 — os difíceis**
-
-| Item | Linha 1 | Linha 2 | Linha 3 |
-|---|---|---|---|
-| Teleportador | liga End · chapa netherite · liga End | diamante · carcaça · diamante | bob. C · chip · bob. C |
-| Controlador de Tempo | chapa netherite · relógio · chapa netherite | bat. · carcaça · bat. | eng. netherite · Estrela do Nether · eng. netherite |
-| Controlador de Clima | chapa netherite · para-raios · chapa netherite | bat. · carcaça · bat. | eng. netherite · Estrela do Nether · eng. netherite |
-
-Os cabos MK2–MK4 continuam saindo do cabo anterior mais o kit.
-
-**Ferramentas**: martelo, escavadora e machado lenhador são montados em volta de uma **engrenagem** do próprio metal (cobre, ferro, ouro; diamante usa engrenagem de aço; netherite usa a de netherite, e a de netherite passou a ser receita de bancada, não de mesa de ferraria), com a cabeça no material vanilla da ferramenta e um graveto de cabo — madeira e pedra continuam só com gravetos. Martelo: 5 cabeças + engrenagem + graveto; escavadora: 3 + engrenagem + graveto; lenhador: 3 + engrenagem + graveto. A Wrench é ferro · — · ferro / — · eng. cobre · — / — · ferro · —. `python -B tools/generate_area_tools.py` regenera as receitas junto com os modelos.
-
-Sem mudança: filtros, sensor de chuva, Bateria Portátil, receptor/transmissor sem fio, upgrades de eficiência/lava/energia/areia, Cabo de Redstone (liga Vermelha) e a Wrench.
+A estrutura do projeto vem do [MDK oficial do NeoForge para 26.2 com ModDevGradle](https://github.com/NeoForgeMDKs/MDK-26.2-ModDevGradle); a licença do modelo está em `TEMPLATE_LICENSE.txt` e cobre apenas os arquivos-modelo.
