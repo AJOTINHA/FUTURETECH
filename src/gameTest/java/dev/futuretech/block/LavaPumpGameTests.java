@@ -63,7 +63,7 @@ public final class LavaPumpGameTests {
                     .setValue(dev.futuretech.api.upgrade.MachineLevel.MK, 4), Block.UPDATE_ALL);
             ((TickLimitedEnergyHandler) pump.get().energy()).set(pump.get().energy().getCapacityAsInt());
             check(helper, count(level, poolFrom, poolTo, Blocks.LAVA) == 9, "Nine sources to start with");
-        }).thenIdle(15).thenExecute(() -> {
+        }).thenIdle(3 * LavaPumpBlockEntity.PIPE_TICKS + 5).thenExecute(() -> {
             // Two blocks of air and one of lava: the pipe stands on the floor, not on the surface.
             check(helper, pump.get().pipe() == 3, "The pipe drops through the lava to the floor, got " + pump.get().pipe());
             check(helper, pump.get().status() == LavaPumpBlockEntity.Status.PUMPING, "And the pump is drawing");

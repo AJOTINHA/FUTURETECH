@@ -96,8 +96,8 @@ public final class LavaPumpBlockEntity extends BaseContainerBlockEntity
     public static final int SCAN_LIMIT = 8_192;
     /** How often an empty search is tried again: the pool refills, or somebody pours more in. */
     public static final int RESCAN_TICKS = 100;
-    /** Ticks per block of pipe going down, or coming back up when the floor rises. */
-    public static final int PIPE_TICKS = 3;
+    /** Ticks per block of pipe going down, or coming back up when the floor rises: two blocks a second. */
+    public static final int PIPE_TICKS = 10;
     public static final int SLOT_INPUT = 0;
     public static final int SLOT_OUTPUT = 1;
     public static final int INVENTORY_SIZE = 2;
