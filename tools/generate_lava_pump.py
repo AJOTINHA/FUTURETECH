@@ -1,9 +1,10 @@
 """Front textures, pipe, models, blockstate and item model of the lava pump.
 
 The fronts are the water pump's with the water recoloured to lava, tone for tone, so the two
-pumps read as one family: same casing, same window, same nozzle. The pipe is a 16x16 tile the
-renderer wraps round each block-long section, so its rings repeat down the length. The block
-models copy the water pump's, which already reuse the shared machine sides and MK corners.
+pumps read as one family: same casing, same window, same nozzle. The pipe follows BuildCraft's
+pump tube: a side strip four pixels wide the renderer runs down each block-long section, and a
+small end cap. The block models copy the water pump's, which already reuse the shared machine
+sides and MK corners.
 
 Run from any directory: python tools/generate_lava_pump.py
 """
@@ -25,11 +26,10 @@ RECOLOUR = {
     (0xaa, 0xd2, 0xfa): (0xff, 0xd8, 0x7a),
 }
 
-PIPE = "#3a3d43"
-PIPE_LIGHT = "#6d737b"
-PIPE_DARK = "#1f2226"
-RING = "#8b9199"
-RING_SHADE = "#4c5158"
+# The pipe, after BuildCraft's pump tube: a dark rim, a speckled grey body and a shadowed edge.
+TUBE_RIM = (0x5a, 0x5a, 0x5a, 255)
+TUBE_EDGE = (0x60, 0x60, 0x60, 255)
+TUBE_BODY = ((0x72, 0x72, 0x72, 255), (0x7c, 0x7c, 0x7c, 255), (0x83, 0x83, 0x83, 255))
 
 
 def recolour(source):
@@ -45,16 +45,18 @@ def recolour(source):
 
 
 def pipe():
-    image = Image.new("RGBA", (16, 16), PIPE)
-    draw = ImageDraw.Draw(image)
-    draw.rectangle((0, 0, 1, 15), fill=PIPE_LIGHT)
-    draw.rectangle((14, 0, 15, 15), fill=PIPE_DARK)
-    draw.line((7, 0, 7, 15), fill=PIPE_DARK)
-    # A coupling ring at the top of every section, a thinner one two thirds down.
-    draw.rectangle((0, 0, 15, 1), fill=RING)
-    draw.line((0, 2, 15, 2), fill=RING_SHADE)
-    draw.line((0, 10, 15, 10), fill=RING)
-    draw.line((0, 11, 15, 11), fill=RING_SHADE)
+    """A 16x16 sheet: the side strip in the first four columns, two half-block segments tall, and
+    the end cap in the 4x4 patch beside its foot. The renderer maps each 1:1 onto the pipe's faces."""
+    image = Image.new("RGBA", (16, 16), TUBE_RIM)
+    pixels = image.load()
+    for segment in (0, 8):
+        for y in range(1, 7):
+            for x in range(3):
+                pixels[x, segment + y] = TUBE_BODY[(x + y) % 3]
+            pixels[3, segment + y] = TUBE_EDGE
+    for y in range(13, 15):
+        for x in range(5, 7):
+            pixels[x, y] = TUBE_BODY[(x + y) % 2 * 2]
     return image
 
 

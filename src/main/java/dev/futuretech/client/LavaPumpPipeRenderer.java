@@ -78,18 +78,21 @@ public final class LavaPumpPipeRenderer implements BlockEntityRenderer<LavaPumpB
         });
     }
 
-    /** One section: four sides with the whole sprite, top and bottom with its middle. */
+    /** One section: four sides with the sprite's side strip, the foot with its end cap. */
     private static void box(PoseStack.Pose pose, VertexConsumer buffer, TextureAtlasSprite sprite, int light,
                             float x, float y, float z, float X, float Y, float Z) {
-        float u0 = sprite.getU0(), u1 = sprite.getU1(), v0 = sprite.getV0(), v1 = sprite.getV1();
-        // The side faces run the sprite top to bottom, so its rings line up section to section.
-        quad(pose, buffer, light, 0, 0, -1, X, Y, z, X, y, z, x, y, z, x, Y, z, u0, v0, u1, v1);
-        quad(pose, buffer, light, 0, 0, 1, x, Y, Z, x, y, Z, X, y, Z, X, Y, Z, u0, v0, u1, v1);
-        quad(pose, buffer, light, -1, 0, 0, x, Y, z, x, y, z, x, y, Z, x, Y, Z, u0, v0, u1, v1);
-        quad(pose, buffer, light, 1, 0, 0, X, Y, Z, X, y, Z, X, y, z, X, Y, z, u0, v0, u1, v1);
-        float vm0 = v0 + (v1 - v0) * 0.375F, vm1 = v0 + (v1 - v0) * 0.625F;
-        quad(pose, buffer, light, 0, 1, 0, x, Y, z, x, Y, Z, X, Y, Z, X, Y, z, u0, vm0, u1, vm1);
-        quad(pose, buffer, light, 0, -1, 0, x, y, Z, x, y, z, X, y, z, X, y, Z, u0, vm0, u1, vm1);
+        float u0 = sprite.getU0(), v0 = sprite.getV0();
+        float width = sprite.getU1() - u0, height = sprite.getV1() - v0;
+        // The strip is the first four columns, one block tall, so its rims line up section to section.
+        float su1 = u0 + width * 0.25F, sv1 = v0 + height;
+        quad(pose, buffer, light, 0, 0, -1, X, Y, z, X, y, z, x, y, z, x, Y, z, u0, v0, su1, sv1);
+        quad(pose, buffer, light, 0, 0, 1, x, Y, Z, x, y, Z, X, y, Z, X, Y, Z, u0, v0, su1, sv1);
+        quad(pose, buffer, light, -1, 0, 0, x, Y, z, x, y, z, x, y, Z, x, Y, Z, u0, v0, su1, sv1);
+        quad(pose, buffer, light, 1, 0, 0, X, Y, Z, X, y, Z, X, y, z, X, Y, z, u0, v0, su1, sv1);
+        // The cap is the 4x4 patch beside the strip's foot.
+        float cu0 = u0 + width * 0.25F, cu1 = u0 + width * 0.5F, cv0 = v0 + height * 0.75F, cv1 = v0 + height;
+        quad(pose, buffer, light, 0, 1, 0, x, Y, z, x, Y, Z, X, Y, Z, X, Y, z, cu0, cv0, cu1, cv1);
+        quad(pose, buffer, light, 0, -1, 0, x, y, Z, x, y, z, X, y, z, X, y, Z, cu0, cv0, cu1, cv1);
     }
 
     private static void quad(PoseStack.Pose pose, VertexConsumer buffer, int light, float nx, float ny, float nz,
