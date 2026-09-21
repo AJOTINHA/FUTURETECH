@@ -2,6 +2,10 @@
   "sources": [
     {
       "type": "single",
+      "resource": "futuretech:block/quarry/drill"
+    },
+    {
+      "type": "single",
       "resource": "futuretech:block/cable_connector/cable_connector"
     },
     {
@@ -211,6 +215,10 @@
     {
       "type": "single",
       "resource": "futuretech:block/steam"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/quarry/arm"
     }
   ]
 }

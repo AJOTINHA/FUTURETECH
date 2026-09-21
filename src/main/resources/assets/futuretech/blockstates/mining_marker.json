@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "powered=false": {
+      "model": "futuretech:block/mining_marker"
+    },
+    "powered=true": {
+      "model": "futuretech:block/mining_marker"
+    }
+  }
+}

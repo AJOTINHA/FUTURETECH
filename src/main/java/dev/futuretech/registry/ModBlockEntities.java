@@ -28,6 +28,8 @@ import dev.futuretech.block.entity.PaintMachineBlockEntity;
 import dev.futuretech.block.entity.MelterBlockEntity;
 import dev.futuretech.block.entity.ExtruderBlockEntity;
 import dev.futuretech.block.entity.SmelteryBlockEntity;
+import dev.futuretech.block.entity.QuarryBlockEntity;
+import dev.futuretech.block.entity.MiningMarkerBlockEntity;
 import dev.futuretech.block.entity.TeleporterBlockEntity;
 import dev.futuretech.block.entity.ControllerBlockEntity;
 import dev.futuretech.block.entity.RainSensorBlockEntity;
@@ -99,6 +101,11 @@ public final class ModBlockEntities {
             TYPES.register("paint_machine", () -> new BlockEntityType<>(PaintMachineBlockEntity::new, ModBlocks.PAINT_MACHINE.get()));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<WaterPumpBlockEntity>> WATER_PUMP =
             TYPES.register("water_pump", () -> new BlockEntityType<>(WaterPumpBlockEntity::new, ModBlocks.WATER_PUMP.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<QuarryBlockEntity>> QUARRY =
+            TYPES.register("quarry", () -> new BlockEntityType<>(QuarryBlockEntity::new, ModBlocks.QUARRY.get()));
+    /** The marker only holds the lines it draws to its neighbours; it has no inventory and no tick. */
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MiningMarkerBlockEntity>> MINING_MARKER =
+            TYPES.register("mining_marker", () -> new BlockEntityType<>(MiningMarkerBlockEntity::new, ModBlocks.MINING_MARKER.get()));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TeleporterBlockEntity>> TELEPORTER =
             TYPES.register("teleporter", () -> new BlockEntityType<>(TeleporterBlockEntity::new, ModBlocks.TELEPORTER.get()));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<RainSensorBlockEntity>> RAIN_SENSOR =
@@ -206,6 +213,11 @@ public final class ModBlockEntities {
                 SidedItems.view(pump, pump.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Fluid.BLOCK, WATER_PUMP.get(), (pump, side) ->
                 SidedFluids.outflow(pump.water(), pump.sideConfig(), side));
+        // A quarry takes energy on every face and only ever hands what it dug out.
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, QUARRY.get(), (quarry, side) ->
+                SidedEnergy.view(quarry.energy(), quarry.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Item.BLOCK, QUARRY.get(), (quarry, side) ->
+                SidedItems.view(quarry, quarry.sideConfig(), side));
         // The teleporter takes energy on every face and has no items to offer.
         event.registerBlockEntity(Capabilities.Energy.BLOCK, TELEPORTER.get(), (teleporter, side) -> teleporter.energy());
         // So do the controllers: they pay for a change from what any face brings in.

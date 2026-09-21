@@ -79,6 +79,8 @@ public final class FutureTechClient {
         event.registerBlockEntityRenderer(ModBlockEntities.ITEM_CABLE.get(), ItemCableRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.FLUID_CABLE.get(), FluidCableRenderer::new);
         event.registerBlockEntityRenderer(ModBlockEntities.TELEPORTER.get(), context -> new TeleporterBeamRenderer());
+        event.registerBlockEntityRenderer(ModBlockEntities.MINING_MARKER.get(), context -> new MiningMarkerRenderer());
+        event.registerBlockEntityRenderer(ModBlockEntities.QUARRY.get(), context -> new QuarryArmRenderer());
         event.registerBlockEntityRenderer(ModBlockEntities.TESSERACT.get(), context -> new TesseractRenderer());
         event.registerBlockEntityRenderer(ModBlockEntities.WIRELESS_REDSTONE.get(), context -> new WirelessRedstoneRenderer());
         event.registerBlockEntityRenderer(ModBlockEntities.SOLAR_GENERATOR.get(), context -> new SolarPanelRenderer());
@@ -105,6 +107,7 @@ public final class FutureTechClient {
         event.register(ModMenus.EXTRUDER.get(), ExtruderScreen::new);
         event.register(ModMenus.PAINT_MACHINE.get(), PaintMachineScreen::new);
         event.register(ModMenus.WATER_PUMP.get(), WaterPumpScreen::new);
+        event.register(ModMenus.QUARRY.get(), QuarryScreen::new);
         event.register(ModMenus.TELEPORTER.get(), TeleporterScreen::new);
         event.register(ModMenus.CONTROLLER.get(), ControllerScreen::new);
         event.register(ModMenus.NETWORK_PANEL.get(), NetworkPanelScreen::new);
@@ -132,6 +135,10 @@ public final class FutureTechClient {
                     textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "block/solar_generator/back_mk" + mk)),
                     textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "block/solar_generator/mast_mk" + mk)));
         }
+        // Charcoal steel with lengthwise grooves for the arm, and a fluted cutting head.
+        QuarryArmRenderer.setSprites(
+                textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "block/quarry/arm")),
+                textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "block/quarry/drill")));
         Map<SideMode, TextureAtlasSprite> sprites = new EnumMap<>(SideMode.class);
         SIDE_TEXTURES.forEach((mode, path) ->
                 sprites.put(mode, textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, path))));

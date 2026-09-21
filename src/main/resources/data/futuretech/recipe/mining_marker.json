@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "T",
+    "P",
+    "I"
+  ],
+  "key": {
+    "T": "minecraft:redstone_torch",
+    "P": "#c:plates/iron",
+    "I": "minecraft:iron_nugget"
+  },
+  "result": {
+    "id": "futuretech:mining_marker",
+    "count": 4
+  }
+}

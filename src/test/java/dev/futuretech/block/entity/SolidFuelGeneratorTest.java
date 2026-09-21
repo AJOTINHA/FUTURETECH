@@ -39,6 +39,38 @@ class SolidFuelGeneratorTest {
         generator.generateEnergy(server.fuelValues());
     }
 
+    /** A speed upgrade burns faster for less out of each fuel; efficiency is the other way. */
+    @Test
+    void speedAndEfficiencyUpgradesChangeTheRateAndWhatCoalIsWorth(MinecraftServer server) {
+        var generator = generator();
+        assertEquals(GENERATION_PER_TICK, generator.generationPerTick());
+        assertEquals(FE_PER_BURN_TICK, generator.fePerBurnTick());
+        assertEquals(400, generator.generatorTicks(1_600));
+        generator.upgrades().setItem(0, new ItemStack(dev.futuretech.registry.ModItems.SPEED_UPGRADE.get()));
+        assertEquals(2 * GENERATION_PER_TICK, generator.generationPerTick());
+        assertEquals(9, generator.fePerBurnTick());
+        // Twice the power out of a coal worth a tenth less: 180 ticks at 80 FE, 14.400 FE in all.
+        assertEquals(180, generator.generatorTicks(1_600));
+        generator.upgrades().setItem(0, new ItemStack(dev.futuretech.registry.ModItems.EFFICIENCY_UPGRADE.get()));
+        assertEquals(GENERATION_PER_TICK, generator.generationPerTick());
+        assertEquals(11, generator.fePerBurnTick());
+        assertEquals(440, generator.generatorTicks(1_600));
+    }
+
+    /** The same coal, with an efficiency upgrade in the slot, runs the generator for longer. */
+    @Test
+    void anEfficiencyUpgradeGetsMoreOutOfTheSameCoal(MinecraftServer server) {
+        var generator = generator();
+        generator.upgrades().setItem(0, new ItemStack(dev.futuretech.registry.ModItems.EFFICIENCY_UPGRADE.get()));
+        var receiver = new SimpleEnergyHandler(100_000);
+        generator.setItem(0, new ItemStack(Items.COAL));
+        for (int t = 0; t < 500; t++) {
+            tick(generator, server);
+            EnergyHandlerUtil.move(generator.energy(), receiver, OUTPUT_PER_TICK, null);
+        }
+        assertEquals(440 * GENERATION_PER_TICK, receiver.getAmountAsInt());
+    }
+
     @Test
     void coalAndCharcoalProduceExactly16000FEPerItemIn400Ticks(MinecraftServer server) {
         // Thermal Expansion's rate: 10 FE for every furnace tick of the fuel, made at 40 FE/t.
@@ -171,7 +203,7 @@ class SolidFuelGeneratorTest {
             assertEquals(fuel.ticks(), SolidFuelGeneratorBlockEntity.burnDuration(stack, server.fuelValues()), name);
             generator.setItem(0, stack);
             var receiver = new SimpleEnergyHandler(100_000);
-            int ticks = SolidFuelGeneratorBlockEntity.generatorTicks(fuel.ticks());
+            int ticks = generator.generatorTicks(fuel.ticks());
             for (int t = 0; t < ticks; t++) {
                 tick(generator, server);
                 EnergyHandlerUtil.move(generator.energy(), receiver, 80, null);

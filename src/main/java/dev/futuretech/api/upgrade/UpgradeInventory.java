@@ -102,6 +102,26 @@ public final class UpgradeInventory extends SimpleContainer {
         return Math.max(1, (int) ((long) energy * percent / 100));
     }
 
+    /**
+     * Energy a level-{@code mk} generator makes per tick when a plain MK1 makes {@code base}: the
+     * level's rate, and the level's rate again for every speed upgrade, the way the boiler and the
+     * turbine already read them.
+     */
+    public int generation(int base, int mk) {
+        return MachineLevel.consumption(base, mk) * (1 + installed(SPEED));
+    }
+
+    /**
+     * What a fuel worth {@code energy} yields with the upgrades installed: every efficiency
+     * upgrade gets {@link #EFFICIENCY_PERCENT} more out of it and every speed upgrade burns
+     * {@link #SPEED_ENERGY_PERCENT} of it away, which is {@link #cost} seen from the other side.
+     * Never below one.
+     */
+    public int yield(int energy) {
+        int percent = Math.max(0, 100 + EFFICIENCY_PERCENT * installed(EFFICIENCY) - SPEED_ENERGY_PERCENT * installed(SPEED));
+        return Math.max(1, (int) ((long) energy * percent / 100));
+    }
+
     /** What {@code energy} comes to once the installed efficiency upgrades take their share; never below one. */
     public int efficient(int energy) {
         int percent = Math.max(0, 100 - EFFICIENCY_PERCENT * installed(EFFICIENCY));

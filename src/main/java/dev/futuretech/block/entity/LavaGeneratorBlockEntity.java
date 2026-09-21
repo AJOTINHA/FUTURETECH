@@ -60,8 +60,9 @@ import org.jspecify.annotations.Nullable;
 /**
  * Burns lava from an internal tank into energy. The tank is filled by fluid cables through the
  * faces in an input mode, or by lava buckets dropped in the input slot; the emptied bucket comes
- * out of the output slot. Like the solid fuel generator it pushes energy out of every face and
- * the MK level only grows the energy buffer.
+ * out of the output slot. Like the solid fuel generator it pushes energy out of every face, and
+ * the level and the upgrades read the same way: a higher MK and every speed upgrade burn more
+ * lava a tick for proportionally more FE, while efficiency upgrades get more FE out of each mB.
  */
 public final class LavaGeneratorBlockEntity extends BaseContainerBlockEntity
         implements AutoTransferable, SideConfigurable, RedstoneControllable, Upgradeable {
@@ -115,7 +116,9 @@ public final class LavaGeneratorBlockEntity extends BaseContainerBlockEntity
     private final EnergyExporter exporter = new EnergyExporter();
     private final LitHold litHold = new LitHold();
     private final ItemTransferUtil transfer = new ItemTransferUtil();
-    private final UpgradeInventory upgrades = new UpgradeInventory(() -> MachineLevel.of(getBlockState()), this::markChanged);
+    private final UpgradeInventory upgrades = new UpgradeInventory(() -> MachineLevel.of(getBlockState()), this::upgradesChanged);
+    /** FE already bought with lava and not yet handed to the buffer; see {@link #generateEnergy}. */
+    private int credit;
     private final ContainerData data = new ContainerData() {
         @Override
         public int get(int index) {
@@ -148,7 +151,7 @@ public final class LavaGeneratorBlockEntity extends BaseContainerBlockEntity
     public LavaGeneratorBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.LAVA_GENERATOR.get(), pos, state);
         this.sides = ((SideConfigurableBlock) ModBlocks.LAVA_GENERATOR.get()).createSideConfig(state);
-        energy.setCapacity(MachineLevel.capacity(CAPACITY, MachineLevel.of(state)));
+        resize(state);
     }
 
     @Override
@@ -188,7 +191,7 @@ public final class LavaGeneratorBlockEntity extends BaseContainerBlockEntity
     @Override
     public void setBlockState(BlockState state) {
         super.setBlockState(state);
-        energy.setCapacity(MachineLevel.capacity(CAPACITY, MachineLevel.of(state)));
+        resize(state);
     }
 
     @Override
@@ -284,21 +287,59 @@ public final class LavaGeneratorBlockEntity extends BaseContainerBlockEntity
         exporter.pushToNeighbours(level, pos, energy, sides::allowsEnergyOutput);
     }
 
-    /** Burns one tick's lava into one tick's energy; waits while the buffer cannot take a whole tick. */
+    /**
+     * FE a tick at this level with the upgrades installed: the level's rate, and the level's rate
+     * again for every speed upgrade.
+     */
+    public int generationPerTick() {
+        return upgrades.generation(GENERATION_PER_TICK, MachineLevel.of(getBlockState()));
+    }
+
+    /** FE one millibucket of lava is worth, with the upgrades' take on it. */
+    public int fePerMb() { return upgrades.yield(GENERATION_PER_TICK / LAVA_PER_TICK); }
+
+    /**
+     * Burns lava into one tick's energy. A millibucket buys {@link #fePerMb} FE of credit, which
+     * the tick spends: that way any rate divides cleanly by any price, whole millibuckets at a
+     * time, and nothing is lost to rounding between ticks.
+     */
     void generateEnergy() {
         generating = false;
-        if (energy.getCapacityAsInt() - energy.getAmountAsInt() < GENERATION_PER_TICK) return;
-        int amount = lavaAmount();
-        if (amount < LAVA_PER_TICK) return;
-        // Our own tank is set directly: a transaction every tick would cost more than the burn.
-        FluidResource resource = lava.getResource(0);
-        lava.set(0, amount == LAVA_PER_TICK ? FluidResource.EMPTY : resource, amount - LAVA_PER_TICK);
-        // Burning one mB at a time, the room for a bucket opens on exactly one tick: retry it then.
-        if (TANK_CAPACITY - amount < FluidType.BUCKET_VOLUME && TANK_CAPACITY - amount + LAVA_PER_TICK >= FluidType.BUCKET_VOLUME) {
-            containerDirty = true;
+        int rate = generationPerTick();
+        if (energy.getCapacityAsInt() - energy.getAmountAsInt() < rate) return;
+        int perMb = fePerMb();
+        while (credit < rate) {
+            int amount = lavaAmount();
+            if (amount < 1) break;
+            // Our own tank is set directly: a transaction every tick would cost more than the burn.
+            FluidResource resource = lava.getResource(0);
+            lava.set(0, amount == 1 ? FluidResource.EMPTY : resource, amount - 1);
+            // The room for a whole bucket opens on exactly one tick: that is the tick to retry it.
+            if (TANK_CAPACITY - amount < FluidType.BUCKET_VOLUME && TANK_CAPACITY - amount + 1 >= FluidType.BUCKET_VOLUME) {
+                containerDirty = true;
+            }
+            credit += perMb;
         }
-        energy.set(energy.getAmountAsInt() + GENERATION_PER_TICK);
+        if (credit <= 0) return;
+        int made = Math.min(rate, credit);
+        credit -= made;
+        energy.set(energy.getAmountAsInt() + made);
         generating = true;
+        markChanged();
+    }
+
+    /**
+     * Energy leaves as fast as it is made, with the MK1's own headroom on top, so a generator
+     * wearing speed upgrades is never bottled up by its own output limit.
+     */
+    private void resize(BlockState state) {
+        energy.setCapacity(MachineLevel.capacity(CAPACITY, MachineLevel.of(state)));
+        energy.setTransferLimits(0, upgrades.generation(OUTPUT_PER_TICK, MachineLevel.of(state)));
+    }
+
+    /** An upgrade going in or out changes both the rate and what can leave in a tick. */
+    private void upgradesChanged() {
+        resize(getBlockState());
         markChanged();
     }
 
@@ -348,8 +389,9 @@ public final class LavaGeneratorBlockEntity extends BaseContainerBlockEntity
         items = NonNullList.withSize(INVENTORY_SIZE, ItemStack.EMPTY);
         ContainerHelper.loadAllItems(input, items);
         upgrades.load(input);
-        energy.setCapacity(MachineLevel.capacity(CAPACITY, MachineLevel.of(getBlockState())));
+        resize(getBlockState());
         energy.set(Math.clamp(input.getIntOr("Energy", 0), 0, energy.getCapacityAsInt()));
+        credit = Math.max(0, input.getIntOr("Credit", 0));
         var stored = input.read("Lava", FluidStack.OPTIONAL_CODEC).orElse(FluidStack.EMPTY);
         int amount = isLava(stored) ? Math.clamp(stored.getAmount(), 0, TANK_CAPACITY) : 0;
         lava.set(0, amount == 0 ? FluidResource.EMPTY : FluidResource.of(stored), amount);
@@ -366,6 +408,7 @@ public final class LavaGeneratorBlockEntity extends BaseContainerBlockEntity
         ContainerHelper.saveAllItems(output, items);
         output.putInt("Energy", energy.getAmountAsInt());
         output.store("Lava", FluidStack.OPTIONAL_CODEC, FluidUtil.getStack(lava, 0));
+        output.putInt("Credit", credit);
         sides.save(output);
         auto.save(output);
         redstone.save(output);

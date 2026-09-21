@@ -38,13 +38,17 @@ public final class EnergyInfoTab extends MachineTab {
         boolean generator = menu.kind() == EnergyInfoMenu.Kind.GENERATOR;
         int rate = menu.energyRatePerTick();
         int output = menu.energyOutputPerTick();
-        rows = new ArrayList<>(4);
+        rows = new ArrayList<>(4 + menu.extraInfo().size());
         rows.add(new Row(label(generator ? "generation" : "usage"), rate(rate),
                 // Idle machines move nothing, so this line drops to zero while the maximum stays put.
                 () -> rate(menu.energyUsagePerTick())));
         rows.add(new Row(label(generator ? "maximum_generation" : "maximum"), rate(rate), () -> rate(menu.energyRatePerTick())));
-        if (output > 0) rows.add(new Row(label("maximum_output"), rate(output), () -> rate(output)));
+        // Read every frame, like the rates above it: the upgrade slots that raise it only arrive
+        // after the screen opens, and a row frozen at what it was then would lie.
+        if (output > 0) rows.add(new Row(label("maximum_output"), rate(output), () -> rate(menu.energyOutputPerTick())));
         rows.add(new Row(label("stored"), amount(menu.energyCapacity()), () -> amount(menu.energyStored())));
+        // What the machine itself wants to add: a generator's fuel, and what that fuel is worth.
+        for (var extra : menu.extraInfo()) rows.add(new Row(extra.label(), extra.widest(), extra.value()));
     }
 
     @Override

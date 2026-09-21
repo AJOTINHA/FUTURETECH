@@ -63,8 +63,10 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
      * coal's 1.600 ticks make 16.000 FE, which the generator turns out in 400 ticks.
      */
     public static final int FE_PER_BURN_TICK = 10;
+    /** How long a coal burns in a furnace, which is the fuel every screen quotes against. */
+    public static final int COAL_BURN_TICKS = 1_600;
     /** Ticks one coal keeps the generator running. */
-    public static final int BURN_TICKS = 1_600 * FE_PER_BURN_TICK / GENERATION_PER_TICK;
+    public static final int BURN_TICKS = COAL_BURN_TICKS * FE_PER_BURN_TICK / GENERATION_PER_TICK;
     // Energy is synced as two 16-bit halves; see EnergySync.
     public static final int DATA_ENERGY_LOW = 0;
     public static final int DATA_ENERGY_HIGH = 1;
@@ -95,7 +97,7 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
     private final EnergyExporter exporter = new EnergyExporter();
     private final LitHold litHold = new LitHold();
     private final ItemTransferUtil transfer = new ItemTransferUtil();
-    private final UpgradeInventory upgrades = new UpgradeInventory(() -> MachineLevel.of(getBlockState()), this::setChanged);
+    private final UpgradeInventory upgrades = new UpgradeInventory(() -> MachineLevel.of(getBlockState()), this::upgradesChanged);
     private final ContainerData data = new ContainerData() {
         @Override
         public int get(int index) {
@@ -128,7 +130,7 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
     public SolidFuelGeneratorBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.SOLID_FUEL_GENERATOR.get(), pos, state);
         this.sides = ((SideConfigurableBlock) ModBlocks.SOLID_FUEL_GENERATOR.get()).createSideConfig(state);
-        energy.setCapacity(MachineLevel.capacity(CAPACITY, MachineLevel.of(state)));
+        resize(state);
     }
 
     @Override
@@ -168,7 +170,7 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
     @Override
     public void setBlockState(BlockState state) {
         super.setBlockState(state);
-        energy.setCapacity(MachineLevel.capacity(CAPACITY, MachineLevel.of(state)));
+        resize(state);
     }
 
     @Override
@@ -216,9 +218,40 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
         return 300;
     }
 
+    /**
+     * FE a tick at this level with the upgrades installed: the level's rate, and the level's rate
+     * again for every speed upgrade, as the boiler and the turbine read them.
+     */
+    public int generationPerTick() {
+        return upgrades.generation(GENERATION_PER_TICK, MachineLevel.of(getBlockState()));
+    }
+
+    /** What a fuel yields for every tick it would burn in a furnace, with the upgrades' take. */
+    public int fePerBurnTick() { return upgrades.yield(FE_PER_BURN_TICK); }
+
     /** Ticks the generator runs on a fuel that burns {@code burnTicks} in a furnace; never below one. */
-    public static int generatorTicks(int burnTicks) {
+    public int generatorTicks(int burnTicks) {
+        return Math.max(1, burnTicks * fePerBurnTick() / generationPerTick());
+    }
+
+    /** Ticks a plain MK1 with no upgrades runs on that fuel; what the recipe pages quote. */
+    public static int baseGeneratorTicks(int burnTicks) {
         return Math.max(1, burnTicks * FE_PER_BURN_TICK / GENERATION_PER_TICK);
+    }
+
+    /**
+     * Energy leaves as fast as it is made, with the MK1's own headroom on top, so a generator
+     * wearing speed upgrades is never bottled up by its own output limit.
+     */
+    private void resize(BlockState state) {
+        energy.setCapacity(MachineLevel.capacity(CAPACITY, MachineLevel.of(state)));
+        energy.setTransferLimits(0, upgrades.generation(OUTPUT_PER_TICK, MachineLevel.of(state)));
+    }
+
+    /** An upgrade going in or out changes both the rate and what can leave in a tick. */
+    private void upgradesChanged() {
+        resize(getBlockState());
+        setChanged();
     }
 
     /** The redstone signal is sampled here and on neighbour changes, not every tick. */
@@ -255,8 +288,9 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
 
     void generateEnergy(FuelValues fuelValues) {
         generating = false;
+        int rate = generationPerTick();
         // Reserve a whole tick's output before using fuel, including the last few FE.
-        if (energy.getCapacityAsInt() - energy.getAmountAsInt() < GENERATION_PER_TICK) return;
+        if (energy.getCapacityAsInt() - energy.getAmountAsInt() < rate) return;
         if (burnRemaining == 0) {
             ItemStack fuel = items.getFirst();
             int duration = burnDuration(fuel, fuelValues);
@@ -266,7 +300,7 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
             if (fuel.isEmpty()) items.set(0, remainder == null ? ItemStack.EMPTY : remainder.create());
             burnRemaining = burnTotal = generatorTicks(duration);
         }
-        energy.set(energy.getAmountAsInt() + GENERATION_PER_TICK);
+        energy.set(energy.getAmountAsInt() + rate);
         burnRemaining--;
         generating = true;
         setChanged();
@@ -278,7 +312,7 @@ public final class SolidFuelGeneratorBlockEntity extends BaseContainerBlockEntit
         items = NonNullList.withSize(1, ItemStack.EMPTY);
         ContainerHelper.loadAllItems(input, items);
         upgrades.load(input);
-        energy.setCapacity(MachineLevel.capacity(CAPACITY, MachineLevel.of(getBlockState())));
+        resize(getBlockState());
         energy.set(Math.clamp(input.getIntOr("Energy", 0), 0, energy.getCapacityAsInt()));
         burnTotal = Math.max(1, input.getIntOr("BurnTotal", BURN_TICKS));
         burnRemaining = Math.clamp(input.getIntOr("BurnRemaining", 0), 0, burnTotal);

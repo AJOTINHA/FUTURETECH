@@ -18,6 +18,7 @@ import dev.futuretech.menu.PaintMachineMenu;
 import dev.futuretech.menu.MelterMenu;
 import dev.futuretech.menu.ExtruderMenu;
 import dev.futuretech.menu.SmelteryMenu;
+import dev.futuretech.menu.QuarryMenu;
 import dev.futuretech.menu.TeleporterMenu;
 import dev.futuretech.menu.ControllerMenu;
 import dev.futuretech.menu.WaterPumpMenu;
@@ -83,6 +84,8 @@ public final class ModMenus {
             "paint_machine", () -> IMenuTypeExtension.create(PaintMachineMenu::new));
     public static final DeferredHolder<MenuType<?>, MenuType<WaterPumpMenu>> WATER_PUMP = TYPES.register(
             "water_pump", () -> new MenuType<>(WaterPumpMenu::new, FeatureFlags.DEFAULT_FLAGS));
+    public static final DeferredHolder<MenuType<?>, MenuType<QuarryMenu>> QUARRY = TYPES.register(
+            "quarry", () -> new MenuType<>(QuarryMenu::new, FeatureFlags.DEFAULT_FLAGS));
     public static final DeferredHolder<MenuType<?>, MenuType<TeleporterMenu>> TELEPORTER = TYPES.register(
             "teleporter", () -> IMenuTypeExtension.create(TeleporterMenu::new));
 

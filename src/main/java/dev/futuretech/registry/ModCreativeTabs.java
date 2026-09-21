@@ -41,6 +41,8 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.EXTRUDER.get());
                         output.accept(ModItems.PAINT_MACHINE.get());
                         output.accept(ModItems.WATER_PUMP.get());
+                        output.accept(ModItems.QUARRY.get());
+                        output.accept(ModItems.MINING_MARKER.get());
                         output.accept(ModItems.TELEPORTER.get());
                         output.accept(ModItems.TIME_CONTROLLER.get());
                         output.accept(ModItems.WEATHER_CONTROLLER.get());

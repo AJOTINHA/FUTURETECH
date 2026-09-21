@@ -115,7 +115,7 @@ public final class LavaGeneratorScreen extends AbstractContainerScreen<LavaGener
         graphics.text(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, TEXT, false);
         graphics.text(font, Component.translatable("gui.futuretech.energy"), 70, 26, TEXT, false);
         Component generationRate = Component.translatable("gui.futuretech.rate",
-                menu.isGenerating() ? LavaGeneratorBlockEntity.GENERATION_PER_TICK : 0);
+                menu.isGenerating() ? menu.energyRatePerTick() : 0);
         graphics.text(font, generationRate, 163 - font.width(generationRate), 26, TEXT, false);
         graphics.text(font, Component.translatable("gui.futuretech.stored", menu.energyStored(),
                 menu.energyCapacity()), 70, 63, TEXT, false);

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "SPS",
+    "GMG",
+    "CRC"
+  ],
+  "key": {
+    "S": "#c:plates/steel",
+    "P": "minecraft:diamond_pickaxe",
+    "G": "#c:gears/steel",
+    "M": "futuretech:machine_casing",
+    "C": "futuretech:conductance_coil",
+    "R": "minecraft:redstone_block"
+  },
+  "result": {
+    "id": "futuretech:quarry",
+    "count": 1
+  }
+}

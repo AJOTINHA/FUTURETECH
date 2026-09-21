@@ -80,6 +80,35 @@ class LavaGeneratorTest {
         assertEquals(0, generator.menuData().get(DATA_GENERATING));
     }
 
+    /** A speed upgrade burns faster for less out of each millibucket; efficiency is the other way. */
+    @Test
+    void speedAndEfficiencyUpgradesChangeTheRateAndWhatLavaIsWorth() {
+        var generator = generator();
+        assertEquals(GENERATION_PER_TICK, generator.generationPerTick());
+        assertEquals(GENERATION_PER_TICK / LAVA_PER_TICK, generator.fePerMb());
+        generator.upgrades().setItem(0, new ItemStack(dev.futuretech.registry.ModItems.SPEED_UPGRADE.get()));
+        assertEquals(2 * GENERATION_PER_TICK, generator.generationPerTick());
+        assertEquals(45, generator.fePerMb());
+        generator.upgrades().setItem(0, new ItemStack(dev.futuretech.registry.ModItems.EFFICIENCY_UPGRADE.get()));
+        assertEquals(GENERATION_PER_TICK, generator.generationPerTick());
+        assertEquals(57, generator.fePerMb());
+    }
+
+    /** The same bucket, with an efficiency upgrade in the slot, is worth 15% more. */
+    @Test
+    void anEfficiencyUpgradeGetsMoreOutOfTheSameBucket() {
+        var generator = generator();
+        generator.upgrades().setItem(0, new ItemStack(dev.futuretech.registry.ModItems.EFFICIENCY_UPGRADE.get()));
+        var receiver = new SimpleEnergyHandler(100_000);
+        generator.setItem(SLOT_INPUT, new ItemStack(Items.LAVA_BUCKET));
+        for (int t = 0; t < 1_200; t++) {
+            tick(generator);
+            EnergyHandlerUtil.move(generator.energy(), receiver, OUTPUT_PER_TICK, null);
+        }
+        assertEquals(0, generator.lavaAmount());
+        assertEquals(57_000, receiver.getAmountAsInt());
+    }
+
     @Test
     void fullBufferPausesWithoutBurningLava() {
         var generator = generator();

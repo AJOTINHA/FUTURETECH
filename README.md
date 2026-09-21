@@ -34,6 +34,10 @@ Triturador, Fornalha Elétrica, Serraria, Metal Press, Fundidora, Melter, Extrus
 - **Kits de Upgrade MK2, MK3 e MK4:** Shift + clique direito na máquina. A sequência é MK1 → MK2 → MK3 → MK4, e o upgrade preserva inventário, energia, progresso e configuração. A potência por nível é 100%, 150%, 200% e 300% da MK1.
 - **Melhorias:** Velocidade, Eficiência, Lava, Energia e Areia, instaladas nos slots que o MK libera.
 
+### Mineração
+
+- **Mineradora:** os **Marcadores de Área** são tochas azuis que você planta nos cantos. Marcador com sinal de redstone traça uma linha reta mostrando onde cabe o próximo, e dois marcadores no mesmo eixo acendem a linha entre eles. Feche o quadrado com quatro e encoste a Mineradora de costas para um dos cantos: é esse marcador que ela lê. Ela então monta sozinha uma **estrutura de vigas** sobre a moldura — quatro pernas e um anel por cima, recolhendo os marcadores para o próprio inventário — e um braço corre nesse anel, descendo a broca em cada bloco. Cava o que está **dentro** da moldura, camada por camada até o fundo do mundo; a linha dos marcadores nunca é quebrada. A cova cresce com o MK: 9, 16, 25 e 33 blocos de lado. Bedrock, baús e as outras máquinas ficam de pé, a água e a lava do caminho somem, e o que ela tira fica no inventário dela até sair pelos lados de saída. Viga quebrada é reposta sozinha, e a estrutura inteira sai junto quando a máquina sai.
+
 ### Transporte
 
 - **Cabos de itens e de fluidos**, cada um em versão normal e opaca, com **Filtros MK1 a MK4** nos conectores.

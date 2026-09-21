@@ -78,7 +78,7 @@ public final class SolidFuelGeneratorScreen extends AbstractContainerScreen<Soli
         }
         graphics.text(font, Component.translatable("gui.futuretech.energy"), 70, 26, TEXT, false);
         Component generationRate = Component.translatable("gui.futuretech.rate",
-                menu.isGenerating() ? SolidFuelGeneratorBlockEntity.GENERATION_PER_TICK : 0);
+                menu.isGenerating() ? menu.energyRatePerTick() : 0);
         graphics.text(font, generationRate, 163 - font.width(generationRate), 26, TEXT, false);
         graphics.text(font, Component.translatable("gui.futuretech.stored", menu.energyStored(),
                 menu.energyCapacity()), 70, 63, TEXT, false);

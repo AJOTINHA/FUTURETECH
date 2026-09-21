@@ -19,6 +19,7 @@ import dev.futuretech.energy.EnergySync;
 import dev.futuretech.registry.ModBlocks;
 import dev.futuretech.registry.ModMenus;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -33,6 +34,7 @@ import java.util.Set;
 
 public final class LavaGeneratorMenu extends MachineMenu implements SideConfigMenu, RedstoneControlMenu, EnergyInfoMenu {
     private final Container buckets;
+    private final UpgradeInventory upgrades;
     private final ContainerData data;
 
     /** Width of the generator screen; upgrade slots sit in the tab beside it. */
@@ -59,6 +61,7 @@ public final class LavaGeneratorMenu extends MachineMenu implements SideConfigMe
         checkContainerSize(buckets, INVENTORY_SIZE);
         checkContainerDataCount(data, DATA_COUNT);
         this.buckets = buckets;
+        this.upgrades = upgrades;
         this.data = data;
         addSlot(new Slot(buckets, SLOT_INPUT, SLOT_X, INPUT_Y) {
             @Override
@@ -83,10 +86,31 @@ public final class LavaGeneratorMenu extends MachineMenu implements SideConfigMe
     public int mk() { return Math.clamp(data.get(DATA_MK), 1, 4); }
 
     @Override
-    public int energyRatePerTick() { return GENERATION_PER_TICK; }
+    public int energyRatePerTick() { return upgrades.generation(GENERATION_PER_TICK, mk()); }
 
     @Override
-    public int energyOutputPerTick() { return OUTPUT_PER_TICK; }
+    public int energyOutputPerTick() { return upgrades.generation(OUTPUT_PER_TICK, mk()); }
+
+    /** FE one millibucket of lava is worth: what the efficiency and speed upgrades move. */
+    public int fePerMb() { return upgrades.yield(GENERATION_PER_TICK / LAVA_PER_TICK); }
+
+    /** Millibuckets a second at full rate, the unit the boiler's readout already uses. */
+    public int lavaPerSecond() { return Math.round(energyRatePerTick() * 20.0F / fePerMb()); }
+
+    /** What the info tab says about the lava: how fast it goes, and what a millibucket is worth. */
+    @Override
+    public java.util.List<InfoRow> extraInfo() {
+        return java.util.List.of(
+                new InfoRow(label("lava_usage"), value("lava_rate", 9_999), () -> value("lava_rate", lavaPerSecond())),
+                new InfoRow(label("fe_per_mb"), value("fe_per_mb_value", 999),
+                        () -> value("fe_per_mb_value", fePerMb())));
+    }
+
+    private static Component label(String key) { return Component.translatable("gui.futuretech.info." + key); }
+
+    private static Component value(String key, int amount) {
+        return Component.translatable("gui.futuretech.info." + key, amount);
+    }
 
     @Override
     public EnergyInfoMenu.Kind kind() { return EnergyInfoMenu.Kind.GENERATOR; }

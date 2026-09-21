@@ -43,3 +43,6 @@ repo/
 # Fontes, prompts, previas e os geradores das texturas e modelos. Nada disso vai
 # para o JAR, e a saida deles ja esta versionada em src/main/resources.
 art/
+
+### Python ###
+__pycache__/

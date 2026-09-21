@@ -39,6 +39,9 @@ import dev.futuretech.block.ControllerBlock;
 import dev.futuretech.block.ControllerKind;
 import dev.futuretech.block.RainSensorBlock;
 import dev.futuretech.block.WaterPumpBlock;
+import dev.futuretech.block.QuarryBlock;
+import dev.futuretech.block.MiningMarkerBlock;
+import dev.futuretech.block.QuarryFrameBlock;
 import dev.futuretech.block.SolidFuelGeneratorBlock;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
@@ -208,6 +211,25 @@ public final class ModBlocks {
             "water_pump", WaterPumpBlock::new, properties -> properties
                     .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
                     .requiresCorrectToolForDrops());
+
+    public static final DeferredBlock<QuarryBlock> QUARRY = BLOCKS.registerBlock(
+            "quarry", QuarryBlock::new, properties -> properties
+                    .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops());
+
+    /** The scaffold the quarry stands up around its pit: built by the machine, never crafted. */
+    public static final DeferredBlock<QuarryFrameBlock> QUARRY_FRAME = BLOCKS.registerBlock(
+            "quarry_frame", QuarryFrameBlock::new, properties -> properties
+                    .mapColor(MapColor.METAL).strength(1.5F, 6.0F).sound(SoundType.METAL)
+                    .noOcclusion().noLootTable()
+                    .pushReaction(net.minecraft.world.level.material.PushReaction.BLOCK));
+
+    /** The corners the quarry reads its frame from: a blue torch, broken by hand, that ticks nothing. */
+    public static final DeferredBlock<MiningMarkerBlock> MINING_MARKER = BLOCKS.registerBlock(
+            "mining_marker", MiningMarkerBlock::new, properties -> properties
+                    .mapColor(MapColor.COLOR_LIGHT_BLUE).instabreak().sound(SoundType.METAL)
+                    .noOcclusion().lightLevel(state -> 7)
+                    .pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY));
 
     public static final DeferredBlock<TeleporterBlock> TELEPORTER = BLOCKS.registerBlock(
             "teleporter", TeleporterBlock::new, properties -> properties

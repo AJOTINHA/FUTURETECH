@@ -19,6 +19,7 @@ import dev.futuretech.energy.EnergySync;
 import dev.futuretech.registry.ModBlocks;
 import dev.futuretech.registry.ModMenus;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -33,6 +34,7 @@ import java.util.Set;
 
 public final class SolidFuelGeneratorMenu extends MachineMenu implements SideConfigMenu, RedstoneControlMenu, EnergyInfoMenu {
     private final Container fuel;
+    private final UpgradeInventory upgrades;
     private final ContainerData data;
 
     /** Width of the generator screen; upgrade slots sit in the tab beside it. */
@@ -52,6 +54,7 @@ public final class SolidFuelGeneratorMenu extends MachineMenu implements SideCon
         checkContainerSize(fuel, 1);
         checkContainerDataCount(data, DATA_COUNT);
         this.fuel = fuel;
+        this.upgrades = upgrades;
         this.data = data;
         addSlot(new Slot(fuel, 0, 8, 45) {
             @Override
@@ -72,10 +75,24 @@ public final class SolidFuelGeneratorMenu extends MachineMenu implements SideCon
     public int mk() { return Math.clamp(data.get(DATA_MK), 1, 4); }
 
     @Override
-    public int energyRatePerTick() { return GENERATION_PER_TICK; }
+    public int energyRatePerTick() { return upgrades.generation(GENERATION_PER_TICK, mk()); }
 
     @Override
-    public int energyOutputPerTick() { return OUTPUT_PER_TICK; }
+    public int energyOutputPerTick() { return upgrades.generation(OUTPUT_PER_TICK, mk()); }
+
+    /** What one coal is worth with the upgrades installed: the machine's fuel economy in one number. */
+    public int coalYield() { return upgrades.yield(FE_PER_BURN_TICK) * COAL_BURN_TICKS; }
+
+    /** What the info tab says about the fuel: what a coal is worth with the upgrades in the slots. */
+    @Override
+    public java.util.List<InfoRow> extraInfo() {
+        return java.util.List.of(new InfoRow(label("coal"),
+                Component.translatable("gui.futuretech.info.fe_per_coal", 999_999),
+                () -> Component.translatable("gui.futuretech.info.fe_per_coal", coalYield())));
+    }
+
+    private static Component label(String key) { return Component.translatable("gui.futuretech.info." + key);
+    }
 
     @Override
     public EnergyInfoMenu.Kind kind() { return EnergyInfoMenu.Kind.GENERATOR; }
