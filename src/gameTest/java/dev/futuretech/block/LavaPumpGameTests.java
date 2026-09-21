@@ -82,12 +82,13 @@ public final class LavaPumpGameTests {
             check(helper, count(level, poolFrom, poolTo, Blocks.STONE) == 9, "The whole pool is stone");
             check(helper, pump.get().lavaAmount() == 9 * LavaPumpBlockEntity.SOURCE_VOLUME, "And nine buckets are in the tank");
             check(helper, pump.get().status() == LavaPumpBlockEntity.Status.NO_LAVA, "With nothing left the pump waits");
-            check(helper, pump.get().pipe() == 2, "The pipe came back up to the stone, got " + pump.get().pipe());
-            // More lava turns up in the pipe's way: it is found again without anyone asking.
+            check(helper, pump.get().pipe() == 0, "With the pool gone the pipe winds back up, got " + pump.get().pipe());
+            // More lava turns up under the pump: it is found again without anyone asking, and the pipe goes back down for it.
             level.setBlock(pumpPos.below(2), Blocks.LAVA.defaultBlockState(), Block.UPDATE_ALL);
         }).thenIdle(140).thenExecute(() -> {
             check(helper, level.getBlockState(pumpPos.below(2)).is(Blocks.STONE), "The new source is taken too");
             check(helper, pump.get().lavaAmount() == 10 * LavaPumpBlockEntity.SOURCE_VOLUME, "Ten buckets now");
+            check(helper, pump.get().pipe() == 0, "And the pipe is back up again, got " + pump.get().pipe());
             // A tank set right on top, its underside open: the pump hands the lava up without a cable.
             level.setBlock(pumpPos.above(), ModBlocks.FLUID_TANK.get().defaultBlockState(), Block.UPDATE_ALL);
             var tank = (FluidTankBlockEntity) level.getBlockEntity(pumpPos.above());

@@ -305,6 +305,7 @@
   "gui.futuretech.lava_pump.status.no_lava": "No lava below",
   "gui.futuretech.lava_pump.status.no_energy": "No energy",
   "gui.futuretech.lava_pump.status.full": "Tank full",
+  "gui.futuretech.lava_pump.status.lowering": "Lowering the pipe",
   "gui.futuretech.lava_pump.status.pumping": "Pumping",
   "command.futuretech.perf.on": "Tick profiler on: costs are shown over the mod's blocks.",
   "command.futuretech.perf.off": "Tick profiler off.",

@@ -66,10 +66,12 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Drains the lava under it into an internal tank, with energy. A pipe drops out of the pump's
- * underside, through air and lava, down to the first solid block; every lava block the pipe passes
- * seeds a search through the pool connected to it, and the pump takes the pool's sources one at a
- * time, the farthest first, so the near ones keep the pool joined to the pipe until the end.
+ * Drains the lava under it into an internal tank, with energy. When there is lava under it, a pipe
+ * drops out of the pump's underside, through air and lava, down to the first solid block; every
+ * lava block the pipe passes seeds a search through the pool connected to it, and the pump takes
+ * the pool's sources one at a time, the farthest first, so the near ones keep the pool joined to
+ * the pipe until the end. With the pool gone the pipe winds back up into the pump, and goes down
+ * again if lava turns up under it.
  *
  * <p>A pumped source does not just vanish: stone goes in its place, so the lava around it never
  * starts flowing into the gap and the world has nothing to recalculate. The pool is lost for good,
@@ -130,7 +132,7 @@ public final class LavaPumpBlockEntity extends BaseContainerBlockEntity
     /** What the pump is doing, for the screen; the order is what travels in the data slot. */
     public enum Status {
         OFF("off", true), NO_LAVA("no_lava", true), NO_ENERGY("no_energy", true),
-        FULL("full", true), PUMPING("pumping", false);
+        FULL("full", true), LOWERING("lowering", false), PUMPING("pumping", false);
 
         private final String key;
         private final boolean problem;
@@ -142,7 +144,7 @@ public final class LavaPumpBlockEntity extends BaseContainerBlockEntity
 
         public String key() { return key; }
 
-        /** Whether the screen shows it in red: anything but pumping. */
+        /** Whether the screen shows it in red: anything but pumping and the pipe on its way down. */
         public boolean isProblem() { return problem; }
 
         public static Status byOrdinal(int ordinal) { return values()[Math.clamp(ordinal, 0, values().length - 1)]; }
@@ -416,11 +418,24 @@ public final class LavaPumpBlockEntity extends BaseContainerBlockEntity
         }
     }
 
-    /** One block of pipe goes down, or comes up when stone rose under it; the clients see each step. */
-    void lowerPipe(ServerLevel level) {
+    /**
+     * Blocks of pipe wanted: down to the floor while there is lava in its way or a pool still to
+     * take, and none at all once the lava is gone. Lava turning up again sends it back down.
+     */
+    int pipeTarget(ServerLevel level) {
         int room = pipeRoom(level);
-        if (room == pipe) return;
-        pipe += room > pipe ? 1 : -1;
+        if (!pool.isEmpty()) return room;
+        for (int depth = 1; depth <= room; depth++) {
+            if (level.getFluidState(worldPosition.below(depth)).is(Fluids.LAVA)) return room;
+        }
+        return 0;
+    }
+
+    /** One block of pipe goes down, or comes back up; the clients see each step. */
+    void lowerPipe(ServerLevel level) {
+        int target = pipeTarget(level);
+        if (target == pipe) return;
+        pipe += target > pipe ? 1 : -1;
         setChanged();
         sendToClients();
     }
@@ -476,6 +491,11 @@ public final class LavaPumpBlockEntity extends BaseContainerBlockEntity
         BlockPos source = nextSource(level);
         if (source == null) {
             status = Status.NO_LAVA;
+            return;
+        }
+        // Nothing is drawn until the pipe stands on the floor of the pool.
+        if (pipe < pipeRoom(level)) {
+            status = Status.LOWERING;
             return;
         }
         if (lavaAmount() + SOURCE_VOLUME > tankCapacity()) {

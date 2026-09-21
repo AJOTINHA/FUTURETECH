@@ -305,6 +305,7 @@
   "gui.futuretech.lava_pump.status.no_lava": "Sem lava embaixo",
   "gui.futuretech.lava_pump.status.no_energy": "Sem energia",
   "gui.futuretech.lava_pump.status.full": "Tanque cheio",
+  "gui.futuretech.lava_pump.status.lowering": "Descendo o cano",
   "gui.futuretech.lava_pump.status.pumping": "Bombeando",
   "command.futuretech.perf.on": "Medição de tick ligada: o custo aparece em cima dos blocos do mod.",
   "command.futuretech.perf.off": "Medição de tick desligada.",
