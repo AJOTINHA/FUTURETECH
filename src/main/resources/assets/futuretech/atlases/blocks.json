@@ -219,6 +219,10 @@
     {
       "type": "single",
       "resource": "futuretech:block/quarry/arm"
+    },
+    {
+      "type": "single",
+      "resource": "futuretech:block/lava_pump/pipe"
     }
   ]
 }

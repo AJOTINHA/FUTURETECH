@@ -22,6 +22,7 @@ import dev.futuretech.menu.QuarryMenu;
 import dev.futuretech.menu.TeleporterMenu;
 import dev.futuretech.menu.ControllerMenu;
 import dev.futuretech.menu.WaterPumpMenu;
+import dev.futuretech.menu.LavaPumpMenu;
 import dev.futuretech.menu.SolidFuelGeneratorMenu;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.flag.FeatureFlags;
@@ -84,6 +85,8 @@ public final class ModMenus {
             "paint_machine", () -> IMenuTypeExtension.create(PaintMachineMenu::new));
     public static final DeferredHolder<MenuType<?>, MenuType<WaterPumpMenu>> WATER_PUMP = TYPES.register(
             "water_pump", () -> new MenuType<>(WaterPumpMenu::new, FeatureFlags.DEFAULT_FLAGS));
+    public static final DeferredHolder<MenuType<?>, MenuType<LavaPumpMenu>> LAVA_PUMP = TYPES.register(
+            "lava_pump", () -> new MenuType<>(LavaPumpMenu::new, FeatureFlags.DEFAULT_FLAGS));
     public static final DeferredHolder<MenuType<?>, MenuType<QuarryMenu>> QUARRY = TYPES.register(
             "quarry", () -> new MenuType<>(QuarryMenu::new, FeatureFlags.DEFAULT_FLAGS));
     public static final DeferredHolder<MenuType<?>, MenuType<TeleporterMenu>> TELEPORTER = TYPES.register(

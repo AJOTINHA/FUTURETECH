@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "SBS",
+    "PMP",
+    "ARA"
+  ],
+  "key": {
+    "S": "#c:plates/steel",
+    "B": "minecraft:bucket",
+    "P": "minecraft:piston",
+    "M": "futuretech:machine_casing",
+    "A": "#c:gears/steel",
+    "R": "minecraft:redstone"
+  },
+  "result": {
+    "id": "futuretech:lava_pump",
+    "count": 1
+  }
+}

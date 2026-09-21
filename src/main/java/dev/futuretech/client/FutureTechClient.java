@@ -81,6 +81,7 @@ public final class FutureTechClient {
         event.registerBlockEntityRenderer(ModBlockEntities.TELEPORTER.get(), context -> new TeleporterBeamRenderer());
         event.registerBlockEntityRenderer(ModBlockEntities.MINING_MARKER.get(), context -> new MiningMarkerRenderer());
         event.registerBlockEntityRenderer(ModBlockEntities.QUARRY.get(), context -> new QuarryArmRenderer());
+        event.registerBlockEntityRenderer(ModBlockEntities.LAVA_PUMP.get(), context -> new LavaPumpPipeRenderer());
         event.registerBlockEntityRenderer(ModBlockEntities.TESSERACT.get(), context -> new TesseractRenderer());
         event.registerBlockEntityRenderer(ModBlockEntities.WIRELESS_REDSTONE.get(), context -> new WirelessRedstoneRenderer());
         event.registerBlockEntityRenderer(ModBlockEntities.SOLAR_GENERATOR.get(), context -> new SolarPanelRenderer());
@@ -107,6 +108,7 @@ public final class FutureTechClient {
         event.register(ModMenus.EXTRUDER.get(), ExtruderScreen::new);
         event.register(ModMenus.PAINT_MACHINE.get(), PaintMachineScreen::new);
         event.register(ModMenus.WATER_PUMP.get(), WaterPumpScreen::new);
+        event.register(ModMenus.LAVA_PUMP.get(), LavaPumpScreen::new);
         event.register(ModMenus.QUARRY.get(), QuarryScreen::new);
         event.register(ModMenus.TELEPORTER.get(), TeleporterScreen::new);
         event.register(ModMenus.CONTROLLER.get(), ControllerScreen::new);
@@ -139,6 +141,7 @@ public final class FutureTechClient {
         QuarryArmRenderer.setSprites(
                 textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "block/quarry/arm")),
                 textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "block/quarry/drill")));
+        LavaPumpPipeRenderer.setSprite(textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, "block/lava_pump/pipe")));
         Map<SideMode, TextureAtlasSprite> sprites = new EnumMap<>(SideMode.class);
         SIDE_TEXTURES.forEach((mode, path) ->
                 sprites.put(mode, textures.apply(Identifier.fromNamespaceAndPath(FutureTech.MOD_ID, path))));

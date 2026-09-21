@@ -39,6 +39,7 @@ import dev.futuretech.block.ControllerBlock;
 import dev.futuretech.block.ControllerKind;
 import dev.futuretech.block.RainSensorBlock;
 import dev.futuretech.block.WaterPumpBlock;
+import dev.futuretech.block.LavaPumpBlock;
 import dev.futuretech.block.QuarryBlock;
 import dev.futuretech.block.MiningMarkerBlock;
 import dev.futuretech.block.QuarryFrameBlock;
@@ -211,6 +212,12 @@ public final class ModBlocks {
             "water_pump", WaterPumpBlock::new, properties -> properties
                     .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
                     .requiresCorrectToolForDrops());
+
+    public static final DeferredBlock<LavaPumpBlock> LAVA_PUMP = BLOCKS.registerBlock(
+            "lava_pump", LavaPumpBlock::new, properties -> properties
+                    .mapColor(MapColor.METAL).strength(3.5F, 6.0F).sound(SoundType.METAL)
+                    .requiresCorrectToolForDrops()
+                    .lightLevel(state -> state.getValue(LavaPumpBlock.LIT) ? 13 : 0));
 
     public static final DeferredBlock<QuarryBlock> QUARRY = BLOCKS.registerBlock(
             "quarry", QuarryBlock::new, properties -> properties

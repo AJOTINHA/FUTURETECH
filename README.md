@@ -43,6 +43,7 @@ Triturador, Fornalha Elétrica, Serraria, Metal Press, Fundidora, Melter, Extrus
 - **Cabos de itens e de fluidos**, cada um em versão normal e opaca, com **Filtros MK1 a MK4** nos conectores.
 - **Facades:** clique num cabo com um bloco para esconder aquela face; a Chave tira de volta.
 - **Tanque de Fluido** e **Bomba d'Água**.
+- **Bomba de Lava:** desce um cano até o fundo do lago e esvazia a lava conectada a ele, da borda para o centro, deixando pedra no lugar de cada fonte para nada ficar escorrendo. A lava fica no tanque interno e sai pelos cabos ou enche baldes.
 - **Tesseract**, **Teleportador** com Cartão de Teleporte, e **Teleportador Portátil**.
 
 ### Redstone e rede

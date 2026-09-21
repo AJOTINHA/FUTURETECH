@@ -34,6 +34,7 @@ import dev.futuretech.block.entity.TeleporterBlockEntity;
 import dev.futuretech.block.entity.ControllerBlockEntity;
 import dev.futuretech.block.entity.RainSensorBlockEntity;
 import dev.futuretech.block.entity.WaterPumpBlockEntity;
+import dev.futuretech.block.entity.LavaPumpBlockEntity;
 import dev.futuretech.block.entity.SolidFuelGeneratorBlockEntity;
 import net.minecraft.resources.Identifier;
 import net.minecraft.core.registries.Registries;
@@ -101,6 +102,8 @@ public final class ModBlockEntities {
             TYPES.register("paint_machine", () -> new BlockEntityType<>(PaintMachineBlockEntity::new, ModBlocks.PAINT_MACHINE.get()));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<WaterPumpBlockEntity>> WATER_PUMP =
             TYPES.register("water_pump", () -> new BlockEntityType<>(WaterPumpBlockEntity::new, ModBlocks.WATER_PUMP.get()));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<LavaPumpBlockEntity>> LAVA_PUMP =
+            TYPES.register("lava_pump", () -> new BlockEntityType<>(LavaPumpBlockEntity::new, ModBlocks.LAVA_PUMP.get()));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<QuarryBlockEntity>> QUARRY =
             TYPES.register("quarry", () -> new BlockEntityType<>(QuarryBlockEntity::new, ModBlocks.QUARRY.get()));
     /** The marker only holds the lines it draws to its neighbours; it has no inventory and no tick. */
@@ -213,6 +216,13 @@ public final class ModBlockEntities {
                 SidedItems.view(pump, pump.sideConfig(), side));
         event.registerBlockEntity(Capabilities.Fluid.BLOCK, WATER_PUMP.get(), (pump, side) ->
                 SidedFluids.outflow(pump.water(), pump.sideConfig(), side));
+        // Lava only comes out, through the faces in an output mode; buckets follow the same faces.
+        event.registerBlockEntity(Capabilities.Energy.BLOCK, LAVA_PUMP.get(), (pump, side) ->
+                SidedEnergy.view(pump.energy(), pump.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Item.BLOCK, LAVA_PUMP.get(), (pump, side) ->
+                SidedItems.view(pump, pump.sideConfig(), side));
+        event.registerBlockEntity(Capabilities.Fluid.BLOCK, LAVA_PUMP.get(), (pump, side) ->
+                SidedFluids.outflow(pump.lava(), pump.sideConfig(), side));
         // A quarry takes energy on every face and only ever hands what it dug out.
         event.registerBlockEntity(Capabilities.Energy.BLOCK, QUARRY.get(), (quarry, side) ->
                 SidedEnergy.view(quarry.energy(), quarry.sideConfig(), side));

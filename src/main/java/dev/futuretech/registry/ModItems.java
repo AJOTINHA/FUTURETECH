@@ -143,6 +143,9 @@ public final class ModItems {
     public static final DeferredItem<TieredMachineBlockItem> WATER_PUMP = ITEMS.registerItem(
             "water_pump", properties -> new TieredMachineBlockItem(ModBlocks.WATER_PUMP.get(), properties),
             properties -> properties.useBlockDescriptionPrefix());
+    public static final DeferredItem<TieredMachineBlockItem> LAVA_PUMP = ITEMS.registerItem(
+            "lava_pump", properties -> new TieredMachineBlockItem(ModBlocks.LAVA_PUMP.get(), properties),
+            properties -> properties.useBlockDescriptionPrefix());
     public static final DeferredItem<TieredMachineBlockItem> QUARRY = ITEMS.registerItem(
             "quarry", properties -> new TieredMachineBlockItem(ModBlocks.QUARRY.get(), properties),
             properties -> properties.useBlockDescriptionPrefix());
