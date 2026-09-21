@@ -35,7 +35,8 @@ public final class LavaPumpPipeRenderer implements BlockEntityRenderer<LavaPumpB
     public static void setSprite(TextureAtlasSprite sprite) { pipeSprite = sprite; }
 
     public static final class State extends BlockEntityRenderState {
-        int pipe;
+        /** Blocks of pipe to draw, the last of them possibly part way. */
+        float pipe;
         /** Packed light per section, top first. */
         int[] light = new int[0];
     }
@@ -47,14 +48,15 @@ public final class LavaPumpPipeRenderer implements BlockEntityRenderer<LavaPumpB
     public void extractRenderState(LavaPumpBlockEntity pump, State state, float partialTick, Vec3 camera,
                                    ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
         BlockEntityRenderer.super.extractRenderState(pump, state, partialTick, camera, breakProgress);
-        state.pipe = pump.pipe();
+        state.pipe = pump.pipeShown(partialTick);
         var level = pump.getLevel();
-        if (state.light.length != state.pipe) state.light = new int[state.pipe];
+        int sections = (int) Math.ceil(state.pipe);
+        if (state.light.length != sections) state.light = new int[sections];
         if (level == null) {
             Arrays.fill(state.light, 0);
             return;
         }
-        for (int section = 0; section < state.pipe; section++) {
+        for (int section = 0; section < sections; section++) {
             state.light[section] = lightAt(level, pump.getBlockPos().below(section + 1));
         }
     }
@@ -71,20 +73,23 @@ public final class LavaPumpPipeRenderer implements BlockEntityRenderer<LavaPumpB
         TextureAtlasSprite sprite = pipeSprite;
         if (state.pipe <= 0 || sprite == null) return;
         collector.submitCustomGeometry(pose, RenderTypes.entitySolid(sprite.atlasLocation()), (p, b) -> {
-            for (int section = 0; section < state.pipe; section++) {
+            int sections = (int) Math.ceil(state.pipe);
+            for (int section = 0; section < sections; section++) {
                 float top = -section;
-                box(p, b, sprite, state.light[section], 0.5F - HALF, top - 1, 0.5F - HALF, 0.5F + HALF, top, 0.5F + HALF);
+                // The last section may still be on its way down: it is drawn from the top, as far as it has got.
+                float length = Math.min(1, state.pipe - section);
+                box(p, b, sprite, state.light[section], length, 0.5F - HALF, top - length, 0.5F - HALF, 0.5F + HALF, top, 0.5F + HALF);
             }
         });
     }
 
-    /** One section: four sides with the sprite's side strip, the foot with its end cap. */
-    private static void box(PoseStack.Pose pose, VertexConsumer buffer, TextureAtlasSprite sprite, int light,
+    /** One section, {@code length} of a block long: four sides with the sprite's side strip, the foot with its end cap. */
+    private static void box(PoseStack.Pose pose, VertexConsumer buffer, TextureAtlasSprite sprite, int light, float length,
                             float x, float y, float z, float X, float Y, float Z) {
         float u0 = sprite.getU0(), v0 = sprite.getV0();
         float width = sprite.getU1() - u0, height = sprite.getV1() - v0;
         // The strip is the first four columns, one block tall, so its rims line up section to section.
-        float su1 = u0 + width * 0.25F, sv1 = v0 + height;
+        float su1 = u0 + width * 0.25F, sv1 = v0 + height * length;
         quad(pose, buffer, light, 0, 0, -1, X, Y, z, X, y, z, x, y, z, x, Y, z, u0, v0, su1, sv1);
         quad(pose, buffer, light, 0, 0, 1, x, Y, Z, x, y, Z, X, y, Z, X, Y, Z, u0, v0, su1, sv1);
         quad(pose, buffer, light, -1, 0, 0, x, Y, z, x, y, z, x, y, Z, x, Y, Z, u0, v0, su1, sv1);

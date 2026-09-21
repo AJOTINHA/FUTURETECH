@@ -26,10 +26,11 @@ RECOLOUR = {
     (0xaa, 0xd2, 0xfa): (0xff, 0xd8, 0x7a),
 }
 
-# The pipe, after BuildCraft's pump tube: a dark rim, a speckled grey body and a shadowed edge.
-TUBE_RIM = (0x5a, 0x5a, 0x5a, 255)
-TUBE_EDGE = (0x60, 0x60, 0x60, 255)
-TUBE_BODY = ((0x72, 0x72, 0x72, 255), (0x7c, 0x7c, 0x7c, 255), (0x83, 0x83, 0x83, 255))
+# The pipe, after BuildCraft's pump tube: a round grey tube, lit from one side, with a dark
+# coupling every half block.
+TUBE_RIM = (0x46, 0x46, 0x46, 255)
+TUBE_RIM_LIGHT = (0x8e, 0x8e, 0x8e, 255)
+TUBE_SHADE = ((0x9c, 0x9c, 0x9c, 255), (0x84, 0x84, 0x84, 255), (0x76, 0x76, 0x76, 255), (0x58, 0x58, 0x58, 255))
 
 
 def recolour(source):
@@ -50,13 +51,15 @@ def pipe():
     image = Image.new("RGBA", (16, 16), TUBE_RIM)
     pixels = image.load()
     for segment in (0, 8):
-        for y in range(1, 7):
-            for x in range(3):
-                pixels[x, segment + y] = TUBE_BODY[(x + y) % 3]
-            pixels[3, segment + y] = TUBE_EDGE
+        for y in range(1, 8):
+            for x in range(4):
+                pixels[x, segment + y] = TUBE_SHADE[x]
+        # A bevel under the coupling, so the ring reads as raised rather than painted on.
+        for x in range(3):
+            pixels[x, segment + 1] = TUBE_RIM_LIGHT
     for y in range(13, 15):
         for x in range(5, 7):
-            pixels[x, y] = TUBE_BODY[(x + y) % 2 * 2]
+            pixels[x, y] = TUBE_SHADE[1 if (x + y) % 2 else 2]
     return image
 
 

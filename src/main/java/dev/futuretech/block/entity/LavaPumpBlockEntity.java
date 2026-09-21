@@ -155,6 +155,9 @@ public final class LavaPumpBlockEntity extends BaseContainerBlockEntity
     private boolean containerDirty = true;
     /** Blocks of pipe hanging under the pump right now; it grows and shrinks a block at a time. */
     private int pipe;
+    /** Client only: the pipe as drawn, chasing {@link #pipe} at the server's pace so it slides rather than jumps. */
+    private float pipeShown;
+    private double pipeShownAt = Double.NaN;
     /** The sources the last search found, nearest first, so the far end is taken off first. */
     private final List<BlockPos> pool = new ArrayList<>();
     /** Ticks already spent on the source at the end of {@link #pool}. */
@@ -312,8 +315,26 @@ public final class LavaPumpBlockEntity extends BaseContainerBlockEntity
 
     public Status status() { return status; }
 
-    /** Blocks of pipe under the pump, for the renderer. */
+    /** Blocks of pipe under the pump, as the server has it. */
     public int pipe() { return pipe; }
+
+    /**
+     * Blocks of pipe to draw right now: the drawn length moves toward {@link #pipe} a block every
+     * {@link #PIPE_TICKS}, the pace the server adds them at, so a pipe going down or up is seen
+     * sliding. Only the renderer calls this, once a frame.
+     */
+    public float pipeShown(float partialTick) {
+        if (level == null) return pipe;
+        double now = level.getGameTime() + partialTick;
+        if (Double.isNaN(pipeShownAt)) {
+            pipeShown = pipe;
+        } else {
+            float step = (float) Math.max(0, now - pipeShownAt) / PIPE_TICKS;
+            pipeShown = pipeShown < pipe ? Math.min(pipe, pipeShown + step) : Math.max(pipe, pipeShown - step);
+        }
+        pipeShownAt = now;
+        return pipeShown;
+    }
 
     /** Sources the last search found and the pump has not taken yet. */
     public int poolSize() { return pool.size(); }
