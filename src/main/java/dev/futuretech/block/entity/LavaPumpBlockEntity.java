@@ -18,6 +18,7 @@ import dev.futuretech.menu.LavaPumpMenu;
 import dev.futuretech.registry.ModBlockEntities;
 import dev.futuretech.registry.ModBlocks;
 import dev.futuretech.transfer.ItemTransferUtil;
+import dev.futuretech.transfer.FluidTransferUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -73,8 +74,8 @@ import java.util.Set;
  * <p>A pumped source does not just vanish: stone goes in its place, so the lava around it never
  * starts flowing into the gap and the world has nothing to recalculate. The pool is lost for good,
  * as a lava lake would be, and it sits in the tank as whole buckets. The tank leaves through
- * fluid cables on the faces in an output mode, or fills empty buckets dropped in the input slot,
- * which come out full from the output slot. Every level above MK1 pumps proportionally faster for
+ * the faces in an output mode, into a fluid cable or whatever tank sits against them, or fills
+ * empty buckets dropped in the input slot, which come out full from the output slot. Every level above MK1 pumps proportionally faster for
  * proportionally more energy a tick, so a bucket costs the same on every level, and doubles the tank.
  */
 public final class LavaPumpBlockEntity extends BaseContainerBlockEntity
@@ -179,6 +180,7 @@ public final class LavaPumpBlockEntity extends BaseContainerBlockEntity
     private final ComparatorNotifier comparator = new ComparatorNotifier();
     private final LitHold litHold = new LitHold();
     private final ItemTransferUtil transfer = new ItemTransferUtil();
+    private final FluidTransferUtil fluidTransfer = new FluidTransferUtil();
     private final UpgradeInventory upgrades = new UpgradeInventory(() -> MachineLevel.of(getBlockState()), this::markChanged);
     private final ContainerData data = new ContainerData() {
         @Override
@@ -363,6 +365,8 @@ public final class LavaPumpBlockEntity extends BaseContainerBlockEntity
         pump.beginTick();
         if (pump.auto.isPulling()) pump.transfer.pullFromNeighbours(level, pos, pump, pump.sides);
         if (pump.auto.isPushing()) pump.transfer.pushToNeighbours(level, pos, pump, pump.sides);
+        // The tank goes to whatever sits against an output face, cable or not.
+        pump.fluidTransfer.pushToNeighbours(level, pos, pump.lava, pump.sides);
         if (pump.containerDirty || level.getGameTime() % CONTAINER_RETRY_TICKS == 0) {
             pump.containerDirty = false;
             pump.fillContainer();

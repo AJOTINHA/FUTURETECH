@@ -1,5 +1,7 @@
 package dev.futuretech.block;
 
+import dev.futuretech.api.side.SideMode;
+import dev.futuretech.block.entity.FluidTankBlockEntity;
 import dev.futuretech.block.entity.LavaPumpBlockEntity;
 import dev.futuretech.energy.TickLimitedEnergyHandler;
 import dev.futuretech.registry.ModBlocks;
@@ -86,6 +88,16 @@ public final class LavaPumpGameTests {
         }).thenIdle(140).thenExecute(() -> {
             check(helper, level.getBlockState(pumpPos.below(2)).is(Blocks.STONE), "The new source is taken too");
             check(helper, pump.get().lavaAmount() == 10 * LavaPumpBlockEntity.SOURCE_VOLUME, "Ten buckets now");
+            // A tank set right on top, its underside open: the pump hands the lava up without a cable.
+            level.setBlock(pumpPos.above(), ModBlocks.FLUID_TANK.get().defaultBlockState(), Block.UPDATE_ALL);
+            var tank = (FluidTankBlockEntity) level.getBlockEntity(pumpPos.above());
+            tank.sideConfig().set(Direction.DOWN, SideMode.INPUT);
+            pump.get().sideConfig().set(Direction.UP, SideMode.OUTPUT);
+        }).thenIdle(60).thenExecute(() -> {
+            var tank = (FluidTankBlockEntity) level.getBlockEntity(pumpPos.above());
+            check(helper, tank.fluids().getAmountAsInt(0) == 10 * LavaPumpBlockEntity.SOURCE_VOLUME,
+                    "The lava went up into the tank, got " + tank.fluids().getAmountAsInt(0));
+            check(helper, pump.get().lavaAmount() == 0, "And the pump's own tank is empty");
         }).thenSucceed();
     }
 
@@ -99,7 +111,7 @@ public final class LavaPumpGameTests {
     public static void register(net.neoforged.neoforge.event.RegisterGameTestsEvent event) {
         var environment = event.registerEnvironment(ID);
         var data = new net.minecraft.gametest.framework.TestData<>(environment,
-                Identifier.fromNamespaceAndPath("futuretech", "quarry_empty"), 420, 0, true);
+                Identifier.fromNamespaceAndPath("futuretech", "quarry_empty"), 500, 0, true);
         event.registerTest(ID, new net.minecraft.gametest.framework.FunctionGameTestInstance(
                 net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.TEST_FUNCTION, ID), data));
     }

@@ -18,6 +18,7 @@ import dev.futuretech.menu.WaterPumpMenu;
 import dev.futuretech.registry.ModBlockEntities;
 import dev.futuretech.registry.ModBlocks;
 import dev.futuretech.transfer.ItemTransferUtil;
+import dev.futuretech.transfer.FluidTransferUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -59,8 +60,8 @@ import org.jspecify.annotations.Nullable;
  * Draws water out of the sources around it into an internal tank, with energy. The pump needs
  * at least {@link #MIN_SOURCES} water sources touching it, the way a pool needs two to refill,
  * and pumps faster the more it has; the sources are never used up. The tank leaves through
- * fluid cables on the faces in an output mode, or fills empty buckets dropped in the input
- * slot, which come out full from the output slot. Every level above MK1 doubles the flow and
+ * the faces in an output mode, into a fluid cable or whatever tank sits against them, or fills
+ * empty buckets dropped in the input slot, which come out full from the output slot. Every level above MK1 doubles the flow and
  * the tank, for a little more energy a tick.
  */
 public final class WaterPumpBlockEntity extends BaseContainerBlockEntity
@@ -131,6 +132,7 @@ public final class WaterPumpBlockEntity extends BaseContainerBlockEntity
     private final ComparatorNotifier comparator = new ComparatorNotifier();
     private final LitHold litHold = new LitHold();
     private final ItemTransferUtil transfer = new ItemTransferUtil();
+    private final FluidTransferUtil fluidTransfer = new FluidTransferUtil();
     private final UpgradeInventory upgrades = new UpgradeInventory(() -> MachineLevel.of(getBlockState()), this::markChanged);
     private final ContainerData data = new ContainerData() {
         @Override
@@ -315,6 +317,8 @@ public final class WaterPumpBlockEntity extends BaseContainerBlockEntity
         pump.beginTick();
         if (pump.auto.isPulling()) pump.transfer.pullFromNeighbours(level, pos, pump, pump.sides);
         if (pump.auto.isPushing()) pump.transfer.pushToNeighbours(level, pos, pump, pump.sides);
+        // The tank goes to whatever sits against an output face, cable or not.
+        pump.fluidTransfer.pushToNeighbours(level, pos, pump.water, pump.sides);
         if (level.getGameTime() % SOURCE_RETRY_TICKS == 0) pump.sampleSources(level);
         if (pump.containerDirty || level.getGameTime() % CONTAINER_RETRY_TICKS == 0) {
             pump.containerDirty = false;
