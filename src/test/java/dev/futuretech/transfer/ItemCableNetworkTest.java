@@ -477,7 +477,7 @@ class ItemCableNetworkTest {
         var network = network(new FakeEndpoint(Direction.NORTH, chest));
         var flight = new ItemFlight(7, new ItemStack(Items.COBBLESTONE, 3), List.of(CABLE), Direction.SOUTH, Direction.NORTH,
                 DyeColor.WHITE, 0, 1, TRIP, false);
-        network.absorb(List.of(flight));
+        network.adopt(List.of(flight));
         assertEquals(List.of(flight), network.flights());
         assertEquals(CABLE, flight.current());
         fly(network, 0);
@@ -485,7 +485,7 @@ class ItemCableNetworkTest {
         // A kept flight whose destination is gone waits where it is until a route turns up.
         var stranded = new ItemFlight(8, new ItemStack(Items.DIRT), List.of(CABLE.east()), Direction.WEST, Direction.EAST,
                 DyeColor.RED, 0, 0, TRIP, false);
-        network.absorb(List.of(stranded));
+        network.adopt(List.of(stranded));
         assertTrue(stranded.waiting);
         assertEquals(List.of(CABLE.east()), stranded.path);
     }

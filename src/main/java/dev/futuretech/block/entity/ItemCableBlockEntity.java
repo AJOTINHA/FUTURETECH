@@ -49,7 +49,13 @@ public final class ItemCableBlockEntity extends AbstractCableBlockEntity {
      * Items inside this cable while it has no network: loaded from the save, or left here when the
      * network was torn down. The next network takes them over.
      */
-    private final List<ItemFlight> parked = new ArrayList<>();
+    /**
+     * What is inside this cable right now. The cable owns it, not the network: a network is an
+     * index that is thrown away and built again whenever a cable changes or a chunk comes back,
+     * and carrying the load in something that disposable is what made items double or vanish
+     * across a chunk boundary. Written with the cable, read back with it, dropped with it.
+     */
+    private final List<ItemFlight> flights = new ArrayList<>();
 
     public ItemCableBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.ITEM_CABLE.get(), pos, state, CableKind.ITEMS);
@@ -85,8 +91,9 @@ public final class ItemCableBlockEntity extends AbstractCableBlockEntity {
         Containers.dropContents(level, pos, filters);
         Containers.dropContents(level, pos, upgrades);
         // Whatever was passing through falls out with the cable.
-        List<ItemFlight> inside = network != null && network.isValid() ? network.removeFlightsIn(pos) : List.copyOf(parked);
-        parked.clear();
+        List<ItemFlight> inside = List.copyOf(flights);
+        flights.clear();
+        if (network != null && network.isValid()) for (ItemFlight flight : inside) network.announceEnd(flight);
         for (ItemFlight flight : inside) {
             Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), flight.stack);
         }
@@ -97,8 +104,8 @@ public final class ItemCableBlockEntity extends AbstractCableBlockEntity {
         super.loadAdditional(input);
         filters.load(input);
         upgrades.load(input);
-        parked.clear();
-        input.read(FLIGHTS_TAG, ItemFlight.LIST_CODEC).ifPresent(parked::addAll);
+        flights.clear();
+        input.read(FLIGHTS_TAG, ItemFlight.LIST_CODEC).ifPresent(flights::addAll);
     }
 
     @Override
@@ -106,8 +113,7 @@ public final class ItemCableBlockEntity extends AbstractCableBlockEntity {
         super.saveAdditional(output);
         filters.save(output);
         upgrades.save(output);
-        List<ItemFlight> inside = flightsHere();
-        if (!inside.isEmpty()) output.store(FLIGHTS_TAG, ItemFlight.LIST_CODEC, inside);
+        if (!flights.isEmpty()) output.store(FLIGHTS_TAG, ItemFlight.LIST_CODEC, List.copyOf(flights));
     }
 
     /** The current network, rebuilt on demand after cables were added or removed nearby. */
@@ -120,19 +126,13 @@ public final class ItemCableBlockEntity extends AbstractCableBlockEntity {
 
     public void setNetwork(ItemCableNetwork network) { this.network = network; }
 
-    public void park(ItemFlight flight) { parked.add(flight); }
-
-    /** Hands the parked flights to the network that is taking this cable over. */
-    public List<ItemFlight> takeParkedFlights() {
-        List<ItemFlight> taken = List.copyOf(parked);
-        parked.clear();
-        return taken;
-    }
-
-    /** The flights inside this cable right now, wherever they are kept. */
-    private List<ItemFlight> flightsHere() {
-        return network != null && network.isValid() ? network.flightsIn(worldPosition) : parked;
-    }
+    /**
+     * The live list the network works on. Handing out the list itself, rather than a copy, is
+     * what keeps the cable the owner: the network moves a flight from one cable's list to the
+     * next one's as it travels, and every one of those lists is already where it will be saved
+     * from.
+     */
+    public List<ItemFlight> flights() { return flights; }
 
     public void clearNetwork(ItemCableNetwork stale) {
         if (network == stale) network = null;

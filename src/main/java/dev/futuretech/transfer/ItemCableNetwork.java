@@ -30,6 +30,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -158,7 +159,12 @@ public final class ItemCableNetwork {
         @Override
         protected void revertToSnapshot(int[] snapshot) { System.arraycopy(snapshot, 0, budgets, 0, budgets.length); }
     };
-    private final List<ItemFlight> flights = new ArrayList<>();
+    /**
+     * The list belonging to each cable, by position. The lists are the cables' own: a network is
+     * built and thrown away as cables change and chunks come and go, so it indexes the load
+     * instead of holding it. Without a world - as in the routing tests - it keeps its own.
+     */
+    private final Map<BlockPos, List<ItemFlight>> byCable = new LinkedHashMap<>();
     private final List<ItemFlight> departing = new ArrayList<>();
     // An item only sets off once the transaction that took it from its source is final.
     private final SnapshotJournal<Integer> departureJournal = new SnapshotJournal<>() {
@@ -173,7 +179,9 @@ public final class ItemCableNetwork {
             long now = now();
             for (ItemFlight flight : departing) {
                 stagger(flight, now);
-                flights.add(flight);
+                BlockPos born = flight.current();
+                in(born).add(flight);
+                touch(born);
                 announce(flight);
             }
             departing.clear();
@@ -242,6 +250,7 @@ public final class ItemCableNetwork {
      * Flood-fills the cables touching {@code start}, gives every one of them this network and takes
      * over the flights they were keeping while there was none.
      */
+
     public static ItemCableNetwork discover(ServerLevel level, BlockPos start) {
         Set<BlockPos> cables = new HashSet<>();
         List<Endpoint> endpoints = new ArrayList<>();
@@ -283,10 +292,8 @@ public final class ItemCableNetwork {
         }
         var network = slowest == null ? new ItemCableNetwork(level, 0, 1, cables, endpoints)
                 : new ItemCableNetwork(level, slowest.batch(), slowest.interval(), cables, endpoints);
-        for (ItemCableBlockEntity member : members) {
-            member.setNetwork(network);
-            network.absorb(member.takeParkedFlights());
-        }
+        for (ItemCableBlockEntity member : members) member.setNetwork(network);
+        network.adopt();
         return network;
     }
 
@@ -305,20 +312,39 @@ public final class ItemCableNetwork {
         return moved;
     }
 
+    /** The list the cable at {@code pos} keeps; its own when there is a world to ask. */
+    private List<ItemFlight> in(BlockPos pos) {
+        // Looked up every time, never remembered. A cable's block entity is replaced whenever its
+        // chunk comes back, and a network that held on to the list of the one before would leave
+        // whatever came back with the cable sitting there, moved by nobody.
+        if (level != null && level.hasChunkAt(pos.getX(), pos.getZ())
+                && level.getBlockEntity(pos) instanceof ItemCableBlockEntity cable) {
+            return cable.flights();
+        }
+        // Without a world - the routing tests - the network keeps the lists itself.
+        return byCable.computeIfAbsent(pos, key -> new ArrayList<>());
+    }
+
+    /** Notes that what is inside the cable at {@code pos} changed, so its chunk is written again. */
+    private void touch(BlockPos pos) {
+        if (level != null && level.getBlockEntity(pos) instanceof ItemCableBlockEntity cable) cable.setChanged();
+    }
+
     /** Every item currently travelling or waiting in the network. */
-    public List<ItemFlight> flights() { return List.copyOf(flights); }
+    public List<ItemFlight> flights() {
+        List<ItemFlight> all = new ArrayList<>();
+        for (BlockPos pos : cables) all.addAll(in(pos));
+        return List.copyOf(all);
+    }
 
     /** The flights inside the cable at {@code pos}; what that cable saves or drops. */
-    public List<ItemFlight> flightsIn(BlockPos pos) {
-        List<ItemFlight> inside = new ArrayList<>();
-        for (ItemFlight flight : flights) if (flight.current().equals(pos)) inside.add(flight);
-        return inside;
-    }
+    public List<ItemFlight> flightsIn(BlockPos pos) { return List.copyOf(in(pos)); }
 
     /** Takes the flights inside the cable at {@code pos} out of the network, for dropping. */
     public List<ItemFlight> removeFlightsIn(BlockPos pos) {
         List<ItemFlight> removed = flightsIn(pos);
-        flights.removeAll(removed);
+        in(pos).clear();
+        touch(pos);
         for (ItemFlight flight : removed) announceEnd(flight);
         return removed;
     }
@@ -329,10 +355,8 @@ public final class ItemCableNetwork {
      */
     public void invalidate(ServerLevel level) {
         valid = false;
-        for (ItemFlight flight : flights) {
-            if (level.getBlockEntity(flight.current()) instanceof ItemCableBlockEntity cable) cable.park(flight);
-        }
-        flights.clear();
+        // Nothing to hand back: what is inside each cable stays with that cable, and is written
+        // out with it. This is why a chunk going away no longer has to be pulled back in.
         for (BlockPos pos : cables) {
             if (level.hasChunkAt(pos.getX(), pos.getZ())
                     && level.getBlockEntity(pos) instanceof ItemCableBlockEntity cable) {
@@ -342,20 +366,42 @@ public final class ItemCableNetwork {
     }
 
     /**
-     * Flights kept by a cable while it had no network. Those whose route still exists carry on;
-     * the others are given a new destination from where they are, or wait there for one.
+     * Looks over what the cables already had inside them when this network was built - items
+     * that were travelling before a cable changed, or that came back with their chunk. A flight
+     * whose road is not part of this network is given a new destination from where it stands,
+     * and waits in its cable if there is none. It never changes hands.
      */
-    public void absorb(List<ItemFlight> parked) {
-        for (ItemFlight flight : parked) {
-            boolean routeIntact = cables.containsAll(flight.path) && indexByKey.containsKey(flight.destination());
-            if (!routeIntact && !reroute(flight, flight.current())) {
-                flight.path = List.of(flight.current());
-                flight.travelled = flight.duration();
-                flight.waiting = true;
-            }
-            flights.add(flight);
-            announce(flight);
+    /** Puts flights inside the cables they stand in and looks their routes over, as when a
+     *  network is built over cables that already had load in them. */
+    public void adopt(List<ItemFlight> found) {
+        for (ItemFlight flight : found) {
+            BlockPos pos = flight.current();
+            in(pos).add(flight);
+            repair(flight, pos);
         }
+    }
+
+    /**
+     * Looks over what the cables already had inside them when this network was built - items
+     * that were travelling before a cable changed, or that came back with their chunk.
+     */
+    private void adopt() {
+        for (BlockPos pos : cables) for (ItemFlight flight : in(pos)) repair(flight, pos);
+    }
+
+    /**
+     * A flight whose road is not part of this network is given a new destination from where it
+     * stands, and waits in its cable if there is none. It never changes hands.
+     */
+    private void repair(ItemFlight flight, BlockPos pos) {
+        if (cables.containsAll(flight.path) && indexByKey.containsKey(flight.destination())) {
+            // Its road is part of this network, so whatever made it wait is over.
+            flight.waiting = false;
+        } else if (!reroute(flight, pos)) {
+            // No other destination for now, so it waits - but it keeps the road it was on.
+            flight.waiting = true;
+        }
+        announce(flight);
     }
 
     /**
@@ -399,6 +445,7 @@ public final class ItemCableNetwork {
             }
         };
     }
+
 
     /**
      * Sets up to {@code amount} of {@code resource} travelling from the face {@code key} towards the
@@ -481,7 +528,7 @@ public final class ItemCableNetwork {
         // What is already bound there is reserved once per kind of item, not once per flight:
         // a dozen identical items in the air are one simulated insert, not twelve.
         Map<ItemResource, Integer> bound = new HashMap<>();
-        reserve(flights, endpoint.key(), bound);
+        reserve(flights(), endpoint.key(), bound);
         reserve(departing, endpoint.key(), bound);
         int room;
         Container container = level == null ? null : ContainerDelivery.blockContainer(level, endpoint.key().neighbour());
@@ -541,9 +588,10 @@ public final class ItemCableNetwork {
             nsAdvance += System.nanoTime() - t0;
             if (++logTicks >= 100) {
                 int waiting = 0;
-                for (ItemFlight flight : flights) if (flight.waiting) waiting++;
+                List<ItemFlight> all = flights();
+                for (ItemFlight flight : all) if (flight.waiting) waiting++;
                 LOG.info("[perf] item network {} cables: flights={} waiting={} | us per 100 ticks: advance={} pump={} dispatch={} insert={} ({} direct of {}) announce={} ({}) end={} ({})",
-                        cables.size(), flights.size(), waiting, nsAdvance / 1000, nsPump / 1000, nsDispatch / 1000, nsInsert / 1000,
+                        cables.size(), all.size(), waiting, nsAdvance / 1000, nsPump / 1000, nsDispatch / 1000, nsInsert / 1000,
                         containerInserts, inserts, nsAnnounce / 1000, announces, nsEnd / 1000, ends);
                 nsAdvance = nsPump = nsDispatch = nsInsert = nsAnnounce = nsEnd = 0;
                 logTicks = inserts = announces = ends = containerInserts = 0;
@@ -596,14 +644,29 @@ public final class ItemCableNetwork {
 
     /** Moves every flight one tick along; arrivals are delivered, and waiting ones retry each interval. */
     private void advanceFlights(boolean retryWaiting) {
-        for (Iterator<ItemFlight> it = flights.iterator(); it.hasNext(); ) {
-            ItemFlight flight = it.next();
-            if (flight.waiting) {
-                if (retryWaiting && arrive(flight)) it.remove();
-                continue;
+        List<ItemFlight> moved = new ArrayList<>();
+        for (BlockPos pos : cables) {
+            List<ItemFlight> here = in(pos);
+            if (here.isEmpty()) continue;
+            boolean changed = false;
+            for (Iterator<ItemFlight> it = here.iterator(); it.hasNext(); ) {
+                ItemFlight flight = it.next();
+                if (flight.waiting) {
+                    if (retryWaiting && arrive(flight)) { it.remove(); changed = true; continue; }
+                } else {
+                    flight.travelled++;
+                    changed = true;
+                    if (flight.arrived() && arrive(flight)) { it.remove(); continue; }
+                }
+                // Crossing into the next cable is a move between two cables' own lists.
+                if (!flight.current().equals(pos)) { it.remove(); changed = true; moved.add(flight); }
             }
-            flight.travelled++;
-            if (flight.arrived() && arrive(flight)) it.remove();
+            if (changed) touch(pos);
+        }
+        for (ItemFlight flight : moved) {
+            BlockPos pos = flight.current();
+            in(pos).add(flight);
+            touch(pos);
         }
     }
 
@@ -700,7 +763,7 @@ public final class ItemCableNetwork {
         announces++;
     }
 
-    private void announceEnd(ItemFlight flight) {
+    public void announceEnd(ItemFlight flight) {
         if (level == null) return;
         long t = System.nanoTime();
         PacketDistributor.sendToPlayersTrackingChunk(level, ChunkPos.containing(flight.current()),
