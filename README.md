@@ -13,7 +13,7 @@ Mod de máquinas, energia e automação industrial para Minecraft Java.
 ## Instalação
 
 1. Instale o NeoForge para Minecraft 26.2.
-2. Baixe o `futuretech-1.0.0.jar`.
+2. Baixe o `futuretech-1.0.1.jar`.
 3. Coloque o arquivo na pasta `mods` da sua instância.
 
 Tudo do mod fica em uma aba própria no inventário criativo, com nomes em português do Brasil e em inglês.
