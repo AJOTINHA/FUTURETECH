@@ -491,6 +491,11 @@ public final class LavaPumpBlockEntity extends BaseContainerBlockEntity
         nextScan = level.getGameTime() + RESCAN_TICKS;
     }
 
+    /** Whether a source is in the pipe's own column: the lava the pipe comes down through. */
+    private boolean underThePipe(BlockPos pos) {
+        return pos.getX() == worldPosition.getX() && pos.getZ() == worldPosition.getZ();
+    }
+
     /** The source being worked on: the last of the pool still standing, dropping any that are gone. */
     private @Nullable BlockPos nextSource(ServerLevel level) {
         while (!pool.isEmpty()) {
@@ -510,6 +515,13 @@ public final class LavaPumpBlockEntity extends BaseContainerBlockEntity
     void pump(ServerLevel level) {
         if (pool.isEmpty() && level.getGameTime() >= nextScan) scan(level);
         BlockPos source = nextSource(level);
+        // The lava the pipe stands in is the way down to everything else: stone in its place
+        // walls the pump off from whatever the last search did not reach, and it stops with the
+        // lake still there. So before taking that one, look once more for lava further out.
+        if (source != null && underThePipe(source) && level.getGameTime() >= nextScan) {
+            scan(level);
+            source = nextSource(level);
+        }
         if (source == null) {
             status = Status.NO_LAVA;
             return;
