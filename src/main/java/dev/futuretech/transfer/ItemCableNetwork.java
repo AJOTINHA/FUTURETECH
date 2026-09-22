@@ -330,7 +330,12 @@ public final class ItemCableNetwork {
     public void invalidate(ServerLevel level) {
         valid = false;
         for (ItemFlight flight : flights) {
-            if (level.getBlockEntity(flight.current()) instanceof ItemCableBlockEntity cable) cable.park(flight);
+            BlockPos pos = flight.current();
+            // Never load a chunk to hand a flight back. A cable whose chunk has gone was saved
+            // with this flight already, so parking it again would bring a second copy in, and
+            // asking for the block entity is itself what would pull that chunk back in.
+            if (level.hasChunkAt(pos.getX(), pos.getZ())
+                    && level.getBlockEntity(pos) instanceof ItemCableBlockEntity cable) cable.park(flight);
         }
         flights.clear();
         for (BlockPos pos : cables) {
