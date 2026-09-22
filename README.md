@@ -72,6 +72,13 @@ Os materiais usam as tags comuns (`c:ingots/<metal>`, `c:dusts/<metal>`, `c:plat
 
 Suporte opcional a **JEI**, que mostra as receitas das máquinas e dos geradores, e a **Curios**, que aceita a Bateria Portátil nos slots de cinto e amuleto.
 
+## Changelog
+
+**1.0.1**
+- Adicionado: Bomba de Lava e Mineradora.
+- Corrigido: cabo de itens duplicando ou perdendo carga ao recarregar a chunk que ele atravessa.
+- Corrigido: Bomba de Lava travando quando a fonte sob o próprio cano é a última do lago.
+
 ## Compilar do código-fonte
 
 Abra a pasta como projeto Gradle na IDE, com um JDK 25.
